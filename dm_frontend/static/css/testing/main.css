@@ -1,0 +1,53 @@
+/* CSS Document */
+
+* {
+	/*overwrite all default browser settings*/
+	margin:				0;
+	padding:			0;
+	
+	/*global font settings*/
+	font-family: 		arial,helvetica,sans-serif;
+}
+
+html,body {
+	/* 100% height hack*/
+	height:				100%;
+	min-height:			100%;
+	height: 			100%;
+}
+
+body {
+	background: 		white;
+	padding:			0;
+	margin:				0;
+	
+	/*part 1 of centering hack*/
+	text-align: 		center;	
+}
+
+div {
+	margin:0px;
+	padding:0px;
+	font-family:verdana; font-size:12px;
+}
+
+ /* Global Link Settings
+--------------------------------*/
+a,
+a:link,
+a:visited {
+	color:				#00f;
+	text-decoration:	none;
+	outline:			none;
+}
+a:hover, 
+a:active {
+	text-decoration:	underline;
+	outline:			none;
+}
+
+.viewer {
+    border: 1px solid #aaaaaa;
+}
+
+

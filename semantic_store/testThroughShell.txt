@@ -1,0 +1,3 @@
+data='<rdf:Description rdf:about="http://dms-data.stanford.edu/Parker/df920pp7276/Manifest.xml"><dc:format>application/rdf+xml</dc:format><rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/><ore:describes rdf:resource="http://dms-data.stanford.edu/Parker/df920pp7276/Manifest"/></rdf:Description>'; import rdflib;from django.test import Client;c = Client();from dm.semantic_store import views;response = c.post("/manifest/", content_type="text/xml", data=data)
+
+

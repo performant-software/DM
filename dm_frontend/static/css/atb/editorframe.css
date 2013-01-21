@@ -1,0 +1,66 @@
+/* Editor Frame styles - These styles apply only to inside the editor iframe */
+
+.atb-editor-textannotation {
+    background: #FFFFBF;
+    cursor: pointer;
+    
+    /* Safari 4-5, Chrome 1-9 */
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FFFFD6), to(#FFFFBF));
+    
+    /* Safari 5.1, Chrome 10+ */
+    background: -webkit-linear-gradient(top, #FFFFBF, #FFFFD6);
+    
+    /* Firefox 3.6+ */
+    background: -moz-linear-gradient(top, #FFFFBF, #FFFFD6);
+    
+    /* IE 10 */
+    background: -ms-linear-gradient(top, #FFFFBF, #FFFFD6);
+    
+    /* Opera 11.10+ */
+    background: -o-linear-gradient(top, #FFFFBF, #FFFFD6);
+    
+    -moz-transition: background 0.2s;
+    -webkit-transition: background 0.2s;
+    -o-transition: background 0.2s;
+    transition: background 0.2s;
+}
+
+.atb-editor-textannotation-hover {
+    background: #FFFF78;
+    
+    /* Safari 4-5, Chrome 1-9 */
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FFFFBF), to(#FFFF78));
+    
+    /* Safari 5.1, Chrome 10+ */
+    background: -webkit-linear-gradient(top, #FFFF78, #FFFFBF);
+    
+    /* Firefox 3.6+ */
+    background: -moz-linear-gradient(top, #FFFF78, #FFFFBF);
+    
+    /* IE 10 */
+    background: -ms-linear-gradient(top, #FFFF78, #FFFFBF);
+    
+    /* Opera 11.10+ */
+    background: -o-linear-gradient(top, #FFFF78, #FFFFBF);
+    
+    -moz-transition: background 0.2s;
+    -webkit-transition: background 0.2s;
+    -o-transition: background 0.2s;
+    transition: background 0.2s;
+}
+
+.atb-editor-textannotation-selected {
+    background: #C3DDFD;
+    
+    -moz-transition: background 0.2s;
+    -webkit-transition: background 0.2s;
+    -o-transition: background 0.2s;
+    transition: background 0.2s;
+}
+
+p {
+    margin-top:0%;
+    margin-bottom:0%;
+    margin-right:0%;
+    margin-left:0%;
+}

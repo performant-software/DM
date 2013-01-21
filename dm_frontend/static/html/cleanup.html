@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+        <title>Digital MappaeMundi: Workspace</title>
+
+        <link rel="stylesheet" href="../css/dev-libraries.css" type="text/css" />
+        <link rel="stylesheet" href="../css/dev-atb.css" type="text/css" />
+        <link rel="stylesheet" href="../css/themes/dark/theme.css" type="text/css" />
+
+        <script
+            src="../js/closure-library/closure/goog/base.js"
+            type="text/javascript"></script>
+        <script
+            src="../js/atb-deps.js"
+            type="text/javascript"></script>
+        <script
+            src="../js/dm/home.js"
+            type="text/javascript"></script>
+
+    </head>
+
+    <body>
+
+        <div class="pageHeader">
+            <div class="pageHeaderLogo"></div>
+            <div class="pageHeaderLoginInfo">
+                You are signed in as <a href="#">mfoys@drew.edu</a>
+                &nbsp;&nbsp;
+                <a href="/sign_out/?username=mfoys@drew.edu">Sign out</a>
+            </div>
+        </div>
+
+        <div class="pageContent">
+
+            <div class="formWrapper">
+                <form method="post" action="/upload" enctype="multipart/form-data">
+                    <input type='hidden' name='csrfmiddlewaretoken' value='6a8747ca3c7f03268fa8aa5351a3e3cd' />
+
+                    <p><label for="id_name">Name:</label>
+                        <input class="textInput" id="id_name" size="52" type="text" name="name" maxlength="256"></p>
+
+                    <p><label for="id_file_upload">File upload:</label>
+                        <input class="fileInput" type="file" size="40" name="file_upload" id="id_file_upload"></p>
+
+                    <p class="formButtons"><input type="submit" value="Start Upload"></p>
+
+                </form>
+            </div>
+
+        </div>
+
+        <div class="pageFooter">
+			<a id="about" href="#">About</a>
+			<span class="pageFooterSep"></span>
+			<a href="#">Contact</a>
+			<span class="pageFooterSep"></span>
+			<a href="#">Credits</a>
+        </div>
+
+    </body>
+</html>

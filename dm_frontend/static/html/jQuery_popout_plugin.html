@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<!--<link rel="stylesheet" href="../css/dev-atb.css" />-->
+<title>RDF Manuscript Repository Crawler - Proof of Concept</title>
+<script src="../js/closure-library/closure/goog/base.js"
+	type="text/javascript"></script>
+<script src="../js/atb-deps.js" type="text/javascript"></script>
+<script type="text/javascript">
+	goog.require('jquery.jQuery');
+    goog.require('jquery.popout');
+    goog.require('jquery.jQueryUI');
+    goog.require('atb.Util');
+    goog.require('jquery.animate_enhanced');
+</script>
+<style type="text/css">
+    @import url("../css/jquery/jquery-ui.css");
+    
+    body {
+        font-family: arial,sans-serif;
+        font-size: 14px;
+        text-align: center;
+    }
+    div.popoutExample {
+        width: 100px;
+        height: 150px;
+        background-color: #DDD;
+        text-align: center;
+        position: relative;
+        display: block;
+        border: 1px solid white;
+    }
+    div.wrapper {
+        display: inline-block;
+        vertical-align: top;
+    }
+    .image {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .addButton {
+        width: 24px;
+        height: 24px;
+        top: 3px;
+        right: 3px;
+        position: absolute;
+        z-index: 3;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+    }
+    #thumbsDiv {
+        width: auto;
+        overflow-x: auto;
+        
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .title {
+        vertical-align: top;
+    }
+    #slider {
+        width: 200px;
+        height: 16px;
+        margin-bottom: 50px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+</head>
+<body>
+    <div id="slider"></div>
+    <div id="thumbsDiv">
+        <div class="wrapper">
+            <div class="popoutExample">
+                <img class="addButton" src="../img/canvas_icons/plus-circle.png" />
+                <div>
+                    <img class="image image3008" src="../img/canvas_icons/3008.jpg" width="72" height="100" />
+                </div>
+                <div class="title">Cotton Map</div>
+            </div>
+        </div>
+        <div class="wrapper">
+            <div class="popoutExample">
+                <img class="addButton" src="../img/canvas_icons/plus-circle.png" />
+                <div>
+                    <img class="image image3012" src="../img/canvas_icons/3012.jpg" width="75" height="100" />
+                </div>
+                <div class="title">Harley Peterborough</div>
+            </div>
+        </div>
+        <div class="wrapper">
+            <div class="popoutExample">
+                <img class="addButton" src="../img/canvas_icons/plus-circle.png" />
+                <div>
+                    <img class="image image3018" src="../img/canvas_icons/3018.jpg" width="61" height="100" />
+                </div>
+                <div class="title">Parker MS 265, f.210</div>
+            </div>
+        </div>
+        <div class="wrapper">
+            <div class="popoutExample">
+                <img class="addButton" src="../img/canvas_icons/plus-circle.png" />
+                <div>
+                    <img class="image image3024" src="../img/canvas_icons/3024.jpg" width="68" height="100" />
+                </div>
+                <div class="title">Sawley Map</div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        jQuery('#slider').slider({
+                                 animate: true,
+                                 min: 100,
+                                 max: 300
+                                 
+        });
+        
+        var DEFAULT_HEIGHT = 100;
+        var DEFAULT_POPOUT_HEIGHT = 320;
+        var currentHeight = 100;
+        
+        var aspectRatioByNumber = {
+            3008: 161/200,
+            3012: 150/200,
+            3018: 122/200,
+            3024: 136/200
+        };
+        
+        var setHeights = function (height) {
+            var width = height;
+            
+            jQuery('.image3008').css({'height': height, 'width': height * aspectRatioByNumber[3008]});
+            jQuery('.image3012').css({'height': height, 'width': height * aspectRatioByNumber[3012]});
+            jQuery('.image3018').css({'height': height, 'width': height * aspectRatioByNumber[3018]});
+            jQuery('.image3024').css({'height': height, 'width': height * aspectRatioByNumber[3024]});
+            
+            jQuery('.popoutExample').css({'height': height + 50, 'width': width});
+            
+            var scrollLeft = jQuery('#thumbsDiv').scrollLeft();
+            var numItemsToLeft = scrollLeft / currentHeight;
+            
+            jQuery('#thumbsDiv').scrollLeft(scrollLeft + (width - currentHeight) * numItemsToLeft);
+            
+            currentHeight = height;
+        };
+        
+        
+        var $popoutExamples = jQuery('.popoutExample');
+        var $popoutWrappers = jQuery('.wrapper');
+        var $thumbsDiv = jQuery('#thumbsDiv');
+        
+        $popoutWrappers.remove();
+        
+        for (var i=0; i< 126; i++) {
+            //$thumbsDiv.after($thumbsDiv.clone(true));
+            $thumbsDiv.append($popoutWrappers.clone(true));
+        }
+        
+        jQuery('.popoutExample').popout({height: DEFAULT_POPOUT_HEIGHT + 25, width: DEFAULT_POPOUT_HEIGHT, selectors: [
+                                                                       {'.image3008': {'width': aspectRatioByNumber[3008] * DEFAULT_POPOUT_HEIGHT, 'height': DEFAULT_POPOUT_HEIGHT}},
+                                                                       {'.image3012': {'width': aspectRatioByNumber[3012] * DEFAULT_POPOUT_HEIGHT, 'height': DEFAULT_POPOUT_HEIGHT}},
+                                                                       {'.image3018': {'width': aspectRatioByNumber[3018] * DEFAULT_POPOUT_HEIGHT, 'height': DEFAULT_POPOUT_HEIGHT}},
+                                                                       {'.image3024': {'width': aspectRatioByNumber[3024] * DEFAULT_POPOUT_HEIGHT, 'height': DEFAULT_POPOUT_HEIGHT}},
+                                                                       {'.addButton': {'width': 32, 'height': 32}}
+                                                                       ]});
+        jQuery('.addButton').mouseup(function (event) { console.log('add button clicked', event); });
+        
+        jQuery('#slider').bind('slide', function (event, ui) {
+                               setHeights(ui.value);
+                               });
+    </script>
+    
+    
+	<div id="myDiv" style="width: 100%; text-align: left;">
+	</div>
+
+
+</body>
+</html>

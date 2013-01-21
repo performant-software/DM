@@ -1,0 +1,91 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" 
+	      href="../css/testing/main.css" media="all" />
+    <link rel="stylesheet" type="text/css"
+          href="../css/atb/viewer/MarkerViewer.css" />
+    <script src="../js/closure-library/closure/goog/base.js" 
+            type="text/javascript"></script>
+    <script src="../js/atb-deps.js" type="text/javascript"></script>
+    <script src="markerViewer.js" type="text/javascript"></script>
+  </head>
+
+  <body>
+	<div id="testPane" style="position: absolute; 
+                  left: 20px;
+                  top: 40px; 
+                  width: 460px; 
+                  height: 475px;"></div>
+    <div style="position: relative">
+	<!--
+      <div id="resourceViewer"
+           class="viewer" 
+           style="position: absolute; 
+                  left: 20px;
+                  top: 40px; 
+                  width: 460px; 
+                  height: 475px;">
+      </div>
+	-->
+      <script>
+        var viewer = initMarkerViewer();
+        //viewer.addOverlay("o1");
+      </script>
+      <div id="links"
+           style="position: absolute;
+                  left: 500px;
+                  top: 40px;">
+        <form>
+          <input onClick="viewer.setResource(1, 1);" 
+                 type="button" 
+                 value="Load 1" />
+          <br />
+          <br />
+          <input onClick="viewer.setResource(2, 1);" 
+                 type="button" 
+                 value="Load 2" />
+          <br />
+          <br />
+          <input onClick="viewer.setResource(3, 1);" 
+                 type="button" 
+                 value="Load 3" />
+          <br />
+          <br />
+          <input onClick="viewer.addMarker(1, 'o1');" 
+                 type="button" 
+                 value="Add region 1 marker (Point)" />
+          <br />
+          <br />
+          <input onClick="viewer.centerOnMarker(1);" 
+                 type="button" 
+                 value="Center on marker 1" />
+          <br />
+          <br />
+          <input onClick="viewer.addMarker(2, 'o1');" 
+                 type="button" 
+                 value="Add region 2 marker (Line)" />
+          <br />
+          <br />
+          <input onClick="viewer.centerOnMarker(2);" 
+                 type="button" 
+                 value="Center on marker 2" />
+          <br />
+          <br />
+          <input onClick="viewer.addMarker(3, 'o1');" 
+                 type="button" 
+                 value="Add region 3 marker (Polygon)" />
+          <br />
+          <br />
+          <input onClick="viewer.centerOnMarker(3);" 
+                 type="button" 
+                 value="Center on marker 3" />
+          <br />
+          <br />
+          <input onClick="viewer.centerOnOverlay('o1');" 
+                 type="button" 
+                 value="Center on all markers" />
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

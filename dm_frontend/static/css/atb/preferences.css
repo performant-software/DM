@@ -1,0 +1,16 @@
+/*@import url('../goog/tab.css');
+@import url('../goog/tabbar.css');*/
+
+.atb-preferences-content {
+    /*width: 600px;
+    height: 400px;*/
+}
+
+.atb-preferences-header {
+    font-size: 1.3em;
+    padding-bottom: 4px;
+}
+
+.atb-preferences-section {
+    padding: 10px;
+}

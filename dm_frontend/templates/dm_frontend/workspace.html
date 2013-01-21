@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load url from future %}
+
+{% include 'ui_scripts.html' %}
+
+{% block styles %}
+<link rel="stylesheet" 
+      type="text/css" 
+      href="{{ STATIC_URL }}css/dm/workspace.css" />
+{% endblock %}
+
+{% block scripts %}
+<script
+   src="{{ STATIC_URL }}js/atb/ui/WindowScaler.js"
+   type="text/javascript"></script>
+<script
+   src="{{ STATIC_URL }}js/dm/workspace.js"
+   type="text/javascript"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="atb-wrapper atb-wrapper-two-col">
+  <div class="atb-wrapper-container">
+    <div class="atb-wrapper-heading" id="leftTab">&nbsp;</div>
+    <div class="atb-wrapper-inner" id="left"></div>
+  </div>
+
+  <div class="atb-wrapper-container">
+    <div class="atb-wrapper-heading" id="rightTab"></div>
+    <div class="atb-wrapper-inner" id="right"></div>
+  </div>
+
+</div>
+<div id="atb-footer-controls"></div>
+{% endblock %}
+
+{% block init_scripts %}
+<script type="text/javascript" >
+  var staticUrl = "{{ STATIC_URL }}";
+  var olImgPath = "{{ STATIC_URL }}js/openlayers/img/";
+  var styleRoot = "{{ STATIC_URL }}css/";
+  var wsURI = "{{ WEBSERVICE_URI }}";
+  var mediawsURI = "{{ MEDIA_WEBSERVICE_URI }}";
+  var wsSameOriginURI = "/"
+  initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", styleRoot, olImgPath);
+  windowScaler.scale();
+</script>
+{% endblock %}

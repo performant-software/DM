@@ -1,0 +1,226 @@
+@import url('../goog/editorToolbar.css');
+
+@import url("'../atb/ui/Editor.css'");
+body {
+  font-family: Sans-serif;
+  font-size: 14px;
+}
+.atb-annotationviewer-anno-title {
+  font-size: 2em;
+  padding-top: 5px;
+  padding-bottom: 3px;
+}
+.atb-annotationviewer-anno-creator {
+  font-size: 1.25em;
+  color: gray;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.atb-annotationviewer-text-show-more {
+  text-decoration: none;
+  color: #307FBF;
+  cursor: pointer;
+  font-size: .9em;
+}
+.atb-annotationviewer-anno-pts-to {
+  font-size: 1.1em;
+  padding-top: 15px;
+  padding-bottom: 0px;
+}
+.atb-ResourceListViewer {
+  overflow: auto;
+}
+.atb-ResourceSummary {
+  clear: both;
+  padding: 5px;
+  margin: 5px;
+  border-width: 1px;
+  border-color: #E8EBED;
+  border-style: solid;
+  border-radius: 7px;
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  border-radius: 7px;
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  cursor: pointer;
+}
+.atb-ResourceSummary img {
+  float: left;
+  border-width: 1px;
+  border-color: gray;
+  border-style: solid;
+  border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  margin-right: 5px;
+}
+.atb-ResourceSummary_hover {
+  clear: both;
+  padding: 5px;
+  margin: 5px;
+  border-width: 1px;
+  border-color: #E8EBED;
+  border-style: solid;
+  border-radius: 7px;
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  border-radius: 7px;
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  cursor: pointer;
+  /* fallback/image non-cover color */
+
+  background-color: #f2f9ff;
+  /* Firefox 3.6+ */
+
+  background-image: -moz-linear-gradient(#e1e8ed, #f2f9ff);
+  /* Safari 4+, Chrome 1+ */
+
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#e1e8ed), to(#f2f9ff));
+  /* Safari 5.1+, Chrome 10+ */
+
+  background-image: -webkit-linear-gradient(#e1e8ed, #f2f9ff);
+  /* Opera 11.10+ */
+
+  background-image: -o-linear-gradient(#e1e8ed, #f2f9ff);
+  /* fallback/image non-cover color */
+
+  background-color: #e1e8ed;
+  /* Firefox 3.6+ */
+
+  background-image: -moz-linear-gradient(#f2f9ff, #e1e8ed);
+  /* Safari 4+, Chrome 1+ */
+
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f2f9ff), to(#e1e8ed));
+  /* Safari 5.1+, Chrome 10+ */
+
+  background-image: -webkit-linear-gradient(#f2f9ff, #e1e8ed);
+  /* Opera 11.10+ */
+
+  background-image: -o-linear-gradient(#f2f9ff, #e1e8ed);
+}
+.atb-ResourceSummary_selected {
+  clear: both;
+  padding: 5px;
+  margin: 5px;
+  border-width: 1px;
+  border-color: #E8EBED;
+  border-style: solid;
+  border-radius: 7px;
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  border-radius: 7px;
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  cursor: pointer;
+  /* fallback/image non-cover color */
+
+  background-color: #c8d9e6;
+  /* Firefox 3.6+ */
+
+  background-image: -moz-linear-gradient(#e1e8ed, #c8d9e6);
+  /* Safari 4+, Chrome 1+ */
+
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#e1e8ed), to(#c8d9e6));
+  /* Safari 5.1+, Chrome 10+ */
+
+  background-image: -webkit-linear-gradient(#e1e8ed, #c8d9e6);
+  /* Opera 11.10+ */
+
+  background-image: -o-linear-gradient(#e1e8ed, #c8d9e6);
+  /* fallback/image non-cover color */
+
+  background-color: #e1e8ed;
+  /* Firefox 3.6+ */
+
+  background-image: -moz-linear-gradient(#c8d9e6, #e1e8ed);
+  /* Safari 4+, Chrome 1+ */
+
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#c8d9e6), to(#e1e8ed));
+  /* Safari 5.1+, Chrome 10+ */
+
+  background-image: -webkit-linear-gradient(#c8d9e6, #e1e8ed);
+  /* Opera 11.10+ */
+
+  background-image: -o-linear-gradient(#c8d9e6, #e1e8ed);
+}
+.atb-resourcesummary-user {
+  color: gray;
+  padding: 2px;
+  font-size: .8em;
+}
+.atb-ResourceSummary-AnnotationSummary-targets {
+  margin-left: 50px;
+}
+._atbTextAnnotation {
+  /*background-color: @ANNOTATION_COLOR;*/
+
+  /* fallback/image non-cover color */
+
+  background-color: #bed2e3;
+  /* Firefox 3.6+ */
+
+  background-image: -moz-linear-gradient(#86aecc, #bed2e3);
+  /* Safari 4+, Chrome 1+ */
+
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#86aecc), to(#bed2e3));
+  /* Safari 5.1+, Chrome 10+ */
+
+  background-image: -webkit-linear-gradient(#86aecc, #bed2e3);
+  /* Opera 11.10+ */
+
+  background-image: -o-linear-gradient(#86aecc, #bed2e3);
+  /* fallback/image non-cover color */
+
+  background-color: #86aecc;
+  /* Firefox 3.6+ */
+
+  background-image: -moz-linear-gradient(#bed2e3, #86aecc);
+  /* Safari 4+, Chrome 1+ */
+
+  background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#bed2e3), to(#86aecc));
+  /* Safari 5.1+, Chrome 10+ */
+
+  background-image: -webkit-linear-gradient(#bed2e3, #86aecc);
+  /* Opera 11.10+ */
+
+  background-image: -o-linear-gradient(#bed2e3, #86aecc);
+  padding: 3px;
+  margin: -3px;
+  border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  cursor: pointer;
+}
+._atbTextAnnotation-hover {
+  border: 1px gray;
+}
+._atbSaveButton {
+  width: 16px;
+  height: 16px;
+  background-image: url("../js/img/save.png");
+  background-repeat: no-repeat;
+}
+._atbAnnotateButton {
+  width: 16px;
+  height: 16px;
+  background-image: url("../js/img/annotateIcon.png");
+  background-repeat: no-repeat;
+  width: auto;
+  padding-left: 17px;
+}
+.atb-Viewport {
+  width: 100%;
+  height: 575px;
+  border-style: solid;
+  border-color: #E8EBED;
+  border-width: 1px;
+  overflow: hidden;
+}

@@ -1,0 +1,41 @@
+.abstractDebugPanel
+{
+	position: absolute;
+	background: white;
+	outline: solid black 1px;
+	
+	/*
+	top: 160%;
+	top: 60%;
+	*/
+	
+	top: 60%;
+	
+	/* left omitted */
+	/*height: auto;*/
+}
+.abstractDebugPanel .debugPanelTitle a
+{
+	text-decoration: none;
+}
+
+.AbstractDebugPanel-minimized
+{
+	position: fixed;
+	/*
+	height: 20px;
+	*/
+	top: 95%;
+	overflow: crop;
+}
+
+.debugViewer
+{
+	/*left: 75%;*/
+	left: 55%;
+}
+
+.debugConsole
+{
+	left: 15px;	
+}

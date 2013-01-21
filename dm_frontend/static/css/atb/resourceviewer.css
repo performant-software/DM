@@ -1,0 +1,376 @@
+/* Resource Viewer Styles */
+/* this one is kind of a dumping ground for styles until the JS is more settled */
+/* TODO: figure out which of these styles needs to be refactored and renamed */
+/* If they don't need to be renamed then we should break them out into split files probably */
+
+.highlighted {
+    background: #EAEC1C;
+    font-weight: bold;
+}
+
+.atb-resourceviewer-wrapper {
+
+}
+
+.atb-resourceviewer-toolbar {
+    background-color: #fafafa;
+    background: #fafafa url(../../img/toolbar-bg-horz.png) bottom left repeat-x;
+    padding-top: 2px;
+    width: 100%;
+    z-index: 1005;
+    height: 35px;
+}
+
+.atb-resourceviewer {
+  width: 100%;
+  overflow: auto;
+}
+
+
+.atb-resourceviewer-reload-button {
+    width: 24px;
+    height: 24px;
+    background: url(../../img/icons-24x24-sprite.png) -408px 0 no-repeat;
+}
+
+.atb-resourceviewer-reload-button-outer {
+    position: absolute;
+    right: 44px;
+    top: -2px;
+    z-index: 3;
+}
+
+.atb-resourcesummary-outer {
+
+}
+
+.atb-resourcesummary {
+    clear: both;
+    padding: 5px;
+    margin: 5px;
+    font-size: 13px;
+    border: 1px solid #E8EBED;
+    border-color: #E8EBED;
+    cursor: pointer;
+
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    
+    -moz-transition: background 0.2s;
+    -webkit-transition: background 0.2s;
+    -o-transition: background 0.2s;
+    transition: background 0.2s;
+}
+
+.atb-resourcesummary img {
+    float: left;
+    border: 1px solid gray;
+    margin-right: 5px;
+
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+.atb-resourcesummary-hover {
+    border: 1px solid #E8EBED;
+    background: #f2f9ff;
+    
+    -moz-transition: background 0.2s;
+    -webkit-transition: background 0.2s;
+    -o-transition: background 0.2s;
+    transition: background 0.2s;
+}
+
+.atb-resourcesummary-selected {
+  border: 1px solid #E8EBED;
+  background: #c8d9e6;
+  cursor: pointer;
+}
+
+.atb-resourcesummary-panel-ctrls {
+    display: block;
+    float: right;
+    z-index: 1000;
+}
+
+.atb-resourcesummary-title {
+    font-size: 15px;
+    margin-bottom: 3px;
+}
+
+.atb-resourcesummary-user {
+  color: gray;
+  padding: 2px;
+  font-size: .8em;
+}
+
+.atb-resourcesummary-textbody {
+    background-color: #FFFF88;
+}
+
+.atb-resourcesummary-delete-button {
+    float: right;
+    width: 16px;
+    height: 16px;
+    background: url(../../img/icons-16x16-sprite.png) -704px 0 no-repeat;
+}
+
+.atb-resourcesummary-new-window, .atb-resourcesummary-swap-panels {
+    width: 16px;
+    height: 16px;
+    background: url(../../img/icons-16x16-sprite.png) -736px 0 no-repeat;
+    display: inline-block;
+    margin: 2px;
+}
+
+.atb-resourcesummary-swap-panels {
+    background-position: -752px 0;
+}
+
+
+.atb-markersummary {
+    display: inline-block;
+    user-select: none;
+}
+
+.atb-markersummary img {
+    float: none;
+    padding: 0;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.atb-markersummary-thumb {
+    border: 1px solid gray;
+    background-repeat: no-repeat;
+    
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+.atb-markersummary .atb-resourcesummary-panel-ctrls {
+    background-image: url(../../img/50pctOpacityWhite.png);
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+
+.atb-twirldown-button {
+    margin-top: 4px;
+    width: 16px;
+    height: 16px;
+    background: url(../../img/icons-16x16-sprite.png) -688px 0 no-repeat;
+    background-repeat: no-repeat;
+    float: left;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.atb-twirldown-button-open {
+    background-position: -672px 0;
+}
+
+
+.atb-finder-search {
+    padding: 0 80px 0 4px;
+    margin-top: 4px;
+    position: relative;
+}
+
+.goog-zippy-collapsed .atb-finder-menu-icon,
+.goog-zippy-expanded .atb-finder-menu-icon,
+.atb-finder-search-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+    background: url(../../img/icons-16x16-sprite.png) -688px 0 no-repeat;
+    position: absolute;
+    left: 4px;
+    top: 10px;
+}
+
+.goog-zippy-expanded .atb-finder-menu-icon {
+    background-position: -672px 0;
+}
+
+
+.atb-finder-search-icon {
+    z-index: 1000;
+    background-position: -720px 0;
+    left: 10px;
+    top: 5px;
+}
+
+.atb-finder-searchfield {
+    width: 100%;
+    border: 1px solid gray;
+    font-size: 12px;
+    padding: 4px 0;
+    text-indent: 28px;
+    position: relative;
+    
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.atb-finder-search-options {
+    padding: 10px;
+    background-color: #f6f6f6;
+    width: 456px;
+    position: absolute;
+    top: 36px;
+    z-index: 1000;
+}
+
+.atb-finder-enable-delete-button {
+    background: url(../../img/icons-24x24-sprite.png);
+    width: 24px;
+    height: 24px;
+    /*display: inline-block;
+    margin: 4px;*/
+    background-position: -336px 0px;
+}
+
+.atb-finder-enable-delete-button-outer {
+    margin: 0;
+    position: absolute;
+    right: 5px;
+    top: 2px;
+}
+
+.atb-viewer-loadingSpinner {
+    width: 32px;
+    height: 32px;
+    background-image: url("../../img/large_loading_spinner.gif");
+    z-index: 1000;
+    position: absolute;
+}
+
+.atb-viewer-networkErrorIcon {
+    width: 36px;
+    height: 36px;
+    background-image: url("../../img/icons-36x36-sprite.png");
+    background-position: -216px 0px;
+    z-index: 1000;
+    position: absolute;
+}
+
+.atb-markersummary-loadingSpinner {
+    background-image: url("../../img/large_loading_spinner.gif");
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+.atb-finder-blankIndicator {
+    color: #C4C4C4;
+    font-size: 18px;
+    text-align: center;
+    width: auto;
+    position: absolute;
+    z-index: 1000;
+}
+
+.atb-markercollection .atb-resourcecollection-children {
+    margin-left: 0;
+}
+
+.atb-markercollection .atb-twirldown-button {
+    margin-left: 0;
+    margin-top: 0;
+}
+
+.atb-resourcecollection-parent .atb-resourcesummary {
+    margin-left: 16px;
+    clear: none;
+}
+
+.atb-resourcecollection-children {
+    margin-left: 22px;
+}
+
+.atb-texthighlightsummary-title {
+    font-size: 1em;
+}
+
+.atb-annotationviewer-anno-title {
+  font-size: 1.5em;
+  padding-top: 5px;
+  padding-bottom: 3px;
+}
+.atb-annotationviewer-anno-creator {
+  font-size: 1.25em;
+  color: gray;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.atb-annotationviewer-text-show-more {
+  text-decoration: none;
+  color: #307FBF;
+  cursor: pointer;
+  font-size: .9em;
+}
+.atb-annotationviewer-anno-pts-to {
+  font-size: 1.1em;
+  padding-top: 15px;
+  padding-bottom: 0px;
+}
+
+.atb-MarkerAnnotationSummary {
+    
+}
+
+.atb-markerannotationsummary-parentDiv {
+    display: inline-block;
+}
+
+.atb-markerannotationsummary-childrenDiv {
+    display: inline-block;
+}
+
+.atb-markerannotatationsummary-arrow {
+    display: inline-block;
+    background-image: url(../../img/icons-24x24-sprite.png);
+    background-position: -480px 0px;
+    background-repeat: no-repeat;
+    
+    margin-bottom: 37px;
+    
+    width: 24px;
+    height: 24px;
+}
+
+.atb-ManuscriptSummary-pageSelection {
+    clear: both;
+}
+
+.atb-ManuscriptSummary-scrollingList {
+    overflow-y: scroll;
+    height: 100px;
+}
+
+.atb-ManuscriptSummary-jumpToInput {
+    width: 100px;
+    margin-left: auto;
+    display: block;
+    
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.atb-ManuscriptSummary-jumpToInput-notFound {
+    background-color: #FFE8E8;
+}
+
+.atb-PageNumberSummary {
+    width: 50px;
+    display: inline-block;
+}
+
+.atb-PageNumberSummary-highlighted {
+    background-color: #9DCFE3;
+}

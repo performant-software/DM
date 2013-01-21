@@ -1,0 +1,3 @@
+data='<rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:ore="http://www.openarchives.org/ore/terms/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:tei="http://www.tei-c.org/ns/1.0/"><rdf:Description rdf:about="http://dms-data.stanford.edu/Parker/df920pp7276/Manifest.xml"><dc:format>application/rdf+xml</dc:format><rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/><ore:describes rdf:resource="http://dms-data.stanford.edu/Parker/df920pp7276/Manifest"/></rdf:Description></rdf:RDF>'; import rdflib;from django.test import Client;c = Client();from dm.semantic_store import views;response = c.post("/store/manifest/http://dms-data.stanford.edu/Parker/df920pp7276/Manifest/", content_type="text/xml", data=data)
+
+
