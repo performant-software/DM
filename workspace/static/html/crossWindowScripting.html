@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+        <title>Default Workspace</title>
+
+        <link rel="stylesheet" href="../css/dev-libraries.css" type="text/css" />
+        <link rel="stylesheet" href="../css/dev-atb.css" type="text/css" />
+        <link rel="stylesheet" href="../css/themes/default/theme.css" type="text/css" />
+
+        <script
+            src="../js/closure-library/closure/goog/base.js"
+            type="text/javascript"></script>
+        <script
+            src="../js/atb-deps.js"
+            type="text/javascript"></script>
+        <script
+            src="../js/dm/home.js"
+            type="text/javascript"></script>
+        <script type="text/javascript">
+            goog.require('goog.events');
+            goog.require('goog.dom');
+            goog.require('goog.dom.DomHelper');
+            goog.require('atb.ui.PopupWindow');
+        </script>
+
+    </head>
+
+    <body>
+
+        <input type="button" value="Open a popup window controlled by this window" id="testButton"/>
+        <p>All scripts are written on this page, but they access OpenLayers from the popup window</p>
+
+
+        
+
+        <script type="text/javascript" >
+            var testButton = goog.dom.getElement('testButton');
+                
+            goog.events.listen(testButton, goog.events.EventType.CLICK, runTest, false, this);
+            
+            function runTest () {
+                var popup = new atb.ui.PopupWindow('popup.html');
+                popup.open();
+                
+                popup.bindToLoad(function() {
+                    var domHelper = new goog.dom.DomHelper(popup.getWindow().document);
+                    var win = domHelper.getWindow();
+
+                    var mapDiv = domHelper.createDom('div', {'id': 'map'});
+                    var base = domHelper.getElement('rootDiv');
+                    base.appendChild(mapDiv);
+
+                    var map = new win.OpenLayers.Map('map');
+
+                    var wmsLayer = new win.OpenLayers.Layer.WMS("OpenLayers WMS",
+                                                             "http://vmap0.tiles.osgeo.org/wms/vmap0?",
+                                                             {layers: 'basic'});
+
+                    var pointLayer = new win.OpenLayers.Layer.Vector("Point Layer");
+                    var lineLayer = new win.OpenLayers.Layer.Vector("Line Layer");
+                    var polygonLayer = new win.OpenLayers.Layer.Vector("Polygon Layer");
+
+                    map.addLayers([wmsLayer, pointLayer, lineLayer, polygonLayer]);
+                    map.addControl(new win.OpenLayers.Control.LayerSwitcher());
+                    map.addControl(new win.OpenLayers.Control.MousePosition());
+
+                    var drawControls = {
+                     point: new win.OpenLayers.Control.DrawFeature(pointLayer,
+                                                                   win.OpenLayers.Handler.Point),
+                     line: new win.OpenLayers.Control.DrawFeature(lineLayer,
+                                                                  win.OpenLayers.Handler.Path),
+                     polygon: new win.OpenLayers.Control.DrawFeature(polygonLayer,
+                                                                     win.OpenLayers.Handler.Polygon)
+                    };
+
+                    for(var key in drawControls) {
+                    map.addControl(drawControls[key]);
+                    }
+                    drawControls.polygon.activate();
+
+                    map.setCenter(new win.OpenLayers.LonLat(0, 0), 3);
+                }, this);
+            }
+        </script>
+    </body>
+</html>

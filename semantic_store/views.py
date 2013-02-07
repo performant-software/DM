@@ -1,7 +1,46 @@
-from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, \
+    HttpResponseNotFound
+from django.conf import settings
+from django.db import connection, transaction
+
+from rdflib.graph import Graph, ConjunctiveGraph
+from rdflib import URIRef, RDF
+from rdflib.namespace import Namespace
+
 from ld import collection
-import rdflib
-from semantic_store import graph
+import rdfstore
+
+
+def annotations(request, collection=None, uri=None):
+    if request.method == 'POST':
+        g = Graph()
+        g.parse(data=request.body)
+        for t in g:
+            print t
+        return HttpResponse()
+    elif request.method == 'PUT':
+        pass
+    elif request.method == 'DELETE':
+        pass
+    elif request.method == 'GET':
+        pass
+    else:
+        return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
+        
+
+
+def manifest(request, uri, ext=None):
+    uri = uri.rstrip('/')
+    print uri
+    try:
+        manifest_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(uri))
+        if len(manifest_g) > 0:
+            return HttpResponse(manifest_g.serialize(), mimetype='text/xml')
+        else:
+            return HttpResponseNotFound()
+    except Exception as e:
+        connection._rollback()
+        raise e
 
 
 def add_working_resource(request, uri):

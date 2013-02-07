@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<!--<link rel="stylesheet" href="../css/dev-atb.css" />-->
+<title>RDF Manuscript Repository Crawler - Proof of Concept</title>
+<script src="../js/closure-library/closure/goog/base.js"
+	type="text/javascript"></script>
+<script src="../js/atb-deps.js" type="text/javascript"></script>
+<script type="text/javascript">
+	goog.require('jquery.jQuery');
+	goog.require('jquery.rdfquery');
+    goog.require('jquery.popout');
+	goog.require('goog.dom');
+    goog.require('atb.Util');
+    goog.require('goog.structs.AvlTree');
+</script>
+
+</head>
+<body>
+    
+	<div id="myDiv" style="width: 100%; text-align: left;">
+	</div>
+
+
+    <script type="text/javascript">
+        var repositoryUrl = 'http://dms-data.stanford.edu/Repository.xml';
+        
+        /** When true, uses a hack with canvas ids to put Stanford's folia in order */
+        var REORDER = true;
+        
+        var proxyUrl = function (url) {
+            return 'dms-data/' + url.replace('http://dms-data.stanford.edu/', '');
+        };
+        
+        var setupDefaultPrefixes = function (rdf) {
+            rdf.prefix('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+            rdf.prefix('dc', 'http://purl.org/dc/elements/1.1/');
+            rdf.prefix('ore', 'http://www.openarchives.org/ore/terms/');
+            rdf.prefix('tei', 'http://www.tei-c.org/ns/1.0/');
+        };
+        
+        var withRDF = function (url, handler, opt_scope) {
+            var successHandler = function (data) {
+                var rdf = jQuery.rdf();
+                rdf.databank.load(data);
+                
+                setupDefaultPrefixes(rdf);
+                
+                atb.Util.scopeAsyncHandler(handler, opt_scope)(rdf, data, this);
+            };
+            
+            return jQuery.ajax({
+                               type: 'GET',
+                               url: url,
+                               success: successHandler,
+                               dataType: 'xml'
+                               });
+        };
+        
+        var parseCanvasNumber = function (canvasPath) {
+            var numberRegex = /-(\d+)$/
+            var match = numberRegex.exec(canvasPath);
+            
+            if (match) {
+                return Number(match[1]);
+            }
+            else {
+                return -1;
+            }
+        };
+        
+        var parseCollectionTitleFromPath = function (path) {
+            var nameRegex = /^\/(\w+)\/Collection$/;
+            var match = nameRegex.exec(path);
+            
+            if (match) {
+                var title = match[1]
+            }
+            else {
+                var title = '';
+            }
+            
+            return title;
+        };
+        
+        
+        
+        var loadManuscriptManifest = function (manifestUrl, collectionUl) {
+            var withEachManuscriptManifest = function (rdf) {
+                var title = rdf.where('?x dc:title ?title')[0].title.value;
+                
+                var nestedOl = goog.dom.createDom('ol');
+                var li = goog.dom.createDom('li', null, title, nestedOl);
+                jQuery(collectionUl).append(li);
+                
+                var withEachTypeNode = function () {
+                    if (this.type.value.path == '/ns/Sequence') {
+                        var normalSequenceUrl = proxyUrl(this.describer.value._string);
+                        
+                        loadNormalSequenceRDF(normalSequenceUrl, nestedOl);
+                    }
+                };
+                rdf.where('?x rdf:type ?type')
+                   .where('?x ore:isDescribedBy ?describer')
+                   .each(withEachTypeNode);
+            };
+            withRDF(manifestUrl, withEachManuscriptManifest);
+        };
+        
+        var loadCollectionManifest = function (manifestUrl, collectionTitleElement, repositoryUl) {
+            var changeTitle = function (rdf) {
+                var title = rdf.where('?x dc:title ?title')[0].title.value;
+                jQuery(collectionTitleElement).text(title);
+                
+                var withEachManuscriptManifestNode = function () {
+                    if (this.type.value.path == '/ns/Manifest') {
+                        var manifestUrl = proxyUrl(this.describer.value._string);
+                        
+                        loadManuscriptManifest(manifestUrl, repositoryUl);
+                    }
+                };
+                rdf.where('?x rdf:type ?type')
+                   .where('?x ore:isDescribedBy ?describer')
+                   .each(withEachManuscriptManifestNode);
+            };
+            withRDF(manifestUrl, changeTitle, this);
+        };
+        
+        var loadNormalSequenceRDF = function (normalSequenceUrl, foliaOl) {
+            withNormalSequenceRDF = function (rdf) {
+                var withEachCanvas = function () {
+                    var title = this.title.value;
+                    jQuery(foliaOl).append('<li>' + title + '</li>');
+                };
+                
+                if (REORDER) {
+                    var canvasNodeComparator = function (a, b) {
+                        var aCanvasNumber = parseCanvasNumber(a.x.value.path);
+                        var bCanvasNumber = parseCanvasNumber(b.x.value.path);
+                        
+                        if (aCanvasNumber < bCanvasNumber)
+                            return -1;
+                        else if (aCanvasNumber > bCanvasNumber)
+                            return 1;
+                        else
+                            return 0;
+                    };
+                    
+                    var canvasNodesInOrder = new goog.structs.AvlTree(canvasNodeComparator);
+                    rdf.where('?x rdf:type ?type')
+                       .where('?x dc:title ?title')
+                       .each(function () {
+                                 if (this.type.value.path == '/ns/Canvas') {
+                                     canvasNodesInOrder.add(this);
+                                 }
+                             });
+                    canvasNodesInOrder.inOrderTraverse(function (canvas) {
+                                                           withEachCanvas.call(canvas);
+                                                       });
+                    
+                }
+                else {
+                    rdf.where('?x rdf:type ?type')
+                       .where('?x dc:title ?title')
+                       .each(function () {
+                                 if (this.type.value.path == '/ns/Canvas') {
+                                     withEachCanvas();
+                                 }
+                             });
+                }
+            };
+            withRDF(normalSequenceUrl, withNormalSequenceRDF);
+        };
+        
+        var loadRepositoryRDF = function (repositoryUrl, div) {
+            var collectionTitlesUl = goog.dom.createDom('ul');
+            jQuery(div).append(collectionTitlesUl);
+            
+            var repositoryRdfHandler = function (rdf) {
+                withEachManifestNode = function () {
+                    if (this.type.value.path == '/ns/Manifest') {
+                        var path = this.x.value.path;
+                        var url = proxyUrl(this.describer.value._string);
+                        
+                        var title = parseCollectionTitleFromPath(path);
+                        var span = goog.dom.createDom('span', null, title);
+                        var nestedUl = goog.dom.createDom('ul');
+                        var li = goog.dom.createDom('li', null, span, nestedUl);
+                        collectionTitlesUl.appendChild(li);
+                        
+                        loadCollectionManifest(url, span, nestedUl);
+                    }
+                };
+                
+                rdf.where('?x rdf:type ?type')
+                   .where('?x ore:isDescribedBy ?describer')
+                   .each(withEachManifestNode);
+            }
+            withRDF(repositoryUrl, repositoryRdfHandler);
+        };
+        
+        loadRepositoryRDF(proxyUrl(repositoryUrl), jQuery('#myDiv'));
+        
+    </script>
+</body>
+</html>

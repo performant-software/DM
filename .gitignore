@@ -1,3 +1,7 @@
+#working copy specific files
+workspace/static/js/closure-library/*
+static/js/closure-library/*
+
 #python specific
 *.pyc
  

@@ -1,0 +1,21 @@
+/* Filter Styles */
+
+.atb-filter-container {
+    display: block;
+    padding: 5px;
+    width: 100%;
+}
+
+.atb-filter-created-range div,
+.atb-filter-modified-range div {
+    margin: 5px;
+    padding: 5px;
+}
+
+.atb-filter-filters-div input[type=text] {
+    width: 100%;
+}
+
+.atb-filter-filters-label {
+    display: block; font-size: 1.1em;
+}

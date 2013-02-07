@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+	<head>
+		<title>PanelManager Test-Page</title>
+
+		
+		<link rel="stylesheet" type="text/css" 
+			  href="../css/testing/main.css" media="all" />
+		
+		
+		
+		<!-- marker editor|viewers: -->
+		<link rel="stylesheet" type="text/css"
+			  href="../css/atb/viewer/MarkerViewer.css" />
+		
+		<link rel="stylesheet" 
+			  type="text/css" 
+			  href="../css/atb/markereditor.css"
+			  media="all" />
+		
+		<link rel="stylesheet" href="http://closure-library.googlecode.com/svn/trunk/closure/goog/css/hsvapalette.css" type="text/css" media="all" />
+		
+		
+		<!---begin texteditor stuff:-->
+		<link rel="stylesheet" 
+			  type="text/css" 
+			  href="../css/atb/editor.css"
+			  media="all" />
+			  
+		<!-- hack -->
+		<!--
+		<style>
+			/*Note: moved to a css file proper!*/
+			/*
+			hack:
+			TODO: put these into their own css file...!
+			*/
+
+			.atb-panelcontainer-inner
+			{
+				position: absolute;
+				top: 36px;
+				
+				/*color: #ff00ff;*/
+			}
+
+			.atb-panelcontainer-outer
+			{
+				position: relative;
+				top: 0px;
+				left: 0px;
+			}
+
+		</style>
+		-->
+		
+		<!-- common|shared: -->
+		<script src="../js/closure-library/closure/goog/base.js" 
+				type="text/javascript"></script>
+		<script src="../js/atb-deps.js" type="text/javascript"></script>
+		
+		
+		<!-- this page: -->
+		<script src="panelManagerTest.js" type="text/javascript"></script>
+	</head>
+	<body style='text-align: left;'>
+		<div id='leftPane' style='float: left;'></div>
+		<div id='rightPane' style='float: right; width: 600px;'></div>
+		
+		<!--debug console-->
+		<div style='position: absolute; left:55%; top: 65%;'>
+			<!--begin debug console-->
+			<b>Debug Console:</b>[<a href='#' onclick='clearDebugConsole();'>Clear</a>]<br/>
+			<div id='debugConsole' style='text-align: left;'></div>
+			<br/>
+			<b>Debug Viewer:</b><br/>
+			<div id='debugViewer'></div>
+		</div>
+		
+		<!--test hacks: -->
+		<div style='position: absolute; top: 90%; left; 30px;'>
+			<span>
+				<a href='#' onclick='testLoadMarker();'>Test Load Marker</a><br/>
+				<a href='#' onclick='testUnloadMarker();'>Test Unload Marker</a><br/>
+				<a href='#' onclick='testToggleLeftToolbarVisiblity();'>Toggle visibility of left toolbar</a><br/>
+				<a href='#' onclick='testAddRemoveRightViewer();'>test add/remove right viewer</a><br/>
+			</span>
+		</div>
+		<!-- start our scripts up: -->
+		<script>
+			initPanelManagerTestApp();
+		</script>
+		<!--end body-->
+	</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+	<head>
+		<title>MarkerEditor TEST</title>
+
+		<link rel="stylesheet" 
+			  type="text/css" 
+			  href="../css/atb/editor.css"
+			  media="all" />
+			  
+		<!-- our stylesheet for the markereditors:-->
+		<link rel="stylesheet" 
+			  type="text/css" 
+			  href="../css/atb/markereditor.css"
+			  media="all" />
+
+		<link rel="stylesheet" type="text/css" 
+			  href="../css/testing/main.css" media="all" />
+		<link rel="stylesheet" type="text/css"
+			  href="../css/atb/viewer/MarkerViewer.css" />
+
+		<link rel="stylesheet" href="http://closure-library.googlecode.com/svn/trunk/closure/goog/css/hsvapalette.css" type="text/css" media="all" />
+
+		<script src="../js/closure-library/closure/goog/base.js" 
+				type="text/javascript"></script>
+		<script src="../js/atb-deps.js" type="text/javascript"></script>
+		<script src="markerEditorTest.js" type="text/javascript"></script>
+		
+	</head>
+	<body style='text-align: left;'>
+		<!-- ^ need to undo "centering" -->
+		<div id='testPane'></div>
+			
+		<div style='position: relative; top: 5px;'>
+			<!--begin debug console-->
+			<b>Debug Console:</b>[<a href='#' onclick='clearDebugConsole();'>Clear</a>]<br/>
+			<div id='debugConsole' style='text-align: left;'></div>
+			<br/>
+			<b>Debug Viewer:</b><br/>
+			<div id='debugViewer'></div>
+		</div>
+		
+		
+		<!-- start our scripts up: -->
+		<script>
+			var viewer = initMarkerEditor();
+		</script>
+		
+		<!-- end body-->
+	</body>
+</html>

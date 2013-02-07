@@ -1,0 +1,33 @@
+/*
+ * Extends /js/closure-library/closure/goog/css/editortoolbar.css
+ */
+
+.goog-toolbar-taller .goog-toolbar-button {
+    margin: 0 2px;
+}
+
+.goog-toolbar-button {   
+    margin: 4px 2px;
+}
+
+/* replaces all usage of the regular goog icon sprite with our sprite */
+.goog-css3-button-dropdown,
+.goog-flat-menu-button-dropdown,
+.goog-imageless-button-dropdown,
+.goog-menu-button-dropdown,
+.goog-palette-cell-selected .goog-palette-colorswatch,
+.goog-option-selected .goog-menuitem-checkbox,
+.goog-option-selected .goog-menuitem-icon,
+.goog-toolbar-menu-button-dropdown,
+.modal-dialog-title-close,
+.tr-icon {
+    background-image: url(../../img/icons-16x16-sprite.png);
+}
+
+.goog-toolbar {
+    background-image: url(../../img/toolbar-bg-horz.png);
+    /* TODO: this hides buttons when the screen isn't wide enough */
+    /* we need them to wrap down probably but this is how we want it for now */
+    overflow: hidden;
+    height: 32px;
+}

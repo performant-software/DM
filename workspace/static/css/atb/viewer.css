@@ -1,0 +1,53 @@
+.atb-viewer-documentIcon {
+    background: url("../../img/icons-24x24-sprite.png") no-repeat scroll -384px 0 transparent;
+    height: 24px;
+    width: 24px;
+    position: absolute;
+    right: 15px;
+    top: 45px;
+    z-index: 1000;
+    
+    -moz-transition: box-shadow 0.2s;
+    -webkit-transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s;
+}
+
+.atb-viewer-documentIconHighlight {
+    /*background-position: -576px 0;*/
+    
+    -moz-box-shadow: 0 0 5px 5px #C3DDFD;
+    -webkit-box-shadow: 0 0 5px 5px #C3DDFD;
+    box-shadow: 0 0 5px 5px #C3DDFD;
+    
+    -moz-transition: box-shadow 0.2s;
+    -webkit-transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s;
+}
+
+.atb-viewer-documentIcon-noScrollbars {
+    right: 5px;
+}
+
+.atb-hoverMenu {
+    -moz-box-shadow: 5px 5px 10px #888;
+    -webkit-box-shadow: 5px 5px 10px #888;
+    box-shadow: 5px 5px 10px #888;
+    
+    z-index: 100000;
+}
+
+.atb-hoverMenu-closeButton {
+    background: url("../../img/icons-16x16-sprite.png") -800px 0 no-repeat;
+    width: 16px;
+    height: 16px;
+    position: absolute;
+}
+
+.atb-hoverMenu-calloutTriangle {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    
+    background-color: transparent;
+    background: url("../../img/icons-16x16-sprite.png") -784px 0 no-repeat;
+}

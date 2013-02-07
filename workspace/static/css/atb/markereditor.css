@@ -1,0 +1,108 @@
+/* Hack - lets move these into this file first: */
+.atb-markereditor-toolbar {
+	left: 0;
+    position: absolute;
+    width: 100%; 
+}
+
+.atb-markereditor-pane {
+	top: 36px;
+}
+
+.atb-markereditor-map-pane {
+    height: 524px;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    width: 100%;
+}
+
+.atb-markereditor-style-pane {
+	padding: 0;
+	left: 500px;
+	position: relative;
+	top: -200px;
+}
+
+.atb-markereditor-root-div { }
+
+.atb-markereditor-base-div {
+    left: 0;
+    position: relative;
+	top: 0;
+}
+
+/* button default */
+.atb-markereditor-button {
+    width: 24px;
+    height: 24px;
+    background: url(../../img/icons-24x24-sprite.png) no-repeat;
+}
+
+.atb-markereditor-button-save {
+    background-position: -120px 0;
+}
+
+.atb-markereditor-button-select {
+    background-position: -144px 0;
+}
+
+.atb-markereditor-button-pan {
+    background-position: -168px 0;
+}
+
+.atb-markereditor-button-polygon {
+    background-position: -192px 0;
+}
+
+.atb-markereditor-button-rectangle {
+    background-position: -456px 0;
+}
+
+.atb-markereditor-button-line  {
+    background-position: -216px 0;
+}
+
+.atb-markereditor-button-addpoint {
+    background-position: -240px 0;
+}
+
+.atb-markereditor-button-modify {
+    background-position: -264px 0;
+}
+
+.atb-markereditor-button-undo {
+    background-position: -288px 0;
+}
+
+.atb-markereditor-button-redo {
+    background-position: -312px 0;
+}
+
+.atb-markereditor-button-delete {
+    background-position: -336px 0;
+}
+
+.atb-markereditor-button-annotations {
+    background-position: -360px 0;
+}
+
+.atb-markereditor-button-hide {
+    background-position: -432px 0;
+}
+
+.atb-infopane-section {
+    padding: 5px;
+}
+
+.atb-infopane-sectionTitle {
+    font-size: 1.2em;
+    margin-left: -2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.atb-infopane-thumbLink {
+    margin: 5px;
+    word-wrap: break-word;
+}

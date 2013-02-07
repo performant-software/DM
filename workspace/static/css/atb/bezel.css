@@ -1,0 +1,22 @@
+/* Bezel Styles */
+
+.atb-bezel {
+    background-color: #959595;
+    height: 150px;
+    position: absolute;
+    width: 150px;
+    z-index: 100000;
+    text-align: center;
+    vertical-align: middle;
+    color: white;
+}
+
+.atb-bezel-linked {
+    background-color: transparent;
+    background-image: url("../../img/bezel-link.png");
+}
+
+.atb-bezel-unlinked {
+    background-color: transparent;
+    background-image: url("../../img/Broken_Link_bezel.png");
+}

@@ -1,0 +1,109 @@
+fetching: http://dms-data.stanford.edu/Oxford/Collection.xml
+removing (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection.xml'), rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/describes'), rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'))
+fetching: http://dms-data.stanford.edu/Oxford/Bodley342/Manifest.xml
+removing (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest.xml'), rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/describes'), rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'))
+removing (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest.xml'), rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/describes'), rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'))
+removing (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'), rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/isDescribedBy'), rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest.xml'))
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:ore="http://www.openarchives.org/ore/terms/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:tei="http://www.tei-c.org/ns/1.0/"
+>
+  <rdf:Description rdf:about="http://dms-data.stanford.edu/Oxford/Bodley342/Manifest">
+    <dc:identifier>Oxford, Bodley 342</dc:identifier>
+    <dc:title>Oxford, Bodley 342</dc:title>
+    <ore:isDescribedBy rdf:resource="http://localhost:8081/store/manifests/http://dms-data.stanford.edu/Oxford/Bodley342/Manifest/"/>
+    <tei:country>United Kingdom</tei:country>
+    <tei:idno>342</tei:idno>
+    <tei:repository>Oxford University Libraries</tei:repository>
+    <tei:settlement>Oxford</tei:settlement>
+    <rdf:type rdf:resource="http://dms.stanford.edu/ns/Manifest"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dms-data.stanford.edu/Oxford/Bodley342/Manifest.xml">
+    <dc:format>application/rdf+xml</dc:format>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dms-data.stanford.edu/Oxford/Collection">
+    <dc:title>Manuscripts from the Oxford University Libraries</dc:title>
+    <ore:aggregates rdf:resource="http://dms-data.stanford.edu/Oxford/Bodley342/Manifest"/>
+    <ore:isDescribedBy rdf:resource="http://localhost:8081/store/manifests/http://dms-data.stanford.edu/Oxford/Collection/"/>
+    <tei:country>United Kingdom</tei:country>
+    <tei:repository>Oxford University Libraries</tei:repository>
+    <tei:settlement>Oxford</tei:settlement>
+    <rdf:type rdf:resource="http://dms.stanford.edu/ns/Manifest"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dms-data.stanford.edu/Oxford/Collection.xml">
+    <dc:format>application/rdf+xml</dc:format>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+  </rdf:Description>
+</rdf:RDF>
+
+[(rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://purl.org/dc/elements/1.1/identifier'),
+  rdflib.term.Literal(u'Oxford, Bodley 342')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://purl.org/dc/elements/1.1/title'),
+  rdflib.term.Literal(u'Oxford, Bodley 342')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/isDescribedBy'),
+  rdflib.term.URIRef(u'http://localhost:8081/store/manifests/http://dms-data.stanford.edu/Oxford/Bodley342/Manifest/')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://www.tei-c.org/ns/1.0/country'),
+  rdflib.term.Literal(u'United Kingdom')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://www.tei-c.org/ns/1.0/idno'),
+  rdflib.term.Literal(u'342')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://www.tei-c.org/ns/1.0/repository'),
+  rdflib.term.Literal(u'Oxford University Libraries')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://www.tei-c.org/ns/1.0/settlement'),
+  rdflib.term.Literal(u'Oxford')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+  rdflib.term.URIRef(u'http://dms.stanford.edu/ns/Manifest')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest'),
+  rdflib.term.URIRef(u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+  rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/Aggregation')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest.xml'),
+  rdflib.term.URIRef(u'http://purl.org/dc/elements/1.1/format'),
+  rdflib.term.Literal(u'application/rdf+xml')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest.xml'),
+  rdflib.term.URIRef(u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+  rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/ResourceMap')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://purl.org/dc/elements/1.1/title'),
+  rdflib.term.Literal(u'Manuscripts from the Oxford University Libraries')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/aggregates'),
+  rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Bodley342/Manifest')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/isDescribedBy'),
+  rdflib.term.URIRef(u'http://localhost:8081/store/manifests/http://dms-data.stanford.edu/Oxford/Collection/')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://www.tei-c.org/ns/1.0/country'),
+  rdflib.term.Literal(u'United Kingdom')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://www.tei-c.org/ns/1.0/repository'),
+  rdflib.term.Literal(u'Oxford University Libraries')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://www.tei-c.org/ns/1.0/settlement'),
+  rdflib.term.Literal(u'Oxford')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+  rdflib.term.URIRef(u'http://dms.stanford.edu/ns/Manifest')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection'),
+  rdflib.term.URIRef(u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+  rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/Aggregation')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection.xml'),
+  rdflib.term.URIRef(u'http://purl.org/dc/elements/1.1/format'),
+  rdflib.term.Literal(u'application/rdf+xml')),
+ (rdflib.term.URIRef(u'http://dms-data.stanford.edu/Oxford/Collection.xml'),
+  rdflib.term.URIRef(u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
+  rdflib.term.URIRef(u'http://www.openarchives.org/ore/terms/ResourceMap'))]

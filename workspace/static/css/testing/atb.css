@@ -1,0 +1,146 @@
+@import url('atb_ui_editor.css')
+
+
+.atb_viewer_annohoverviewer {
+    background-color: #ffffff;
+    opacity: 1;
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)"; // first!
+	filter: alpha(opacity=100);
+    text-align: left;
+    border: 5px;
+    border-color: #aaaaaa;
+}
+
+.atb_viewer_annohoverviewer_title {
+    font-weight: bold;
+}
+
+
+
+.atb_ui_annoitem_thumb {
+    position: relative;
+    left: 0px;
+    top: 0px;
+    width: 100px;
+    height: 100px;
+ }
+
+.atb_ui_annoitem_title {
+    display: none;
+}
+
+.atb_ui_annoitem_summary {
+    display: none;
+}
+
+.atb_ui_annoitemhover {
+    margin: 0px;
+    top: 0px;
+    z-index:100;
+    background-color: #ffffff;
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)"; // first!
+	filter: alpha(opacity=50);
+    opacity: 1;
+}
+
+.atb_ui_annoitemhover_thumb {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 200px;
+    height: 200px;
+    z-index:100
+}
+
+.atb_ui_annoitemhover_title {
+    position: absolute;
+    background-color: #ffffff;
+    opacity: 1;
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)"; // first!
+	filter: alpha(opacity=100);
+    left: 200px;
+    padding: 10px;
+    top: 0px;
+    width: 280px;
+    height: 30px;
+    font-size: 14px;
+    text-align: left;
+}
+
+.atb_ui_annoitemhover_summary {
+    position: absolute;
+    background-color: #ffffff;
+    opacity: 1;
+    -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)"; // first!
+	filter: alpha(opacity=100);
+    left: 200px;
+    padding: 10px;
+    top: 30px;
+    width: 280px;
+    height: 150px;
+    text-align: left;
+}
+
+
+.goog-inline-block {
+  position: relative;
+  display: -moz-inline-box; /* Ignored by FF3 and later. */
+  display: inline-block;
+}
+
+/*
+ * Pre-IE7 IE hack.  On IE, "display: inline-block" only gives the element
+ * layout, but doesn't give it inline behavior.  Subsequently setting display
+ * to inline does the trick.
+ */
+* html .goog-inline-block {
+  display: inline;
+}
+
+/*
+ * IE7-only hack.  On IE, "display: inline-block" only gives the element
+ * layout, but doesn't give it inline behavior.  Subsequently setting display
+ * to inline does the trick.
+ */
+*:first-child+html .goog-inline-block {
+  display: inline;
+}
+
+
+.goog-control {
+    position: relative;
+    padding: 4px;
+    !border: 2px solid #036;
+    font: normal 9pt "Trebuchet MS", Tahoma, Arial, sans-serif;
+    cursor: pointer;
+    outline: none !important;
+}
+
+
+.goog-control-disabled {
+    border-color: #888;
+    color: #888;
+    background-color: #ccc;
+}
+
+
+.goog-container {
+    position: relative;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background-color: #eee;
+    outline: none !important;
+    zoom: 1; /* The container element must have layout on IE. */
+}
+
+.goog-container-vertical {
+    width: 100;
+    border: 1px solid #888;
+}
+
+.goog-container-horizontal {
+    border-bottom: 1px solid #d5d5d5;
+    background: #fafafa url(../../img/toolbar-bg-horz.png) repeat-x bottom left;
+}
+
