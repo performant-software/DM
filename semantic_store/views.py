@@ -1,43 +1,23 @@
 from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, \
     HttpResponseNotFound
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import transaction
 
 from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, RDF
-from rdflib.namespace import Namespace
+from rdflib import URIRef
 
-import collection
-import rdfstore
+from semantic_store import collection
+from .rdfstore import rdfstore, default_identifier
 
-from namespaces import ns
-from validators import AnnotationValidator
-
-
-def annotation_uris(g):
-    query = \
-    """SELECT ?uri
-       WHERE {
-           ?uri rdf:type oa:Annotation;
-       }
-       
-    """
-    qres = g.query(query, initNs=ns)
-    # tuples in case of context; no context so strip 
-    uris = [i[0] for i in qres]
-    return uris
+from .namespaces import ns
+from .validators import AnnotationValidator
+from .annotation_views import create_annotations
 
 
-def annotations(request, collection=None, uri=None):
+
+def annotations(request, dest_graph_uri=None, anno_uri=None):
     if request.method == 'POST':
-        validator = AnnotationValidator()
-        g = Graph()
-        g.parse(data=request.body)
-        with transaction.commit_on_success():
-            for a in annotation_uris(g):
-                if not validator.validate(g, a):
-                    return HttpResponse(status=400, content=validator.failure)
-        return HttpResponse(status=201)
+        return create_annotations(request, dest_graph_uri, anno_uri)
     elif request.method == 'PUT':
         pass
     elif request.method == 'DELETE':
@@ -50,7 +30,6 @@ def annotations(request, collection=None, uri=None):
 
 def manifest(request, uri, ext=None):
     uri = uri.rstrip('/')
-    print uri
     try:
         manifest_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(uri))
         if len(manifest_g) > 0:

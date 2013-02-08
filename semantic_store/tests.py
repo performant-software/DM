@@ -1,6 +1,10 @@
 import os
 
+import uuid
+
 from django.utils import unittest
+from django.utils.encoding import iri_to_uri
+from django.utils.http import urlquote, urlquote_plus
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 from django.conf import settings
@@ -14,47 +18,86 @@ import rdfstore
 
 class TestCreateSingleAnnotation(unittest.TestCase):
 
-    def test_embedded_textual_body(self):
+    def test_embedded_textual_body_bnode(self):
         url = reverse('semantic_store_annotations', 
-                      kwargs=dict(collection=self.collection_uri))
+                      kwargs=dict(dest_graph_uri=self.dest_graph_uri))
         g = Graph()
         bind_namespaces(g)
-        annoBNode = BNode()
-        bodyBNode = BNode()
-        g.add((annoBNode, NS.rdf['type'], NS.oa['Annotation']))
-        g.add((annoBNode, NS.oa['hasTarget'], self.canvas))
-        g.add((annoBNode, NS.oa['hasBody'], bodyBNode))
-        g.add((bodyBNode, NS.rdf['type'], NS.dctypes['Text']))
-        g.add((bodyBNode, NS.rdf['type'], NS.cnt['ContentAsText']))
-        g.add((bodyBNode, NS.cnt['chars'], self.shortText))
-        g.add((bodyBNode, NS.dc['format'], Literal("text/plain")))
+        anno = BNode()
+        body = BNode()
+        g.add((anno, NS.rdf['type'], NS.oa['Annotation']))
+        g.add((anno, NS.oa['hasTarget'], self.canvas))
+        g.add((anno, NS.oa['hasBody'], body))
+        g.add((body, NS.rdf['type'], NS.dctypes['Text']))
+        g.add((body, NS.rdf['type'], NS.cnt['ContentAsText']))
+        g.add((body, NS.cnt['chars'], self.shortText))
+        g.add((body, NS.dc['format'], Literal("text/plain")))
         data = g.serialize(initNs=ns)
-
         response = self.client.post(url, data=data, content_type="text/xml")
         self.assertEqual(response.status_code, 201)
 
-    def test_specific_target(self):
+    def test_embedded_textual_body_uuids(self):
+        url = reverse('semantic_store_annotations', 
+                      kwargs=dict(dest_graph_uri=self.dest_graph_uri))
+        g = Graph()
+        bind_namespaces(g)
+        anno = URIRef(uuid.uuid4())
+        body = URIRef(uuid.uuid4())
+        g.add((anno, NS.rdf['type'], NS.oa['Annotation']))
+        g.add((anno, NS.oa['hasTarget'], self.canvas))
+        g.add((anno, NS.oa['hasBody'], body))
+        g.add((body, NS.rdf['type'], NS.dctypes['Text']))
+        g.add((body, NS.rdf['type'], NS.cnt['ContentAsText']))
+        g.add((body, NS.cnt['chars'], self.shortText))
+        g.add((body, NS.dc['format'], Literal("text/plain")))
+        data = g.serialize(initNs=ns)
+        response = self.client.post(url, data=data, content_type="text/xml")
+        self.assertEqual(response.status_code, 201)
+
+
+    def test_specific_target_bnode(self):
         # See http://www.openannotation.org/spec/core/specific.html#Specific
         # and http://www.openannotation.org/spec/core/publishing.html#Embedding
         url = reverse('semantic_store_annotations', 
-                      kwargs=dict(collection=self.collection_uri))
+                      kwargs=dict(dest_graph_uri=self.dest_graph_uri))
         g = Graph()
         bind_namespaces(g)
-        annoBNode = BNode()
-        targetBNode = BNode()
-        svgBNode = BNode()
-        g.add((annoBNode, NS.rdf['type'], NS.oa['Annotation']))
-        g.add((annoBNode, NS.oa['hasTarget'], targetBNode))
-        g.add((targetBNode, NS.rdf['type'], NS.oa['SpecificResource']))
-        g.add((targetBNode, NS.oa['hasSelector'], svgBNode))
-        g.add((svgBNode, NS.rdf['type'], NS.oa['SvgSelector']))
-        g.add((svgBNode, NS.rdf['type'], NS.cnt['ContentAsText']))
-        g.add((svgBNode, NS.cnt['chars'], 
+        anno = BNode()
+        target = BNode()
+        svg = BNode()
+        g.add((anno, NS.rdf['type'], NS.oa['Annotation']))
+        g.add((anno, NS.oa['hasTarget'], target))
+        g.add((target, NS.rdf['type'], NS.oa['SpecificResource']))
+        g.add((target, NS.oa['hasSelector'], svg))
+        g.add((svg, NS.rdf['type'], NS.oa['SvgSelector']))
+        g.add((svg, NS.rdf['type'], NS.cnt['ContentAsText']))
+        g.add((svg, NS.cnt['chars'], 
                Literal("<circle cx='300' cy='200' r='100'/>")))
-        g.add((svgBNode, NS.cnt['characterEncoding'], Literal("utf-8")))
-        
+        g.add((svg, NS.cnt['characterEncoding'], Literal("utf-8")))
         data = g.serialize(initNs=ns)
+        response = self.client.post(url, data=data, content_type="text/xml")
+        self.assertEqual(response.status_code, 201)
 
+    def test_specific_target_uuid(self):
+        # See http://www.openannotation.org/spec/core/specific.html#Specific
+        # and http://www.openannotation.org/spec/core/publishing.html#Embedding
+        url = reverse('semantic_store_annotations', 
+                      kwargs=dict(dest_graph_uri=self.dest_graph_uri))
+        g = Graph()
+        bind_namespaces(g)
+        anno = URIRef(uuid.uuid4())
+        target = URIRef(uuid.uuid4())
+        svg = URIRef(uuid.uuid4())
+        g.add((anno, NS.rdf['type'], NS.oa['Annotation']))
+        g.add((anno, NS.oa['hasTarget'], target))
+        g.add((target, NS.rdf['type'], NS.oa['SpecificResource']))
+        g.add((target, NS.oa['hasSelector'], svg))
+        g.add((svg, NS.rdf['type'], NS.oa['SvgSelector']))
+        g.add((svg, NS.rdf['type'], NS.cnt['ContentAsText']))
+        g.add((svg, NS.cnt['chars'], 
+               Literal("<circle cx='300' cy='200' r='100'/>")))
+        g.add((svg, NS.cnt['characterEncoding'], Literal("utf-8")))
+        data = g.serialize(initNs=ns)
         response = self.client.post(url, data=data, content_type="text/xml")
         self.assertEqual(response.status_code, 201)
 
@@ -66,7 +109,7 @@ class TestCreateSingleAnnotation(unittest.TestCase):
     def setUp(self):
         self.client = Client()
         self.root_uri = "http://dm.drew.edu/"
-        self.collection_uri = "http://dm.drew.edu/testproject"
+        self.dest_graph_uri = uuid.uuid4()
         fixture_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                         "semantic_store_test_fixture.xml")
         self.g = ConjunctiveGraph(rdfstore.rdfstore(),
