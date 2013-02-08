@@ -14,7 +14,7 @@ from rdflib.namespace import Namespace
 from semantic_store import rdfstore
 from semantic_store import collection
 from semantic_store.namespaces import NS
-from _harvest import harvest_collection
+from _harvest import harvest_collection, localize_describes
 
 
 class Command(BaseCommand):
@@ -60,6 +60,7 @@ class Command(BaseCommand):
             print "url or manifest_file and uri arguments are required."
             exit(0)
         rep_uri = URIRef(rep_uri)
+        col_uri = URIRef(col_uri)
         rep_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(rep_uri))
         rep_g.add((rep_uri, NS.rdf['type'], NS.dms['Manifest']))
         rep_g.add((rep_uri, NS.rdf['type'], NS.ore['Aggregation']))
@@ -68,6 +69,8 @@ class Command(BaseCommand):
                                 kwargs={'uri': str(rep_uri)})
         local_abs_url = "http://%s%s" % (store_host, local_rel_url)
         rep_g.add((rep_uri, NS.ore['isDescribedBy'], URIRef(local_abs_url)))
-        rep_g.add((rep_uri, NS.ore['aggregates'], URIRef(rep_uri)))
+        rep_g.add((rep_uri, NS.ore['aggregates'], col_uri))
+        rep_g.add((col_uri, NS.ore['isDescribedBy'], URIRef(col_url)))
+        localize_describes(store_host, col_uri, col_url, rep_g)
         harvest_collection(col_url, col_uri, store_host, manifest_file)
                 
