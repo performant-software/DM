@@ -1,8 +1,7 @@
 import pprint
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-import rdfstore
-#from semantic_store import store as main_store
+from semantic_store import rdfstore
 from rdflib import URIRef
 from rdflib.graph import ConjunctiveGraph
 from django.conf import settings

@@ -10,14 +10,34 @@ from rdflib.namespace import Namespace
 from ld import collection
 import rdfstore
 
+from namespaces import ns
+from validators import AnnotationValidator
+
+
+def annotation_uris(g):
+    query = \
+    """SELECT ?uri
+       WHERE {
+           ?uri rdf:type oa:Annotation;
+       }
+       
+    """
+    qres = g.query(query, initNs=ns)
+    # tuples in case of context; no context so strip 
+    uris = [i[0] for i in qres]
+    return uris
+
 
 def annotations(request, collection=None, uri=None):
     if request.method == 'POST':
+        validator = AnnotationValidator()
         g = Graph()
         g.parse(data=request.body)
-        for t in g:
-            print t
-        return HttpResponse()
+        with transaction.commit_on_success():
+            for a in annotation_uris(g):
+                if not validator.validate(g, a):
+                    return HttpResponse(status=400, content=validator.failure)
+        return HttpResponse(status=201)
     elif request.method == 'PUT':
         pass
     elif request.method == 'DELETE':
@@ -27,7 +47,6 @@ def annotations(request, collection=None, uri=None):
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
         
-
 
 def manifest(request, uri, ext=None):
     uri = uri.rstrip('/')

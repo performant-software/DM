@@ -12,9 +12,9 @@ from .namespaces import NS, ns, bind_namespaces
 import rdfstore
 
 
-class TestSingleComment(unittest.TestCase):
+class TestCreateSingleAnnotation(unittest.TestCase):
 
-    def test_annotation_embedded_textual_body(self):
+    def test_embedded_textual_body(self):
         url = reverse('semantic_store_annotations', 
                       kwargs=dict(collection=self.collection_uri))
         g = Graph()
@@ -31,9 +31,32 @@ class TestSingleComment(unittest.TestCase):
         data = g.serialize(initNs=ns)
 
         response = self.client.post(url, data=data, content_type="text/xml")
+        self.assertEqual(response.status_code, 201)
 
-        # Check that the response is 200 OK.
-        self.assertEqual(response.status_code, 200)
+    def test_specific_target(self):
+        # See http://www.openannotation.org/spec/core/specific.html#Specific
+        # and http://www.openannotation.org/spec/core/publishing.html#Embedding
+        url = reverse('semantic_store_annotations', 
+                      kwargs=dict(collection=self.collection_uri))
+        g = Graph()
+        bind_namespaces(g)
+        annoBNode = BNode()
+        targetBNode = BNode()
+        svgBNode = BNode()
+        g.add((annoBNode, NS.rdf['type'], NS.oa['Annotation']))
+        g.add((annoBNode, NS.oa['hasTarget'], targetBNode))
+        g.add((targetBNode, NS.rdf['type'], NS.oa['SpecificResource']))
+        g.add((targetBNode, NS.oa['hasSelector'], svgBNode))
+        g.add((svgBNode, NS.rdf['type'], NS.oa['SvgSelector']))
+        g.add((svgBNode, NS.rdf['type'], NS.cnt['ContentAsText']))
+        g.add((svgBNode, NS.cnt['chars'], 
+               Literal("<circle cx='300' cy='200' r='100'/>")))
+        g.add((svgBNode, NS.cnt['characterEncoding'], Literal("utf-8")))
+        
+        data = g.serialize(initNs=ns)
+
+        response = self.client.post(url, data=data, content_type="text/xml")
+        self.assertEqual(response.status_code, 201)
 
 
     def tearDown(self):
