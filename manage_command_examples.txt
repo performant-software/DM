@@ -1,0 +1,3 @@
+django-admin.py harvest_collection_manifests --uri=http://manifests.ydc2.yale.edu/MetaManifest --url http://openmanifests.s3-website-us-east-1.amazonaws.com/MetaManifest.xml --manifest_file /Users/shannon/python_lib/dm/semantic_store/dummy_data/YaleMetaManifest.xml --store_host "localhost:8081" --rep_uri http://manifests.ydc2.yale.edu/Repository --rep_title "Yale University" --settings=settings
+
+django-admin.py clear_store --settings=settings
