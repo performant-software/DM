@@ -6,10 +6,17 @@ from .namespaces import NS, ns
 
 
 class AnnotationValidator(object):
-    def __init__(self):
+    def __init__(self, dest_graph):
         self.failure = ""
+        self._dest_graph = dest_graph
         self._failures = []
         self.__nonzero__ = False
+
+    def exists(self, anno_uri):
+        if (anno_uri, None, None) in self._dest_graph:
+            self._failures.append("Annotation %s exists in collection %s." \
+                                      % (anno_uri, self._dest_graph.identifier))
+            return False
 
     def has_anno_class(self, g, anno_uri):
         t = (anno_uri, NS.rdf['type'], NS.oa['Annotation'])
@@ -59,6 +66,9 @@ class AnnotationValidator(object):
         return True
 
     def validate(self, g, anno_uri):
+        if self.exists(anno_uri):
+            return self.fail(anno_uri)
+            
         if not self.has_anno_class(g, anno_uri):
             return self.fail(anno_uri)
 
