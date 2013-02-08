@@ -7,7 +7,7 @@ from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef, RDF
 from rdflib.namespace import Namespace
 
-from ld import collection
+import collection
 import rdfstore
 
 from namespaces import ns
