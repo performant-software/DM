@@ -1,5 +1,6 @@
 goog.provide('sc.data.Databroker');
 
+goog.require('goog.Uri');
 goog.require('goog.string');
 goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
@@ -23,6 +24,8 @@ sc.data.Databroker = function(options) {
         options = {};
     }
     jQuery.extend(true, this.options, options);
+
+    this.corsEnabledDomains = new goog.structs.Set(this.options.corsEnabledDomains);
 
     this.namespaceUtil = new sc.util.Namespaces();
     this.tripleStore = new sc.data.TripleStore(this.namespaceUtil);
@@ -59,11 +62,55 @@ sc.data.Databroker.prototype.options = {
             url += 'h=' + String(Math.round(opt_height)) + '&';
 
         return url;
+    },
+    corsEnabledDomains: []
+};
+
+/**
+ * Returns a proxied url without checking if proxying is necessary.
+ * @private
+ * @param  {string} url The url to proxy.
+ * @return {string} The proxied url.
+ */
+sc.data.Databroker.prototype._proxyUrl = function(url) {
+    return this.options.proxiedUrlGenerator(url);
+};
+
+/**
+ * Checks to see if the url requires a proxy for ajax access, and
+ * returns a proxied url if necessary, or the same url if not.
+ * @param  {string} url The url to proxy.
+ * @return {[type]} The proxied (or original) url.
+ */
+sc.data.Databroker.prototype.proxyUrl = function(url) {
+    if (this.shouldProxy(url)) {
+        return this._proxyUrl(url);
+    }
+    else {
+        return url;
     }
 };
 
-sc.data.Databroker.prototype.proxyUrl = function(url) {
-    return this.options.proxiedUrlGenerator(url);
+/**
+ * Determines whether a proxy is required to access the given url with
+ * ajax. Returns true iff the host of the url does not match the window's
+ * location, or the domain of the url was specified as sending the appropriate
+ * CORS headers in the databroker's {corsEnabledDomains} option.
+ * @param  {string} url The url to check.
+ * @return {boolean} Whether proxying is required.
+ */
+sc.data.Databroker.prototype.shouldProxy = function(url) {
+    var hostname = window.location.hostname;
+    var port = window.location.port;
+
+    if (this.corsEnabledDomains.contains(hostname)) {
+        return false;
+    }
+    else {
+        var uri = new goog.Uri(url);
+
+        return !(uri.getPort() == port && uri.getDomain() == hostname);
+    }
 };
 
 /**
@@ -412,7 +459,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
 
     var deferredResource = jQuery.Deferred();
     
-    var inTimeout = function() {
+    window.setTimeout(function() {
         var resourceTypes = this.getResourceTypesSet(uri);
 
         var urlsToRequest = this.getUrlsToRequestForResource(uri);
@@ -453,8 +500,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
                 }
             });
         }
-    };
-    window.setTimeout(jQuery.proxy(inTimeout, this), 0);
+    }.bind(this), 0);
 
     return deferredResource;
 };
