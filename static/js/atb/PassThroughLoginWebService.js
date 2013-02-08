@@ -586,7 +586,7 @@ atb.PassThroughLoginWebService.prototype.withSearchResults = function(
 atb.PassThroughLoginWebService.prototype.proxiedUri = function(
     uri
 ) {
-    return this.sameOriginRootUri + 'proxy/' + window.encodeURIComponent(uri) + '?username='+this.username;
+    return uri;
 };
 
 

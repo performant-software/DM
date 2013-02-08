@@ -47,7 +47,6 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     
 	this.force_styleRoot = atb.util.ReferenceUtil.applyDefaultValue(opt_hack_set_styleRoot, null);
 	
-	this.dataStore = new atb.DataStore(this.webService);
 	this.panelManager = new atb.viewer.PanelManager(this);
 	this.resourceCrawler = new atb.resource.ResourceCrawler(this);
     
@@ -73,10 +72,6 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
 
 atb.ClientApp.prototype.getWebService = function () {
 	return this.webService;
-};
-
-atb.ClientApp.prototype.getDataStore = function () {
-	return this.dataStore;
 };
 
 atb.ClientApp.prototype.getPanelManager = function () {

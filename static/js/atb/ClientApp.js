@@ -36,16 +36,7 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     
     this.databroker = new sc.data.Databroker({
         proxiedUrlGenerator: function (url) {
-            var a = document.createElement('a');
-            a.href = url;
-            if (a.hostname == location.hostname && 
-                a.port == location.port &&
-                a.protocol == location.protocol) 
-            {
-                return url;
-            } else {
-                return self.webService.proxiedUri(url);
-            }
+            return self.webService.proxiedUri(url);
         }
     });
     
