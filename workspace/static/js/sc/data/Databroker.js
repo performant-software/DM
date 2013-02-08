@@ -109,7 +109,7 @@ sc.data.Databroker.prototype.shouldProxy = function(url) {
     else {
         var uri = new goog.Uri(url);
 
-        return !(uri.getPort() == port && uri.getDomain() == hostname);
+        return !(uri.getDomain() == hostname && uri.getPort() == port);
     }
 };
 
@@ -165,9 +165,7 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
 
     this.requestedUrls.add(url);
 
-    console.log(url);
     var proxiedUrl = this.proxyUrl(url);
-    console.log(proxiedUrl);
 
     var successHandler = function(data, textStatus, jqXhr) {
         self.receivedUrls.add(url);
@@ -392,7 +390,7 @@ sc.data.Databroker.prototype.getAllTriplesForSave = function(triples) {
  * @param {Array.<string>} uris
  * @return {goog.structs.Set.<string>}
  */
-sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris) {
+sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_forceReload) {
     var urlsToRequest = new goog.structs.Set();
 
     var allUris = new goog.structs.Set();
@@ -402,8 +400,10 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris) {
         allUris.add(uri);
 
         var resourcesForCanvas = sc.util.Namespaces.stripAngleBrackets(
-            this.getUrisWithProperty('dms:forCanvas',
-                                     sc.util.Namespaces.wrapWithAngleBrackets(uri))
+            this.getUrisWithProperty(
+                'dms:forCanvas',
+                 sc.util.Namespaces.wrapWithAngleBrackets(uri)
+            )
         );
         allUris.addAll(resourcesForCanvas);
     }
@@ -419,7 +419,9 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris) {
             for (var j = 0, lenj = describers.length; j < lenj; j++) {
                 var describer = describers[j];
 
-                urlsToRequest.add(describer);
+                if (!opt_forceReload || !this.receivedUrls.contains(describer)) {
+                    urlsToRequest.add(describer);
+                }
             }
         }
         else if (uri.substring(0, 9) == 'urn:uuid:') {
@@ -430,7 +432,10 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris) {
             for (var j = 0, lenj = urlGuesses.length; j < lenj; j++) {
                 var url = urlGuesses[j];
 
-                urlsToRequest.add(url);
+                if ((!opt_forceReload || !this.receivedUrls.contains(url)) &&
+                    !this.failedUrls.contains(url)) {
+                    urlsToRequest.add(url);
+                }
             }
         }
     }
@@ -443,8 +448,8 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris) {
  * @param {string} uri
  * @return {goog.structs.Set.<string>}
  */
-sc.data.Databroker.prototype.getUrlsToRequestForResource = function(uri) {
-    return this.getUrlsToRequestForResources([uri]);
+sc.data.Databroker.prototype.getUrlsToRequestForResource = function(uri, opt_forceReload) {
+    return this.getUrlsToRequestForResources([uri], opt_forceReload);
 };
 
 /**
