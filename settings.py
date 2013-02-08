@@ -106,7 +106,7 @@ RDFLIB_STORE_GRAPH_URI = 'http://dm.drew.edu/rdfstore'
 
 LOGIN_REDIRECT_URL = '/'
 
-ROOT_URLCONF = 'config.dm.urls'
+ROOT_URLCONF = 'urls'
 
 SOUTH_TESTS_MIGRATE = False
                 
