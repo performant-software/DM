@@ -31,12 +31,13 @@ def annotations(request, dest_graph_uri=None, anno_uri=None):
 def manifest(request, uri, ext=None):
     uri = uri.rstrip('/')
     try:
-        manifest_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(uri))
+        manifest_g = Graph(store=rdfstore(), identifier=URIRef(uri))
         if len(manifest_g) > 0:
             return HttpResponse(manifest_g.serialize(), mimetype='text/xml')
         else:
             return HttpResponseNotFound()
     except Exception as e:
+        print e
         connection._rollback()
         raise e
 

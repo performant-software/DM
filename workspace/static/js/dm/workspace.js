@@ -110,7 +110,7 @@ var hideWorkingResources = function() {
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
     repoBrowser = new atb.widgets.RepoBrowser(clientApp, {
         repositoryUrlsByName: {
-            'Stanford DMS': 'http://localhost:8081/store/manifests/http://dms-data.stanford.edu/Repository',
+            'Yale University': '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
 // 'http://dms-data.stanford.edu/Repository.xml',
 //            'Shared Canvas': 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml'
         }
