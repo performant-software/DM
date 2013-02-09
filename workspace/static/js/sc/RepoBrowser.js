@@ -33,9 +33,6 @@ sc.RepoBrowser = function(options) {
 
     this.options = jQuery.extend(true, {
         databroker: new sc.data.Databroker(),
-        repositoryUrlsByName: {
-            'Stanford DMS': 'http://dms-data.stanford.edu/Repository.xml'
-        },
         slideAnimationSpeed: 300,
         doc: window.document,
         imageSourceGenerator: function(url, opt_width, opt_height) {
