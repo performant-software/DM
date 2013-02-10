@@ -46,11 +46,7 @@ sc.RepoBrowser = function(options) {
 
     this.databroker = this.options.databroker;
 
-    for (repositoryName in this.options.repositoryUrlsByName) {
-        var url = this.options.repositoryUrlsByName[repositoryName];
-
-        this.databroker.fetchRdf(url);
-    }
+    this.prefetchInitialRdf();
 
     this.currentRepository = '';
 };
@@ -270,39 +266,65 @@ sc.RepoBrowser.prototype.slideToManuscripts = function(opt_after) {
     });
 };
 
+sc.RepoBrowser.prototype.prefetchInitialRdf = function() {
+    var repos = this.options.repositories;
+
+    for (var i=0, len=repos.length; i<len; i++) {
+        var repo = repos[i];
+
+        var url = repo.url;
+
+        if (url) {
+            this.databroker.fetchRdf(url);
+        }
+    }
+};
+
 /**
  * Displays working links to all repositories specified in this.options.repositoryUrlsByName
  */
 sc.RepoBrowser.prototype.loadAllRepositories = function() {
-    var self = this;
-    var repositoryUrls = this.options.repositoryUrlsByName;
+    var repos = this.options.repositories;
     var repositoriesDiv = this.sectionDivs.repositories;
 
     jQuery(repositoriesDiv).empty();
 
     this.slideToRepositories();
 
-    this.breadCrumbs.push('Repositories', function() {
-        self.loadAllRepositories();
-    });
+    this.breadCrumbs.push('Repositories', this.loadAllRepositories.bind(this));
 
-    for (var name in repositoryUrls) {
-        if (repositoryUrls.hasOwnProperty(name)) {
-            var url = String(repositoryUrls[name]);
+    for (var i=0, len=repos.length; i<len; i++) {
+        var repo = repos[i];
 
-            var item = new sc.RepoBrowserItem(self);
-            item.setTitle(name);
-            item.render(repositoriesDiv);
+        var item = new sc.RepoBrowserItem(this);
+
+        if (repo.title) {
+            item.setTitle(repo.title);
+        }
+        else {
+            var title = this.databroker.getResource(repo.uri).getOneProperty('rdf:title') ||
+                'Untitled repository';
+            item.setTitle(title);
+        }
+
+        item.render(repositoriesDiv);
+
+        var url = repo.url;
+
+        if (url && !repo.uri) {
             item.bind('click', {url: url, name: name}, function(event) {
-                self.loadRepositoryByUrl(event.data.url);
-            });
+                this.loadRepositoryByUrl(event.data.url);
+            }.bind(this));
+        }
+        else {
+            item.bind('click', {uri: repo.uri}, function(event) {
+                this.loadRepositoryByUrl(event.data.uri);
+            }.bind(this));
         }
     }
 };
 
 sc.RepoBrowser.prototype.pushTitleToBreadCrumbs = function(uri, clickHandler) {
-    var self = this;
-
     var title = sc.RepoBrowser.parseTitleFromPath(uri);
     this.breadCrumbs.push(title, clickHandler);
 };
@@ -357,25 +379,23 @@ sc.RepoBrowser.prototype.addManifestItem = function(uri, clickHandler, div) {
 };
 
 sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, div) {
-    var self = this;
-
     this.showLoadingIndicator();
 
     this.databroker.getDeferredResource(manifestUri).done(function(resource) {
-        var aggregatedUris = self.databroker.getAggregationContentsUris(manifestUri);
+        var aggregatedUris = this.databroker.getAggregationContentsUris(manifestUri);
 
-        var fragment = self.options.doc.createDocumentFragment();
+        var fragment = this.options.doc.createDocumentFragment();
 
         for (var i = 0, len = aggregatedUris.length; i < len; i++) {
             var uri = aggregatedUris[i];
 
-            self.addManifestItem(uri, clickHandler, fragment);
+            this.addManifestItem(uri, clickHandler, fragment);
         }
 
         div.appendChild(fragment);
 
-        self.hideLoadingIndicator();
-    });
+        this.hideLoadingIndicator();
+    }.bind(this));
 };
 
 /**
@@ -383,7 +403,6 @@ sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, 
  * @param url {string}
  */
 sc.RepoBrowser.prototype.loadRepositoryByUrl = function(url) {
-    var self = this;
     var collectionsDiv = this.sectionDivs.collections;
 
     this.slideToCollections();
@@ -396,20 +415,21 @@ sc.RepoBrowser.prototype.loadRepositoryByUrl = function(url) {
     this.showLoadingIndicator();
 
     this.databroker.getDeferredResource(url).done(function(resource) {
-        console.log(url);
-        var uri = self.databroker.getResourcesDescribedByUrl(url)[0];
-        if (uri !== undefined) {
-            var uri = sc.util.Namespaces.stripAngleBrackets(uri);
-
-            self.pushTitleToBreadCrumbs(uri, function() {
-                self.loadRepositoryByUrl(url);
-            });
-
-            self.addManifestItems(uri, 
-                                  jQuery.proxy(self.loadCollectionByUri, self), 
-                                  collectionsDiv);
+        var uri = this.databroker.getResourcesDescribedByUrl(url)[0];
+        if (uri == null) {
+            uri = url;
         }
-    });
+
+        var uri = sc.util.Namespaces.stripAngleBrackets(uri);
+
+        this.pushTitleToBreadCrumbs(uri, this.loadRepositoryByUrl.bind(this, url));
+
+        this.addManifestItems(
+            uri, 
+            this.loadCollectionByUri.bind(this, uri), 
+            collectionsDiv
+        );
+    }.bind(this));
 };
 
 /**
@@ -427,14 +447,10 @@ sc.RepoBrowser.prototype.loadCollectionByUri = function(uri) {
 
     jQuery(manuscriptsDiv).empty();
 
-    this.pushTitleToBreadCrumbs(uri, function() {
-        self.loadCollectionByUri(uri);
-    });
+    this.pushTitleToBreadCrumbs(uri, this.loadCollectionByUri.bind(this, uri));
 
     var manifest = this.databroker.getDeferredResource(uri);
-    manifest.done(function(resource) {
-        self.generateManuscriptItems(uri);
-    });
+    manifest.done(this.generateManuscriptItems.bind(this, uri));
 };
 
 sc.RepoBrowser.prototype.generateManuscriptItems = function(manifestUri) {

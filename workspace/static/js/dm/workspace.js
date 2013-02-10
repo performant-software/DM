@@ -109,11 +109,13 @@ var hideWorkingResources = function() {
 
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
     repoBrowser = new atb.widgets.RepoBrowser(clientApp, {
-        repositoryUrlsByName: {
-            'Yale University': '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
-// 'http://dms-data.stanford.edu/Repository.xml',
-//            'Shared Canvas': 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml'
-        }
+        repositories: [
+            {
+                title: 'Yale University',
+                url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
+                uri: 'http://manifests.ydc2.yale.edu/Repository'
+            }
+        ]
     });
 
     repoBrowser.addEventListener('panelChosen', handlePanelChoice);
@@ -168,11 +170,13 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 	//Q: should these dm package methods just take a clientApp...?
     var markerEditor;
     var textEditor;
-	clientApp = new atb.ClientApp(
+	goog.global.clientApp = new atb.ClientApp(
 		new atb.PassThroughLoginWebService(wsURI, mediawsURI, wsSameOriginURI, username), 
         username,
         styleRoot
     );
+
+    goog.global.databroker = clientApp.getDatabroker();
 
     // activate auto heights for window and widgets
     var scalingRules = {

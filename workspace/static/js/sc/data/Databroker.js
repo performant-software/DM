@@ -955,7 +955,6 @@ sc.data.Databroker.prototype.getConstraintValuesOnResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
-    console.log("url:", url);
     url = sc.util.Namespaces.wrapWithAngleBrackets(url);
     var uris = this.tripleStore.getObjectsWithSubjectAndPredicate(
         url, 
