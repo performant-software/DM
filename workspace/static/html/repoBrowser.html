@@ -55,13 +55,21 @@
 				}
 			}),
             /**
-             * A dictionary of urls to a Repository rdf file (.xml or .json) by the name they should 
-             * be displayed under
+             * A list of repository information. Each repository requires at least a url pointing to a manifest file
+             * or the uri of the manifest.
              */
-            repositoryUrlsByName: {
-                'Stanford DMS': 'http://dms-data.stanford.edu/Repository.xml',
-                'Shared Canvas': 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml'
-            },
+            repositories: [
+                {
+                    title: 'Stanford DMS',
+                    url: 'http://dms-data.stanford.edu/Repository.xml',
+                    uri: 'http://dms-data.stanford.edu/Repository'
+                },
+                {
+                    title: 'Shared Canvas',
+                    url: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml',
+                    uri: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository'
+                }
+            ],
             /**
              * The speed at which the drill-down section animation should occur
              */
