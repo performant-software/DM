@@ -288,6 +288,12 @@ sc.data.Databroker.prototype.addNewTriple = function(triple) {
     this.newTriples.push(triple);
 };
 
+sc.data.Databroker.prototype.addNewTriples = function(triples) {
+    for (var i=0, len=triples.length; i<len; i++) {
+        this.addNewTriple(triples[i]);
+    }
+};
+
 sc.data.Databroker.prototype.dumpTripleStore = function(opt_outputType) {
     return this.dumpTriples(this.tripleStore.getAllTriples(), opt_outputType);
 };
@@ -1160,4 +1166,35 @@ sc.data.Databroker.prototype.getSourceUrls = function(uri) {
     }
 
     return sources.getValues();
+};
+
+sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
+    var anno = this.getResource(this.createUuid());
+    anno.addProperty(
+        this.namespaceUtil.autoExpand('rdf:type'),
+        this.namespaceUtil.autoExpand('oac:Annotation')
+    );
+
+    if (opt_annoType) {
+        anno.addProperty(
+            this.namespaceUtil.autoExpand('rdf:type'),
+            this.namespaceUtil.autoExpand(opt_annoType)
+        );
+    }
+
+    if (bodyUri) {
+        anno.addProperty(
+            sc.data.Databroker.ANNO_NS.hasBody,
+            sc.util.Namespaces.wrapWithAngleBrackets(bodyUri)
+        );
+    }
+
+    if (targetUri) {
+        anno.addProperty(
+            sc.data.Databroker.ANNO_NS.hasTarget,
+            sc.util.Namespaces.wrapWithAngleBrackets(targetUri)
+        );
+    }
+
+    return anno;
 };
