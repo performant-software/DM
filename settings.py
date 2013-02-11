@@ -100,6 +100,8 @@ MIDDLEWARE_CLASSES = (
 RDFLIB_STORE_IDENTIFIER = 'rdfstore'
 RDFLIB_STORE_GRAPH_URI = 'http://dm.drew.edu/rdfstore'
 
+URI_MINT_BASE = 'http://dm.drew.edu'
+
 #FTS_BACKEND = 'pgsql://' # or 'simple://' # or 'dummy://' 
 #FTS_CONFIGURE_ALL_BACKENDS = False
 #DATABASE_ENGINE = 'postgresql_psycopg2'

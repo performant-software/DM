@@ -5,13 +5,56 @@ from rdflib.namespace import Namespace
 from .namespaces import NS, ns
 
 
-class AnnotationValidator(object):
-    def __init__(self, dest_graph):
-        self.failure = ""
+class BaseValidator(object):
+    def __init__(self, dest_graph, display_name):
         self._dest_graph = dest_graph
+        self._display_name = display_name
+        self.failure = ""
         self._failures = []
         self.__nonzero__ = False
+    
+    def fail(self, node):
+        self.failure = "%s:\n" % node
+        for i in self._failures:
+            self.failure += "%s\n" % i
+        self.__nonzero__ = False
+        return False
+        
+    def succeed(self, node):
+        self.failure = ""
+        self._failures = []
+        self.__nonzero__ = True
+        return True
 
+    def has_types(self, g, node, types):
+        all_types = True
+        for rdftype in types:
+            if not (node, NS.rdf['type'], rdftype) in g:
+                all_types = False
+                self._failures.append("%s must have type %s." % 
+                                      (self._display_name, rdftype))
+        return all_types
+
+    def has_title(self, g, node, title=None):
+        if not (node, NS.dc['title'], title) in g:
+            if title:
+                self._failures.append("%s must have a %s property of %s." % 
+                                      (self._display_name, NS.dc['title'], title))
+            else:
+                self._failures.append("%s must have a %s property." % 
+                                      (self._display_name, NS.dc['title']))
+            return False
+        return True
+
+
+class ProjectValidator(BaseValidator):
+    def valid(self, g, project):
+        self.has_types(g, project, (NS.dcmitype['Collection'], NS.ore['Aggregation'],))
+        self.has_title(g, project)
+        return self
+
+
+class AnnotationValidator(BaseValidator):
     def exists(self, anno_uri):
         if (anno_uri, None, None) in self._dest_graph:
             self._failures.append("Annotation %s exists in collection %s." \
@@ -52,20 +95,8 @@ class AnnotationValidator(object):
             return False
         return True
 
-    def fail(self, anno_uri):
-        self.failure = "%s:\n" % anno_uri
-        for i in self._failures:
-            self.failure += "%s\n" % i
-        self.__nonzero__ = False
-        return False
-        
-    def succeed(self, anno_uri):
-        self.failure = ""
-        self._failures = []
-        self.__nonzero__ = True
-        return True
 
-    def validate(self, g, anno_uri):
+    def valid(self, g, anno_uri):
         if self.exists(anno_uri):
             return self.fail(anno_uri)
             
