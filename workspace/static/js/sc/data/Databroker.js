@@ -44,6 +44,7 @@ sc.data.Databroker = function(options) {
     this.textResources = {};
     this.modifiedResources = {};
     this.deletedResources = {};
+
 };
 
 
@@ -1172,6 +1173,38 @@ sc.data.Databroker.prototype.getSourceUrls = function(uri) {
 
     return sources.getValues();
 };
+
+
+sc.data.Databroker.prototype.syncResources = function() {
+    for (var uri in this.modifiedResources) {
+        if (this.modifiedResources.hasOwnProperty(uri)) {
+            if (this.modifiedResources[uri] == 'text') {
+                var res = this.textResources[uri];
+                var paramStr = jQuery.param(res.attr);
+                console.log("resource to sync:");
+                console.log("\t uri: ", uri);
+                console.log("\t content: ", res.content);
+                console.log("\t params: ", paramStr);
+                /*
+                    var jqXhr = jQuery.ajax({
+                        type: 'POST',
+                        data: dump,
+                        url: url,
+                        processData: !jQuery.isXMLDoc(dump),
+                        success: successHandler,
+                        error: errorHandler
+                    });
+                */
+            }
+        }
+    }
+}
+
+
+sc.data.Databroker.prototype.sync = function() {
+    console.log("sc.data.Databroker.sync called.");
+    this.syncResources();
+}
 
 
 sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
