@@ -112,8 +112,10 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         repositories: [
             {
                 title: 'Yale University',
-                url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
-                uri: 'http://manifests.ydc2.yale.edu/Repository'
+                // url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
+                url: '/store/manifests/http://manifests.ydc2.yale.edu/MetaManifest',
+                uri: 'http://manifests.ydc2.yale.edu/MetaManifest'
+                // uri: 'http://manifests.ydc2.yale.edu/Repository'
             }
         ]
     });
