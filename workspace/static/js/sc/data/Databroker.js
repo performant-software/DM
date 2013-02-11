@@ -6,8 +6,12 @@ goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
 goog.require('jquery.rdfquery');
 goog.require('sc.data.Resource');
+
 goog.require('sc.data.Triple');
 goog.require('sc.data.TripleStore');
+goog.require('sc.data.Quad');
+goog.require('sc.data.QuadStore');
+
 goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
 goog.require('sc.util.Namespaces');
@@ -29,6 +33,8 @@ sc.data.Databroker = function(options) {
 
     this.namespaceUtil = new sc.util.Namespaces();
     this.tripleStore = new sc.data.TripleStore(this.namespaceUtil);
+
+    this.quadStore = new sc.data.QuadStore();
 
     this.requestedUrls = new goog.structs.Set();
     this.receivedUrls = new goog.structs.Set();
