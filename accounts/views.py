@@ -6,6 +6,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.conf import settings
 
 
+@login_required
+def manage_project(request, identifier=None):
+    context = RequestContext(request)
+    return render_to_response("accounts/manage_project.html", 
+                              context_instance=context)
+
+
 def sign_in(request):
     next_url = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
 
