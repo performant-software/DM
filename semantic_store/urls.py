@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import patterns, url, include
 import semantic_store.views
-from semantic_store.rdfviews import ProjectView
+from semantic_store.rdf_views import ProjectView
 
 urlpatterns = patterns('',
     url(r'^manifests(?:/(?P<uri>.+))?/?$', 
