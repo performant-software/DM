@@ -9,6 +9,7 @@ from rdflib import Graph, ConjunctiveGraph, BNode, URIRef
 
 class GraphView(View):
     http_method_names = ['post']
+    permit_post_identifier = False
 
     def new_nodes(self, g):
         raise NotImplementedError()
@@ -20,9 +21,6 @@ class GraphView(View):
         raise NotImplementedError()
 
     def add_node(self, g, node, uri):
-        raise NotImplementedError
-
-    def add_triple(self, t):
         raise NotImplementedError
 
     def create_nodes(self, g):
@@ -55,10 +53,11 @@ class GraphView(View):
             
     def post(self, *args, **kwargs):
         self.request = args[0]
-        identifier = kwargs['identifier']
-        if identifier:
-            return HttpResponse(status=400, 
-                                content="URI not permitted in create request.")
+        if not self.__class__.permit_post_identifier:
+            identifier = kwargs['identifier']
+            if identifier:
+                return HttpResponse(status=400, 
+                                    content="URI not permitted in create request.")
         g = Graph()
         try:
             g.parse(data=self.request.body)

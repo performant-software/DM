@@ -40,7 +40,12 @@ sc.data.Databroker = function(options) {
     this.rdfByUrl = new goog.structs.Map();
     
     this.newTriples = [];
+
+    this.textResources = {};
+    this.modifiedResources = {};
+    this.deletedResources = {};
 };
+
 
 sc.data.Databroker.prototype.options = {
     proxiedUrlGenerator: function(url) {
@@ -1168,6 +1173,21 @@ sc.data.Databroker.prototype.getSourceUrls = function(uri) {
     return sources.getValues();
 };
 
+
+sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
+    this.textResources[uri] = {
+        'content': content,
+        'attr': attr
+    };
+    this.modifiedResources[uri] = 'text';
+};
+
+
+sc.data.Databroker.prototype.addTextResource = function(uri, title, content) {
+    this.updateTextResource(uri, title, content);
+};
+
+
 sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
     var anno = this.getResource(this.createUuid());
     anno.addProperty(
@@ -1198,3 +1218,5 @@ sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoT
 
     return anno;
 };
+
+
