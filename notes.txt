@@ -1,0 +1,13 @@
+- create annotation link, line 175 of ClientApp.js
+
+- hover menu contents panel in atb.AnnoTitlesList
+
+- show hover menu in atb.viewer.Viewer, line 428
+  - each viewer loads their own set of buttons.
+
+- show hover menu in canvas viewer: atb.viewer.CanvasViewer.onFeatureHover, line 143
+
+- create text annotation from canvas viewer: atb.viewer.CanvasViewer.createTextAnno()
+
+- sc.data.DataBroker.createAnno
+
