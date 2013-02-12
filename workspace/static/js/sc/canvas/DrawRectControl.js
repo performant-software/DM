@@ -32,8 +32,7 @@ goog.inherits(sc.canvas.DrawRectControl, sc.canvas.DrawFeatureControl);
 sc.canvas.DrawRectControl.prototype.activate = function() {
     sc.canvas.DrawFeatureControl.prototype.activate.call(this);
 
-    var viewportDiv = this.viewport.viewportDiv;
-    jQuery(viewportDiv).bind('mousedown', this.proxiedHandleMousedown);
+    this.viewport.fabricCanvas.on('mouse:down', this.proxiedHandleMousedown);
 };
 
 /**
@@ -42,9 +41,9 @@ sc.canvas.DrawRectControl.prototype.activate = function() {
 sc.canvas.DrawRectControl.prototype.deactivate = function() {
     var viewportDiv = this.viewport.viewportDiv;
 
-    jQuery(viewportDiv).unbind('mousedown', this.proxiedHandleMousedown);
-    jQuery(viewportDiv).unbind('mousemove', this.proxiedHandleMousemove);
-    jQuery(viewportDiv).unbind('mouseup', this.proxiedHandleMouseup);
+    this.viewport.fabricCanvas.off('mouse:down', this.proxiedHandleMousedown);
+    this.viewport.fabricCanvas.off('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:up', this.proxiedHandleMouseup);
 
     sc.canvas.DrawFeatureControl.prototype.deactivate.call(this);
 };
@@ -54,7 +53,9 @@ sc.canvas.DrawRectControl.prototype.deactivate = function() {
  * saving it, then adding mousemove handlers to resize the rectangle.
  * @param {Event} event The jQuery event fired.
  */
-sc.canvas.DrawRectControl.prototype.handleMousedown = function(event) {
+sc.canvas.DrawRectControl.prototype.handleMousedown = function(opts) {
+    var event = opts.e;
+
     this.beginDrawFeature();
 
     var viewportDiv = this.viewport.viewportDiv;
@@ -73,15 +74,17 @@ sc.canvas.DrawRectControl.prototype.handleMousedown = function(event) {
     this.feature = canvas.addRect(this.startX, this.startY,
                                   this.width, this.height, this.uri);
 
-    jQuery(viewportDiv).bind('mousemove', this.proxiedHandleMousemove);
-    jQuery(viewportDiv).bind('mouseup', this.proxiedHandleMouseup);
+    this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);
 };
 
 /**
  * Handles a mousemove event by resizing the saved rectangle.
  * @param {Event} event The jQuery event fired.
  */
-sc.canvas.DrawRectControl.prototype.handleMousemove = function(event) {
+sc.canvas.DrawRectControl.prototype.handleMousemove = function(opts) {
+    var event = opts.e;
+
     this.viewport.registerHandledMouseEvent(event);
     
     var canvasCoords = this.viewport.pageToCanvasCoord(event.pageX,
@@ -108,9 +111,11 @@ sc.canvas.DrawRectControl.prototype.handleMousemove = function(event) {
     this.width = Math.abs(canvasCoords.x - this.startX);
     this.height = Math.abs(canvasCoords.y - this.startY);
 
-    this.feature.attr({
-        'x': x,
-        'y': y,
+    var coord = this.viewport.canvas.toCenteredCanvasCoord(x, y);
+
+    this.feature.set({
+        'left': coord.x + this.width / 2,
+        'top': coord.y + this.height / 2,
         'width': this.width,
         'height': this.height
     });
@@ -122,10 +127,13 @@ sc.canvas.DrawRectControl.prototype.handleMousemove = function(event) {
  * Handles a mouseup event by completing the rectangle.
  * @param {Event} event The jQuery event fired.
  */
-sc.canvas.DrawRectControl.prototype.handleMouseup = function(event) {
+sc.canvas.DrawRectControl.prototype.handleMouseup = function(opts) {
+    var event = opts.e;
+
     var viewportDiv = this.viewport.viewportDiv;
 
-    jQuery(viewportDiv).unbind('mousemove', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:up', this.proxiedHandleMouseup);
 
     this.viewport.registerHandledMouseEvent(event);
 

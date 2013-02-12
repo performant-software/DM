@@ -54,10 +54,7 @@ sc.canvas.DrawFeatureControl.EVENT_TYPES = {
 sc.canvas.DrawFeatureControl.prototype.activate = function() {
     sc.canvas.FeatureControl.prototype.activate.call(this);
 
-    if (this.viewport.canvas) {
-        var canvasDiv = this.viewport.canvas.getElement();
-        jQuery(canvasDiv).addClass('sc-CanvasViewport-draw');
-    }
+    jQuery(this.viewport.getElement()).addClass('sc-CanvasViewport-draw');
 };
 
 /**
@@ -66,10 +63,7 @@ sc.canvas.DrawFeatureControl.prototype.activate = function() {
 sc.canvas.DrawFeatureControl.prototype.deactivate = function() {
     sc.canvas.FeatureControl.prototype.deactivate.call(this);
 
-    if (this.viewport.canvas) {
-        var canvasDiv = this.viewport.canvas.getElement();
-        jQuery(canvasDiv).removeClass('sc-CanvasViewport-draw');
-    }
+    jQuery(this.viewport.getElement()).removeClass('sc-CanvasViewport-draw');
 };
 
 /**
@@ -88,11 +82,6 @@ sc.canvas.DrawFeatureControl.prototype.beginDrawFeature = function() {
     this.isDrawingInProgress = true;
 
     this.uri = this.getNewUri();
-
-    if (this.viewport.canvas) {
-        var canvasDiv = this.viewport.canvas.getElement();
-        jQuery(canvasDiv).addClass('sc-CanvasViewport-draw');
-    }
 
     var event = new goog.events.Event(sc.canvas.DrawFeatureControl.
                                       EVENT_TYPES.beginDraw, this.uri);
@@ -115,6 +104,8 @@ sc.canvas.DrawFeatureControl.prototype.finishDrawFeature = function() {
     this.drawnFeatures.push(feature);
 
     this.sendFeatureToDatabroker();
+
+    this.viewport.canvas.requestFrameRender();
     
     this.viewport.canvas.fireModifiedFeature(feature, uri);
 

@@ -3,7 +3,6 @@ goog.provide('atb.viewer.CanvasViewer');
 goog.require('atb.viewer.Viewer');
 
 goog.require('sc.canvas.CanvasViewer');
-goog.require('sc.canvas.Canvas');
 
 
 atb.viewer.CanvasViewer = function(clientApp) {
@@ -251,7 +250,7 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     
     var self = this;
     
-    var deferredCanvas = sc.canvas.Canvas.createDeferredCanvas(
+    var deferredCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(
         uri,
         this.databroker,
         {width: 100, height: 100},

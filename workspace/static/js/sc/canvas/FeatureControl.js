@@ -43,6 +43,14 @@ sc.canvas.FeatureControl.prototype.updateFeature = function() {
     var event = new goog.events.Event(sc.canvas.DrawFeatureControl.
                                       EVENT_TYPES.updateFeature, this.uri);
     event.feature = this.feature;
+
+    this.feature.setCoords();
+    if (this.feature._calcDimensions) {
+        this.feature._calcDimensions();
+    }
+
+    this.viewport.requestFrameRender();
+
     this.dispatchEvent(event);
 };
 
@@ -87,6 +95,10 @@ sc.canvas.FeatureControl.prototype.clientToCanvasCoord = function(x, y) {
     return this.viewport.clientToCanvasCoord(x, y);
 };
 
+sc.canvas.FeatureControl.prototype.layerToCanvasCoord = function(x, y) {
+    return this.viewport.layerToCanvasCoord(x, y);
+};
+
 /**
  * Takes a Raphael feature and converts it to a string representation of an svg
  * feature
@@ -94,7 +106,7 @@ sc.canvas.FeatureControl.prototype.clientToCanvasCoord = function(x, y) {
  * @return {string} The svg representation.
  */
 sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
-    return sc.util.svg.raphaelElementToSVG(this.feature);
+    return this.feature.toSVG();
 };
 
 /**
@@ -107,7 +119,7 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     
     this.hardcodeFeatureTransformations();
     
-    var contentUri = this.feature.data('uri') || this.databroker.createUuid();
+    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) || this.databroker.createUuid();
     var constrainedTargetUri = this.databroker.createUuid();
     var canvasUri = this.viewport.canvas.getUri();
     
@@ -139,28 +151,7 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
 sc.canvas.FeatureControl.prototype.getFeatureCoordinates = function() {
     var feature = this.feature;
     
-    var type = feature.type;
-    
-    if (type == 'path') {
-        var bbox = feature.getBBox();
-        
-        return {
-            'x': bbox.x,
-            'y': bbox.y
-        };
-    }
-    else if (type == 'circle' || type == 'ellipse') {
-        return {
-            'x': feature.attr('cx'),
-            'y': feature.attr('cy')
-        };
-    }
-    else if (type == 'rect' || type == 'image') {
-        return {
-            'x': feature.attr('x'),
-            'y': feature.attr('y')
-        };
-    }
+    return this.viewport.canvas.getFeatureCoords(feature);
 };
 
 /**
@@ -173,24 +164,7 @@ sc.canvas.FeatureControl.prototype.getFeatureCoordinates = function() {
 sc.canvas.FeatureControl.prototype.setFeatureCoordinates = function(x, y) {
     var feature = this.feature;
     
-    var type = feature.type;
-    
-    if (type == 'path') {
-        var bbox = feature.getBBox();
-        
-        var deltaX = x - bbox.x;
-        var deltaY = y - bbox.y;
-        
-        feature.transform('...T' + deltaX + ',' + deltaY);
-    }
-    else if (type == 'circle' || type == 'ellipse') {
-        feature.attr('cx', x);
-        feature.attr('cy', y);
-    }
-    else if (type == 'rect' || type == 'image') {
-        feature.attr('x', x);
-        feature.attr('y', y);
-    }
+    this.viewport.canvas.setFeatureCoords(feature, x, y);
 };
 
 /**
@@ -202,11 +176,11 @@ function() {
     var feature = this.feature;
     
     if (feature.type == 'path') {
-        var transformedPath = Raphael.transformPath(feature.attr('path'),
-                                                    feature.transform());
+        // var transformedPath = Raphael.transformPath(feature.attr('path'),
+        //                                             feature.transform());
         
-        feature.attr('path', transformedPath);
-        feature.transform('');
+        // feature.attr('path', transformedPath);
+        // feature.transform('');
     }
 };
 

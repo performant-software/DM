@@ -146,9 +146,7 @@ sc.canvas.DrawLineControl.prototype.handleMouseup = function(event) {
         this.finishDrawFeature();
     }
     else {
-        var isFirstClick = this.isFirstClick();
-
-        if (isFirstClick) {
+        if (this.isFirstClick()) {
             this.createInitialLine(canvasCoords);
 
             jQuery(viewportDiv).bind('mousemove', this.proxiedHandleMousemove);
@@ -163,20 +161,22 @@ sc.canvas.DrawLineControl.prototype.handleMouseup = function(event) {
  * Sets this.feature to a path with only a move to command of the starting
  * coordinates.
  *
- * @param {Object} canvasCoords An object with x and y properties representing
+ * @param {Object} canvasCoord An object with x and y properties representing
  * the x and y canvas coordinates.
  */
-sc.canvas.DrawLineControl.prototype.createInitialLine = function(canvasCoords) {
+sc.canvas.DrawLineControl.prototype.createInitialLine = function(canvasCoord) {
     var viewportDiv = this.viewport.getElement();
     var canvas = this.viewport.canvas;
 
     this.beginDrawFeature();
 
-    this.points.push(canvasCoords);
-
-    var commands = 'M' + canvasCoords.x + ',' + canvasCoords.y;
-
-    this.feature = canvas.addPath(commands, this.uri);
+    this.points.push(canvasCoord);
+    
+    this.feature = canvas.addPolyline([canvasCoord], this.uri);
+    this.feature.set({
+        top: canvasCoord.y - canvas.group.get('height') / 2,
+        left: canvasCoord.x - canvas.group.get('width') / 2
+    });
 };
 
 /**
@@ -188,7 +188,7 @@ sc.canvas.DrawLineControl.prototype.createInitialLine = function(canvasCoords) {
  */
 sc.canvas.DrawLineControl.prototype.createPathCommandsFromPoints = function(
                                                                     points) {
-    return sc.canvas.Canvas.createPathCommandsFromPoints(points, false);
+    return this.viewport.canvas.createPathCommandsFromPoints(points, false);
 };
 
 /**
@@ -212,9 +212,54 @@ sc.canvas.DrawLineControl.prototype.handleMousemove = function(event) {
     }
 
     pointsToDraw.push(canvasCoords);
+    
+    this.updateLine(pointsToDraw);
+};
 
-    var pathCommands = this.createPathCommandsFromPoints(pointsToDraw);
-    this.feature.attr('path', pathCommands);
+sc.canvas.DrawLineControl.prototype.normalizePoints = function(points) {
+    var newPoints = [];
+
+    var initialPoint = this.points[0];
+
+    for (var i=0, len=points.length; i<len; i++) {
+        var point = {
+            x: points[i].x,
+            y: points[i].y
+        };
+
+        point.x -= initialPoint.x;
+        point.y -= initialPoint.y;
+
+        newPoints.push(point)
+    }
+
+    for (var i=newPoints.length - 1; i>=0; i--) {
+        var point = newPoints[i];
+
+        newPoints.push(point);
+    }
+
+    return newPoints;
+};
+
+sc.canvas.DrawLineControl.prototype.updateLine = function(points) {
+    points = this.normalizePoints(points);
+
+    var initialPoint = this.points[0];
+
+    this.feature.set('points', points);
+    this.feature.setCoords();
+    this.feature._calcDimensions();
+
+    this.updateFeature();
+};
+
+sc.canvas.DrawLineControl.prototype.updatePath = function(commands) {
+    var canvas = this.viewport.canvas;
+
+    this.feature = canvas.updatePath(this.feature, commands);
+
+    this.updateFeature();
 };
 
 /**
@@ -249,8 +294,10 @@ sc.canvas.DrawLineControl.prototype.handleDblclick = function(event) {
  * @inheritDoc
  */
 sc.canvas.DrawLineControl.prototype.finishDrawFeature = function() {
-    var pathCommands = this.createPathCommandsFromPoints(this.points);
-    this.feature.attr('path', pathCommands);
+    // var pathCommands = this.createPathCommandsFromPoints(this.points);
+    // this.updatePath(pathCommands);
+
+    this.updateLine(this.points);
 
     sc.canvas.DrawFeatureControl.prototype.finishDrawFeature.call(this);
 

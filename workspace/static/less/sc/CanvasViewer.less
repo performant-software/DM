@@ -1,27 +1,21 @@
 @import "Common";
 
 .sc-CanvasViewport {
-    
-    .sc-CanvasViewport-viewport {
-        overflow: hidden;
-        position: relative;
-    }
-    
-    .sc-CanvasViewport-content {
-        position: absolute;
-        top: 0;
-        left: 0;
-    }
-    
-    .sc-CanvasViewport-drag {
-        cursor: move;
-        .user-select(none);
-    }
-    
-    .sc-CanvasViewport-draw {
-        cursor: crosshair;
-        .user-select(none);
-    }
+    position: relative;}
+
+.sc-CanvasViewport-drag {
+    cursor: move;
+    .user-select(none);
+}
+
+.sc-CanvasViewport-draw {
+    cursor: crosshair;
+    .user-select(none);
+}
+
+.sc-CanvasViewport-progress {
+    cursor: progress !important;
+    .user-select(none);
 }
 
 .sc-CanvasToolbar {
@@ -99,6 +93,8 @@
         .user-select(none);
         
         .border-radius(5px 0 0 0);
+
+        cursor: pointer !important;
     }
 }
 
