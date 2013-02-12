@@ -32,19 +32,19 @@ goog.inherits(sc.canvas.DrawCircleControl, sc.canvas.DrawFeatureControl);
 sc.canvas.DrawCircleControl.prototype.activate = function() {
     sc.canvas.DrawFeatureControl.prototype.activate.call(this);
 
-    var viewportDiv = this.viewport.viewportDiv;
-    jQuery(viewportDiv).bind('mousedown', this.proxiedHandleMousedown);
+    var viewportDiv = this.viewport.getElement();
+    this.viewport.fabricCanvas.on('mouse:down', this.proxiedHandleMousedown);
 };
 
 /**
  * @inheritDoc
  */
 sc.canvas.DrawCircleControl.prototype.deactivate = function() {
-    var viewportDiv = this.viewport.viewportDiv;
+    var viewportDiv = this.viewport.getElement();
 
-    jQuery(viewportDiv).unbind('mousedown', this.proxiedHandleMousedown);
-    jQuery(viewportDiv).unbind('mousemove', this.proxiedHandleMousemove);
-    jQuery(viewportDiv).unbind('mouseup', this.proxiedHandleMouseup);
+    this.viewport.fabricCanvas.off('mouse:down', this.proxiedHandleMousedown);
+    this.viewport.fabricCanvas.off('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:up', this.proxiedHandleMouseup);
 
     sc.canvas.DrawFeatureControl.prototype.deactivate.call(this);
 };
@@ -57,7 +57,7 @@ sc.canvas.DrawCircleControl.prototype.deactivate = function() {
 sc.canvas.DrawCircleControl.prototype.handleMousedown = function(event) {
     this.beginDrawFeature();
 
-    var viewportDiv = this.viewport.viewportDiv;
+    var viewportDiv = this.viewport.getElement();
     var canvas = this.viewport.canvas;
     
     this.viewport.registerHandledMouseEvent(event);
@@ -75,8 +75,8 @@ sc.canvas.DrawCircleControl.prototype.handleMousedown = function(event) {
 
     this.feature = canvas.addCircle(cx, cy, r, this.uri);
 
-    jQuery(viewportDiv).bind('mousemove', this.proxiedHandleMousemove);
-    jQuery(viewportDiv).bind('mouseup', this.proxiedHandleMouseup);
+    this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);
 };
 
 /**
@@ -94,15 +94,18 @@ sc.canvas.DrawCircleControl.prototype.handleMousemove = function(event) {
     var smallestDimension = Math.min(Math.abs(this.width),
                                      Math.abs(this.height));
 
-    var r = smallestDimension / 2;
+    var r = Math.abs(smallestDimension / 2);
     var cx = this.x + r;
     var cy = this.y + r;
 
-    this.feature.attr({
-        'cx': cx,
-        'cy': cy,
-        'r': Math.abs(r)
-    });
+    var coords = this.viewport.canvas.toCenteredCanvasCoord(cx, cy);
+
+    this.feature.set({
+        'left': coords.x,
+        'top': coords.y,
+        'width': r,
+        'height': r
+    }).setRadius(r);
 
     this.updateFeature();
 };
@@ -112,9 +115,10 @@ sc.canvas.DrawCircleControl.prototype.handleMousemove = function(event) {
  * @param {Event} event The jQuery event fired.
  */
 sc.canvas.DrawCircleControl.prototype.handleMouseup = function(event) {
-    var viewportDiv = this.viewport.viewportDiv;
+    var viewportDiv = this.viewport.getElement();
 
-    jQuery(viewportDiv).unbind('mousemove', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:up', this.proxiedHandleMouseup);
 
     this.viewport.registerHandledMouseEvent(event);
 

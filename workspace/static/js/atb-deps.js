@@ -87,7 +87,7 @@ goog.addDependency('../../../atb/util/Set.js', ['atb.util.Set'], ['atb.util.Refe
 goog.addDependency('../../../atb/util/Stack.js', ['atb.util.Stack'], []);
 goog.addDependency('../../../atb/util/StyleUtil.js', ['atb.util.StyleUtil'], ['atb.util.ReferenceUtil', 'goog.dom.DomHelper', 'goog.math.Coordinate', 'goog.positioning.ClientPosition', 'jquery.jQuery']);
 goog.addDependency('../../../atb/viewer/CanvasThumbnail.js', ['atb.viewer.CanvasThumbnail'], ['atb.ui.Canvas', 'atb.viewer.ViewerThumbnail']);
-goog.addDependency('../../../atb/viewer/CanvasViewer.js', ['atb.viewer.CanvasViewer'], ['atb.viewer.Viewer', 'sc.canvas.Canvas', 'sc.canvas.CanvasViewer']);
+goog.addDependency('../../../atb/viewer/CanvasViewer.js', ['atb.viewer.CanvasViewer'], ['atb.viewer.Viewer', 'sc.canvas.CanvasViewer']);
 goog.addDependency('../../../atb/viewer/CollectionViewer.js', ['atb.viewer.CollectionViewer'], ['goog.dom.dataset', 'goog.ui.HoverCard']);
 goog.addDependency('../../../atb/viewer/ColorOpacityField.js', ['atb.viewer.ColorOpacityField'], ['atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'goog.events', 'goog.events.EventType', 'goog.positioning.AnchoredViewportPosition', 'goog.positioning.ClientPosition', 'goog.positioning.Corner', 'goog.ui.Component.EventType', 'goog.ui.HsvaPalette', 'goog.ui.Popup']);
 goog.addDependency('../../../atb/viewer/Editor.js', ['atb.viewer.Editor'], ['atb.ClientApp', 'atb.Util', 'atb.debug.DebugTools', 'atb.events.ResourceClicked', 'atb.events.ResourceModified', 'atb.util.HtmlUtil', 'atb.util.ReferenceUtil', 'atb.util.Set', 'atb.util.StyleUtil', 'atb.viewer.EditorPropertiesPane', 'atb.viewer.Finder', 'atb.viewer.TextEditorAnnotate', 'atb.viewer.TextThumbnail', 'atb.viewer.Viewer', 'atb.widgets.DialogWidget', 'atb.widgets.ForegroundMenuDisplayer', 'atb.widgets.GlassPane', 'atb.widgets.IMenu', 'atb.widgets.MenuItem', 'atb.widgets.MenuUtil', 'atb.widgets.Toolbar', 'goog.asserts', 'goog.cssom.iframe.style', 'goog.dom', 'goog.dom.DomHelper', 'goog.editor.Command', 'goog.editor.Field', 'goog.editor.plugins.BasicTextFormatter', 'goog.editor.plugins.EnterHandler', 'goog.editor.plugins.HeaderFormatter', 'goog.editor.plugins.LinkBubble', 'goog.editor.plugins.LinkDialogPlugin', 'goog.editor.plugins.ListTabHandler', 'goog.editor.plugins.LoremIpsum', 'goog.editor.plugins.RemoveFormatting', 'goog.editor.plugins.SpacesTabHandler', 'goog.editor.plugins.UndoRedo', 'goog.events.PasteHandler', 'goog.ui.IdGenerator', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarController', 'jquery.jQuery']);
@@ -143,6 +143,7 @@ goog.addDependency('../../../atb/widgets/WorkingResources.js', ['atb.widgets.Wor
 goog.addDependency('../../../atb/widgets/WorkingResourcesFolio.js', ['atb.widgets.WorkingResourcesFolio'], ['atb.widgets.WorkingResourcesItem', 'sc.RepoBrowserFolio']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesItem.js', ['atb.widgets.WorkingResourcesItem'], ['goog.dom.DomHelper', 'goog.events', 'goog.events.ActionEvent', 'goog.events.EventTarget', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesManuscript.js', ['atb.widgets.WorkingResourcesManuscript'], ['atb.widgets.WorkingResourcesItem', 'goog.structs.Map', 'goog.ui.AnimatedZippy']);
+goog.addDependency('../../../fabric/fabric0.9.15.min.js', ['fabric'], []);
 goog.addDependency('../../../jquery/jquery-1.8.3.js', ['jquery.jQuery'], []);
 goog.addDependency('../../../jquery/jquery-ui-1.8.22.custom.min.js', ['jquery.jQueryUI'], []);
 goog.addDependency('../../../jquery/jquery.animate-enhanced.js', ['jquery.animate_enhanced'], []);
@@ -161,10 +162,8 @@ goog.addDependency('../../../sc/RepoBrowser.js', ['sc.RepoBrowser'], ['goog.even
 goog.addDependency('../../../sc/RepoBrowserFolio.js', ['sc.RepoBrowserFolio'], ['sc.RepoBrowserItem']);
 goog.addDependency('../../../sc/RepoBrowserItem.js', ['sc.RepoBrowserItem'], ['jquery.jQuery']);
 goog.addDependency('../../../sc/RepoBrowserManuscript.js', ['sc.RepoBrowserManuscript'], ['goog.dom', 'goog.math.Size', 'goog.ui.AnimatedZippy', 'sc.RepoBrowserItem']);
-goog.addDependency('../../../sc/canvas/Canvas.js', ['sc.canvas.Canvas'], ['Raphael', 'goog.dom', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map', 'sc.util.stats']);
 goog.addDependency('../../../sc/canvas/CanvasToolbar.js', ['sc.canvas.CanvasToolbar'], ['goog.dom', 'goog.events', 'goog.structs.Map', 'goog.ui.ToggleButton', 'goog.ui.Toolbar', 'goog.ui.editor.ToolbarFactory', 'jquery.jQuery', 'sc.canvas.DragFeatureControl', 'sc.canvas.DrawCircleControl', 'sc.canvas.DrawEllipseControl', 'sc.canvas.DrawLineControl', 'sc.canvas.DrawPolygonControl', 'sc.canvas.DrawRectControl', 'sc.canvas.ImageChoicePicker', 'sc.canvas.PanZoomGesturesControl']);
-goog.addDependency('../../../sc/canvas/CanvasViewer.js', ['sc.canvas.CanvasViewer'], ['goog.dom', 'goog.events', 'goog.math.Size', 'jquery.jQuery', 'sc.canvas.Canvas', 'sc.canvas.CanvasToolbar', 'sc.canvas.CanvasViewport', 'sc.canvas.DragFeatureControl', 'sc.canvas.ZoomSliderControl']);
-goog.addDependency('../../../sc/canvas/CanvasViewport.js', ['sc.canvas.CanvasViewport'], ['Raphael', 'goog.dom', 'goog.events', 'goog.events.Event', 'goog.events.EventTarget', 'goog.events.EventType', 'goog.events.KeyCodes', 'goog.structs.Map', 'goog.structs.Set', 'jquery.event.drag', 'jquery.jQuery', 'sc.canvas.Canvas']);
+goog.addDependency('../../../sc/canvas/CanvasViewer.js', ['sc.canvas.CanvasViewer'], ['goog.dom', 'goog.events', 'goog.math.Size', 'jquery.jQuery', 'sc.canvas.CanvasToolbar', 'sc.canvas.DragFeatureControl', 'sc.canvas.FabricCanvas', 'sc.canvas.FabricCanvasViewport', 'sc.canvas.ZoomSliderControl']);
 goog.addDependency('../../../sc/canvas/CommentedCanvasViewer.js', ['sc.canvas.CommentedCanvasViewer'], ['goog.events', 'sc.CommentViewer', 'sc.canvas.CanvasViewer']);
 goog.addDependency('../../../sc/canvas/Control.js', ['sc.canvas.Control'], ['goog.events.Event', 'goog.events.EventTarget']);
 goog.addDependency('../../../sc/canvas/DragFeatureControl.js', ['sc.canvas.DragFeatureControl'], ['Raphael', 'sc.canvas.FeatureControl']);
@@ -174,6 +173,8 @@ goog.addDependency('../../../sc/canvas/DrawFeatureControl.js', ['sc.canvas.DrawF
 goog.addDependency('../../../sc/canvas/DrawLineControl.js', ['sc.canvas.DrawLineControl'], ['goog.array', 'goog.events.KeyCodes', 'sc.canvas.DrawFeatureControl']);
 goog.addDependency('../../../sc/canvas/DrawPolygonControl.js', ['sc.canvas.DrawPolygonControl'], ['sc.canvas.DrawLineControl']);
 goog.addDependency('../../../sc/canvas/DrawRectControl.js', ['sc.canvas.DrawRectControl'], ['sc.canvas.DrawFeatureControl']);
+goog.addDependency('../../../sc/canvas/FabricCanvas.js', ['sc.canvas.FabricCanvas'], ['fabric', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map', 'goog.structs.Set']);
+goog.addDependency('../../../sc/canvas/FabricCanvasViewport.js', ['sc.canvas.FabricCanvasViewport', 'sc.canvas.FabricCanvasViewportEvent'], ['fabric', 'goog.async.Throttle', 'goog.dom.DomHelper', 'goog.events.Event', 'goog.events.EventTarget', 'goog.object', 'goog.structs.Set', 'jquery.jQuery']);
 goog.addDependency('../../../sc/canvas/FeatureControl.js', ['sc.canvas.FeatureControl'], ['sc.canvas.Control']);
 goog.addDependency('../../../sc/canvas/ImageChoicePicker.js', ['sc.canvas.ImageChoicePicker'], ['goog.structs.Set', 'goog.ui.Button', 'goog.ui.CustomButton', 'jquery.jQuery']);
 goog.addDependency('../../../sc/canvas/KeyboardShortcutsControl.js', ['sc.canvas.KeyboardShortcutsControl'], ['goog.events', 'sc.canvas.Control']);

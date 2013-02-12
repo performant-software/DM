@@ -48,16 +48,16 @@ sc.canvas.ZoomSliderControl.prototype.deactivate = function() {
 
 sc.canvas.ZoomSliderControl.prototype.updateRange = function() {
     if (this.viewport.canvas) {
-        var actualCanvasSize = this.viewport.canvas.getActualSize();
-        var minSize = Math.log(sc.canvas.CanvasViewport.MIN_CANVAS_DISPLAY_SIZE);
+        var actualCanvasSize = this.viewport.canvas.getSize();
+        var minSize = Math.log(sc.canvas.FabricCanvasViewport.MIN_CANVAS_DISPLAY_SIZE);
         var maxSize = Math.log(actualCanvasSize.getShortest() *
-            sc.canvas.CanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO);
+            sc.canvas.FabricCanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO);
     }
     else {
         var minSize = 0;
         var maxSize = 100;
     }
-    var maxRatio = sc.canvas.CanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO;
+    var maxRatio = sc.canvas.FabricCanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO;
     
     jQuery(this.sliderDiv).slider('option', {
         'min': minSize,
@@ -73,9 +73,11 @@ sc.canvas.ZoomSliderControl.prototype.handleSlide = function(event, ui) {
 sc.canvas.ZoomSliderControl.prototype.updateZoomFromSliderValue =
 function(value) {
     var size = Math.exp(value);
-    var actualCanvasSize = this.viewport.canvas.getActualSize();
+    var actualCanvasSize = this.viewport.canvas.getSize();
     
     var ratio = size / actualCanvasSize.getShortest();
+
+    var center = this.viewport.getCenterCoord();
     
     this.viewport.zoomToRatio(ratio);
     
@@ -97,12 +99,14 @@ sc.canvas.ZoomSliderControl.prototype.handleCanvasAdded = function(event) {
 };
 
 sc.canvas.ZoomSliderControl.prototype.updateTooltip = function() {
-    var zoomPercentage = Math.round(this.viewport.displayToActualSizeRatio
-                                    * 100);
-    
-    jQuery(this.sliderDiv).attr('title', 'Zoomed to ' +
-        zoomPercentage + '% of actual canvas image size. ' +
-        'Slide to adjust the zoom level.');
+    if (this.viewport.canvas) {
+        var zoomPercentage = Math.round(
+            this.viewport.canvas.getDisplayToActualSizeRatio() * 100);
+        
+        jQuery(this.sliderDiv).attr('title', 'Zoomed to ' +
+            zoomPercentage + '%.\n' +
+            'Slide to adjust the zoom level.');
+    }
 };
 
 sc.canvas.ZoomSliderControl.prototype.handleScrollWheel =
