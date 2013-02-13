@@ -3,7 +3,8 @@ goog.provide('atb.viewer.CanvasViewer');
 goog.require('atb.viewer.Viewer');
 
 goog.require('sc.canvas.CanvasViewer');
-goog.require('sc.canvas.Canvas');
+goog.require('sc.canvas.FabricCanvasFactory');
+
 
 atb.viewer.CanvasViewer = function(clientApp) {
     atb.viewer.Viewer.call(this, clientApp);
@@ -250,7 +251,7 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     
     var self = this;
     
-    var deferredCanvas = sc.canvas.Canvas.createDeferredCanvas(
+    var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         uri,
         this.databroker,
         {width: 100, height: 100},
@@ -340,30 +341,32 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var textEditor = new atb.viewer.Editor(this.clientApp);
     textEditor.setPurpose('anno');
     
-    var withUids = function(uids) {
-        var newTextId = uids[0];
-        var annoId = uids[1];
+    var newTextId = this.databroker.createUuid();
+    var annoId = this.databroker.createUuid();
+
+    console.log("newTextId:", newTextId);
+    console.log("annoId:", annoId);
+    
+    textEditor.resourceId = newTextId;
+    textEditor.annotationUid = annoId;
+    textEditor.toggleIsAnnoText(true);
         
-        textEditor.resourceId = newTextId;
-        textEditor.annotationUid = annoId;
-        textEditor.toggleIsAnnoText(true);
-        
-        textEditor.saveContents(function() {
-            this.webService.withSavedAnno(annoId, {
-                'id': annoId,
-                'type': 'anno',
-                'anno': {
-                    'targets': [id],
-                    'bodies': [newTextId]
-                }
-            }, jQuery.noop, this);
-        }, this);
+    /* Need to tell text editor to save and create anno in data broker.
+    textEditor.saveContents(function() {
+        this.webService.withSavedAnno(annoId, {
+            'id': annoId,
+            'type': 'anno',
+            'anno': {
+                'targets': [id],
+                'bodies': [newTextId]
+            }
+        }, jQuery.noop, this);
+    }, this);
     };
-    
-    this.webService.withUidList(2, withUids, this,
-                                jQuery.proxy(this.flashErrorIcon, this));
-    
-    var otherContainer = this.getPanelManager().getAnotherPanel(this.getPanelContainer());
+    */
+
+    var otherContainer = this.getPanelManager().getAnotherPanel(
+        this.getPanelContainer());
     otherContainer.setViewer(textEditor);
     textEditor.setTitle(textTitle);
 };

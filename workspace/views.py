@@ -12,3 +12,5 @@ def workspace(request):
     return render_to_response("workspace/workspace.html", 
                               context_instance=context)
 
+
+    

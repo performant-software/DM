@@ -383,11 +383,13 @@ sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, 
 
     this.databroker.getDeferredResource(manifestUri).done(function(resource) {
         var aggregatedUris = this.databroker.getAggregationContentsUris(manifestUri);
+        console.log("aggregatedUris:", aggregatedUris);
 
         var fragment = this.options.doc.createDocumentFragment();
 
         for (var i = 0, len = aggregatedUris.length; i < len; i++) {
             var uri = aggregatedUris[i];
+            console.log("uri:", uri);
 
             this.addManifestItem(uri, clickHandler, fragment);
         }
@@ -512,10 +514,10 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
     var sequenceUri = this.databroker.getManuscriptSequenceUris(manuscriptUri)[0];
     var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(manuscriptUri)[0];
 
-    var deferredSequence = this.databroker.getDeferredResource(sequenceUri);
-    var deferredImageAnno = this.databroker.getDeferredResource(imageAnnoUri);
+//    var deferredSequence = this.databroker.getDeferredResource(sequenceUri);
+//    var deferredImageAnno = this.databroker.getDeferredResource(imageAnnoUri);
 
-    deferredSequence.done(jQuery.proxy(function(sequence) {
+//    deferredSequence.done(jQuery.proxy(function(sequence) {
         if (manuscriptItem.getNumFolia() > 0) {
             return;
         }
@@ -586,7 +588,7 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
             manuscriptItem.showFoliaMessage('Badly formed data - unable to determine page order');
         }
 
-        deferredImageAnno.done(jQuery.proxy(function(imageAnnos) {
+//        deferredImageAnno.done(jQuery.proxy(function(imageAnnos) {
             for (var uri in thumbsByUri) {
                 var thumb = thumbsByUri[uri];
                 var canvasResource = this.databroker.getResource(uri);
@@ -614,12 +616,14 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
                     );
                 }
             }
-        }, this));
-    }, this));
+//        }, this));
+//    }, this));
 
+/*
     deferredSequence.fail(jQuery.proxy(function() {
         manuscriptItem.showFoliaMessage('Unable to load folia information');
     }, this));
+*/
 };
 
 /**

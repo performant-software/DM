@@ -23,12 +23,14 @@ sc.canvas.PanZoomGesturesControl = function(viewport) {
 
     this.timeOfLastDragEnd = goog.now();
     this.viewport.registerHandledMouseEvent(this.timeOfLastDragEnd);
+    
+    this.mouseIsDown = false;
 
-    this.proxiedHandleDraginit = jQuery.proxy(this.handleDraginit, this);
-    this.proxiedHandleMousewheel = jQuery.proxy(this.handleMousewheel, this);
-    this.proxiedHandleDrag = jQuery.proxy(this.handleDrag, this);
-    this.proxiedHandleDragend = jQuery.proxy(this.handleDragend, this);
-    this.proxiedHandleDblclick = jQuery.proxy(this.handleDblclick, this);
+    this.proxiedHandleMousedown = this.handleMousedown.bind(this);
+    this.proxiedHandleMouseup = this.handleMouseup.bind(this);
+    this.proxiedHandleMousemove = this.handleMousemove.bind(this);
+    this.proxiedHandleMousewheel = this.handleMousewheel.bind(this);
+    this.proxiedHandleDblclick = this.handleDblclick.bind(this);
 };
 goog.inherits(sc.canvas.PanZoomGesturesControl, sc.canvas.Control);
 
@@ -38,31 +40,35 @@ goog.inherits(sc.canvas.PanZoomGesturesControl, sc.canvas.Control);
 sc.canvas.PanZoomGesturesControl.prototype.activate = function() {
     sc.canvas.Control.prototype.activate.call(this);
 
-    var $viewport = jQuery(this.viewport.viewportDiv);
+    var fabricCanvas = this.viewport.fabricCanvas;
+    var div = this.viewport.getTopCanvasElement();
+    div = this.viewport.getElement();
+    
+    fabricCanvas.on('mouse:down', this.proxiedHandleMousedown);
+    fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
+    fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);
 
-    $viewport.bind('draginit', this.proxiedHandleDraginit);
+    jQuery(div).on('mousewheel', this.proxiedHandleMousewheel);
+    jQuery(div).on('dblclick', this.proxiedHandleDblclick);
 
-    $viewport.bind('mousewheel', this.proxiedHandleMousewheel);
-
-    $viewport.bind('dblclick', this.proxiedHandleDblclick);
-
-    $viewport.addClass('sc-CanvasViewport-drag');
+    jQuery(div).addClass('sc-CanvasViewport-drag');
 };
 
 /**
  * @inheritDoc
  */
 sc.canvas.PanZoomGesturesControl.prototype.deactivate = function() {
-    var $viewport = jQuery(this.viewport.viewportDiv);
+    var $viewport = jQuery(this.viewport.getElement());
 
-    $viewport.unbind('draginit', this.proxiedHandleDraginit);
-    $viewport.trigger('dragend');
-    $viewport.unbind('drag', this.proxiedHandleDrag);
-    $viewport.unbind('dragend', this.proxiedHandleDragend);
+    var fabricCanvas = this.viewport.fabricCanvas;
+    var div = this.viewport.getElement();
+    
+    fabricCanvas.off('mouse:down', this.proxiedHandleMousedown);
+    fabricCanvas.off('mouse:move', this.proxiedHandleMousemove);
+    fabricCanvas.off('mouse:up', this.proxiedHandleMouseup);
 
-    $viewport.unbind('mousewheel', this.proxiedHandleMousewheel);
-
-    $viewport.unbind('dblclick', this.proxiedHandleDblclick);
+    jQuery(div).off('mousewheel', this.proxiedHandleMousewheel);
+    jQuery(div).off('dblclick', this.proxiedHandleDblclick);
 
     $viewport.removeClass('sc-CanvasViewport-drag');
 
@@ -79,6 +85,10 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousewheel =
 function(event, delta, deltaX, deltaY) {
     event.preventDefault();
 
+    if (this.viewport.isEmpty()) {
+        return;
+    }
+
     if (event.shiftKey) {
         this.viewport.panByPageCoords(
             deltaX * 3,
@@ -88,32 +98,27 @@ function(event, delta, deltaX, deltaY) {
     else {
         var factor = 1;
 
-        if (delta > 0) {
-            factor = 1 + Math.log(delta + 1) / 30;
+        if (deltaY > 0) {
+            factor = 1 + Math.log(deltaY + 1) / 30;
         }
-        else if (delta < 0) {
-            factor = 1 - Math.log(-delta + 1) / 30;
+        else if (deltaY < 0) {
+            factor = 1 - Math.log(-deltaY + 1) / 30;
         }
 
-        this.viewport.zoomByFactor(
-            factor,
-            {x: event.pageX, y: event.pageY}
-        );
+        var canvasCoords = this.viewport.clientToCanvasCoord(event.clientX, event.clientY);
+        var layerCoords = this.viewport.pageToLayerCoord(event.pageX, event.pageY);
+
+        this.viewport.pauseRendering();
+        this.viewport.zoomByFactor(factor);
+        this.viewport.moveCanvasCoordToLayerCoord(canvasCoords, layerCoords);
+        this.viewport.resumeRendering();
     }
 
     return false;
 };
 
-/**
- * Event handler for draginit events on the viewport
- * @this {sc.canvas.PanZoomGesturesControl}
- * @param {Event} event The browser event.
- * @param {Object} dragDrop The DragDrop plugin data.
- */
-sc.canvas.PanZoomGesturesControl.prototype.handleDraginit = function(event,
-                                                                     dragDrop) {
-    var $viewport = jQuery(this.viewport.viewportDiv);
-    var self = this;
+sc.canvas.PanZoomGesturesControl.prototype.handleMousedown = function(opts) {
+    var event = opts.e;
 
     this.isDragging = true;
     this.viewport.isDragging = true;
@@ -121,44 +126,34 @@ sc.canvas.PanZoomGesturesControl.prototype.handleDraginit = function(event,
     this.lastPageX = event.pageX;
     this.lastPageY = event.pageY;
 
-    $viewport.bind('drag', this.proxiedHandleDrag);
-
-    $viewport.one('dragend', this.proxiedHandleDragend);
+    event.preventDefault();
 };
 
-/**
- * Event handler for drag events on the viewport
- * @this {sc.canvas.PanZoomGesturesControl}
- * @param {Event} event The browser event.
- * @param {Object} dragDrop The DragDrop plugin data.
- */
-sc.canvas.PanZoomGesturesControl.prototype.handleDrag = function(event,
-                                                                  dragDrop) {
-    var dx = this.lastPageX - event.pageX;
-    var dy = this.lastPageY - event.pageY;
+sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {
+    if (this.isDragging && this.viewport.canvas) {
+        var event = opts.e;
 
-    this.lastPageX = event.pageX;
-    this.lastPageY = event.pageY;
+        var dx = this.lastPageX - event.pageX;
+        var dy = this.lastPageY - event.pageY;
 
-    this.viewport.panByPageCoords(dx, dy);
+        this.lastPageX = event.pageX;
+        this.lastPageY = event.pageY;
+
+        this.viewport.panByPageCoords(dx, dy);
+
+        event.preventDefault();
+    }
 };
 
-/**
- * Event handler for dragend events on the viewport
- * @this {sc.canvas.PanZoomGesturesControl}
- * @param {Event} event The browser event.
- * @param {Object} dragDrop The DragDrop plugin data.
- */
-sc.canvas.PanZoomGesturesControl.prototype.handleDragend = function(event,
-                                                                     dragDrop) {
-    var $viewport = jQuery(this.viewport.viewportDiv);
+sc.canvas.PanZoomGesturesControl.prototype.handleMouseup = function(opts) {
+    var event = opts.e;
 
     this.isDragging = false;
     this.viewport.isDragging = false;
     this.timeOfLastDragEnd = event.timeStamp;
     this.viewport.registerHandledMouseEvent(event);
 
-    $viewport.unbind('drag', this.proxiedHandleDrag);
+    event.preventDefault();
 };
 
 /**
@@ -169,12 +164,19 @@ sc.canvas.PanZoomGesturesControl.prototype.handleDragend = function(event,
  * @param {Event} event The jQuery event fired.
  */
 sc.canvas.PanZoomGesturesControl.prototype.handleDblclick = function(event) {
+    var canvasCoords = this.viewport.clientToCanvasCoord(event.pageX, event.pageY);
+
+    this.viewport.pauseRendering();
+
     if (event.shiftKey) {
-        this.viewport.zoomByFactor(1 / 1.5, {x: event.pageX, y: event.pageY});
+        this.viewport.zoomByFactor(1 / 1.5);
     }
     else {
-        this.viewport.zoomByFactor(1.5, {x: event.pageX, y: event.pageY});
+        this.viewport.zoomByFactor(1.5);
     }
+    this.viewport.centerOnCanvasCoord(canvasCoords);
+
+    this.viewport.resumeRendering();
 
     this.viewport.registerHandledMouseEvent(event);
 };

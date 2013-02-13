@@ -43,6 +43,14 @@ sc.canvas.FeatureControl.prototype.updateFeature = function() {
     var event = new goog.events.Event(sc.canvas.DrawFeatureControl.
                                       EVENT_TYPES.updateFeature, this.uri);
     event.feature = this.feature;
+
+    this.feature.setCoords();
+    if (this.feature._calcDimensions) {
+        this.feature._calcDimensions();
+    }
+
+    this.viewport.requestFrameRender();
+
     this.dispatchEvent(event);
 };
 
@@ -87,6 +95,10 @@ sc.canvas.FeatureControl.prototype.clientToCanvasCoord = function(x, y) {
     return this.viewport.clientToCanvasCoord(x, y);
 };
 
+sc.canvas.FeatureControl.prototype.layerToCanvasCoord = function(x, y) {
+    return this.viewport.layerToCanvasCoord(x, y);
+};
+
 /**
  * Takes a Raphael feature and converts it to a string representation of an svg
  * feature
@@ -94,7 +106,7 @@ sc.canvas.FeatureControl.prototype.clientToCanvasCoord = function(x, y) {
  * @return {string} The svg representation.
  */
 sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
-    return sc.util.svg.raphaelElementToSVG(this.feature);
+    return this.feature.toSVG();
 };
 
 /**
@@ -105,30 +117,26 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
         return;
     }
     
-    this.hardcodeFeatureTransformations();
-    
-    var contentUri = this.feature.data('uri') || this.databroker.createUuid();
-    var constrainedTargetUri = this.databroker.createUuid();
+    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) ||
+        this.databroker.createUuid();
     var canvasUri = this.viewport.canvas.getUri();
     
-    var svgString = this.exportFeatureToSvg();
-    svgString = sc.util.Namespaces.escapeForXml(svgString);
+    var svgString = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
+
+    var selector = this.databroker.createResource(
+        contentUri, 'oac:SvgSelector');
+    selector.addType('cnt:ContentAsText');
+    selector.addProperty('cnt:chars', '"' + svgString + '"');
+    selector.addProperty('cnt:characterEncoding', '"UTF-8"');
     
-    var content = this.databroker.createResource(
-        contentUri,
-        'cnt:ContentAsText'
-    );
-    content.addProperty('cnt:characterEncoding', '"UTF-8"');
-    content.addProperty('cnt:chars', '"' + svgString + '"');
-    
-    var constrainedTarget = this.databroker.createResource(
-        constrainedTargetUri,
-        'oac:ConstrainedTarget'
-    );
-    constrainedTarget.addProperty('oac:constrains',
-                                  '<' + canvasUri + '>');
-    constrainedTarget.addProperty('oac:constrainedBy',
-                                  '<' + contentUri + '>');
+    var specificResource = this.databroker.createResource(
+        this.databroker.createUuid(), 'oac:SpecificResource');
+    specificResource.addProperty('oac:hasSource', '<' + canvasUri + '>');
+    specificResource.addProperty('oac:hasSelector', selector.bracketedUri);
+
+    var annotation = this.databroker.createResource(
+        this.databroker.createUuid(), 'oac:Annotation');
+    annotation.addProperty('oac:hasTarget', specificResource.bracketedUri);
 };
 
 /**
@@ -139,28 +147,7 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
 sc.canvas.FeatureControl.prototype.getFeatureCoordinates = function() {
     var feature = this.feature;
     
-    var type = feature.type;
-    
-    if (type == 'path') {
-        var bbox = feature.getBBox();
-        
-        return {
-            'x': bbox.x,
-            'y': bbox.y
-        };
-    }
-    else if (type == 'circle' || type == 'ellipse') {
-        return {
-            'x': feature.attr('cx'),
-            'y': feature.attr('cy')
-        };
-    }
-    else if (type == 'rect' || type == 'image') {
-        return {
-            'x': feature.attr('x'),
-            'y': feature.attr('y')
-        };
-    }
+    return this.viewport.canvas.getFeatureCoords(feature);
 };
 
 /**
@@ -173,43 +160,8 @@ sc.canvas.FeatureControl.prototype.getFeatureCoordinates = function() {
 sc.canvas.FeatureControl.prototype.setFeatureCoordinates = function(x, y) {
     var feature = this.feature;
     
-    var type = feature.type;
-    
-    if (type == 'path') {
-        var bbox = feature.getBBox();
-        
-        var deltaX = x - bbox.x;
-        var deltaY = y - bbox.y;
-        
-        feature.transform('...T' + deltaX + ',' + deltaY);
-    }
-    else if (type == 'circle' || type == 'ellipse') {
-        feature.attr('cx', x);
-        feature.attr('cy', y);
-    }
-    else if (type == 'rect' || type == 'image') {
-        feature.attr('x', x);
-        feature.attr('y', y);
-    }
+    this.viewport.canvas.setFeatureCoords(feature, x, y);
 };
-
-/**
- * If the feature is a path, any transformations on the path will be converted
- * into new path commands, and the old transformations will be removed.
- */
-sc.canvas.FeatureControl.prototype.hardcodeFeatureTransformations =
-function() {
-    var feature = this.feature;
-    
-    if (feature.type == 'path') {
-        var transformedPath = Raphael.transformPath(feature.attr('path'),
-                                                    feature.transform());
-        
-        feature.attr('path', transformedPath);
-        feature.transform('');
-    }
-};
-
 /**
  * Sets whether the control should save its changes to the databroker.
  *

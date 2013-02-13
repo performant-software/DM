@@ -5,7 +5,7 @@ from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef
 
 from .validators import AnnotationValidator
-from .rdfstore import rdfstore
+from .rdfstore import rdfstore, default_identifier
 from .namespaces import ns
 
 
@@ -35,7 +35,7 @@ def valid_annotations(dest_graph_uri, anno_g, anno_uris):
     dest_g = destination_graph(dest_graph_uri)
     validator = AnnotationValidator(dest_g)
     for a in anno_uris:
-        if not validator.validate(anno_g, a):
+        if not validator.valid(anno_g, a):
             return validator
     return validator
 

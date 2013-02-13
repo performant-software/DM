@@ -46,7 +46,13 @@ sc.data.Databroker = function(options) {
     this.rdfByUrl = new goog.structs.Map();
     
     this.newTriples = [];
+
+    this.textResources = {};
+    this.modifiedResources = {};
+    this.deletedResources = {};
+
 };
+
 
 sc.data.Databroker.prototype.options = {
     proxiedUrlGenerator: function(url) {
@@ -292,6 +298,12 @@ sc.data.Databroker.prototype.addNewTriple = function(triple) {
     this.tripleStore.addTriple(triple);
     
     this.newTriples.push(triple);
+};
+
+sc.data.Databroker.prototype.addNewTriples = function(triples) {
+    for (var i=0, len=triples.length; i<len; i++) {
+        this.addNewTriple(triples[i]);
+    }
 };
 
 sc.data.Databroker.prototype.dumpTripleStore = function(opt_outputType) {
@@ -579,11 +591,14 @@ sc.data.Databroker.prototype.getResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.createResource = function(uri, type) {
+    if (uri == null) {
+        uri = this.createUuid();
+    }
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
     var triple = new sc.data.Triple(
         uri,
-        this.namespaceUtil.autoExpand('rdf:type'),
+        this.namespaceUtil.expand('rdf', 'type'),
         this.namespaceUtil.autoExpand(type)
     );
     
@@ -1167,3 +1182,83 @@ sc.data.Databroker.prototype.getSourceUrls = function(uri) {
 
     return sources.getValues();
 };
+
+
+sc.data.Databroker.prototype.syncResources = function() {
+    for (var uri in this.modifiedResources) {
+        if (this.modifiedResources.hasOwnProperty(uri)) {
+            if (this.modifiedResources[uri] == 'text') {
+                var res = this.textResources[uri];
+                var paramStr = jQuery.param(res.attr);
+                console.log("resource to sync:");
+                console.log("\t uri: ", uri);
+                console.log("\t content: ", res.content);
+                console.log("\t params: ", paramStr);
+                /*
+                    var jqXhr = jQuery.ajax({
+                        type: 'POST',
+                        data: dump,
+                        url: url,
+                        processData: !jQuery.isXMLDoc(dump),
+                        success: successHandler,
+                        error: errorHandler
+                    });
+                */
+            }
+        }
+    }
+}
+
+
+sc.data.Databroker.prototype.sync = function() {
+    console.log("sc.data.Databroker.sync called.");
+    this.syncResources();
+}
+
+
+sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
+    this.textResources[uri] = {
+        'content': content,
+        'attr': attr
+    };
+    this.modifiedResources[uri] = 'text';
+};
+
+
+sc.data.Databroker.prototype.addTextResource = function(uri, title, content) {
+    this.updateTextResource(uri, title, content);
+};
+
+
+sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
+    var anno = this.getResource(this.createUuid());
+    anno.addProperty(
+        this.namespaceUtil.autoExpand('rdf:type'),
+        this.namespaceUtil.autoExpand('oac:Annotation')
+    );
+
+    if (opt_annoType) {
+        anno.addProperty(
+            this.namespaceUtil.autoExpand('rdf:type'),
+            this.namespaceUtil.autoExpand(opt_annoType)
+        );
+    }
+
+    if (bodyUri) {
+        anno.addProperty(
+            sc.data.Databroker.ANNO_NS.hasBody,
+            sc.util.Namespaces.wrapWithAngleBrackets(bodyUri)
+        );
+    }
+
+    if (targetUri) {
+        anno.addProperty(
+            sc.data.Databroker.ANNO_NS.hasTarget,
+            sc.util.Namespaces.wrapWithAngleBrackets(targetUri)
+        );
+    }
+
+    return anno;
+};
+
+
