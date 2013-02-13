@@ -11,6 +11,7 @@ goog.require('sc.canvas.ZoomSliderControl');
 
 goog.require('sc.canvas.FabricCanvasViewport');
 goog.require('sc.canvas.FabricCanvas');
+goog.require('sc.canvas.FabricCanvasFactory');
 
 /**
  * A tool for viewing and annotating canvases, which provides an interactive
@@ -115,7 +116,7 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     this.mainViewport.setCanvas(canvas);
     this.mainViewport.zoomToFit();
     
-    var deferredMarqueeCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(
+    var deferredMarqueeCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         canvas.getUri(),
         this.databroker,
         this.marqueeViewport.getDisplaySize()
