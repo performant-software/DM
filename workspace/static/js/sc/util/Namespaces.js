@@ -15,6 +15,7 @@ sc.util.Namespaces.DEFAULT_NAMESPACES = {
     'tei': 'http://www.tei-c.org/ns/1.0/',
     'exif': 'http://www.w3.org/2003/12/exif/ns#',
     'oac': 'http://www.openannotation.org/ns/',
+    'oa': 'http://www.openannotation.org/ns/',
     'dms': 'http://dms.stanford.edu/ns/',
     'cnt': 'http://www.w3.org/2008/content#',
     'owl': 'http://www.w3.org/2002/07/owl#',
@@ -228,16 +229,20 @@ sc.util.Namespaces.prototype.autoExpand = function (ns) {
             var prefix = match[1];
             var fragment = match[2];
             
-            if (this.uriByPrefix.containsKey(prefix)) {
-                return '<' + this.uriByPrefix.get(prefix) + fragment + '>';
-            }
-            else {
-                throw "Prefix " + prefix + " is not in the registered namespaces";
-            }
+            return this.expand(prefix, fragment);
         }
     }
     
     throw "Namespace " + ns + " could not be expanded";
+};
+
+sc.util.Namespaces.prototype.expand = function(prefix, postfix) {
+    if (this.uriByPrefix.containsKey(prefix)) {
+        return '<' + this.uriByPrefix.get(prefix) + postfix + '>';
+    }
+    else {
+        throw "Prefix " + prefix + " is not in the registered namespaces";
+    }
 };
 
 /**

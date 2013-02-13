@@ -209,11 +209,11 @@ atb.viewer.Editor.prototype.updateResourceObject = function () {
  * @param opt_doAfter {function=}
  * @param opt_doAfterScope {object=}
  **/
-atb.viewer.Editor.prototype.saveContents = function (opt_doAfter, opt_doAfterScope, opt_synchronously) {
+atb.viewer.Editor.prototype.saveContents = function (
+    opt_doAfter, opt_doAfterScope, opt_synchronously
+) {
     if (this.resourceId == null) {
-        this.getResourceIdFromServer(this.saveContents, this);
-        
-        return;
+        this.resourceId = this.databroker.createUuid();
     } else {
         //Only makes a server request if local ids are being used in this editor
         this.updateAllPropertiesFromPane();
@@ -221,54 +221,20 @@ atb.viewer.Editor.prototype.saveContents = function (opt_doAfter, opt_doAfterSco
         this.unsavedChanges = false;
         
         var resourceObject = this.updateResourceObject();
-        
-        this.webService.withSavedResource(
-                resourceObject,
-                function (response) {
-                    if (opt_doAfter) {
-                        doAfter = atb.Util.scopeAsyncHandler(opt_doAfter, opt_doAfterScope);
-                        doAfter(response);
-                    }
-                },
-                this,
-                this.flashErrorIcon,
-                opt_synchronously
-            );
+
+        this.clientApp.databroker.updateTextResource(
+            resourceObject.id,
+            resourceObject.contents,
+            {
+                'title': resourceObject.title, 
+                'purpose': resourceObject.purpose
+            }
+        );
         
         this.registerThumbnailToPanel();
-
     }
 };
 
-atb.viewer.Editor.prototype.getResourceIdFromServer = function (opt_onFinish, opt_onFinishScope) {
-    if (this.resourceId == null) {
-        this.webService.withUid(
-            function (uid) {
-                console.log("got uid for new text: ", uid);
-                this.resourceId = uid;
-                
-                if(opt_onFinish) {
-                    if (opt_onFinishScope) {
-                        opt_onFinish.call(opt_onFinishScope);
-                    }
-                    else {
-                        opt_onFinish();
-                    }
-                }
-            },
-            this
-        );
-    } else {
-        if(opt_onFinish) {
-            if (opt_onFinishScope) {
-                opt_onFinish.call(opt_onFinishScope);
-            }
-            else {
-                opt_onFinish();
-            }
-        }
-    }
-};
 
 /** @deprecated */
 atb.viewer.Editor.prototype.replaceLocalIdsWithServerIds = function (
@@ -440,13 +406,19 @@ atb.viewer.Editor.prototype.render=function()
 
     this.syncTitle();//hack
     
-    this.autoSaveIntervalObject = window.setInterval(atb.Util.scopeAsyncHandler(this.saveIfModified, this), this.autoSaveInterval);
+    this.autoSaveIntervalObject = window.setInterval(
+        atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
+        this.autoSaveInterval);
+
     var callBeforeUnload = function () {
         this.saveIfModified(true);
     };
-    this.clientApp.registerFunctionToCallBeforeUnload(atb.Util.scopeAsyncHandler(callBeforeUnload, this));
+    this.clientApp.registerFunctionToCallBeforeUnload(
+        atb.Util.scopeAsyncHandler(callBeforeUnload, this));
     
-    goog.events.listen(this.clientApp.getEventDispatcher(), atb.events.LinkingModeExited.EVENT_TYPE, this.handleLinkingModeExited, false, this);
+    goog.events.listen(this.clientApp.getEventDispatcher(), 
+                       atb.events.LinkingModeExited.EVENT_TYPE, 
+                       this.handleLinkingModeExited, false, this);
 };
 
 atb.viewer.Editor.prototype.renderHelper_ = function () {
@@ -1542,7 +1514,7 @@ atb.viewer.Editor.prototype.saveDelayAfterLastChange = 2.5 * 1000;
 
 atb.viewer.Editor.prototype.saveIfModified = function (opt_synchronously) {
     var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
-                          (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
+        (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
     
     if (this.hasUnsavedChanges() && isNotStillTyping) {
         this.saveContents(null, null, opt_synchronously);

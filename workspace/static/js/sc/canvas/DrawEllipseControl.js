@@ -32,19 +32,19 @@ goog.inherits(sc.canvas.DrawEllipseControl, sc.canvas.DrawFeatureControl);
 sc.canvas.DrawEllipseControl.prototype.activate = function() {
     sc.canvas.DrawFeatureControl.prototype.activate.call(this);
 
-    var viewportDiv = this.viewport.viewportDiv;
-    jQuery(viewportDiv).bind('mousedown', this.proxiedHandleMousedown);
+    var viewportDiv = this.viewport.getElement();
+    this.viewport.fabricCanvas.on('mouse:down', this.proxiedHandleMousedown);
 };
 
 /**
  * @inheritDoc
  */
 sc.canvas.DrawEllipseControl.prototype.deactivate = function() {
-    var viewportDiv = this.viewport.viewportDiv;
+    var viewportDiv = this.viewport.getElement();
 
-    jQuery(viewportDiv).unbind('mousedown', this.proxiedHandleMousedown);
-    jQuery(viewportDiv).unbind('mousemove', this.proxiedHandleMousemove);
-    jQuery(viewportDiv).unbind('mouseup', this.proxiedHandleMouseup);
+    this.viewport.fabricCanvas.off('mouse:down', this.proxiedHandleMousedown);
+    this.viewport.fabricCanvas.off('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:up', this.proxiedHandleMouseup);
 
     sc.canvas.DrawFeatureControl.prototype.deactivate.call(this);
 };
@@ -54,10 +54,12 @@ sc.canvas.DrawEllipseControl.prototype.deactivate = function() {
  * saving it, then adding mousemove handlers to resize the ellipse.
  * @param {Event} event The jQuery event fired.
  */
-sc.canvas.DrawEllipseControl.prototype.handleMousedown = function(event) {
+sc.canvas.DrawEllipseControl.prototype.handleMousedown = function(opts) {
+    var event = opts.e;
+
     this.beginDrawFeature();
 
-    var viewportDiv = this.viewport.viewportDiv;
+    var viewportDiv = this.viewport.getElement();
     var canvas = this.viewport.canvas;
     
     this.viewport.registerHandledMouseEvent(event);
@@ -76,15 +78,17 @@ sc.canvas.DrawEllipseControl.prototype.handleMousedown = function(event) {
 
     this.feature = canvas.addEllipse(cx, cy, rx, ry, this.uri);
 
-    jQuery(viewportDiv).bind('mousemove', this.proxiedHandleMousemove);
-    jQuery(viewportDiv).bind('mouseup', this.proxiedHandleMouseup);
+    this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);
 };
 
 /**
  * Handles a mousemove event by resizing the saved ellipse.
  * @param {Event} event The jQuery event fired.
  */
-sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(event) {
+sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(opts) {
+    var event = opts.e;
+
     this.viewport.registerHandledMouseEvent(event);
     
     var canvasCoords = this.clientToCanvasCoord(event.clientX, event.clientY);
@@ -97,11 +101,15 @@ sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(event) {
     var cx = this.x + rx;
     var cy = this.y + ry;
 
-    this.feature.attr({
-        'cx': cx,
-        'cy': cy,
+    var coords = this.viewport.canvas.toCenteredCanvasCoord(cx, cy);
+
+    this.feature.set({
+        'left': coords.x,
+        'top': coords.y,
         'rx': Math.abs(rx),
-        'ry': Math.abs(ry)
+        'ry': Math.abs(ry),
+        'width': Math.abs(rx),
+        'height': Math.abs(ry)
     });
 
     this.updateFeature();
@@ -111,12 +119,15 @@ sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(event) {
  * Handles a mouseup event by completing the ellipse.
  * @param {Event} event The jQuery event fired.
  */
-sc.canvas.DrawEllipseControl.prototype.handleMouseup = function(event) {
+sc.canvas.DrawEllipseControl.prototype.handleMouseup = function(opts) {
+    var event = opts.e;
+
     this.viewport.registerHandledMouseEvent(event);
     
-    var viewportDiv = this.viewport.viewportDiv;
+    var viewportDiv = this.viewport.getElement();
 
-    jQuery(viewportDiv).unbind('mousemove', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:move', this.proxiedHandleMousemove);
+    this.viewport.fabricCanvas.off('mouse:up', this.proxiedHandleMouseup);
 
     this.viewport.registerHandledMouseEvent(event);
 

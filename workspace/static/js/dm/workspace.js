@@ -112,8 +112,10 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         repositories: [
             {
                 title: 'Yale University',
-                url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
-                uri: 'http://manifests.ydc2.yale.edu/Repository'
+                // url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
+                url: '/store/manifests/http://manifests.ydc2.yale.edu/MetaManifest',
+                uri: 'http://manifests.ydc2.yale.edu/MetaManifest'
+                // uri: 'http://manifests.ydc2.yale.edu/Repository'
             }
         ]
     });
@@ -303,6 +305,13 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
     setupControls(clientApp, workingResourcesViewer);
+
+    var autoSaveInterval = 10 * 1000;
+    var autoSaveIntervalObject = window.setInterval(
+        function() {
+            clientApp.databroker.sync();
+        },
+        autoSaveInterval);
 }
 
 /* REMOVE

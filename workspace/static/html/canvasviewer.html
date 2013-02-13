@@ -2,7 +2,7 @@
 
 <html>
 <head>
-    <title>Canvas Viewer</title>
+    <title>FabricJS Canvas Viewer</title>
     
     <script src="../js/closure-library/closure/goog/base.js" type="text/javascript"></script>
     <script src="../js/atb-deps.js" type="text/javascript"></script>
@@ -13,11 +13,8 @@
         goog.require('jquery.event.drag');
         
         goog.require('sc.data.Databroker');
-        goog.require('sc.canvas.Canvas');
-        goog.require('sc.canvas.CanvasViewport');
-        goog.require('sc.canvas.CanvasToolbar');
-        goog.require('sc.canvas.CanvasViewer');
-        goog.require('sc.canvas.CommentedCanvasViewer');
+        goog.require('sc.canvas.FabricCanvas');
+        goog.require('sc.canvas.FabricCanvasViewport');
         
         goog.require('sc.canvas.PanZoomGesturesControl');
         goog.require('sc.canvas.DrawEllipseControl');
@@ -84,8 +81,8 @@
 //    viewport.resize('100%', '613');
 //    viewport.render(canvasViewportDiv);
 //    
-//    var panZoomControl = new sc.canvas.PanZoomGesturesControl(viewport);
-//    panZoomControl.activate();
+   // var panZoomControl = new sc.canvas.PanZoomGesturesControl(viewport);
+   // panZoomControl.activate();
 //    
 //    var drawEllipseControl = new sc.canvas.DrawEllipseControl(viewport, databroker);
 //    var drawCircleControl = new sc.canvas.DrawCircleControl(viewport, databroker);
@@ -97,14 +94,20 @@
 //    var toolbar = new sc.canvas.CanvasToolbar(viewport, databroker);
 //    toolbar.render(canvasToolbarDiv);
     
-    var viewer = new sc.canvas.CommentedCanvasViewer({
-        databroker: databroker
+    var viewer = new sc.canvas.FabricCanvasViewport(databroker, {
+        doc: window.document
     });
     viewer.render(canvasViewportDiv);
-    viewer.resize('100%', 650);
+    viewer.resize(jQuery(canvasViewportDiv).width(), 650);
+    jQuery(window).on('resize', function() {
+        viewer.resize(jQuery(canvasViewportDiv).width(), 650);
+    });
+
+    var panZoomControl = new sc.canvas.PanZoomGesturesControl(viewer);
+    panZoomControl.activate();
     
     var setCanvasByUri = function(uri) {
-        viewer.addDeferredCanvas(sc.canvas.Canvas.createDeferredCanvas(uri, databroker, viewer.getDisplaySize()));
+        viewer.addDeferredCanvas(sc.canvas.FabricCanvas.createDeferredCanvas(uri, databroker));
     };
     
     var openHandler = function (event) {
@@ -115,12 +118,17 @@
 
         if (event.resource.hasAnyType('dms:Canvas')) {
             var withCollection = function (deferreds) {
-                var deferredCanvas = sc.canvas.Canvas.createDeferredCanvas(uri, databroker, viewer.getDisplaySize(), urisInOrder, index);
+                var deferredCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(uri, databroker, urisInOrder, index);
                 
                 viewer.addDeferredCanvas(deferredCanvas);
             };
             
-            databroker.getDeferredResourceCollection([uri].concat(databroker.getManuscriptAggregationUris(manifestUri))).allComplete(withCollection).singleFail(function () {console.error(arguments);});
+            databroker.getDeferredResourceCollection(
+                [uri].concat(databroker.getManuscriptAggregationUris(manifestUri))).
+                    allComplete(withCollection).singleFail(function () {
+                        console.error(arguments);
+                    }
+            );
             
             event.preventDefault();
         }
@@ -128,18 +136,10 @@
     
     var repoBrowser = new sc.RepoBrowser({
         databroker: databroker,
-        repositories: [
-            {
-                title: 'Stanford DMS',
-                url: 'http://dms-data.stanford.edu/Repository.xml',
-                uri: 'http://dms-data.stanford.edu/Repository'
-            },
-            {
-                title: 'Shared Canvas',
-                url: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml',
-                uri: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository'
-            }
-        ],,
+        repositoryUrlsByName: {
+            'Stanford DMS': 'http://dms-data.stanford.edu/Repository.xml',
+            'Shared Canvas': 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml'
+        },
         noImages: false,
         showAddButton: false
     });
@@ -155,7 +155,7 @@
 //    databroker.fetchRdf(manifestUrl, function () {
 //        databroker.getDeferredResourceCollection([manuscriptUri].concat(databroker.getManuscriptAggregationUris(manuscriptUri))).allComplete(function (deferreds) {
 //            
-//            var deferredCanvas = sc.canvas.Canvas.createDeferredCanvas(canvasUri, databroker, {width: 600, height: 600});
+//            var deferredCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(canvasUri, databroker, {width: 600, height: 600});
 //            viewport.addDeferredCanvas(deferredCanvas);
 //        }).singleFail(function () {console.error(arguments);});
 //    });
