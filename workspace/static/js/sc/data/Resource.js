@@ -296,13 +296,3 @@ sc.data.Resource.prototype.dump = function() {
 sc.data.Resource.prototype.getSourceUrls = function() {
     return this.databroker.getSourceUrls(this.bracketedUri);
 };
-
-sc.data.Resource.prototype.addProperty = function(predicate, object) {
-    this.databroker.addNewTriple(new sc.data.Triple(
-        this.bracketedUri,
-        predicate,
-        object
-    ));
-
-    return this;
-};
