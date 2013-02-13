@@ -117,30 +117,26 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
         return;
     }
     
-    this.hardcodeFeatureTransformations();
-    
-    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) || this.databroker.createUuid();
-    var constrainedTargetUri = this.databroker.createUuid();
+    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) ||
+        this.databroker.createUuid();
     var canvasUri = this.viewport.canvas.getUri();
     
-    var svgString = this.exportFeatureToSvg();
-    svgString = sc.util.Namespaces.escapeForXml(svgString);
+    var svgString = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
+
+    var selector = this.databroker.createResource(
+        contentUri, 'oac:SvgSelector');
+    selector.addType('cnt:ContentAsText');
+    selector.addProperty('cnt:chars', '"' + svgString + '"');
+    selector.addProperty('cnt:characterEncoding', '"UTF-8"');
     
-    var content = this.databroker.createResource(
-        contentUri,
-        'cnt:ContentAsText'
-    );
-    content.addProperty('cnt:characterEncoding', '"UTF-8"');
-    content.addProperty('cnt:chars', '"' + svgString + '"');
-    
-    var constrainedTarget = this.databroker.createResource(
-        constrainedTargetUri,
-        'oac:ConstrainedTarget'
-    );
-    constrainedTarget.addProperty('oac:constrains',
-                                  '<' + canvasUri + '>');
-    constrainedTarget.addProperty('oac:constrainedBy',
-                                  '<' + contentUri + '>');
+    var specificResource = this.databroker.createResource(
+        this.databroker.createUuid(), 'oac:SpecificResource');
+    specificResource.addProperty('oac:hasSource', '<' + canvasUri + '>');
+    specificResource.addProperty('oac:hasSelector', selector.bracketedUri);
+
+    var annotation = this.databroker.createResource(
+        this.databroker.createUuid(), 'oac:Annotation');
+    annotation.addProperty('oac:hasTarget', specificResource.bracketedUri);
 };
 
 /**
@@ -166,24 +162,6 @@ sc.canvas.FeatureControl.prototype.setFeatureCoordinates = function(x, y) {
     
     this.viewport.canvas.setFeatureCoords(feature, x, y);
 };
-
-/**
- * If the feature is a path, any transformations on the path will be converted
- * into new path commands, and the old transformations will be removed.
- */
-sc.canvas.FeatureControl.prototype.hardcodeFeatureTransformations =
-function() {
-    var feature = this.feature;
-    
-    if (feature.type == 'path') {
-        // var transformedPath = Raphael.transformPath(feature.attr('path'),
-        //                                             feature.transform());
-        
-        // feature.attr('path', transformedPath);
-        // feature.transform('');
-    }
-};
-
 /**
  * Sets whether the control should save its changes to the databroker.
  *

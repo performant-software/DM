@@ -585,11 +585,14 @@ sc.data.Databroker.prototype.getResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.createResource = function(uri, type) {
+    if (uri == null) {
+        uri = this.createUuid();
+    }
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
     var triple = new sc.data.Triple(
         uri,
-        this.namespaceUtil.autoExpand('rdf:type'),
+        this.namespaceUtil.expand('rdf', 'type'),
         this.namespaceUtil.autoExpand(type)
     );
     

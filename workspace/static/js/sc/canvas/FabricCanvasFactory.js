@@ -1,6 +1,7 @@
 goog.provide('sc.canvas.FabricCanvasFactory');
 
 goog.require('sc.canvas.FabricCanvas');
+goog.require('goog.array');
 
 sc.canvas.FabricCanvasFactory.createFromResource = function(resource) {
     var uri = resource.getUri();
@@ -95,7 +96,7 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
 
             sc.canvas.FabricCanvasFactory.findAndAddImages(canvas);
             sc.canvas.FabricCanvasFactory.findAndAddSegments(canvas);
-            sc.canvas.FabricCanvasFactory.findAndAddConstraints(canvas);
+            sc.canvas.FabricCanvasFactory.findAndAddSelectors(canvas);
             sc.canvas.FabricCanvasFactory.findAndAddComments(canvas);
 
             if (deferredResource.state() == 'resolved') {
@@ -193,35 +194,47 @@ sc.canvas.FabricCanvasFactory.findAndAddComments = function(canvas) {
     }
 };
 
-sc.canvas.FabricCanvasFactory.findAndAddConstraints = function(canvas) {
+sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
     var databroker = canvas.databroker;
 
-    var constraintUris = databroker.getUrisWithProperty(
-        sc.canvas.FabricCanvas.RDF_ENUM.constrains, '<' + canvas.uri + '>'
-    );
+    var specificResourceUris = databroker.getUrisWithProperty(
+        'oac:hasSource', '<' + canvas.uri + '>');
+    for (var i=0; i<specificResourceUris.length; i++) {
+        var specificResource = databroker.getResource(specificResourceUris[i]);
 
-    var self = canvas;
+        if (!specificResource.hasType('oac:SpecificResource')) {
+            goog.array.removeAt(specificResourceUris, i);
+            i--;
 
-    for (var i = 0, len = constraintUris.length; i < len; i++) {
-        var constraintUri = constraintUris[i];
-        var constrainedTargetResource = databroker.getResource(constraintUri);
+            // In the future, this should also check that there exists an annotation which targets the specific resource
+        }
+    }
 
-        var contentResourceUris = constrainedTargetResource.getProperties(
-                                      sc.canvas.FabricCanvas.RDF_ENUM.constrainedBy);
+    for (var i=0, len=specificResourceUris.length; i<len; i++) {
+        var specificResource = databroker.getResource(specificResourceUris[i]);
 
-        for (var j = 0, lenj = contentResourceUris.length; j < lenj; j++) {
-            var contentResourceUri = contentResourceUris[j];
-            var contentResource = databroker.getResource(contentResourceUri);
+        var selectorUris = specificResource.getProperties('oac:hasSelector');
+        for (var j=0, lenj=selectorUris.length; j<lenj; j++) {
+            var selector = databroker.getResource(selectorUris[j]);
 
-            var content = contentResource.getOneProperty(
-                                         sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
-            
-            if (content) {
-                if (self.featuresByUri.containsKey(constraintUri)) {
-                    self.removeObjectByUri(constraintUri);
+            if (!selector.hasType('oac:SvgSelector')) {
+                continue;
+            }
+
+            if (selector.hasType('cnt:ContentAsText')) {
+                var svgText = selector.getOneProperty('cnt:chars');
+
+                if (svgText) {
+                    if (canvas.featuresByUri.containsKey(constraintUri)) {
+                        canvas.removeObjectByUri(constraintUri);
+                    }
+                    
+                    canvas.addFeatureFromTagString(svgText, constraintUri);
                 }
-                
-                self.addFeatureFromTagString(content, constraintUri);
+            }
+            else {
+                // The selector uri should be treated as a url to an svg document
+                // TODO
             }
         }
     }
