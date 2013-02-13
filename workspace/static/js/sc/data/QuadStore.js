@@ -29,6 +29,25 @@ sc.data.QuadStore = function(opt_quads) {
 };
 
 /**
+ * @private
+ * Returns a set of quads matching the specified pattern.
+ * (null or undefined is treated as a wildcard)
+ *
+ * IMPORTANT: Modifying this set modifies the index.
+ * 
+ * @param  {string|null|undefined} subject    The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined} predicate  The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined} object     The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined} context    The context to search for, or null as a wildcard.
+ * @return {goog.structs.Set.<sc.data.Quad>}  The set of quads matching the query.
+ */
+sc.data.QuadStore.prototype._queryReturningSet = function(subject, predicate, object, context) {
+    var key = sc.data.QuadStore.getIndexKeyForQuery(subject, predicate, object, context);
+
+    return this.indexedQuads.get(key, true);
+};
+
+/**
  * Returns a set of quads matching the specified pattern.
  * (null or undefined is treated as a wildcard)
  * @param  {string|null|undefined} subject    The subject to search for, or null as a wildcard.
@@ -38,9 +57,7 @@ sc.data.QuadStore = function(opt_quads) {
  * @return {goog.structs.Set.<sc.data.Quad>}  A set of quads matching the query.
  */
 sc.data.QuadStore.prototype.queryReturningSet = function(subject, predicate, object, context) {
-    var key = sc.data.QuadStore.getIndexKeyForQuery(subject, predicate, object, context);
-
-    return this.indexedQuads.get(key, true);
+    return this._queryReturningSet(subject, object, predicate, object, context).clone();
 };
 
 /**
@@ -50,10 +67,23 @@ sc.data.QuadStore.prototype.queryReturningSet = function(subject, predicate, obj
  * @param  {string|null|undefined} predicate The predicate to search for, or null as a wildcard.
  * @param  {string|null|undefined} object    The object to search for, or null as a wildcard.
  * @param  {string|null|undefined} context   The context to search for, or null as a wildcard.
- * @return {array.<sc.data.Quad>}            A set of quads matching the query.
+ * @return {array.<sc.data.Quad>}            A list of quads matching the query.
  */
 sc.data.QuadStore.prototype.query = function(subject, predicate, object, context) {
-    return this.queryReturningSet(subject, predicate, object, context);
+    return this._queryReturningSet(subject, predicate, object, context).getValues();
+};
+
+/**
+ * Returns the number of quads matching the specified pattern.
+ * (null or undefined is treated as a wildcard)
+ * @param  {string|null|undefined} subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined} predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined} object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined} context   The context to search for, or null as a wildcard.
+ * @return {Number}                          The number of quads matching the query.
+ */
+sc.data.QuadStore.prototype.numQuadsMatchingQuery = function(subject, predicate, object, context) {
+    retun this._queryReturningSet(subject, predicate, object, context).getCount();
 };
 
 /**
