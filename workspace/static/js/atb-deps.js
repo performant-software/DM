@@ -174,7 +174,7 @@ goog.addDependency('../../../sc/canvas/DrawLineControl.js', ['sc.canvas.DrawLine
 goog.addDependency('../../../sc/canvas/DrawPolygonControl.js', ['sc.canvas.DrawPolygonControl'], ['sc.canvas.DrawLineControl']);
 goog.addDependency('../../../sc/canvas/DrawRectControl.js', ['sc.canvas.DrawRectControl'], ['sc.canvas.DrawFeatureControl']);
 goog.addDependency('../../../sc/canvas/FabricCanvas.js', ['sc.canvas.FabricCanvas'], ['fabric', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map', 'goog.structs.Set']);
-goog.addDependency('../../../sc/canvas/FabricCanvasFactory.js', ['sc.canvas.FabricCanvasFactory'], ['sc.canvas.FabricCanvas']);
+goog.addDependency('../../../sc/canvas/FabricCanvasFactory.js', ['sc.canvas.FabricCanvasFactory'], ['goog.array', 'sc.canvas.FabricCanvas']);
 goog.addDependency('../../../sc/canvas/FabricCanvasViewport.js', ['sc.canvas.FabricCanvasViewport', 'sc.canvas.FabricCanvasViewportEvent'], ['fabric', 'goog.async.Throttle', 'goog.dom.DomHelper', 'goog.events.Event', 'goog.events.EventTarget', 'goog.object', 'goog.structs.Set', 'jquery.jQuery']);
 goog.addDependency('../../../sc/canvas/FeatureControl.js', ['sc.canvas.FeatureControl'], ['sc.canvas.Control']);
 goog.addDependency('../../../sc/canvas/ImageChoicePicker.js', ['sc.canvas.ImageChoicePicker'], ['goog.structs.Set', 'goog.ui.Button', 'goog.ui.CustomButton', 'jquery.jQuery']);
@@ -183,7 +183,7 @@ goog.addDependency('../../../sc/canvas/PanZoomGesturesControl.js', ['sc.canvas.P
 goog.addDependency('../../../sc/canvas/ZoomSliderControl.js', ['sc.canvas.ZoomSliderControl'], ['jquery.jQuery', 'jquery.jQueryUI', 'sc.canvas.Control']);
 goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'jquery.rdfquery', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.Resource', 'sc.data.Triple', 'sc.data.TripleStore', 'sc.util.DefaultDict', 'sc.util.DeferredCollection', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], []);
-goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.array', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
+goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.array', 'goog.string', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.structs.Set', 'jquery.jQuery', 'sc.data.Triple', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Triple.js', ['sc.data.Triple'], []);
 goog.addDependency('../../../sc/data/TripleStore.js', ['sc.data.TripleStore'], ['goog.array', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);

@@ -2,10 +2,20 @@ goog.provide('sc.data.QuadStore');
 
 goog.require('goog.array');
 goog.require('goog.structs.Set');
+goog.require('goog.string');
 goog.require('sc.util.DefaultDict');
 goog.require('sc.util.Namespaces');
 
-
+/**
+ * An indexed store of {sc.data.Quad} Quads (triples with a context),
+ * which allows fast querying.
+ *
+ * @class 
+ * 
+ * @author tandres@drew.edu (Tim Andres)
+ * 
+ * @param {?array.<sc.data.Quad>} opt_quads Quads to add to the store.
+ */
 sc.data.QuadStore = function(opt_quads) {
     this.quads = new goog.structs.Set();
 
@@ -18,14 +28,38 @@ sc.data.QuadStore = function(opt_quads) {
     }
 };
 
-sc.data.QuadStore.prototype.query = function(subject, object, predicate, context) {
-    var key = sc.data.QuadStore.getIndexKeyForQuery(subject, object, predicate, context);
+/**
+ * Returns a set of quads matching the specified pattern.
+ * (null or undefined is treated as a wildcard)
+ * @param  {string|null|undefined} subject    The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined} predicate  The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined} object     The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined} context    The context to search for, or null as a wildcard.
+ * @return {goog.structs.Set.<sc.data.Quad>}  A set of quads matching the query.
+ */
+sc.data.QuadStore.prototype.queryReturningSet = function(subject, predicate, object, context) {
+    var key = sc.data.QuadStore.getIndexKeyForQuery(subject, predicate, object, context);
 
-    var set = this.indexedQuads.get(key, true);
-
-    return set.getValues();
+    return this.indexedQuads.get(key, true);
 };
 
+/**
+ * Returns an array of quads matching the specified pattern.
+ * (null or undefined is treated as a wildcard)
+ * @param  {string|null|undefined} subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined} predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined} object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined} context   The context to search for, or null as a wildcard.
+ * @return {array.<sc.data.Quad>}            A set of quads matching the query.
+ */
+sc.data.QuadStore.prototype.query = function(subject, predicate, object, context) {
+    return this.queryReturningSet(subject, predicate, object, context);
+};
+
+/**
+ * Adds a quad to the store, and indexes it.
+ * @param {sc.data.Quad} quad Quad to add.
+ */
 sc.data.QuadStore.prototype.addQuad = function(quad) {
     var keys = sc.data.QuadStore.generateIndexKeys(quad);
 
@@ -38,18 +72,41 @@ sc.data.QuadStore.prototype.addQuad = function(quad) {
     return this;
 };
 
+/**
+ * Adds a collection of quads to the store, and indexes them.
+ * @param {array.<sc.data.Quad>|goog.structs.Collection.<sc.data.Quad>}
+ *        quads An array or collection of quads.
+ */
 sc.data.QuadStore.prototype.addQuads = function(quads) {
-    for (var i=0, len=quads.length; i<len; i++) {
-        this.addQuad(quads[i]);
-    }
+    goog.structs.forEach(quads, function(quad) {
+        this.addQuad(quad);
+    }, this);
 
     return this;
 };
 
+/**
+ * Returns a list of all quads in the store.
+ * @return {Array.<sc.data.Quad>} A list of all the quads in the store.
+ */
 sc.data.QuadStore.prototype.getQuads = function() {
     return this.quads.getValues();
 };
 
+/**
+ * Returns the number of quads in the store.
+ * @return {Number} The number of quads in the store.
+ */
+sc.data.QuadStore.prototype.getCount = function() {
+    return this.quads.getCount();
+};
+
+/**
+ * Generates all possible keys under which the given quad should be
+ * stored in the index.
+ * @param  {sc.data.Quad} quad The quad to index.
+ * @return {array.<string>}    A list of all possible keys for the index.
+ */
 sc.data.QuadStore.generateIndexKeys = function(quad) {
     var keys = [
         sc.data.QuadStore.getIndexKeyForQuery(
@@ -111,19 +168,46 @@ sc.data.QuadStore.generateIndexKeys = function(quad) {
     return keys;
 };
 
-sc.data.QuadStore.getIndexKeyForQuery = function(subject, object, predicate, context) {
+/**
+ * Wildcard character to be used in the index.
+ * @type {String}
+ * @constant
+ */
+sc.data.QuadStore.WILDCARD = '*';
+
+/**
+ * @private
+ * Returns a wildcard if the string is null or the wildcard string,
+ * or the hash code of the string otherwise.
+ * This limits the length of the index keys.
+ * @param  {string|null} str The string to encode.
+ * @return {string}          The encoded string.
+ */
+sc.data.QuadStore._hashCodeOrWildcard = function(str) {
+    if (str == null || str == sc.data.QuadStore.WILDCARD) {
+        return sc.data.QuadStore.WILDCARD;
+    }
+    else {
+        return goog.string.hashCode(str);
+    }
+};
+
+/**
+ * Returns the appropriate key for the index for a given query, treating
+ * null as a wildcard.
+ * @param  {string|null|undefined} subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined} predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined} object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined} context   The context to search for, or null as a wildcard.
+ * @return {string}                          The index key to use.
+ */
+sc.data.QuadStore.getIndexKeyForQuery = function(subject, predicate, object, context) {
     var key = [];
 
-    for (var i=0, len=arguments.length; i<len; i++) {
-        if (arguments[i] == null) {
-            arguments[i] = '*';
-        }
-    }
-
-    key.push('__s:' + subject);
-    key.push('__o:' + object);
-    key.push('__p:' + predicate);
-    key.push('__c:' + context);
+    key.push('_s:' + sc.data.QuadStore._hashCodeOrWildcard(subject));
+    key.push('_o:' + sc.data.QuadStore._hashCodeOrWildcard(object));
+    key.push('_p:' + sc.data.QuadStore._hashCodeOrWildcard(predicate));
+    key.push('_c:' + sc.data.QuadStore._hashCodeOrWildcard(context));
 
     return key.join(';');
 };
