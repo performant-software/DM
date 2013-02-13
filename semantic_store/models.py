@@ -1,19 +1,16 @@
 import datetime
 from django.contrib.auth.models import User
 from django.db import models
-from permissions import Permissions
+from permissions import Permission
 
+# class Url(models.Model):
+#     url = models.URLField(max_length=2000)
+#     fetched = models.DateTimeField(auto_now=True)
 
-class Url(models.Model):
-    url = models.URLField(max_length=2000)
-    fetched = models.DateTimeField(auto_now=True)
-
-
-class ProjectPermissions(models.Model):
-    uri = models.URLField(max_length=2000)
+class ProjectPermission(models.Model):
+    identifier = models.CharField(max_length=2000)
     user = models.ForeignKey(User)
-    permissions = models.CharField(max_length=64, choices=Permissions.choices)
-
+    permission = models.CharField(max_length=64, choices=Permission.choices)
 
 class Text(models.Model):
     identifier = models.CharField(max_length=2000)

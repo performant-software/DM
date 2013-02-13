@@ -1,7 +1,6 @@
 import uuid
 
-from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.views.generic import View
 
 from rdflib import Graph, ConjunctiveGraph, BNode, URIRef
@@ -23,20 +22,28 @@ class GraphView(View):
     def add_node(self, g, node, uri):
         raise NotImplementedError
 
+    def add_triples(self, g, item_g):
+        for t in item_g:
+            g.add(t)
+
+    def remove_triples(self, g, item_g):
+        for s, p, o in item_g:
+            for t in g.triples(s, p, None):
+                g.remove(t)
+
     def create_nodes(self, g):
         num_nodes = 0
         graphs = []
         identifiers = []
         nodes = self.new_nodes(g)
-        with transaction.commit_on_success():
-            for n in nodes:
-                num_nodes += 1
-                if type(n) is BNode:
-                    identifier = URIRef(uuid.uuid4())
-                else:
-                    identifier = n
-                identifiers.append(identifier)
-                graphs.append(self.add_node(g, n, identifier))
+        for n in nodes:
+            num_nodes += 1
+            if type(n) is BNode:
+                identifier = URIRef(uuid.uuid4())
+            else:
+                identifier = n
+            identifiers.append(identifier)
+            graphs.append(self.add_node(g, n, identifier))
         if num_nodes is 1:
             return graphs[0].serialize()
         else:
@@ -49,7 +56,13 @@ class GraphView(View):
             for g in graphs:
                 nodes_str += g.serialize()
             return nodes_str
-            
+
+    def serialized_graph(view, **kwargs):
+        graph_uri = uris.uri(view, **kwargs)
+        g = Graph(store=rdfstore(), identifier=graph_uri)
+        if len(list(g)) == 0:
+            return HttpResponseNotFound(mimetype='text/xml')
+        return HttpResponse(g.serialize(), mimetype='text/xml')
             
     def post(self, *args, **kwargs):
         self.request = args[0]
@@ -66,12 +79,11 @@ class GraphView(View):
         nodes = self.new_nodes(g)
         if not nodes:
             return HttpResponse(status=400, content=self.no_nodes_found())
-
         validator = self.validator(self.request)
         for n in nodes:
             if not validator.valid(g, n):
                 return HttpResponse(status=400, content=validator.failure)
 
         created_str = self.create_nodes(g)
-
         return HttpResponse(status=201, content=created_str)
+

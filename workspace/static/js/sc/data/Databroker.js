@@ -12,6 +12,7 @@ goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
 goog.require('sc.util.Namespaces');
 
+
 /**
  * @class
  *
@@ -47,6 +48,13 @@ sc.data.Databroker = function(options) {
 
 };
 
+sc.data.Databroker.prototype.RESTYPE = {
+    'text': 0, 
+    'project': 1, 
+    'annotation': 2, 
+    'user': 3, 
+    'resource': 4
+};
 
 sc.data.Databroker.prototype.options = {
     proxiedUrlGenerator: function(url) {
@@ -69,8 +77,18 @@ sc.data.Databroker.prototype.options = {
 
         return url;
     },
-    corsEnabledDomains: []
+    corsEnabledDomains: [],
+    dmBaseUri: "http://dm.drew.edu/store/",
+    restHost: location.host,
+    restBasePath: 'store',
+    restProtocol: 'http',
+    restTextPath: 'texts',
+    restProjectPath: 'projects',
+    restResourcePath: 'resources',
+    restAnnotationPath: 'annotations',
+    restUserPath: 'users'
 };
+
 
 /**
  * Returns a proxied url without checking if proxying is necessary.
@@ -1154,6 +1172,16 @@ sc.data.Databroker.prototype.createUuid = function() {
     }
 };
 
+
+sc.data.Databroker.prototype.createTextHttpUri = function() {
+    var uuid = this.createUuid().replace("/urn\:uuid\:/", "");
+    var uri = this.textBaseUri.replace(/\/+$/, "")
+        + "/"
+        + uuid;
+    return uri;
+}
+
+
 /**
  * Returns the urls of the source files from which triples about a given uri were loaded. 
  * @param  {string} uri The uri to search for.
@@ -1178,25 +1206,92 @@ sc.data.Databroker.prototype.getSourceUrls = function(uri) {
 };
 
 
+sc.data.Databroker.prototype._restUri = function(
+    baseUri,
+    projectUri,
+    resType, 
+    resUri, 
+    params
+) {
+    var url = baseUri.replace(/\/+$/, "");
+    url += "/";
+
+    if (projectUri != null) {
+        url += this.options.restProjectPath.replace(/^\/+|\/+$/g, "");
+        url += "/";
+        url += projectUri;
+        url += "/";
+    }
+
+    if (resType == this.RESTYPE.text) {
+        url += this.options.restTextPath.replace(/^\/+|\/+$/g, "");
+        url += "/";
+    } else if (resType == this.RESTYPE.resource) {
+        url += this.options.restResourcePath.replace(/^\/+|\/+$/g, "");
+        url += "/";
+    } else if (resType == this.RESTYPE.annotation) {
+        url += this.options.restAnnotationPath.replace(/^\/+|\/+$/g, "");
+        url += "/";
+    } else if (resType == this.RESTYPE.user) {
+        url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
+        url += "/";
+    }
+    if (resUri != null) {
+        url += resUri;
+    } 
+    if (params != null) {
+        url += "?" + jQuery.param(params);
+    }
+
+    return url;
+};
+
+
+sc.data.Databroker.prototype.restUrl = function(
+    projectUri,
+    resType, 
+    resUri, 
+    params 
+) {
+    var baseUrl = this.options.restProtocol
+        + "://"
+        + this.options.restHost.replace(/\/+$/, "")
+        + "/"
+        + this.options.restBasePath.replace(/^\/+|\/+$/g, "")
+        + "/";
+    return this._restUri(baseUrl, projectUri, resType, resUri, params);
+};
+
+
+sc.data.Databroker.prototype.restUri = function(
+    projectUri,
+    resType, 
+    resUri, 
+    params 
+) {
+    return this._restUri(this.options.dmBaseUri, projectUri, resType, resUri, params);
+}
+
+
 sc.data.Databroker.prototype.syncResources = function() {
-    for (var uri in this.modifiedResources) {
-        if (this.modifiedResources.hasOwnProperty(uri)) {
-            if (this.modifiedResources[uri] == 'text') {
-                var res = this.textResources[uri];
-                var paramStr = jQuery.param(res.attr);
-                console.log("resource to sync:");
-                console.log("\t uri: ", uri);
-                console.log("\t content: ", res.content);
-                console.log("\t params: ", paramStr);
+    for (var identifier in this.modifiedResources) {
+        if (this.modifiedResources.hasOwnProperty(identifier)) {
+            if (this.modifiedResources[identifier] == RESTYPE.text) {
+                var res = this.textResources[identifier];
+                var params = res.attr;
+                var url = this.restUrl(
+                    this.currentProject, RESTYPE.text, identifier, params
+                );
+                console.log("resource to sync:", url);
                 /*
-                    var jqXhr = jQuery.ajax({
-                        type: 'POST',
-                        data: dump,
-                        url: url,
-                        processData: !jQuery.isXMLDoc(dump),
-                        success: successHandler,
-                        error: errorHandler
-                    });
+                var jqXhr = jQuery.ajax({
+                    type: 'POST',
+                    data: dump,
+                    url: url,
+                    processData: !jQuery.isXMLDoc(dump),
+                    success: successHandler,
+                    error: errorHandler
+                });
                 */
             }
         }
@@ -1215,7 +1310,7 @@ sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
         'content': content,
         'attr': attr
     };
-    this.modifiedResources[uri] = 'text';
+    this.modifiedResources[uri] = RESTYPE.text;
 };
 
 
