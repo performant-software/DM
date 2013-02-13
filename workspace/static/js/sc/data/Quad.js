@@ -19,3 +19,13 @@ sc.data.Quad.prototype.equals = function(other) {
 sc.data.Quad.prototype.toString = function() {
     return [this.subject, this.predicate, this.object, this.context, '.'].join(' ');
 };
+
+sc.data.Quad.createFromRdfqueryTriple = function(jqTriple, context) {
+    var subject = jqTriple.subject.toString();
+    var predicate = jqTriple.property.toString();
+    var object = jqTriple.object.toString();
+
+    var triple = new sc.data.Quad(subject, predicate, object, context);
+    
+    return triple;
+};
