@@ -228,16 +228,20 @@ sc.util.Namespaces.prototype.autoExpand = function (ns) {
             var prefix = match[1];
             var fragment = match[2];
             
-            if (this.uriByPrefix.containsKey(prefix)) {
-                return '<' + this.uriByPrefix.get(prefix) + fragment + '>';
-            }
-            else {
-                throw "Prefix " + prefix + " is not in the registered namespaces";
-            }
+            return this.expand(prefix, fragment);
         }
     }
     
     throw "Namespace " + ns + " could not be expanded";
+};
+
+sc.util.Namespaces.prototype.expand = function(prefix, postfix) {
+    if (this.uriByPrefix.containsKey(prefix)) {
+        return '<' + this.uriByPrefix.get(prefix) + postfix + '>';
+    }
+    else {
+        throw "Prefix " + prefix + " is not in the registered namespaces";
+    }
 };
 
 /**
