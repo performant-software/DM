@@ -1214,6 +1214,8 @@ sc.data.Databroker.prototype.createUuid = function() {
     }
 };
 
+<<<<<<< HEAD
+=======
 
 sc.data.Databroker.prototype.createTextHttpUri = function() {
     var uuid = this.createUuid().replace("/urn\:uuid\:/", "");
@@ -1221,6 +1223,30 @@ sc.data.Databroker.prototype.createTextHttpUri = function() {
         + "/"
         + uuid;
     return uri;
+}
+
+
+/**
+ * Returns the urls of the source files from which triples about a given uri were loaded. 
+ * @param  {string} uri The uri to search for.
+ * @return {Array.<string>} An array of source urls.
+ */
+sc.data.Databroker.prototype.getSourceUrls = function(uri) {
+    uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+
+    var triples = this.tripleStore.getTriplesWithSubject(uri).concat(
+        this.tripleStore.getTriplesWithObject(uri)
+    );
+
+    var sources = new goog.structs.Set();
+
+    for (var i=0, len=triples.length; i<len; i++) {
+        var triple = triples[i];
+
+        sources.add(triple.getSource());
+    }
+
+    return sources.getValues();
 };
 
 
@@ -1288,9 +1314,10 @@ sc.data.Databroker.prototype.restUri = function(
     params 
 ) {
     return this._restUri(this.options.dmBaseUri, projectUri, resType, resUri, params);
-};
+}
 
 
+>>>>>>> 74443e1310e19942b940e5c86d0d1d66d4dee3f9
 sc.data.Databroker.prototype.syncResources = function() {
     for (var identifier in this.modifiedResources) {
         if (this.modifiedResources.hasOwnProperty(identifier)) {
@@ -1314,13 +1341,13 @@ sc.data.Databroker.prototype.syncResources = function() {
             }
         }
     }
-};
+}
 
 
 sc.data.Databroker.prototype.sync = function() {
     // console.log("sc.data.Databroker.sync called.");
     this.syncResources();
-};
+}
 
 
 sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {

@@ -159,6 +159,21 @@ var hideRepoBrowser = function() {
     repoBrowser.hidePanelChooser();
 };
 
+
+var setupCurrentProject = function(clientApp, username) {
+    var db = clientApp.databroker;
+    var url = db.restUrl(null, db.RESTYPE.user, username, null);
+    var uri = db.restUri(null, db.RESTYPE.user, username, null);
+    console.log("rest uri:", uri);
+    db.fetchRdf(url, function() {
+        console.log("Got some kind of response.");
+        var uris = db.getAggregationContentsUris(uri);
+        for (var i=0; i<uris.length; i++) {
+            console.log("agg uri:", uris[i]);
+        }
+    });
+}
+
 //TODO: kill the default content of the left/right panes probably and let the panels add the children of those tags themselves as they see fit, during their
 //          tenure of their panelcontainer's tag...
 //			maybe wrap them in another child tag that they "keep" owning and stops being a child when it moves...??
@@ -305,13 +320,15 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
     setupControls(clientApp, workingResourcesViewer);
-
+    setupCurrentProject(clientApp, username);
+    
     var autoSaveInterval = 10 * 1000;
     var autoSaveIntervalObject = window.setInterval(
         function() {
             clientApp.databroker.sync();
         },
         autoSaveInterval);
+    
 }
 
 /* REMOVE
@@ -334,6 +351,8 @@ var search = function(e) {
         );
     }
 };*/
+
+
 
 var showPreferences = function () {
     
