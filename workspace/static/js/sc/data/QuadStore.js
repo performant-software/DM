@@ -83,7 +83,25 @@ sc.data.QuadStore.prototype.query = function(subject, predicate, object, context
  * @return {Number}                          The number of quads matching the query.
  */
 sc.data.QuadStore.prototype.numQuadsMatchingQuery = function(subject, predicate, object, context) {
-    retun this._queryReturningSet(subject, predicate, object, context).getCount();
+    return this._queryReturningSet(subject, predicate, object, context).getCount();
+};
+
+/**
+ * Calls a function with each quad matching the specified pattern.
+ * (null or undefined is treated as a wildcard)
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @param  {Function(sc.data.Quad)} fn        A function which takes a Quad as its first paramater.
+ * @param  {Object}                 [varname] [description]
+ */
+sc.data.QuadStore.prototype.forEachQuadMatchingQuery = function(subject, predicate, object, context, fn, opt_obj) {
+    goog.structs.forEach(
+        this._queryReturningSet(subject, predicate, object, context),
+        fn,
+        opt_obj
+    );
 };
 
 /**
@@ -141,56 +159,56 @@ sc.data.QuadStore.generateIndexKeys = function(quad) {
     var keys = [
         sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
-            quad.object,
             quad.predicate,
+            quad.object,
             quad.context
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
             null,
-            quad.object,
             quad.predicate,
+            quad.object,
             quad.context
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
             null,
-            quad.predicate,
+            quad.object,
             quad.context
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
-            quad.object,
+            quad.predicate,
             null,
             quad.context
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
-            quad.object,
             quad.predicate,
+            quad.object,
             null
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
             null,
             null,
-            quad.predicate,
-            quad.context
-        ),
-        sc.data.QuadStore.getIndexKeyForQuery(
-            quad.subject,
-            null,
-            null,
-            quad.context
-        ),
-        sc.data.QuadStore.getIndexKeyForQuery(
-            quad.subject,
             quad.object,
+            quad.context
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            quad.subject,
+            null,
+            null,
+            quad.context
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            quad.subject,
+            quad.predicate,
             null,
             null
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
-            quad.object,
             quad.predicate,
+            quad.object,
             null
         )
     ];
@@ -235,8 +253,8 @@ sc.data.QuadStore.getIndexKeyForQuery = function(subject, predicate, object, con
     var key = [];
 
     key.push('_s:' + sc.data.QuadStore._hashCodeOrWildcard(subject));
-    key.push('_o:' + sc.data.QuadStore._hashCodeOrWildcard(object));
     key.push('_p:' + sc.data.QuadStore._hashCodeOrWildcard(predicate));
+    key.push('_o:' + sc.data.QuadStore._hashCodeOrWildcard(object));
     key.push('_c:' + sc.data.QuadStore._hashCodeOrWildcard(context));
 
     return key.join(';');
