@@ -7,8 +7,6 @@ goog.require('goog.structs.Set');
 goog.require('jquery.rdfquery');
 goog.require('sc.data.Resource');
 
-goog.require('sc.data.Triple');
-goog.require('sc.data.TripleStore');
 goog.require('sc.data.Quad');
 goog.require('sc.data.QuadStore');
 
@@ -31,8 +29,7 @@ sc.data.Databroker = function(options) {
 
     this.corsEnabledDomains = new goog.structs.Set(this.options.corsEnabledDomains);
 
-    this.namespaceUtil = new sc.util.Namespaces();
-    this.tripleStore = new sc.data.TripleStore(this.namespaceUtil);
+    this.namespaces = new sc.util.Namespaces();
 
     this.quadStore = new sc.data.QuadStore();
 
@@ -45,7 +42,7 @@ sc.data.Databroker = function(options) {
 
     this.rdfByUrl = new goog.structs.Map();
     
-    this.newTriples = [];
+    this.newQuads = [];
 
     this.textResources = {};
     this.modifiedResources = {};
@@ -145,21 +142,21 @@ sc.data.Databroker.ANNO_NS = {
  * @param {string} fullUri
  */
 sc.data.Databroker.prototype.registerNamespace = function(prefix, fullUri) {
-    this.namespaceUtil.addNamespace(prefix, fullUri);
+    this.namespaces.addNamespace(prefix, fullUri);
 };
 
 /**
- * @return {sc.util.NamespaceUtil} The namespace utility object associated with the data store.
+ * @return {sc.util.namespaces} The namespace utility object associated with the data store.
  */
-sc.data.Databroker.prototype.getNamespaceUtil = function() {
-    return this.namespaceUtil;
+sc.data.Databroker.prototype.getnamespaces = function() {
+    return this.namespaces;
 };
 
 /**
- * @return {sc.data.TripleStore} The triple store which holds all rdf data.
+ * @return {sc.data.QuadStore} The quad store which holds all rdf data.
  */
-sc.data.Databroker.prototype.getTripleStore = function() {
-    return this.tripleStore;
+sc.data.Databroker.prototype.getQuadStore = function() {
+    return this.quadStore;
 };
 
 /**
@@ -224,7 +221,7 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr) {
     }
 
     var rdf = jQuery.rdf();
-    this.namespaceUtil.setupRdfQueryPrefixes(rdf);
+    this.namespaces.setupRdfQueryPrefixes(rdf);
 
     try {
         rdf.load(data);
@@ -271,56 +268,58 @@ sc.data.Databroker.isReadableType = function(type) {
 };
 
 /**
- * Takes a {jQuery.rdf} object and parses its triples, adding them to the triple store
+ * Takes a {jQuery.rdf} object and parses its triples, adding them to the quad store
  * @param {jQuery.rdf} rdf
  */
-sc.data.Databroker.prototype.processJQueryRdf = function(rdf, url) {
+sc.data.Databroker.prototype.processJQueryRdf = function(rdf, url, context) {
     var jqTriples = rdf.databank.triples();
 
     for (var i = 0, len = jqTriples.length; i < len; i++) {
         var jqTriple = jqTriples[i];
 
-        var triple = sc.data.Triple.createFromRdfqueryTriple(jqTriple);
-        triple.setSource(url);
-
-        this.tripleStore.addTriple(triple);
+        var quad = sc.data.Quad.createFromRdfqueryTriple(jqTriple, context);
+        this.quadStore.addQuad(quad);
     }
 };
 
 /**
- * Adds a new locally created triple to the triple store, and keeps a reference
- * to it as new. If the triple was not locally created, the triple store's
- * addTriple method should be called instead.
+ * Adds a new locally created quad to the quad store, and keeps a reference
+ * to it as new. If the quad was not locally created, the quad store's
+ * addQuad method should be called instead.
  *
- * @param {sc.data.Triple} triple The triple to be added.
+ * @param {sc.data.Quad} quad The quad to be added.
  */
-sc.data.Databroker.prototype.addNewTriple = function(triple) {
-    this.tripleStore.addTriple(triple);
-    
-    this.newTriples.push(triple);
+sc.data.Databroker.prototype.addNewQuad = function(quad) {
+    this.quadStore.addQuad(quad);
+
+    this.newQuads.push(quad);
+
+    return this;
 };
 
-sc.data.Databroker.prototype.addNewTriples = function(triples) {
-    for (var i=0, len=triples.length; i<len; i++) {
-        this.addNewTriple(triples[i]);
-    }
+sc.data.Databroker.prototype.addNewQuads = function(quads) {
+    goog.structs.forEach(quads, function(quad) {
+        this.addNewQuad(quad);
+    }, this);
+
+    return this;
 };
 
-sc.data.Databroker.prototype.dumpTripleStore = function(opt_outputType) {
-    return this.dumpTriples(this.tripleStore.getAllTriples(), opt_outputType);
+sc.data.Databroker.prototype.dumpQuadStore = function(opt_outputType) {
+    return this.dumpTriples(this.quadStore.getQuads(), opt_outputType);
 };
 
-sc.data.Databroker.prototype.dumpTriples = function(triples, opt_outputType) {
+sc.data.Databroker.prototype.dumpQuads = function(quads, opt_outputType) {
     var rdf = jQuery.rdf();
-    this.namespaceUtil.setupRdfQueryPrefixes(rdf);
+    this.namespaces.setupRdfQueryPrefixes(rdf);
     
-    for (var i=0, len=triples.length; i<len; i++) {
-        var triple = triples[i];
+    for (var i=0, len=quads.length; i<len; i++) {
+        var quad = quads[i];
 
         var jQueryTriple = jQuery.rdf.triple(
-            triple.subject,
-            triple.predicate,
-            triple.object
+            quad.subject,
+            quad.predicate,
+            quad.object
         );
         
         rdf.add(jQueryTriple);
@@ -331,12 +330,12 @@ sc.data.Databroker.prototype.dumpTriples = function(triples, opt_outputType) {
     });
 };
 
-sc.data.Databroker.prototype.dumpNewTriples = function(opt_outputType) {
-    return this.dumpTriples(this.newTriples, opt_outputType);
+sc.data.Databroker.prototype.dumpNewQuads = function(opt_outputType) {
+    return this.dumpQuads(this.newQuads, opt_outputType);
 };
 
-sc.data.Databroker.prototype.postTriples = function(url, triples, opt_handler, opt_format) {
-    var dump = this.dumpTriples(triples, opt_format);
+sc.data.Databroker.prototype.postQuads = function(url, quads, opt_handler, opt_format) {
+    var dump = this.dumpQuads(quads, opt_format);
 
     var self = this;
     
@@ -364,43 +363,47 @@ sc.data.Databroker.prototype.postTriples = function(url, triples, opt_handler, o
     return jqXhr;
 };
 
-sc.data.Databroker.prototype.saveNewTriples = function(url, opt_handler, opt_format) {
-    var self = this;
-    
-    this.postTriples(url, this.getAllTriplesForSave(this.newTriples),
-                     function() {
-                     self.newTriples = [];
-                     
-                     if (jQuery.isFunction(opt_handler)) {
-                         opt_handler.apply(this, arguments);
-                     }
-                     }, opt_format);
+sc.data.Databroker.prototype.saveNewQuads = function(url, opt_handler, opt_format) {
+    this.postQuads(
+        url,
+        this.getAllQuadsForSave(this.newQuads),
+        function() {
+            this.newQuads = [];
+
+            if (jQuery.isFunction(opt_handler)) {
+                opt_handler.apply(this, arguments);
+            }
+        }.bind(this),
+        opt_format
+    );
+
+    return this;
 };
 
-sc.data.Databroker.prototype.getAllTriplesForSave = function(triples) {
+sc.data.Databroker.prototype.getAllQuadsForSave = function(quads) {
     var subjectsAndObjects = new goog.structs.Set();
     
-    for (var i=0, len=triples.length; i<len; i++) {
-        var triple = triples[i];
+    for (var i=0, len=quads.length; i<len; i++) {
+        var quad = quads[i];
         
-        subjectsAndObjects.add(triple.subject);
-        subjectsAndObjects.add(triple.object);
+        subjectsAndObjects.add(quad.subject);
+        subjectsAndObjects.add(quad.object);
     }
     
-    var additionalTriples = [];
+    var additionalQuads = [];
     subjectsAndObjects = subjectsAndObjects.getValues();
     
     for (var i=0, len=subjectsAndObjects.length; i<len; i++) {
-        var uri = subjectsAndObjects[i];
+        var uri = sc.util.Namespaces.wrapWithAngleBrackets(subjectsAndObjects[i]);
         
-        var relatedTriples = this.tripleStore.getTriplesWithSubject(uri);
-        additionalTriples = additionalTriples.concat(relatedTriples);
+        var relatedQuads = this.quadStore.query(uri, null, null, null);
+        additionalQuads = additionalQuads.concat(relatedQuads);
     }
     
-    // No need to add original triples, as they've already been included by
-    // querying for triples with their subjects
+    // No need to add original quads, as they've already been included by
+    // querying for quads with their subjects
     
-    return additionalTriples;
+    return additionalQuads;
 };
 
 /**
@@ -530,10 +533,13 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
 
 sc.data.Databroker.prototype.knowsAboutResource = function(uri) {
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+
+    var numQuads = this.quadStore.numQuadsMatchingQuery(uri, null, null, null) +
+                   this.quadStore.numQuadsMatchingQuery(null, uri, null, null) +
+                   this.quadStore.numQuadsMatchingQuery(null, null, uri, null) +
+                   this.quadStore.numQuadsMatchingQuery(null, null, null, uri);
     
-    var triples = this.tripleStore.getTriplesWithSubject(uri);
-    
-    return triples.length > 0;
+    return numQuads > 0;
 };
 
 /**
@@ -556,31 +562,32 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
     var equivalentUris = this.getEquivalentUris(uri);
     
     var ddict = new sc.util.DefaultDict(function() {
-                                        return new goog.structs.Set();});
+        return new sc.util.DefaultDict(function () {
+            return new goog.structs.Set();
+        });
+    });
     
     for (var i=0, len=equivalentUris.length; i<len; i++) {
-        var equivalentUri = equivalentUris[i];
-        equivalentUri = sc.util.Namespaces.wrapWithAngleBrackets(equivalentUri);
-        
-        var resourceDump = 
-        this.tripleStore.dumpResource(equivalentUri);
-        
-        for (var predicate in resourceDump) {
-            if (resourceDump.hasOwnProperty(predicate)) {
-                ddict.get(predicate).addAll(resourceDump[predicate]);
-            }
-        }
+        var equivalentUri = sc.util.Namespaces.wrapWithAngleBrackets(equivalentUris[i]);
+
+        this.quadStore.forEachQuadMatchingQuery(
+            equivalentUri, null, null, null,
+            function(quad) {
+                ddict.get('__context__:' + quad.context).
+                    get(this.namespaces.prefix(quad.predicate)).
+                    add(this.namespaces.prefix(quad.object));
+            }, this
+        );
     }
     
     var dump = {};
     
-    var predicates = ddict.getKeys();
-    for (var i=0, len=predicates.length; i<len; i++) {
-        var predicate = predicates[i];
-        var objects = ddict.get(predicate).getValues();
-        
-        dump[predicate] = objects;
-    }
+    goog.structs.forEach(ddict, function(predicates, context) {
+        dump[context] = {};
+        goog.structs.forEach(predicates, function(objects, predicate) {
+            dump[context][predicate] = objects.getValues();
+        }, this);
+    }, this);
     
     return dump;
 };
@@ -596,13 +603,14 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
     }
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
-    var triple = new sc.data.Triple(
+    var quad = new sc.data.Quad(
         uri,
-        this.namespaceUtil.expand('rdf', 'type'),
-        this.namespaceUtil.autoExpand(type)
+        this.namespaces.expand('rdf', 'type'),
+        this.namespaces.autoExpand(type),
+        null
     );
     
-    this.addNewTriple(triple);
+    this.addNewQuad(quad);
     
     return this.getResource(uri);
 };
@@ -626,16 +634,21 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
         if (!sc.util.Namespaces.isUri(uri)) {
             continue
         }
-        
-        sameUris.addAll(this.tripleStore.getSubjectsSetWithPredicateAndObject(
-            'owl:sameAs',
-            uri
-        ));
-        
-        sameUris.addAll(this.tripleStore.getObjectsSetWithSubjectAndPredicate(
-            uri,
-            'owl:sameAs'
-        ));
+
+        this.quadStore.forEachQuadMatchingQuery(
+            null, this.namespaces.expand('owl', 'sameAs'), uri, null,
+            function(quad) {
+                sameUris.add(quad.subject)
+            },
+            this
+        );
+        this.quadStore.forEachQuadMatchingQuery(
+            uri, this.namespaces.expand('owl', 'sameAs'), null, null,
+            function(quad) {
+                sameUris.add(quad.object)
+            },
+            this
+        );
     }
     
     if (sc.util.Namespaces.isAngleBracketWrapped(uris[0])) {
@@ -646,12 +659,6 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
     }
 };
 
-/**
- *
- * Note: Although this implementation is slightly more complex, it is
- * much more efficient than checking against the values returned by the
- * getEquivalentUris method.
- */
 sc.data.Databroker.prototype.areEquivalentUris = function(uriA, uriB) {
     uriA = sc.util.Namespaces.wrapWithAngleBrackets(uriA);
     uriB = sc.util.Namespaces.wrapWithAngleBrackets(uriB);
@@ -659,29 +666,11 @@ sc.data.Databroker.prototype.areEquivalentUris = function(uriA, uriB) {
     if (uriA == uriB) {
         return true;
     }
+
+    var numQuads = this.quadStore.numQuadsMatchingQuery(uriA, this.namespaces.expand('owl', 'sameAs'), uriB, null) +
+        this.quadStore.numQuadsMatchingQuery(uriB, this.namespaces.expand('owl', 'sameAs'), uriA, null);
     
-    var set1 = this.tripleStore.getSubjectsSetWithPredicateAndObject(
-        'owl:sameAs',
-        uriA
-    );
-    
-    var set2 = this.tripleStore.getSubjectsSetWithPredicateAndObject(
-        'owl:sameAs',
-        uriB
-    );
-    
-    var set3 = this.tripleStore.getObjectsSetWithSubjectAndPredicate(
-        uriA,
-        'owl:sameAs'
-    );
-    
-    var set4 = this.tripleStore.getObjectsSetWithSubjectAndPredicate(
-        uriB,
-        'owl:sameAs'
-    );
-    
-    return (set1.contains(uriB) || set2.contains(uriA) || set3.contains(uriB) ||
-            set4.contains(uriA));
+    return numQuads > 0;
 };
 
 sc.data.Databroker.prototype.getUrisSetWithProperty = function(predicate, object) {
@@ -692,10 +681,16 @@ sc.data.Databroker.prototype.getUrisSetWithProperty = function(predicate, object
     for (var i=0, len=equivalentObjects.length; i<len; i++) {
         var equivalentObject = equivalentObjects[i];
         
-        uris.addAll(this.tripleStore.getSubjectsSetWithPredicateAndObject(
-            predicate,
-            equivalentObject
-        ));
+        this.quadStore.forEachQuadMatchingQuery(
+            null,
+            this.namespaces.autoExpand(predicate),
+            this.namespaces.autoExpand(object),
+            null,
+            function(quad) {
+                uris.add(quad.subject);
+            },
+            this
+        );
     }
     
     return uris;
@@ -714,11 +709,17 @@ sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predica
     
     for (var i=0, len=equivalentUris.length; i<len; i++) {
         var equivalentUri = equivalentUris[i];
-        
-        properties.addAll(this.tripleStore.getObjectsSetWithSubjectAndPredicate(
-            equivalentUri,
-            predicate
-        ));
+
+        this.quadStore.forEachQuadMatchingQuery(
+            sc.util.Namespaces.wrapWithAngleBrackets(equivalentUri),
+            this.namespaces.autoExpand(predicate),
+            null,
+            null,
+            function(quad) {
+                properties.add(quad.object);
+            },
+            this
+        );
     }
     
     return properties;
@@ -818,7 +819,7 @@ sc.data.Databroker.prototype.getResourceTargetAnnoIds = function(resourceUri, op
         return sc.util.Namespaces.stripAngleBrackets(annoIds.getValues());
     }
     else {
-        var type = this.namespaceUtil.autoExpand(opt_annoType);
+        var type = this.namespaces.autoExpand(opt_annoType);
 
         var typedAnnoIds = this.getUrisSetWithProperty('rdf:type', type);
         
@@ -844,7 +845,7 @@ sc.data.Databroker.prototype.getResourceBodyAnnoIds = function(resourceUri, opt_
         return annoIds.getValues();
     }
     else {
-        var type = this.namespaceUtil.autoExpand(opt_annoType);
+        var type = this.namespaces.autoExpand(opt_annoType);
 
         var typedAnnoIds = this.getUrisSetWithProperty('rdf:type', type);
 
@@ -977,18 +978,32 @@ sc.data.Databroker.prototype.getConstraintValuesOnResource = function(uri) {
 
 sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
     url = sc.util.Namespaces.wrapWithAngleBrackets(url);
-    var uris = this.tripleStore.getObjectsWithSubjectAndPredicate(
-        url, 
-        'ore:describes'
+
+    var uris = new goog.structs.Set();
+
+    this.quadStore.forEachQuadMatchingQuery(
+        url,
+        this.namespaces.expand('ore', 'describes'),
+        null,
+        null,
+        function(quad) {
+            uris.add(quad.object);
+        },
+        this
     );
-    if (uris.length == 0) {
-        uris = this.tripleStore.getSubjectsWithPredicateAndObject(
-            'ore:isDescribedBy',
-            url
-        );
-    }
+
+    this.quadStore.forEachQuadMatchingQuery(
+        null,
+        this.namespaces.expand('ore', 'isDescribedBy'),
+        url,
+        null,
+        function(quad) {
+            uris.add(quad.subject);
+        },
+        this
+    );
     
-    return sc.util.Namespaces.stripAngleBrackets(uris);
+    return sc.util.Namespaces.stripAngleBrackets(uris.getValues());
 };
 
 /**
@@ -1030,6 +1045,7 @@ sc.data.Databroker.prototype.getManuscriptAggregationUris = function(manifestUri
  */
 sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
     var bracketedListUri = sc.util.Namespaces.wrapWithAngleBrackets(listUri);
+    console.log(bracketedListUri)
     
     var uris = [];
 
@@ -1067,7 +1083,17 @@ sc.data.Databroker.prototype.getManuscriptSequenceUris = function(manifestUri) {
     
     var aggregateUris = this.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
-    var allSequences = this.tripleStore.getSubjectsSetWithType('dms:Sequence');
+    var allSequences = new goog.structs.Set();
+    this.quadStore.forEachQuadMatchingQuery(
+        null,
+        this.namespaces.expand('rdf', 'type'),
+        this.namespaces.expand('dms', 'Sequence'),
+        null,
+        function(quad) {
+            allSequences.add(quad.subject);
+        },
+        this
+    );
 
     var intersection = allSequences.intersection(aggregateUris);
     return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
@@ -1078,7 +1104,17 @@ sc.data.Databroker.prototype.getManuscriptImageAnnoUris = function(manifestUri) 
     
     var aggregateUris = this.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
-    var allImageAnnos = this.tripleStore.getSubjectsSetWithType('dms:ImageAnnotationList');
+    var allImageAnnos = new goog.structs.Set();
+    this.quadStore.forEachQuadMatchingQuery(
+        null,
+        this.namespaces.expand('rdf', 'type'),
+        this.namespaces.expand('dms', 'ImageAnnotationList'),
+        null,
+        function(quad) {
+            allImageAnnos.add(quad.subject);
+        },
+        this
+    );
 
     var intersection = allImageAnnos.intersection(aggregateUris);
     return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
@@ -1152,37 +1188,13 @@ sc.data.Databroker.prototype.createUuid = function() {
     var uuid = 'urn:uuid:' + goog.string.getRandomString() +
                 goog.string.getRandomString() + goog.string.getRandomString();
 
-    if (! this.tripleStore.containsResource(uuid)) {
+    if (! this.knowsAboutResource(uuid)) {
         return uuid;
     }
     else {
         return this.createUuid();
     }
 };
-
-/**
- * Returns the urls of the source files from which triples about a given uri were loaded. 
- * @param  {string} uri The uri to search for.
- * @return {Array.<string>} An array of source urls.
- */
-sc.data.Databroker.prototype.getSourceUrls = function(uri) {
-    uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
-
-    var triples = this.tripleStore.getTriplesWithSubject(uri).concat(
-        this.tripleStore.getTriplesWithObject(uri)
-    );
-
-    var sources = new goog.structs.Set();
-
-    for (var i=0, len=triples.length; i<len; i++) {
-        var triple = triples[i];
-
-        sources.add(triple.getSource());
-    }
-
-    return sources.getValues();
-};
-
 
 sc.data.Databroker.prototype.syncResources = function() {
     for (var uri in this.modifiedResources) {
@@ -1211,7 +1223,7 @@ sc.data.Databroker.prototype.syncResources = function() {
 
 
 sc.data.Databroker.prototype.sync = function() {
-    console.log("sc.data.Databroker.sync called.");
+    // console.log("sc.data.Databroker.sync called.");
     this.syncResources();
 }
 
@@ -1233,14 +1245,14 @@ sc.data.Databroker.prototype.addTextResource = function(uri, title, content) {
 sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
     var anno = this.getResource(this.createUuid());
     anno.addProperty(
-        this.namespaceUtil.autoExpand('rdf:type'),
-        this.namespaceUtil.autoExpand('oac:Annotation')
+        this.namespaces.autoExpand('rdf:type'),
+        this.namespaces.autoExpand('oac:Annotation')
     );
 
     if (opt_annoType) {
         anno.addProperty(
-            this.namespaceUtil.autoExpand('rdf:type'),
-            this.namespaceUtil.autoExpand(opt_annoType)
+            this.namespaces.autoExpand('rdf:type'),
+            this.namespaces.autoExpand(opt_annoType)
         );
     }
 

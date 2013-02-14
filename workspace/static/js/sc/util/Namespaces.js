@@ -1,6 +1,7 @@
 goog.provide('sc.util.Namespaces');
 
 goog.require('goog.structs.Map');
+goog.require('goog.string');
 
 sc.util.Namespaces = function (opt_namespacesDict) {
     this.uriByPrefix = new goog.structs.Map(sc.util.Namespaces.DEFAULT_NAMESPACES);
@@ -56,7 +57,8 @@ sc.util.Namespaces.stripAngleBrackets = function (str) {
 };
 
 sc.util.Namespaces.wrapWithAngleBrackets = function(str) {
-    if (sc.util.Namespaces.isAngleBracketWrapped(str)) {
+    if (sc.util.Namespaces.isAngleBracketWrapped(str) ||
+        sc.util.Namespaces.isBNode(str)) {
         return str;
     }
     else {
@@ -206,6 +208,10 @@ sc.util.Namespaces.isUri = function(str) {
     }
 };
 
+sc.util.Namespaces.isBNode = function(str) {
+    return goog.string.startsWith(str, '_:');
+};
+
 /**
  * Takes an absolute or prefixed namespace, and expands it (if necessary) to its absolute namespace.
  * @param {string} ns
@@ -214,7 +220,8 @@ sc.util.Namespaces.isUri = function(str) {
  */
 sc.util.Namespaces.prototype.autoExpand = function (ns) {
     if (sc.util.Namespaces.isQuoteWrapped(ns) ||
-        sc.util.Namespaces.isAngleBracketWrapped(ns)) {
+        sc.util.Namespaces.isAngleBracketWrapped(ns) ||
+        sc.util.Namespaces.isBNode(ns)) {
         return ns;
     }
     
@@ -242,6 +249,39 @@ sc.util.Namespaces.prototype.expand = function(prefix, postfix) {
     }
     else {
         throw "Prefix " + prefix + " is not in the registered namespaces";
+    }
+};
+
+/**
+ * Turns a fully qualified uri into a prefixed version.
+ * If a prefix cannot be found, the angle bracket wrapped uri is returned.
+ * @param  {string} uri The uri to reduce.
+ * @return {string} The complete uri.
+ */
+sc.util.Namespaces.prototype.prefix = function(uri) {
+    uri = sc.util.Namespaces.stripAngleBrackets(uri);
+    var matchedBaseUri = null;
+    var matchedPrefix = null;
+
+    goog.structs.every(this.uriByPrefix, function(baseUri, prefix) {
+        if (goog.string.startsWith(uri, baseUri)) {
+            matchedBaseUri = baseUri;
+            matchedPrefix = prefix;
+            return false;
+        }
+        else {
+            return true;
+        }
+    }, this);
+
+    if (matchedBaseUri && matchedPrefix) {
+        return matchedPrefix + ':' + goog.string.removeAt(uri, 0, matchedBaseUri.length);
+    }
+    else if (!sc.util.Namespaces.isBNode(uri)) {
+        return sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    }
+    else {
+        return uri;
     }
 };
 

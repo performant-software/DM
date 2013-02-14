@@ -2,7 +2,7 @@ goog.provide('sc.data.Resource');
 
 goog.require('goog.structs.Set');
 goog.require('jquery.jQuery');
-goog.require('sc.data.Triple');
+goog.require('sc.data.Quad');
 goog.require('sc.util.Namespaces');
 
 /**
@@ -33,7 +33,7 @@ sc.data.Resource.prototype.getDatabroker = function() {
 };
 
 /**
- * Returns the objects of all triples with this resource as a subject and the
+ * Returns the objects of all quads with this resource as a subject and the
  * given resource, or an object dictionary of values by predicate.
  * Angle brackets around urls, quotes around literals, and xml escaped
  * characters will be returned unmodified.
@@ -126,7 +126,7 @@ sc.data.Resource.prototype.hasPredicate = function(predicate) {
 
 sc.data.Resource.prototype.hasAnyPredicate = function(possiblePredicates) {
     for (var i = 0, len = possiblePredicates.length; i < len; i++) {
-        var possiblePredicate = this.databroker.namespaceUtil.
+        var possiblePredicate = this.databroker.namespaces.
             autoExpand(possiblePredicates[i]);
 
         if (this.hasPredicate(possiblePredicate)) {
@@ -138,12 +138,12 @@ sc.data.Resource.prototype.hasAnyPredicate = function(possiblePredicates) {
 };
 
 sc.data.Resource.prototype.addProperty = function(predicate, object) {
-    predicate = this.databroker.namespaceUtil.autoExpand(predicate);
-    object = this.databroker.namespaceUtil.autoExpand(object);
+    predicate = this.databroker.namespaces.autoExpand(predicate);
+    object = this.databroker.namespaces.autoExpand(object);
     
-    var triple = new sc.data.Triple(this.bracketedUri, predicate, object);
+    var quad = new sc.data.Quad(this.bracketedUri, predicate, object, null);
     
-    this.databroker.addNewTriple(triple);
+    this.databroker.addNewQuad(quad);
     
     return this;
 };
@@ -188,7 +188,7 @@ sc.data.Resource.prototype.getTypesSet = function() {
 
 sc.data.Resource.prototype.hasType = function(type) {
     var types = this.getTypesSet();
-    var type = this.databroker.namespaceUtil.autoExpand(type);
+    var type = this.databroker.namespaces.autoExpand(type);
 
     return types.contains(type);
 };
@@ -206,7 +206,7 @@ sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
     }
 
     for (var i = 0, len = typesToTest.length; i < len; i++) {
-        var possibleType = this.databroker.namespaceUtil.
+        var possibleType = this.databroker.namespaces.
             autoExpand(typesToTest[i]);
 
         if (types.contains(possibleType)) {
@@ -228,7 +228,7 @@ sc.data.Resource.prototype.hasAllTypes = function(possibleTypes) {
     }
 
     for (var i = 0, len = typesToTest.length; i < len; i++) {
-        var possibleType = this.databroker.namespaceUtil.
+        var possibleType = this.databroker.namespaces.
             autoExpand(typesToTest[i]);
 
         possibleTypesSet.add(possibleType);
@@ -287,12 +287,4 @@ sc.data.Resource.prototype.getEquivalentUris = function() {
 
 sc.data.Resource.prototype.dump = function() {
     return this.databroker.dumpResource(this.bracketedUri);
-};
-
-/**
- * Returns the urls of files which contained triples with this resource as a subject or object.
- * @return {Array.<string>} The source file urls.
- */
-sc.data.Resource.prototype.getSourceUrls = function() {
-    return this.databroker.getSourceUrls(this.bracketedUri);
 };
