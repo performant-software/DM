@@ -16,6 +16,25 @@ from .namespaces import NS, ns, bind_namespaces
 import rdfstore
 
 
+def validate_return_anno(testcase, response, g, anno, body=None):
+    rg = Graph()
+    rg.parse(data=response.content)
+    annotations = list(rg.subjects(NS.rdf['type'], NS.oa['Annotation']))
+    testcase.assertEqual(len(annotations), 1)
+    bodies = list(rg.subjects(NS.rdf['type'], NS.dctypes['Text']))
+    testcase.assertEqual(len(bodies), 1)
+    for s, p, o in g:
+        if s == anno:
+            s = annotations[0]
+        elif s == body:
+            s = bodies[0]
+        if o == anno:
+            o = annotations[0]
+        elif o == body:
+            o = bodies[0]
+        testcase.assertTrue((s, p, o) in rg)
+    testcase.assertTrue(len(list(rg.objects(annotations[0], NS.oa['annotatedAt'])))>0)
+
 class TestProjects(unittest.TestCase):
     def test_add_manuscript_to_user_project(self):
         url = reverse('semantic_store_projects', 
@@ -101,9 +120,7 @@ class TestProjects(unittest.TestCase):
         self.g.close()
 
 
-#class TestPublicSingleAnnotation(unittest.TestCase):
-class TestPublicSingleAnnotation(object):
-
+class TestPublicSingleAnnotation(unittest.TestCase):
     def test_embedded_textual_body_bnode(self):
         url = reverse('semantic_store_annotations', kwargs=dict())
         g = Graph()
@@ -120,6 +137,7 @@ class TestPublicSingleAnnotation(object):
         data = g.serialize(initNs=ns)
         response = self.client.post(url, data=data, content_type="text/xml")
         self.assertEqual(response.status_code, 201)
+        validate_return_anno(self, response, g, anno, body)
 
     def test_embedded_textual_body_uuids(self):
         url = reverse('semantic_store_annotations', kwargs=dict())
@@ -137,7 +155,22 @@ class TestPublicSingleAnnotation(object):
         data = g.serialize(initNs=ns)
         response = self.client.post(url, data=data, content_type="text/xml")
         self.assertEqual(response.status_code, 201)
+        validate_return_anno(self, response, g, anno, body)
 
+    def test_body_uri(self):
+        url = reverse('semantic_store_annotations', kwargs=dict())
+        g = Graph()
+        bind_namespaces(g)
+        anno = URIRef(uuid.uuid4())
+        body = URIRef(uuid.uuid4())
+        g.add((anno, NS.rdf['type'], NS.oa['Annotation']))
+        g.add((anno, NS.oa['hasTarget'], self.canvas))
+        g.add((anno, NS.oa['hasBody'], body))
+        g.add((body, NS.rdf['type'], NS.dctypes['Text']))
+        data = g.serialize(initNs=ns)
+        response = self.client.post(url, data=data, content_type="text/xml")
+        self.assertEqual(response.status_code, 201)
+        validate_return_anno(self, response, g, anno, body)
 
     def test_specific_target_bnode(self):
         # See http://www.openannotation.org/spec/core/specific.html#Specific
@@ -183,10 +216,8 @@ class TestPublicSingleAnnotation(object):
         response = self.client.post(url, data=data, content_type="text/xml")
         self.assertEqual(response.status_code, 201)
 
-
     def tearDown(self):
         self.g.close()
-        
 
     def setUp(self):
         self.client = Client()
@@ -202,4 +233,5 @@ class TestPublicSingleAnnotation(object):
                         Information concerning the general content type (Text, Image, Audio, Video etc) of the Annotation's related resources is useful to applications. This is expressed using typing of the Body and Target resources, and thereby allows the client to easily determine if and how it can render the resource without maintaining a long list of media types. For example, an HTML5 based client can use the information that the Target resource is an image to generate a <img> element with the appropriate src attribute, rather than having to maintain a list of all of the image media types. The creator of the Annotation may also not know the exact media type of the Body or Target, but should at least be able to provide this general class.
                         """
 
-
+class TestAuthenticatedSingleAnnotation(unittest.TestCase):
+    pass

@@ -15,7 +15,7 @@ def create_project_graph(g, node, identifier, host, user_email=None):
         allprojects_uri = uris.uri('semantic_store_projects')
         allprojects_g = Graph(store=rdfstore(), identifier=allprojects_uri)
 
-        uri = uris.uri(host, 'semantic_store_projects', identifier=identifier)
+        uri = uris.uri('semantic_store_projects', identifier=identifier)
         project_g = Graph(store=rdfstore(), identifier=uri)
 
         for s, p, o in g.triples((node, NS.rdf['type'], None)):
