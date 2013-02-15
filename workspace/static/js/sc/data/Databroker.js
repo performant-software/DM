@@ -49,7 +49,12 @@ sc.data.Databroker = function(options) {
     this.modifiedResources = {};
     this.deletedResources = {};
 
+    this.newResourceUris = new goog.structs.Set();
+
+    this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
 };
+
+sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
 
 sc.data.Databroker.prototype.RESTYPE = {
     'text': 0, 
@@ -620,6 +625,8 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
         uri = this.createUuid();
     }
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+
+    this.newResourceUris.add(uri);
     
     var quad = new sc.data.Quad(
         uri,
@@ -1290,30 +1297,118 @@ sc.data.Databroker.prototype.restUri = function(
     return this._restUri(this.options.dmBaseUri, projectUri, resType, resUri, params);
 };
 
+sc.data.Databroker.prototype.getModifiedResourceUris = function() {
+    var subjectsOfNewQuads = new goog.structs.Set();
+    for (var i=0, len=this.newQuads.length; i<len; i++) {
+        var quad = this.newQuads[i];
 
-sc.data.Databroker.prototype.syncResources = function() {
-    for (var identifier in this.modifiedResources) {
-        if (this.modifiedResources.hasOwnProperty(identifier)) {
-            if (this.modifiedResources[identifier] == RESTYPE.text) {
-                var res = this.textResources[identifier];
-                var params = res.attr;
-                var url = this.restUrl(
-                    this.currentProject, RESTYPE.text, identifier, params
-                );
-                console.log("resource to sync:", url);
-                /*
-                var jqXhr = jQuery.ajax({
-                    type: 'POST',
-                    data: dump,
-                    url: url,
-                    processData: !jQuery.isXMLDoc(dump),
-                    success: successHandler,
-                    error: errorHandler
-                });
-                */
-            }
+        subjectsOfNewQuads.add(quad.subject);
+    }
+
+    return this.newResourceUris.difference(subjectsOfNewQuads);
+};
+
+sc.data.Databroker.prototype.getQuadsToSyncForAnno = function(uri) {
+    var anno = this.getResource(uri);
+
+    var quadsToPost = this.quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
+
+    var targetUris = anno.getProperties('oac:hasTarget');
+    var bodyUris = anno.getProperties('oac:hasBody');
+
+    for (var i=0, len=targetUris.length; i<len; i++) {
+        var target = this.getResource(targetUris[i]);
+
+        quadsToPost.addAll(this.quadStore.queryReturningSet(target.bracketedUri, null, null, null));
+
+        if (target.hasType('oac:SpecificResource')) {
+            goog.structs.forEach(target.getProperties('oac:hasSelector'), function(selectorUri) {
+                quadsToPost.addAll(this.quadStore.queryReturningSet(
+                    sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null, null, null));
+            }, this);
         }
     }
+
+    for (var i=0, len=bodyUris.length; i<len; i++) {
+        var body = this.getResource(bodyUris[i]);
+
+        quadsToPost.addAll(this.quadStore.queryReturningSet(body.bracketedUri, null, null, null));
+    }
+
+    return quadsToPost.getValues();
+};
+
+sc.data.Databroker.prototype.postNewResources = function() {
+    var xhrs = [];
+
+    goog.structs.forEach(this.newResourceUris, function(uri) {
+        var xhr = this.sendResource(uri, 'POST');
+
+        xhrs.push(xhr);
+    }, this);
+
+    return xhrs;
+};
+
+sc.data.Databroker.prototype.sendResource = function(uri, method) {
+    var resource = this.getResource(uri);
+
+    var resType;
+    var quadsToPost = [];
+
+    if (resource.hasType('dcterms:Text')) {
+        resType = this.RESTYPE.text;
+
+        quadsToPost = this.quadStore.query(resource.bracketedUri, null, null, null);
+    }
+    else if (resource.hasType('oac:Annotation')) {
+        resType = this.RESTYPE.annotation;
+
+        quadsToPost = this.getQuadsToSyncForAnno(resource.bracketedUri);
+    }
+
+    var url = this.restUrl(this.currentProject, resType, uri, {});
+
+    var dataDump = this.dumpQuads(quadsToPost);
+
+    var xhr = jQuery.ajax({
+        type: method,
+        url: url,
+        success: function() {
+            console.log('successful sync', arguments);
+        },
+        error: function() {
+            console.error('unsuccessful sync', arguments);
+        },
+        data: dataDump,
+        processData: !jQuery.isXMLDoc(dataDump)
+    });
+
+    return xhr;
+};
+
+sc.data.Databroker.prototype.putModifiedResources = function() {
+    var modifiedUris = this.getModifiedResourceUris();
+
+    var xhrs = [];
+
+    goog.structs.forEach(modifiedUris, function(uri) {
+        var xhr = this.sendResource(uri, 'PUT');
+
+        xhrs.push(xhr);
+    }, this);
+
+    return xhrs;
+};
+
+
+sc.data.Databroker.prototype.syncResources = function() {
+    this.postNewResources();
+
+    this.putModifiedResources();
+
+    this.newResourceUris.clear();
+    this.newQuads = [];
 };
 
 
@@ -1338,7 +1433,7 @@ sc.data.Databroker.prototype.addTextResource = function(uri, title, content) {
 
 
 sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
-    var anno = this.getResource(this.createUuid());
+    var anno = this.createResource(this.createUuid());
     anno.addProperty(
         this.namespaces.autoExpand('rdf:type'),
         this.namespaces.autoExpand('oac:Annotation')
