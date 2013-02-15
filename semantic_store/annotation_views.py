@@ -74,13 +74,15 @@ def create_annotations(request, dest_graph_uri=None, anno_uri=None):
     if anno_uri:
         return HttpResponse(status=400, 
                             content="Annotation URI not permitted in create request.")
-
+    print "before destination_graph"
     dest_g = destination_graph(dest_graph_uri)
+    print "before annotations_g"
     annotations_g = Graph()
     try:
         annotations_g.parse(data=request.body)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
+    print "before annotation_uris"
     anno_uris = annotation_uris(annotations_g)
     if not anno_uris:
         return HttpResponse(status=400, 
