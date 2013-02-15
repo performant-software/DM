@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadReq
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
 
 from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef
@@ -42,10 +43,20 @@ def projects(request, uri=None):
             return HttpResponse(status=400, 
                                 content="Project delete request must specify URI.")
         return delete_project(request, uri)
-        
-def project_annotations(request, project_uri=None, anno_uri=None):
-    pass
 
+@csrf_exempt        
+def project_annotations(request, project_uri=None, anno_uri=None):
+    print "anno_uri:", anno_uri
+    if request.method == 'POST':
+        return create_annotations(request, project_uri, anno_uri)
+    elif request.method == 'PUT':
+        pass
+    elif request.method == 'DELETE':
+        pass
+    elif request.method == 'GET':
+        pass
+    else:
+        return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
 def manuscripts(request, uri=None):
     pass
@@ -71,7 +82,7 @@ def users(request, username=None):
 def user_annotations(request, username=None):
     pass
 
-
+@csrf_exempt
 def annotations(request, dest_graph_uri=None, anno_uri=None):
     if request.method == 'POST':
         return create_annotations(request, dest_graph_uri, anno_uri)
@@ -83,7 +94,6 @@ def annotations(request, dest_graph_uri=None, anno_uri=None):
         pass
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
-        
 
 def resources(request, uri, ext=None):
     uri = uri.rstrip('/')
