@@ -103,6 +103,8 @@ atb.viewer.Editor = function(clientApp, opt_initialTextContent, opt_annoBodyId) 
     
     this.scrollTop = 0;
 
+    var db = this.clientApp.databroker;
+
 };
 goog.inherits(atb.viewer.Editor, atb.viewer.Viewer);
 

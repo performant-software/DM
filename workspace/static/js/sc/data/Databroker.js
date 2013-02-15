@@ -1358,19 +1358,23 @@ sc.data.Databroker.prototype.sendResource = function(uri, method) {
 
     var resType;
     var quadsToPost = [];
+    var url;
 
     if (resource.hasType('dcterms:Text')) {
         resType = this.RESTYPE.text;
 
         quadsToPost = this.quadStore.query(resource.bracketedUri, null, null, null);
+
+        url = this.restUrl(this.currentProject, resType,
+                           sc.util.Namespaces.stripAngleBrackets(uri), {});
     }
     else if (resource.hasType('oac:Annotation')) {
         resType = this.RESTYPE.annotation;
 
         quadsToPost = this.getQuadsToSyncForAnno(resource.bracketedUri);
-    }
 
-    var url = this.restUrl(this.currentProject, resType, uri, {});
+        url = this.restUrl(this.currentProject, resType, null, {});
+    }
 
     var dataDump = this.dumpQuads(quadsToPost);
 
@@ -1426,12 +1430,18 @@ sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
         'content': content,
         'attr': attr
     };
-    this.modifiedResources[uri] = RESTYPE.text;
+    this.modifiedResources[uri] = this.RESTYPE.text;
 };
 
 
-sc.data.Databroker.prototype.addTextResource = function(uri, title, content) {
-    this.updateTextResource(uri, title, content);
+sc.data.Databroker.prototype.createText = function(title, content) {
+    var text = this.createResource(this.createUuid());
+    text.addProperty(
+        this.namespaces.autoExpand('rdf:type'),
+        this.namespaces.autoExpand('dctypes:Text')
+    );
+    this.updateTextResource(text.uri, title, content);
+    return text;
 };
 
 

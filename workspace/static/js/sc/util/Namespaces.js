@@ -12,6 +12,7 @@ sc.util.Namespaces.DEFAULT_NAMESPACES = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
     'dc': 'http://purl.org/dc/elements/1.1/',
     'dcterms': 'http://purl.org/dc/terms/',
+    'dctypes': 'http://purl.org/dc/dcmitype/',
     'ore': 'http://www.openarchives.org/ore/terms/',
     'tei': 'http://www.tei-c.org/ns/1.0/',
     'exif': 'http://www.w3.org/2003/12/exif/ns#',

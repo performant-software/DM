@@ -1,6 +1,5 @@
 from rdflib import RDF
 from rdflib.namespace import Namespace
-
 ns = dict(
     rdf=RDF,
     dms=Namespace("http://dms.stanford.edu/ns/"),
@@ -10,7 +9,7 @@ ns = dict(
     dcmitype=Namespace("http://purl.org/dc/dcmitype/"),
     exif=Namespace("http://www.w3.org/2003/12/exif/ns#"),
     tei=Namespace("http://www.tei-c.org/ns/1.0/"),
-    oa=Namespace("http://www.w3.org/ns/openannotation/core/"),
+    oa=Namespace("http://www.openannotation.org/ns/"),
     cnt=Namespace("http://www.w3.org/2011/content#"),
     dcterms=Namespace("http://purl.org/dc/terms/"),
     dctypes=Namespace("http://purl.org/dc/dcmitype/"),
