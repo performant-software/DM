@@ -5,6 +5,9 @@ from django.views.generic import View
 
 from rdflib import Graph, ConjunctiveGraph, BNode, URIRef
 
+from semantic_store import uris
+from semantic_store.rdfstore import rdfstore
+
 
 class GraphView(View):
     http_method_names = ['post']
@@ -57,7 +60,7 @@ class GraphView(View):
                 nodes_str += g.serialize()
             return nodes_str
 
-    def serialized_graph(view, **kwargs):
+    def serialized_graph(self, view, **kwargs):
         graph_uri = uris.uri(view, **kwargs)
         g = Graph(store=rdfstore(), identifier=graph_uri)
         if len(list(g)) == 0:

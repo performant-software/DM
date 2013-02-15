@@ -113,7 +113,7 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
             {
                 title: 'Yale University',
                 // url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
-                url: '/store/manifests/http://manifests.ydc2.yale.edu/MetaManifest',
+                url: '/store/resources/http://manifests.ydc2.yale.edu/MetaManifest',
                 uri: 'http://manifests.ydc2.yale.edu/MetaManifest'
                 // uri: 'http://manifests.ydc2.yale.edu/Repository'
             }
@@ -164,12 +164,13 @@ var setupCurrentProject = function(clientApp, username) {
     var db = clientApp.databroker;
     var url = db.restUrl(null, db.RESTYPE.user, username, null);
     var uri = db.restUri(null, db.RESTYPE.user, username, null);
-    console.log("rest uri:", uri);
     db.fetchRdf(url, function() {
-        console.log("Got some kind of response.");
         var uris = db.getAggregationContentsUris(uri);
         for (var i=0; i<uris.length; i++) {
-            console.log("agg uri:", uris[i]);
+            db.allProjects.push(uris[i]);
+        }
+        if (uris.length == 1) {
+            db.currentProject = uris[0];
         }
     });
 }

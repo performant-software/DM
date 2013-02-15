@@ -85,14 +85,22 @@ def annotations(request, dest_graph_uri=None, anno_uri=None):
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
         
 
-def manifest(request, uri, ext=None):
+def resources(request, uri, ext=None):
     uri = uri.rstrip('/')
     try:
         manifest_g = Graph(store=rdfstore(), identifier=URIRef(uri))
         if len(manifest_g) > 0:
             return HttpResponse(manifest_g.serialize(), mimetype='text/xml')
         else:
-            return HttpResponseNotFound()
+            main_graph = ConjunctiveGraph(store=rdfstore(), 
+                                          identifier=default_identifier)
+            g = Graph()
+            for t in main_graph.triples((URIRef(uri), None, None)):
+                g.add(t)
+            if len(g) > 0:
+                return HttpResponse(g.serialize(), mimetype='text/xml')
+            else:
+                return HttpResponseNotFound()
     except Exception as e:
         print e
         connection._rollback()

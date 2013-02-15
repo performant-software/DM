@@ -3,9 +3,9 @@ import semantic_store.views
 from semantic_store.rdf_views import ProjectView, ProjectTextView, UserView
 
 urlpatterns = patterns('',
-    url(r'^manifests(?:/(?P<uri>.+))?/?$', 
-        semantic_store.views.manifest, 
-        name="semantic_store_manifest"),
+    url(r'^resources(?:/(?P<uri>.+))?/?$', 
+        semantic_store.views.resources, 
+        name="semantic_store_resources"),
     url(r'^repositories(?:/(?P<uri>.+))?/?$', 
         semantic_store.views.repositories, 
         name="semantic_store_repositories"),
