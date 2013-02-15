@@ -31,7 +31,7 @@ def localize_describes(store_host, uri, url, g):
         g.remove(t)
     for t in g.triples((URIRef(uri), ns['ore']['isDescribedBy'], URIRef(url))):
         g.remove(t)
-    local_rel_url = reverse('semantic_store_manifest' , kwargs={'uri': str(uri)})
+    local_rel_url = reverse('semantic_store_resources' , kwargs={'uri': str(uri)})
     local_abs_url = "http://%s%s" % (store_host, local_rel_url)
     g.add((URIRef(uri), ns['ore']['isDescribedBy'], URIRef(local_abs_url)))
 

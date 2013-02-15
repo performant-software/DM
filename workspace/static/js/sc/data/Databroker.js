@@ -45,10 +45,14 @@ sc.data.Databroker = function(options) {
     
     this.newQuads = [];
 
+    this.currentProject = null;
+    this.allProjects = [];
+
     this.textResources = {};
+    this.newResources = {};
     this.modifiedResources = {};
     this.deletedResources = {};
-
+    
 };
 
 sc.data.Databroker.prototype.RESTYPE = {
@@ -1301,6 +1305,11 @@ sc.data.Databroker.prototype.syncResources = function() {
                     this.currentProject, RESTYPE.text, identifier, params
                 );
                 console.log("resource to sync:", url);
+                /*
+                var jqXhr = jQuery.ajax({
+                    type:
+                });
+                */
                 /*
                 var jqXhr = jQuery.ajax({
                     type: 'POST',

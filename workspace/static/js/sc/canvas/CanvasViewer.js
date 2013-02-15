@@ -126,7 +126,7 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
         canvas.addEventListener(
             ['featureAdded', 'featureModified', 'featureRemoved'],
             function(event) {
-                marqueeCanvas.findAndAddConstraints(this.databroker);
+                sc.canvas.FabricCanvasFactory.findAndAddSelectors(marqueeCanvas);
             },
             false,
             this
