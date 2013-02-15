@@ -25,7 +25,6 @@ def annotation_uris(g):
     uris = [i[0] for i in qres]
     return uris
 
-
 def destination_graph(dest_graph_uri=None):
     if dest_graph_uri:
         dest_g = Graph(store=rdfstore(), identifier=URIRef(dest_graph_uri))
@@ -60,7 +59,7 @@ def update_annotation(request, dest_g, annotations_g, anno_uri):
     new_anno_g = annotation_graph(annotations_g, anno_uri)
     new_anno_g.add((anno_uri, NS.oa['annotatedAt'], Literal(datetime.utcnow())))
     if request.user.is_authenticated():
-        user_uri = uris.uri('semantic_store_users', username=username)
+        user_uri = uris.uri('semantic_store_users', username=request.user.username)
         new_anno_g.add((anno_uri, NS.oa['annotatedBy'], user_uri))
         new_anno_g.add((user_uri, NS.rdf['type'], NS.foaf['Person']))
         new_anno_g.add((user_uri, NS.foaf['name'], Literal(request.user.username)))
