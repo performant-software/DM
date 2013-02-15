@@ -322,13 +322,6 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     setupControls(clientApp, workingResourcesViewer);
     setupCurrentProject(clientApp, username);
     
-    var autoSaveInterval = 10 * 1000;
-    var autoSaveIntervalObject = window.setInterval(
-        function() {
-            clientApp.databroker.sync();
-        },
-        autoSaveInterval);
-    
 }
 
 /* REMOVE
