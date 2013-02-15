@@ -65,7 +65,7 @@ class Command(BaseCommand):
         rep_g.add((rep_uri, NS.rdf['type'], NS.dms['Manifest']))
         rep_g.add((rep_uri, NS.rdf['type'], NS.ore['Aggregation']))
         rep_g.add((rep_uri, NS.dc['title'], Literal(rep_title)))
-        local_rel_url = reverse('semantic_store_manifest' , 
+        local_rel_url = reverse('semantic_store_resources' , 
                                 kwargs={'uri': str(rep_uri)})
         local_abs_url = "http://%s%s" % (store_host, local_rel_url)
         rep_g.add((rep_uri, NS.ore['isDescribedBy'], URIRef(local_abs_url)))

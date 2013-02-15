@@ -45,6 +45,9 @@ sc.data.Databroker = function(options) {
     
     this.newQuads = [];
 
+    this.currentProject = null;
+    this.allProjects = [];
+
     this.textResources = {};
     this.modifiedResources = {};
     this.deletedResources = {};

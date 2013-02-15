@@ -1,6 +1,6 @@
 - create annotation link, line 175 of ClientApp.js
 
-- hover menu contents panel in atb.AnnoTitlesList
+- hover menu contents panel in atb.ui.AnnoTitlesList
 
 - show hover menu in atb.viewer.Viewer, line 428
   - each viewer loads their own set of buttons.
