@@ -344,12 +344,12 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var newTextId = this.databroker.createUuid();
     var annoId = this.databroker.createUuid();
 
-    console.log("newTextId:", newTextId);
-    console.log("annoId:", annoId);
-    
     textEditor.resourceId = newTextId;
     textEditor.annotationUid = annoId;
     textEditor.toggleIsAnnoText(true);
+
+    console.log("newTextId:", newTextId);
+    console.log("annoId:", annoId);
         
     /* Need to tell text editor to save and create anno in data broker.
     textEditor.saveContents(function() {

@@ -40,6 +40,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         username = options['username']
+
         email = options['email']
         password = options['password']
         store_host = options['store_host']
@@ -53,13 +54,16 @@ class Command(BaseCommand):
             project_identifier = uris.uuid()
             project_url = uris.url(store_host, 'semantic_store_projects', 
                                    identifier=project_identifier)
-            create_project(user, project_identifier, "Default project", store_host)
+            title = "Default project"
+            create_project(user, project_identifier, title, store_host)
 
             user_identifier = uris.uri('semantic_store_users', username=username)
+            print user_identifier
             user_url = uris.url(store_host, 'semantic_store_users', username=username)
             user_g = Graph(store=rdfstore.rdfstore(), identifier=user_identifier)
 
             user_g.add((user_identifier, NS.ore['aggregates'], project_identifier))
+            user_g.add((project_identifier, NS.dc['title'], Literal(title))) 
             user_g.add((project_identifier, NS.rdf['type'], NS.dcmitype['Collection']))
             user_g.add((project_identifier, NS.rdf['type'], NS.ore['Aggregation']))
             user_g.add((project_identifier, NS.ore['isDescribedBy'], project_url))
