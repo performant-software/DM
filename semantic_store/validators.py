@@ -57,7 +57,7 @@ class ProjectValidator(BaseValidator):
 class AnnotationValidator(BaseValidator):
     def exists(self, anno_uri):
         if (anno_uri, None, None) in self._dest_graph:
-            self._failures.append("Annotation %s exists in collection %s." \
+            self._failures.append("Annotation %s already exists in collection %s." \
                                       % (anno_uri, self._dest_graph.identifier))
             return False
 
