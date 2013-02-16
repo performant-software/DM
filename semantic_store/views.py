@@ -13,7 +13,8 @@ from .rdfstore import rdfstore, default_identifier
 
 from .namespaces import ns
 from .validators import AnnotationValidator
-from .annotation_views import create_annotations
+from .annotation_views import create_or_update_annotations, get_annotations, \
+    search_annotations
 from .project_views import create_project, read_project, update_project, delete_project
 
 
@@ -46,15 +47,24 @@ def projects(request, uri=None):
 
 @csrf_exempt        
 def project_annotations(request, project_uri=None, anno_uri=None):
-    print "anno_uri:", anno_uri
     if request.method == 'POST':
-        return create_annotations(request, project_uri, anno_uri)
+        if anno_uri:
+            return HttpResponse(status=400, 
+                                content="Annotation URI not permitted in create.")
+        return create_or_update_annotations(request, project_uri, anno_uri)
     elif request.method == 'PUT':
-        pass
+        return create_or_update_annotations(request, project_uri, anno_uri)
     elif request.method == 'DELETE':
         pass
     elif request.method == 'GET':
-        pass
+        if anno_uri:
+            return get_annotations(request, project_uri, [anno_uri])
+        else:
+            search_uri = request.GET.get('uri', None)
+            if search_uri:
+                return search_annotations(request, project_uri, search_uri)
+            else:
+                return get_annotations(request, project_uri)
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 

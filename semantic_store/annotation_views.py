@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 
 from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, Literal
+from rdflib import URIRef, Literal, BNode
 
 from .validators import AnnotationValidator
 from .rdfstore import rdfstore, default_identifier
@@ -52,6 +52,15 @@ def bfs(collector, universe, frontier):
 def annotation_graph(g, anno_uri):
     return bfs(Graph(), g, [anno_uri])
 
+def annotation_ancestors(search_g, node):
+    if len(list(search_g.triples((node, NS.rdf['type'], NS.oa['Annotation'])))):
+        return [node]
+    all_nodes = []
+    for s, p, o in search_g.triples((None, None, node)):
+        for i in annotation_ancestor(search_g, s):
+            all_nodes.append(i)
+    return all_nodes
+
 def update_annotation(request, dest_g, annotations_g, anno_uri):
     old_anno_g = annotation_graph(dest_g, anno_uri)
     for t in old_anno_g:
@@ -69,13 +78,8 @@ def update_annotation(request, dest_g, annotations_g, anno_uri):
         dest_g.add(t)
     return new_anno_g
 
-def create_annotations(request, dest_graph_uri=None, anno_uri=None):
-    if anno_uri:
-        return HttpResponse(status=400, 
-                            content="Annotation URI not permitted in create request.")
-    print "before destination_graph"
+def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     dest_g = destination_graph(dest_graph_uri)
-    print "before annotations_g"
     annotations_g = Graph()
     try:
         annotations_g.parse(data=request.body)
@@ -95,3 +99,36 @@ def create_annotations(request, dest_graph_uri=None, anno_uri=None):
             stored_g = update_annotation(request, dest_g, annotations_g, i)
 
     return HttpResponse(stored_g.serialize(), status=201)
+
+def get_annotations(request, graph_uri, anno_uris=[]):
+    result_g = Graph()
+    g = destination_graph(graph_uri)
+    num_anno_uris = len(anno_uris)
+    if num_anno_uris > 1:
+        agg_bnode = BNode()
+        for i in anno_uris:
+            anno_g = annotation_graph(g, URIRef(i))
+            if len(list(anno_g)) > 0:
+                result_g.add((agg_bnode, NS.ore['aggregates'], URIRef(i)))
+                for t in anno_g:
+                    result_g.add(t)
+    elif num_anno_uris == 1:
+        anno_g = annotation_graph(g, URIRef(anno_uris[0]))
+        for t in anno_g:
+            result_g.add(t)
+    else:
+        subjects = g.subjects(NS.rdf['type'], NS.oa['Annotation'])
+        print "all subjects:", list(subjects)
+        agg_bnode = BNode()
+        for i in subjects:
+            result_g.add((agg_bnode, NS.ore['aggregates'], URIRef(i)))
+    if len(result_g) > 0:
+        return HttpResponse(result_g.serialize(), status=200)
+    else:
+        return HttpResponseNotFound()
+
+def search_annotations(request, graph_uri, search_uri):
+    g = destination_graph(graph_uri)
+    anno_uris = annotation_ancestors(g, search_uri)
+    return get_annotations(request, g, anno_uris)
+
