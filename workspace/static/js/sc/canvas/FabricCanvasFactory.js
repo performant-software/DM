@@ -225,11 +225,11 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
                 var svgText = selector.getOneProperty('cnt:chars');
 
                 if (svgText) {
-                    if (canvas.featuresByUri.containsKey(constraintUri)) {
-                        canvas.removeObjectByUri(constraintUri);
+                    if (canvas.getFabricObjectByUri(selector.getUri())) {
+                        canvas.removeObjectByUri(selector.getUri());
                     }
                     
-                    canvas.addFeatureFromTagString(svgText, constraintUri);
+                    canvas.addFeatureFromTagString(svgText, selector.getUri());
                 }
             }
             else {
