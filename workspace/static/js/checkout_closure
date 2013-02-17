@@ -1,2 +1,4 @@
 #!/bin/sh
-svn checkout http://closure-library.googlecode.com/svn/trunk/ closure-library
+git clone https://code.google.com/p/closure-library/ -o closure-library
+
+chmod +x closure-library/closure/bin/build/depswriter.py
