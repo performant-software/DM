@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseNotFound
 
@@ -8,28 +9,24 @@ from rdflib import URIRef, Literal, BNode
 
 from .validators import AnnotationValidator
 from .rdfstore import rdfstore, default_identifier
-from .namespaces import NS, ns
+from .namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 
+def graph():
+    g = Graph()
+    bind_namespaces(g)
+    return g
 
 def annotation_uris(g):
-    query = \
-    """SELECT ?uri
-       WHERE {
-           ?uri rdf:type oa:Annotation;
-       }
-       
-    """
-    qres = g.query(query, initNs=ns)
-    # tuples in case of context; no context so strip 
-    uris = [i[0] for i in qres]
-    return uris
+    uris = g.subjects(NS.rdf['type'], NS.oa['Annotation'])
+    return list(uris)
 
 def destination_graph(dest_graph_uri=None):
     if dest_graph_uri:
         dest_g = Graph(store=rdfstore(), identifier=URIRef(dest_graph_uri))
     else:
-        dest_g = ConjunctiveGraph(store=rdfstore(), identifier=default_identifier)
+        uri = reverse('semantic_store_annotations')
+        dest_g = Graph(store=rdfstore(), identifier=URIRef(uri))
     return dest_g
 
 def valid_annotations(dest_g, annotations_g, anno_uris):
@@ -50,14 +47,14 @@ def bfs(collector, universe, frontier):
     return bfs(collector, universe, frontier)
 
 def annotation_graph(g, anno_uri):
-    return bfs(Graph(), g, [anno_uri])
+    return bfs(graph(), g, [anno_uri])
 
 def annotation_ancestors(search_g, node):
     if len(list(search_g.triples((node, NS.rdf['type'], NS.oa['Annotation'])))):
         return [node]
     all_nodes = []
     for s, p, o in search_g.triples((None, None, node)):
-        for i in annotation_ancestor(search_g, s):
+        for i in annotation_ancestors(search_g, s):
             all_nodes.append(i)
     return all_nodes
 
@@ -80,12 +77,13 @@ def update_annotation(request, dest_g, annotations_g, anno_uri):
 
 def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     dest_g = destination_graph(dest_graph_uri)
-    annotations_g = Graph()
+    annotations_g = graph()
     try:
         annotations_g.parse(data=request.body)
+#        print "annotations.g:"
+#        print annotations_g.serialize(initNs=ns)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
-    print "before annotation_uris"
     anno_uris = annotation_uris(annotations_g)
     if not anno_uris:
         return HttpResponse(status=400, 
@@ -98,10 +96,10 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
         for i in anno_uris:
             stored_g = update_annotation(request, dest_g, annotations_g, i)
 
-    return HttpResponse(stored_g.serialize(), status=201)
+    return HttpResponse(stored_g.serialize(), status=201, mimetype='text/xml')
 
 def get_annotations(request, graph_uri, anno_uris=[]):
-    result_g = Graph()
+    result_g = graph()
     g = destination_graph(graph_uri)
     num_anno_uris = len(anno_uris)
     if num_anno_uris > 1:
@@ -118,17 +116,16 @@ def get_annotations(request, graph_uri, anno_uris=[]):
             result_g.add(t)
     else:
         subjects = g.subjects(NS.rdf['type'], NS.oa['Annotation'])
-        print "all subjects:", list(subjects)
         agg_bnode = BNode()
         for i in subjects:
             result_g.add((agg_bnode, NS.ore['aggregates'], URIRef(i)))
     if len(result_g) > 0:
-        return HttpResponse(result_g.serialize(), status=200)
+        return HttpResponse(result_g.serialize(), status=200, mimetype='text/xml')
     else:
         return HttpResponseNotFound()
 
 def search_annotations(request, graph_uri, search_uri):
     g = destination_graph(graph_uri)
     anno_uris = annotation_ancestors(g, search_uri)
-    return get_annotations(request, g, anno_uris)
+    return get_annotations(request, graph_uri, anno_uris)
 
