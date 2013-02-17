@@ -133,6 +133,28 @@ sc.data.QuadStore.prototype.addQuads = function(quads) {
     return this;
 };
 
+sc.data.QuadStore.prototype.removeQuad = function(quad) {
+    var keys = sc.data.QuadStore.generateIndexKeys(quad);
+
+    goog.structs.forEach(keys, function(key) {
+        var set = this.indexedQuads.get(key);
+
+        set.remove(quad);
+    }, this);
+};
+
+sc.data.QuadStore.prototype.removeQuads = function(quads) {
+    goog.structs.forEach(quads, function(quad) {
+        this.removeQuad(quad);
+    }, this);
+};
+
+sc.data.QuadStore.prototype.removeQuadsMatchingQuery = function(subject, predicate, object, context) {
+    this.forEachQuadMatchingQuery(subject, predicate, object, context, function(quad) {
+        this.removeQuad(quad);
+    }, this);
+};
+
 /**
  * Returns a list of all quads in the store.
  * @return {Array.<sc.data.Quad>} A list of all the quads in the store.
