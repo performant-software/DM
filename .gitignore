@@ -14,3 +14,5 @@ settings_local.py
 *.swp
 *.out
 
+
+workspace/static/js/closure-library/
