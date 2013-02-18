@@ -1437,15 +1437,7 @@ sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
 
 
 sc.data.Databroker.prototype.createText = function(title, content) {
-    console.log("called createText");
     var text = this.createResource(this.createUuid(), 'dctypes:Text');
-    console.log("between");
-    /*
-    text.addProperty(
-        this.namespaces.autoExpand('rdf:type'),
-        this.namespaces.autoExpand('dctypes:Text')
-    );
-    */
     this.updateTextResource(text.uri, title, content);
     return text;
 };
@@ -1453,13 +1445,6 @@ sc.data.Databroker.prototype.createText = function(title, content) {
 
 sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
     var anno = this.createResource(this.createUuid(), 'oac:Annotation');
-    /*
-    anno.addProperty(
-        this.namespaces.autoExpand('rdf:type'),
-        this.namespaces.autoExpand('oac:Annotation')
-    );
-    */
-
     if (opt_annoType) {
         anno.addProperty(
             this.namespaces.autoExpand('rdf:type'),
