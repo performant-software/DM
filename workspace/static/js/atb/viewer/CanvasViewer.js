@@ -329,22 +329,28 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 };
 
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
+    console.log("one");
     var id = this.webService.resourceUriToId(uri);
+    console.log("two");
     
     var canvasUri = this.viewer.mainViewport.canvas.getUri();
     var canvasResource = this.databroker.getResource(canvasUri);
+    console.log("three");
     
     var canvasTitle = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
+    console.log("four");
     
     var textTitle = 'New annotation on ' + canvasTitle;
+    console.log("five");
     
     var textEditor = new atb.viewer.Editor(this.clientApp);
     textEditor.setPurpose('anno');
+    console.log("six");
 
     var newTextResource = this.databroker.createText("", "");
     var newTextId = newTextResource.uri;
-
-    var newAnno = this.databroker.createAnno(newTextId, id, null);
+    
+    var newAnno = this.databroker.createAnno(newTextId, id);
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;
