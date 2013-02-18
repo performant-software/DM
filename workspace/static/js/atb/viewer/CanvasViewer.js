@@ -123,7 +123,7 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
                        var uri = this.webService.resourceIdToUri(id);
                        
                        try {
-                       viewport.canvas.removeFeature(uri);
+                       viewport.canvas.removeObjectByUri(uri);
                        } catch (error) {}
                        }, false, this);
     
@@ -296,12 +296,13 @@ atb.viewer.CanvasViewer.prototype.autoResize = function() {
 atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
     var viewport = this.viewer.mainViewport;
     
-    viewport.canvas.removeFeature(uri);
+    viewport.canvas.removeObjectByUri(uri);
+    viewport.requestFrameRender();
     
     var id = this.webService.resourceUriToId(uri);
     
-    var webService = this.clientApp.getWebService();
-    webService.withDeletedResource(id, function (response) {}, this, jQuery.proxy(this.flashErrorIcon, this));
+    // var webService = this.clientApp.getWebService();
+    // webService.withDeletedResource(id, function (response) {}, this, jQuery.proxy(this.flashErrorIcon, this));
     
     var event = new goog.events.Event('resource deleted', id);
     
