@@ -360,31 +360,25 @@ atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE = {
 };
 
 atb.viewer.CanvasViewer.prototype.highlightFeature = function(uri) {
-    var feature = this.viewer.mainViewport.canvas.getFeature(uri);
-    
-    feature.data('oldStroke', feature.attr('stroke'));
-    feature.data('oldFill', feature.attr('fill'));
-    
-    feature.animate(atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE,
-                    sc.canvas.Canvas.FADE_SPEED);
+    var feature = this.viewer.mainViewport.canvas.getFabricObjectByUri(uri);
     
     this.lastHighlightedFeatureUri = uri;
+    this.lastHighlightedFeatureStyle = {
+        stroke: feature.get('stroke'),
+        fill: feature.get('fill')
+    };
+    
+    feature.set(atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE);
 };
 
 atb.viewer.CanvasViewer.prototype.unhighlightFeature = function(uri) {
-    var feature = this.viewer.mainViewport.canvas.getFeature(uri);
+    var feature = this.viewer.mainViewport.canvas.getFabricObjectByUri(uri);
     
-    if (feature.data('oldStroke') == null ||
-        feature.data('oldFill')) {
-        return;
+    if (this.lastHighlightedFeatureStyle) {
+        feature.set(this.lastHighlightedFeatureStyle);
     }
     
-    feature.animate({'stroke': feature.data('oldStroke'),
-                    'fill': feature.data('oldFill')},
-                    sc.canvas.Canvas.FADE_SPEED);
-    
-    feature.removeData('oldStroke');
-    feature.removeData('oldFill');
+    feature.set(this.lastHighlightedFeatureStyle);
 };
 
 atb.viewer.CanvasViewer.prototype.flashFeatureHighlight = function(uri) {
