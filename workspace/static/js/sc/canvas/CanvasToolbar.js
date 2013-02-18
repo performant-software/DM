@@ -453,10 +453,9 @@ sc.canvas.CanvasToolbar.prototype.setCanvasByUri = function(uri, urisInOrder,
                                                             index) {
     var self = this;
     
-    var deferredCanvas = sc.canvas.Canvas.createDeferredCanvas(
+    var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         uri,
         this.databroker,
-        this.viewer.getDisplaySize(),
         urisInOrder,
         index
     ).done(function(canvas) {

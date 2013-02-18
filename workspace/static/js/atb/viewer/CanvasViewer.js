@@ -254,7 +254,6 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         uri,
         this.databroker,
-        {width: 100, height: 100},
         opt_sequenceUris,
         opt_sequenceIndex,
         opt_onLoad ? atb.Util.scopeAsyncHandler(opt_onLoad, opt_scope) : null
