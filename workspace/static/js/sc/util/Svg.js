@@ -161,12 +161,12 @@ sc.util.svg.parseAttrsFromString = function(str) {
     var cxMatch = /\s+cx\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
     var cyMatch = /\s+cy\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
     var rMatch = /\s+r\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
-    var xMatch = /\s+x\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
-    var yMatch = /\s+y\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
-    var x1Match = /\s+x1\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
-    var x2Match = /\s+x2\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
-    var y1Match = /\s+y1\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
-    var y2Match = /\s+y2\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
+    var xMatch = /\s+x\s*=\s*['"](\-?\d+(?:\.\d+)?%?)["']/i.exec(str);
+    var yMatch = /\s+y\s*=\s*['"](\-?\d+(?:\.\d+)?%?)["']/i.exec(str);
+    var x1Match = /\s+x1\s*=\s*['"](\-?\d+(?:\.\d+)?%?)["']/i.exec(str);
+    var x2Match = /\s+x2\s*=\s*['"](\-?\d+(?:\.\d+)?%?)["']/i.exec(str);
+    var y1Match = /\s+y1\s*=\s*['"](\-?\d+(?:\.\d+)?%?)["']/i.exec(str);
+    var y2Match = /\s+y2\s*=\s*['"](\-?\d+(?:\.\d+)?%?)["']/i.exec(str);
     var widthMatch = /\s+width\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
     var heightMatch = /\s+height\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
     var rxMatch = /\s+rx\s*=\s*['"](\d+(?:\.\d+)?%?)["']/i.exec(str);
@@ -179,43 +179,43 @@ sc.util.svg.parseAttrsFromString = function(str) {
     var attrs = {};
 
     if (cxMatch) {
-        attrs.cx = cxMatch[1];
+        attrs.cx = Number(cxMatch[1]);
     }
     if (cyMatch) {
-        attrs.cy = cyMatch[1];
+        attrs.cy = Number(cyMatch[1]);
     }
     if (rMatch) {
-        attrs.r = rMatch[1];
+        attrs.r = Number(rMatch[1]);
     }
     if (xMatch) {
-        attrs.x = xMatch[1];
+        attrs.x = Number(xMatch[1]);
     }
     if (yMatch) {
-        attrs.y = yMatch[1];
+        attrs.y = Number(yMatch[1]);
     }
     if (x1Match) {
-        attrs.x1 = x1Match[1];
+        attrs.x1 = Number(x1Match[1]);
     }
     if (x2Match) {
-        attrs.x2 = x2Match[1];
+        attrs.x2 = Number(x2Match[1]);
     }
     if (y1Match) {
-        attrs.y1 = y1Match[1];
+        attrs.y1 = Number(y1Match[1]);
     }
     if (y2Match) {
-        attrs.y2 = y2Match[1];
+        attrs.y2 = Number(y2Match[1]);
     }
     if (widthMatch) {
-        attrs.width = widthMatch[1];
+        attrs.width = Number(widthMatch[1]);
     }
     if (heightMatch) {
-        attrs.height = heightMatch[1];
+        attrs.height = Number(heightMatch[1]);
     }
     if (rxMatch) {
-        attrs.rx = rxMatch[1];
+        attrs.rx = Number(rxMatch[1]);
     }
     if (ryMatch) {
-        attrs.ry = ryMatch[1];
+        attrs.ry = Number(ryMatch[1]);
     }
     if (dMatch) {
         attrs.d = dMatch[1];

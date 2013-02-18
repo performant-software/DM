@@ -106,7 +106,15 @@ sc.canvas.FeatureControl.prototype.layerToCanvasCoord = function(x, y) {
  * @return {string} The svg representation.
  */
 sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
-    return this.feature.toSVG();
+    var canvas = this.viewport.canvas;
+
+    var featureClone = this.feature.clone();
+
+    var coords = canvas.getFeatureCoords(this.feature);
+
+    featureClone.set('left', coords.x).set('top', coords.y);
+
+    return featureClone.toSVG();
 };
 
 /**
@@ -116,12 +124,12 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     if (! this.shouldSaveChanges) {
         return;
     }
+
+    var svgString = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
     
     var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) ||
         this.databroker.createUuid();
     var canvasUri = this.viewport.canvas.getUri();
-    
-    var svgString = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
 
     var selector = this.databroker.createResource(
         contentUri, 'oac:SvgSelector');
