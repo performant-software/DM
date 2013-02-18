@@ -384,6 +384,7 @@ atb.viewer.CanvasViewer.prototype.highlightFeature = function(uri) {
     };
     
     feature.set(atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE);
+    this.viewer.mainViewport.requestFrameRender();
 };
 
 atb.viewer.CanvasViewer.prototype.unhighlightFeature = function(uri) {
@@ -394,6 +395,7 @@ atb.viewer.CanvasViewer.prototype.unhighlightFeature = function(uri) {
     }
     
     feature.set(this.lastHighlightedFeatureStyle);
+    this.viewer.mainViewport.requestFrameRender();
 };
 
 atb.viewer.CanvasViewer.prototype.flashFeatureHighlight = function(uri) {
