@@ -630,15 +630,17 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
 
     this.newResourceUris.add(uri);
-    
-    var quad = new sc.data.Quad(
-        uri,
-        this.namespaces.expand('rdf', 'type'),
-        this.namespaces.autoExpand(type),
-        null
-    );
-    
-    this.addNewQuad(quad);
+
+    if (type) {
+        var quad = new sc.data.Quad(
+            uri,
+            this.namespaces.expand('rdf', 'type'),
+            this.namespaces.autoExpand(type),
+            null
+        );
+        
+        this.addNewQuad(quad);
+    }
     
     return this.getResource(uri);
 };
