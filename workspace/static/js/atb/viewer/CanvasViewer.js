@@ -329,41 +329,24 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 };
 
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
-    var id = this.webService.resourceUriToId(uri);
-    
-    var canvasUri = this.viewer.mainViewport.canvas.getUri();
-    var canvasResource = this.databroker.getResource(canvasUri);
+    var canvasUri = this.getUri();
+    var canvasResource = this.databroker.getResource(this.getUri());
     
     var canvasTitle = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
-    
     var textTitle = 'New annotation on ' + canvasTitle;
     
     var textEditor = new atb.viewer.Editor(this.clientApp);
     textEditor.setPurpose('anno');
 
-    var newTextResource = this.databroker.createText("", "");
+    var newTextResource = this.databroker.createText(textTitle, "");
     var newTextId = newTextResource.uri;
 
-    var newAnno = this.databroker.createAnno(newTextId, id, null);
+    var newAnno = this.databroker.createAnno(newTextId, uri, null);
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;
     textEditor.annotationUid = annoId;
     textEditor.toggleIsAnnoText(true);
-        
-    /* Need to tell text editor to save and create anno in data broker.
-    textEditor.saveContents(function() {
-        this.webService.withSavedAnno(annoId, {
-            'id': annoId,
-            'type': 'anno',
-            'anno': {
-                'targets': [id],
-                'bodies': [newTextId]
-            }
-        }, jQuery.noop, this);
-    }, this);
-    };
-    */
 
     var otherContainer = this.getPanelManager().getAnotherPanel(
         this.getPanelContainer());
