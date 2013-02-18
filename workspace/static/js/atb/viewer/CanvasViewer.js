@@ -329,10 +329,22 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 };
 
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
+<<<<<<< HEAD
     var canvasUri = this.getUri();
     var canvasResource = this.databroker.getResource(this.getUri());
     
     var canvasTitle = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
+=======
+    console.log("createTextAnno uri:", uri);
+    var id = this.webService.resourceUriToId(uri);
+    var svgUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    
+    var canvasUri = this.viewer.mainViewport.canvas.getUri();
+    var canvasResource = this.databroker.getResource(canvasUri);
+    
+    var canvasTitle = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
+    
+>>>>>>> creating a text annotation from hover menu now creates the correct annotation targeting the specific resource that identifies the canvas as source and svg as selector (body is the new text created).
     var textTitle = 'New annotation on ' + canvasTitle;
     
     var textEditor = new atb.viewer.Editor(this.clientApp);
@@ -341,7 +353,21 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var newTextResource = this.databroker.createText(textTitle, "");
     var newTextId = newTextResource.uri;
 
+<<<<<<< HEAD
     var newAnno = this.databroker.createAnno(newTextId, uri, null);
+=======
+    // This should be a convenience method in the data broker
+    var specificTargets = [];
+    this.databroker.quadStore.forEachQuadMatchingQuery(
+        null, this.databroker.namespaces.expand('oa', 'hasSelector'), svgUri, null,
+        function(quad) {
+            specificTargets.push(quad.subject);
+        },
+        this
+    );
+       
+    var newAnno = this.databroker.createAnno(newTextId, specificTargets[0]);
+>>>>>>> creating a text annotation from hover menu now creates the correct annotation targeting the specific resource that identifies the canvas as source and svg as selector (body is the new text created).
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;
