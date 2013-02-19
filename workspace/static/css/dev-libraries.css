@@ -26,8 +26,5 @@
 /* goog extended styles */
 @import url("goog/editortoolbar.css");
 
-/* open layers */
-@import url("openlayers/OpenLayers.css");
-
 
 @import url("jquery/jquery-ui-1.8.22.custom.css");

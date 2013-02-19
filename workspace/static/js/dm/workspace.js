@@ -5,7 +5,6 @@ goog.require('atb.viewer.PanelManager');
 goog.require('atb.viewer.PanelContainer');
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
-goog.require('atb.viewer.StandardSimpleMarkerEditor');
 goog.require('atb.viewer.Editor');
 goog.require('atb.ui.Preferences');
 goog.require('atb.widgets.MenuUtil');
@@ -179,15 +178,9 @@ var setupCurrentProject = function(clientApp, username) {
 //          tenure of their panelcontainer's tag...
 //			maybe wrap them in another child tag that they "keep" owning and stops being a child when it moves...??
 
-function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, olImgPath)
+function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
 {
-    if (olImgPath != undefined) {
-        OpenLayers.ImgPath = olImgPath;
-    }
-
 	//Q: should these dm package methods just take a clientApp...?
-    var markerEditor;
-    var textEditor;
 	goog.global.clientApp = new atb.ClientApp(
 		new atb.PassThroughLoginWebService(wsURI, mediawsURI, wsSameOriginURI, username), 
         username,

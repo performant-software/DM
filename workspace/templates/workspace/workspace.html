@@ -39,12 +39,11 @@
 {% block init_scripts %}
 <script type="text/javascript" >
   var staticUrl = "{{ STATIC_URL }}";
-  var olImgPath = "{{ STATIC_URL }}js/openlayers/img/";
   var styleRoot = "{{ STATIC_URL }}css/";
   var wsURI = "{{ WEBSERVICE_URI }}";
   var mediawsURI = "{{ MEDIA_WEBSERVICE_URI }}";
   var wsSameOriginURI = "/"
-  initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", styleRoot, olImgPath);
+  initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", styleRoot);
   windowScaler.scale();
 </script>
 {% endblock %}
