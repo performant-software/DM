@@ -84,6 +84,7 @@ sc.canvas.PanZoomGesturesControl.prototype.deactivate = function() {
 sc.canvas.PanZoomGesturesControl.prototype.handleMousewheel =
 function(event, delta, deltaX, deltaY) {
     event.preventDefault();
+    event.stopPropagation();
 
     if (this.viewport.isEmpty()) {
         return;
