@@ -34,7 +34,6 @@ goog.require('atb.widgets.IMenu');
 goog.require('atb.widgets.Toolbar');
 goog.require('atb.widgets.MenuItem');
 goog.require('atb.widgets.MenuUtil');
-goog.require('atb.debug.DebugTools');//HACK
 goog.require('atb.util.StyleUtil');
 goog.require('atb.util.ReferenceUtil');
 //end radial menus test includes

@@ -383,13 +383,11 @@ sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, 
 
     this.databroker.getDeferredResource(manifestUri).done(function(resource) {
         var aggregatedUris = this.databroker.getAggregationContentsUris(manifestUri);
-        console.log("aggregatedUris:", aggregatedUris);
 
         var fragment = this.options.doc.createDocumentFragment();
 
         for (var i = 0, len = aggregatedUris.length; i < len; i++) {
             var uri = aggregatedUris[i];
-            console.log("uri:", uri);
 
             this.addManifestItem(uri, clickHandler, fragment);
         }

@@ -24,7 +24,7 @@ goog.require("atb.util.Map");
 **/
 atb.widgets.Toolbar = function(set_targetDiv, opt_initialMenuItems)
 {
-	atb.debug.DebugUtil.debugAssertion(!atb.util.ReferenceUtil.isBadReferenceValue(set_targetDiv), "null targetDiv given!");
+	goog.asserts.assert(!atb.util.ReferenceUtil.isBadReferenceValue(set_targetDiv), "null targetDiv given!");
 	
 	//Call superclass's constructor:
 	atb.widgets.IMenu.call(this);

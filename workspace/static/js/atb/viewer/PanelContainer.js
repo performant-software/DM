@@ -11,7 +11,7 @@ goog.provide("atb.viewer.PanelContainer");
 //TODO: track down a possible but with titles when/after saving editor/markereditors...?
 
 goog.require("atb.util.ReferenceUtil");
-goog.require("atb.debug.DebugUtil");
+goog.require('goog.asserts');
 
 goog.require("atb.widgets.IMenu");
 goog.require("atb.widgets.MenuItem");
@@ -311,10 +311,10 @@ atb.viewer.PanelContainer.prototype.getPanelManager = function()
 
 atb.viewer.PanelContainer.prototype.setPanelManager = function(set_panelManager)
 {//^TO BE USED BY PANELMANAGER ONLY!!!
-	atb.debug.DebugUtil.debugAssertion(set_panelManager !== null, "null panelmanager set!");//lol...what of clearing them later-on...?!?
+	goog.asserts.assert(set_panelManager !== null, "null panelmanager set!");//lol...what of clearing them later-on...?!?
 	//atb.viewer.PanelContainer
 	var bCond = (this.panelManager === null);// || (this.panelManager ===set_panelManager)//nah...lets just go with the first part after-all...!
-	atb.debug.DebugUtil.debugAssertion( bCond, "Warning: changing panelmanagers for a panelcontainer!!!");
+	goog.asserts.assert( bCond, "Warning: changing panelmanagers for a panelcontainer!!!");
 	
 	this.panelManager = set_panelManager;
 //lolfriendclasses...???/methods...?	
@@ -806,7 +806,7 @@ atb.viewer.PanelContainer.prototype.decodeMenuItem = function(menuItemDef)
 	var actionHandler = atb.util.ReferenceUtil.applyDefaultValue(menuItemDef.action, 
 			atb.util.ReferenceUtil.applyDefaultValue(menuItemDef.actionHandler, null)
 	);
-	atb.debug.DebugUtil.debugAssertion(actionHandler!=null, "[panelcontainer]: null actionhandler for menuitemdef! name="+menuItemDef.name);
+	goog.asserts.assert(actionHandler!=null, "[panelcontainer]: null actionhandler for menuitemdef! name="+menuItemDef.name);
 	
 	//true;//hack
 	

@@ -123,7 +123,7 @@ atb.widgets.RadialMenu.prototype.findMatchingEntryInfo = function(findMenuItem)
 			return testEntry;
 		}
 	}
-	atb.debug.DebugUtil.debugAssertion(false, "match not found for menuitem when looking for an entry!");
+	goog.asserts.assert(false, "match not found for menuitem when looking for an entry!");
 	//orlolraiseerror...??
 	
 	return null;//not found!

@@ -8,7 +8,7 @@ goog.provide("atb.widgets.MenuUtil");
 
 goog.require("jquery.jQuery");
 goog.require("atb.util.ReferenceUtil");
-goog.require("atb.debug.DebugUtil");
+goog.require('goog.asserts');
 goog.require("atb.widgets.MenuItem");
 goog.require("atb.util.LangUtil");
 
@@ -142,7 +142,7 @@ atb.widgets.MenuUtil.decodeMenuItem = function(menuItemDef, opt_menuItemDefDefau
 	);
 	var custom_options = atb.util.ReferenceUtil.applyDefaultValue(menuItemDef.custom, null);
 	
-	atb.debug.DebugUtil.debugAssertion(actionHandler!=null, "[atb.widgets.MenuUtil.decodeMenuItem]: null actionhandler for menuitemdef! name="+menuItemDef.name);
+	goog.asserts.assert(actionHandler!=null, "[atb.widgets.MenuUtil.decodeMenuItem]: null actionhandler for menuitemdef! name="+menuItemDef.name);
 	
 	var visualInfo =  atb.util.ReferenceUtil.applyDefaultValue(menuItemDef.visual, null);
 	if (visualInfo === null)
