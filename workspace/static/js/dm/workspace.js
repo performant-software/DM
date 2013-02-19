@@ -1,6 +1,5 @@
 goog.require("atb.ClientApp");
 goog.require("atb.WebService");
-goog.require("atb.DataStore");
 goog.require('atb.viewer.PanelManager');
 goog.require('atb.viewer.PanelContainer');
 goog.require('atb.PassThroughLoginWebService');
@@ -277,11 +276,10 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
     }
     ];
 	
-    var resourceViewer = new atb.viewer.Finder(clientApp);//new atb.viewer.ResourceListViewer(clientApp);
+    // var resourceViewer = new atb.viewer.Finder(clientApp);
     
-    leftContainer.setViewer(resourceViewer);
-//    resourceViewer.addSummariesFromUserId(username);
-    resourceViewer.loadSummaries([username]);
+    // leftContainer.setViewer(resourceViewer);
+    // resourceViewer.loadSummaries([username]);
 		
     leftContainer.setToolbarHangingLeft(true);
     leftContainer.autoHideToolbars();

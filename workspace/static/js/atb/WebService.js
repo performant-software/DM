@@ -9,14 +9,11 @@ goog.require('jquery.jQuery');
 goog.require('goog.ui.IdGenerator');
 goog.require('atb.util.Stack');
 
-goog.require("atb.debug.DebugFilter");
 /**
  * @constructor
  * @param rootURI {string}
  */
 atb.WebService = function(rootURI, mediaURI) {
-    this.debugFilter = new atb.debug.DebugFilter();
-	
     if (rootURI[rootURI.length-1] != '/') {
         this.rootURI = rootURI + "/"; 
     } else {
@@ -409,26 +406,19 @@ atb.WebService.prototype.requestResources = function(remoteIds, callback)
 	var self = this;
 	incrementalFunc = function()//response)
 	{
-		//this.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "incrementalFunc!");
-		self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "incrementalFunc!");
+		
 		if (items.isEmpty())
 		{
-			//this.debugFilter.debugPrint(atb.debug.DebugFilter.CAT_TRACE, 
-			//this.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, 
-			self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "incremental - done; doing callback!");
-			//this.this.debugFilter.debugPrint(atb.debug.DebugFilter.CAT_TRACE, 
+			
 			callback(responses);
 		}
 		else
 		{
 			lastQuery = items.pop();
-			//this.this.debugFilter.debugPrint(atb.debug.DebugFilter.CAT_TRACE, 
-			self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "now requesting: "+lastQuery);
+
 			var uri = uriBase + lastQuery;
 			//uri = "http://localhost/Drew/work/anno/anno/html/dummyQuery.json.php?resourceId=5";//hack
-			self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "&nbsp;&nbsp;&nbsp;&nbsp;"+"uri = <a href='"+uri+"'>"+uri+"</a>");
-			//debugPrint(""+jquery.getJSON);
-			//debugPrint(""+jQuery.getJSON);
+			
 			jQuery.getJSON(uri, responseFunc);
 		}
 	};
@@ -446,11 +436,6 @@ atb.WebService.prototype.requestResources = function(remoteIds, callback)
 		}
 
 		*/
-		self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "responseFunc; response:");
-		self.debugFilter.debugDumpObject(atb.debug.DebugFilter.CAT_TRACE, response);
-		self.debugFilter.debugNewline(atb.debug.DebugFilter.CAT_TRACE);
-		//this.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, 
-		//, "&nbsp;");//lolhack!
 		
 		responses.push({
 			id: lastQuery,
