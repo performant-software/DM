@@ -269,13 +269,15 @@ sc.RepoBrowser.prototype.slideToManuscripts = function(opt_after) {
 sc.RepoBrowser.prototype.prefetchInitialRdf = function() {
     var repos = this.options.repositories;
 
-    for (var i=0, len=repos.length; i<len; i++) {
-        var repo = repos[i];
+    if (repos) {
+        for (var i=0, len=repos.length; i<len; i++) {
+            var repo = repos[i];
 
-        var url = repo.url;
+            var url = repo.url;
 
-        if (url) {
-            this.databroker.fetchRdf(url);
+            if (url) {
+                this.databroker.fetchRdf(url);
+            }
         }
     }
 };
