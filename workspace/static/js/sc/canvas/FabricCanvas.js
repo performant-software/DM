@@ -286,6 +286,69 @@ sc.canvas.FabricCanvas.prototype.fadeTextAnnosToOpacity = function(opacity) {
     }, this);
 };
 
+sc.canvas.FabricCanvas.MARKER_TYPES = new goog.structs.Set([
+    'circle',
+    'ellipse',
+    'polyline',
+    'path',
+    'line',
+    'pathgroup',
+    'polygon',
+    'rect',
+    'triangle'
+]);
+
+sc.canvas.FabricCanvas.prototype.showObject = function(obj) {
+    obj.set('opacity', 1);
+};
+
+sc.canvas.FabricCanvas.prototype.hideObject = function(obj) {
+    obj.set('opacity', 0);
+};
+
+sc.canvas.FabricCanvas.prototype.showMarkers = function() {
+    goog.structs.forEach(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type)) {
+            this.showObject(obj);
+        }
+    }, this);
+
+    this.requestFrameRender();
+};
+
+sc.canvas.FabricCanvas.prototype.hideMarkers = function() {
+    goog.structs.forEach(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type)) {
+            this.hideObject(obj);
+        }
+    }, this);
+
+    this.requestFrameRender();
+};
+
+sc.canvas.FabricCanvas.prototype.isHidingAllMarkers = function() {
+    return goog.structs.every(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && obj.get('opacity') != 0) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }, this);
+};
+
+sc.canvas.FabricCanvas.prototype.getNumMarkers = function() {
+    var count = 0;
+
+    goog.structs.forEach(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && obj.get('opacity') != 0) {
+            count ++;
+        }
+    }, this);
+
+    return count;
+};
+
 /**
  * Adds a databroker image resource object to the canvas.
  *

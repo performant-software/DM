@@ -134,9 +134,10 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     this.addButton(rightButton);
 
     this.autoEnableNavButtons();
-    this.viewer.mainViewport.addEventListener('canvasAdded',
-                                              this.autoEnableNavButtons,
-                                              false, this);
+    this.viewer.mainViewport.addEventListener(
+        'canvasAdded',
+        this.autoEnableNavButtons,
+        false, this);
 
     var panZoomButton = this.createButton(
         'pan-zoom',
@@ -184,6 +185,30 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     );
     this.addButton(drawBoxButton);
 
+    var toggleMarkersButton = this.createButton(
+        'toggle-markers',
+        'Toggle the visibility of markers on the canvas',
+        '',
+        'sc-CanvasToolbar-toggleMarkersIcon',
+        this.handleToggleMarkers
+    );
+    this.addButton(toggleMarkersButton);
+    toggleMarkersButton.setChecked(true);
+    this.viewer.mainViewport.addEventListener(
+        'canvasAdded',
+        function(event) {
+            toggleMarkersButton.setChecked(true);
+        });
+    for (var name in this.controls) {
+        if (this.controls.hasOwnProperty(name)) {
+            var control = this.controls[name];
+
+            goog.events.listen(control, ['beginDraw', 'finishDraw'], function(event) {
+                toggleMarkersButton.setChecked(true);
+            });
+        }
+    }
+
     var transcriptionsButton = this.createButton(
         'transcriptions',
         'Show and hide transcriptions',
@@ -198,8 +223,8 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         }
     }, false, this);
     transcriptionsButton.addEventListener('leave',
-                                          this.handleTranscriptionsClick,
-                                          false, this);
+        this.handleTranscriptionsClick,
+        false, this);
     this.addButton(transcriptionsButton);
     
     var imageChoicesButton = this.createButton(
@@ -210,6 +235,22 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         this.handleImageChoicesClick
     );
     this.addButton(imageChoicesButton);
+};
+
+sc.canvas.CanvasToolbar.prototype.handleToggleMarkers = function(event) {
+    var canvas = this.viewer.mainViewport.canvas;
+    var button = this.buttonsByName['toggle-markers'];
+
+    if (canvas) {
+        if (button.isChecked()) {
+            canvas.showMarkers();
+            button.setChecked(true);
+        }
+        else {
+            canvas.hideMarkers();
+            button.setChecked(false);
+        }
+    }
 };
 
 sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
