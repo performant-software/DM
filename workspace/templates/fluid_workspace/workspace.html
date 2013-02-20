@@ -1,0 +1,377 @@
+{% extends "fluid_workspace/base.html" %}
+{% load static from staticfiles %}
+
+{% block head_css %}
+<style>
+  .row-fluid #noMargin {
+      margin-left:0;
+  }
+
+  .tool-line {
+      position:fixed;
+      text-align: center;
+      top: 56px;
+  }
+
+  #grid {
+      padding-top: 120px;
+  }
+</style>
+{% endblock %}
+
+{% block head_scripts %}
+{% include "fluid_workspace/ui_scripts.html" %}
+<script
+   src="{% static 'js/dm/fluid_workspace.js' %}"
+   type="text/javascript">
+</script>
+{% endblock %}
+
+{% block page_content %}
+<div 
+  <div class="row-fluid tool-line" id="selector">
+    <div class="btn-group">
+      <button class="1x1 btn-large">1x1</button>
+      <button class="1x2 btn-large">1x2</button>
+      <button class="1x3 btn-large">1x3</button>
+      <button class="2x2 btn-large">2x2</button>
+      <button class="2x3 btn-large">2x3</button>
+      <button class="3x3 btn-large">3x3</button>
+      <button class="3x4 btn-large">3x4</button>
+      <button class="4x4 btn-large">4x4</button>
+      <a href="#myModal" role="button" class="btn" data-toggle="modal">Repositories</a>
+      <button class="add btn-large">+</button>
+
+    </div>
+  </div>
+  <div class="row-fluid" id="grid">
+    <div>
+      <div class="atb-wrapper atb-wrapper-one-col">
+        <div class="atb-wrapper-container">
+          <div class="atb-wrapper-heading" id="leftTab">&nbsp;</div>
+          <div class="atb-wrapper-inner" id="left"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p>One</p>
+    </div>
+    <div>
+      <p>Two</p>
+    </div>
+    <div>
+      <p>Three</p>
+    </div>
+    <div>
+      <p>Four</p>
+    </div>
+    <div>
+      <p>Five</p>
+    </div>
+    <div>
+      <p>Six</p>
+    </div>
+    <div>
+      <p>Seven</p>
+    </div>
+    <div>
+      <p>Eight</p>
+    </div>
+    <div>
+      <p>Nine</p>
+    </div>
+    <div>
+      <p>Ten</p>
+    </div>
+    <div>
+      <p>Eleven</p>
+    </div>
+    <div>
+      <p>Twelve</p>
+    </div>
+    <div>
+      <p>Thirteen</p>
+    </div>
+    <div>
+      <p>Fourteen</p>
+    </div>
+    <div>
+      <p>Fifteen</p>
+    </div>
+    <div>
+      <p>Sixteen</p>
+    </div>
+  </div>
+</div>
+
+  	<!--JQuery and bootstrap js-->
+    <!--
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    -->
+
+    <!--Custom js that prepends divs & restructures grid.-->
+    <script>
+
+      var columns = "span6";
+      var rows = 2;
+
+      viewers = [];
+
+      function setFirst(){
+        var count = 0;
+
+        $("#grid").children().each(function(){
+          var inRow = 12 / parseInt(columns.substring(4));
+          if(count % inRow === 0){
+            $(this).attr("id","noMargin");
+          }
+            else $(this).removeAttr("id");
+          count++;
+        })
+      }
+
+      function setHeight(){
+        var height = ($(window).height() - $("#selector").height()) / rows;
+        $("#grid").children().each(function(){
+          $(this).height(height);
+        })
+      }
+      
+      function setSpan(){
+        $("#grid").children().attr('class', columns);
+        setFirst();
+        setHeight();
+      }
+
+      setSpan();
+
+      $(".add").click(function(){
+        $("#grid").prepend("<div> <p>Added</p> </div>");
+        setSpan();
+      })
+
+      $(".1x1").click(function(){
+        columns = "span12";
+        rows = 1;
+        windowScaler.scale(rows);
+        setSpan();
+      })
+
+      $(".1x2").click(function(){
+        columns = "span6";
+        rows = 1;
+        windowScaler.scale(rows);
+        setSpan();
+      })
+
+      $(".1x3").click(function(){
+        columns = "span4";
+        rows = 1;
+        windowScaler.scale(rows);
+        setSpan();
+      })
+
+      $(".2x2").click(function(){
+        columns = "span6";
+        rows = 2;
+        windowScaler.scale(rows);
+        setSpan();
+      })
+
+      $(".2x3").click(function(){
+        columns = "span4";
+        rows = 2;
+        windowScaler.scale(rows);
+        setSpan();
+      })
+
+      $(".3x3").click(function(){
+        columns = "span4";
+        rows = 3;
+        windowScaler.scale(rows);
+        console.log("viewers[0]:", viewers[0]);
+        window.setTimeout(function() {
+            viewers[0].autoResize();
+        }, 150);
+        setSpan();
+      })
+
+      $(".3x4").click(function(){
+        columns = "span3";
+        rows = 3;
+        windowScaler.scale(rows);
+        setSpan();
+      })
+
+      $(".4x4").click(function(){
+        columns = "span3";
+        rows = 4;
+        windowScaler.scale(rows);
+        setSpan();
+      })
+
+      $(window).resize(function(){
+        setSpan();
+        });
+      
+    </script>
+
+
+
+<!-- Modal -->
+<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Modal header</h3>
+  </div>
+  <div class="modal-body">
+    <p>One fine body…</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    <button class="btn btn-primary">Save changes</button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block init_scripts %}
+<script type="text/javascript" >
+  var staticUrl = "{{ STATIC_URL }}";
+  var olImgPath = "{{ STATIC_URL }}js/openlayers/img/";
+  var styleRoot = "{{ STATIC_URL }}css/";
+  var wsURI = "{{ WEBSERVICE_URI }}";
+  var mediawsURI = "{{ MEDIA_WEBSERVICE_URI }}";
+  var wsSameOriginURI = "/"
+  initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", 
+                styleRoot, olImgPath);
+  var db = clientApp.databroker;
+  console.log(db);
+  var manuscriptUri = "http://openmanifests.s3-website-us-east-1.amazonaws.com"
+      + "/BeineckeMS10/Manifest";
+  var manuscriptUrl = "/store/resources/http://openmanifests.s3-website-us-east-1"
+      + ".amazonaws.com/BeineckeMS10/Manifest";
+  var pages = [];
+  var viewer;
+  db.fetchRdf(manuscriptUrl, function() {
+      var canvasParentDiv = document.getElementById('canvasParent');
+      var canvasToolbarDiv = document.getElementById('canvasToolbar');
+      var canvasViewportDiv = document.getElementById('canvasViewport');
+      console.log("canvasViewportDiv:", canvasViewportDiv);
+	
+      var leftTabId = "left";
+      var leftContainer = new atb.viewer.PanelContainer(
+          "leftPane", 
+          document.getElementById(leftTabId), 
+          'leftTab',
+          null,
+          null,
+          windowScaler
+      );
+
+  	  var panelManager = clientApp.getPanelManager();
+      panelManager.addPanelSlot(leftContainer);
+
+      var viewer = new atb.viewer.CanvasViewer(clientApp);
+      viewers.push(viewer);
+      leftContainer.setViewer(viewer);
+      leftContainer.setToolbarHangingLeft(true);
+      leftContainer.autoHideToolbars();
+/*
+      var viewer = new sc.canvas.FabricCanvasViewport(databroker, {
+          doc: window.document
+      });
+*/
+
+/*
+      viewer.domHelper = new goog.dom.DomHelper(window.document);
+      console.log(viewer.domHelper);
+      viewer.render(canvasViewportDiv);
+*/      
+
+      /*
+      viewer.resize(jQuery(canvasViewportDiv).width(), 650);
+      jQuery(window).on('resize', function() {
+          viewer.resize(jQuery(canvasViewportDiv).width(), 650);
+      });
+      */
+
+      var sequenceUris = db.getManuscriptSequenceUris(manuscriptUri);
+      console.log(sequenceUris);
+      pages = db.getListUrisInOrder(sequenceUris[0]);
+      viewer.setCanvasByUri(pages[0], null, null, null, null);
+//      canvasParentDiv.appendChild(viewer.getElement());
+
+      /*
+      var canvasToolbarDiv = document.getElementById('canvasToolbar');
+      var canvasViewportDiv = document.getElementById('canvasViewport');
+    
+      var databroker = new sc.data.Databroker();
+    
+      var viewer = new sc.canvas.FabricCanvasViewport(databroker, {
+          doc: window.document
+      });
+      viewer.render(canvasViewportDiv);
+      viewer.resize(jQuery(canvasViewportDiv).width(), 650);
+      jQuery(window).on('resize', function() {
+          viewer.resize(jQuery(canvasViewportDiv).width(), 650);
+      });
+
+      var panZoomControl = new sc.canvas.PanZoomGesturesControl(viewer);
+      panZoomControl.activate();
+    
+      var setCanvasByUri = function(uri) {
+          viewer.addDeferredCanvas(
+              sc.canvas.FabricCanvas.createDeferredCanvas(uri, databroker)
+          );
+      };
+
+      setCanvasByUri(pages[0]);
+
+    
+      var openHandler = function(event) {
+          var uri = event.uri;
+          var manifestUri = event.manifestUri;
+          var urisInOrder = event.urisInOrder;
+          var index = event.currentIndex;
+
+          if (event.resource.hasAnyType('dms:Canvas')) {
+              var withCollection = function (deferreds) {
+                  var deferredCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(
+                      uri, 
+                      databroker, 
+                      urisInOrder, 
+                      index
+                  );
+                  viewer.addDeferredCanvas(deferredCanvas);
+              };
+            
+              var collection = databroker.getDeferredResourceCollection(
+                  [uri].concat(databroker.getManuscriptAggregationUris(manifestUri))
+              );
+              collection.allComplete(withCollection).singleFail(function () {
+                  console.error(arguments);
+              });
+
+              event.preventDefault();
+          }
+      };
+      */
+
+      /*
+      var repoBrowser = new sc.RepoBrowser({
+          databroker: databroker,
+          repositoryUrlsByName: {
+              'Stanford DMS': 'http://dms-data.stanford.edu/Repository.xml',
+          },
+          noImages: false,
+          showAddButton: false
+      });
+      repoBrowser.addEventListener('click', openHandler);
+      repoBrowser.render(document.getElementById('repoBrowser'));
+      */
+  });
+
+</script>
+{% endblock %}

@@ -17,13 +17,14 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     if (this.rootDiv != null) {
         return;
     }
-    
+
     var self = this;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-    
+
     atb.viewer.Viewer.prototype.render.call(this, div);
+    console.log("rootDiv:", this.rootDiv);
     jQuery(this.rootDiv).addClass('atb-CanvasViewer');
-    
+
     var menuButtons = [
         new atb.widgets.MenuItem(
             "showLinkedAnnos",
@@ -280,6 +281,7 @@ function(id, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
                         opt_sequenceIndex);
 };
 
+
 atb.viewer.CanvasViewer.prototype.autoResize = function() {
     var panelContainer = this.getPanelContainer();
     
@@ -292,6 +294,7 @@ atb.viewer.CanvasViewer.prototype.autoResize = function() {
     
     this.viewer.resize(width, height);
 };
+
 
 atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
     var viewport = this.viewer.mainViewport;

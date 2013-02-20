@@ -30,7 +30,7 @@ goog.require('sc.data.Databroker');
 
 atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     var self = this;
-    
+
 	this.webService = webService;
     this.webService.setClientApp(this);
     

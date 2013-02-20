@@ -68,6 +68,7 @@ goog.addDependency('../../../atb/ui/Canvas.js', ['atb.ui.Canvas'], ['Raphael', '
 goog.addDependency('../../../atb/ui/Container.js', ['atb.ui.Container'], ['goog.ui.Container']);
 goog.addDependency('../../../atb/ui/InfoPane.js', ['atb.ui.InfoPane'], ['atb.widgets.DialogWidget', 'goog.dom.DomHelper', 'goog.events', 'jquery.jQuery']);
 goog.addDependency('../../../atb/ui/PanelLayoutThumbnail.js', ['atb.ui.PanelLayoutThumbnail'], ['goog.dom.DomHelper']);
+goog.addDependency('../../../atb/ui/PanelScaler.js', ['atb.ui.PanelScaler'], ['atb.ui.WindowScaler']);
 goog.addDependency('../../../atb/ui/PopupWindow.js', ['atb.ui.PopupWindow'], ['atb.Util', 'goog.dom', 'goog.dom.DomHelper', 'goog.events', 'jquery.jQuery']);
 goog.addDependency('../../../atb/ui/Preferences.js', ['atb.ui.Preferences'], ['atb.Util', 'atb.widgets.DialogWidget', 'goog.dom.DomHelper', 'goog.ui.CustomButton', 'jquery.jQuery']);
 goog.addDependency('../../../atb/ui/Toolbar.js', ['atb.ui.Toolbar', 'atb.ui.Toolbar.Orientation'], ['goog.dom', 'goog.ui.Toolbar', 'jquery.jQuery']);
