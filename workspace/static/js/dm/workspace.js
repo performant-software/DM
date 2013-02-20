@@ -74,15 +74,14 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     jQuery(wrContainer).hide();
 
     workingResourcesViewer.render(wrContainer);
-    workingResourcesViewer.loadUser(username);
+
+    if (databroker.currentProject) {
+        databroker.getDeferredResource(databroker.currentProject).done(function(project) {
+            workingResourcesViewer.loadManifest(project.uri);
+        });
+    }
 
     goog.events.listen(workingResourcesViewer, 'panelChosen', handlePanelChoice);
-
-    //DEMO - REMOVE
-    clientApp.getDatabroker().fetchRdf('http://ada.drew.edu/tandres/WRDemoCollection.xml', function() {
-        workingResourcesViewer.loadManifest('http://dm.drew.edu/tests/working-resources-collection');
-    });
-    //END DEMO
 
     return workingResourcesViewer;
 };
@@ -169,6 +168,8 @@ var setupCurrentProject = function(clientApp, username) {
         }
         if (uris.length == 1) {
             db.currentProject = uris[0];
+
+            workingResourcesViewer.loadManifest(uris[0]);
         }
     });
 }
@@ -309,10 +310,10 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
     var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
 
+    setupCurrentProject(clientApp, username);
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
     setupControls(clientApp, workingResourcesViewer);
-    setupCurrentProject(clientApp, username);
     
 }
 
