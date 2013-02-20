@@ -144,6 +144,14 @@
         setHeight();
       }
 
+      function resizeViewers() {
+        jQuery(viewers).each(function(){
+          if (jQuery.isFunction(this.autoResize)) {
+            this.autoResize();
+          }
+        })
+      }
+
       setSpan();
 
       $(".add").click(function(){
@@ -156,6 +164,7 @@
         rows = 1;
         windowScaler.scale(rows);
         setSpan();
+        resizeViewers();
       })
 
       $(".1x2").click(function(){
@@ -163,6 +172,7 @@
         rows = 1;
         windowScaler.scale(rows);
         setSpan();
+        resizeViewers();
       })
 
       $(".1x3").click(function(){
@@ -170,6 +180,7 @@
         rows = 1;
         windowScaler.scale(rows);
         setSpan();
+        resizeViewers();
       })
 
       $(".2x2").click(function(){
@@ -177,6 +188,7 @@
         rows = 2;
         windowScaler.scale(rows);
         setSpan();
+        resizeViewers();
       })
 
       $(".2x3").click(function(){
@@ -184,17 +196,15 @@
         rows = 2;
         windowScaler.scale(rows);
         setSpan();
+        resizeViewers();
       })
 
       $(".3x3").click(function(){
         columns = "span4";
         rows = 3;
         windowScaler.scale(rows);
-        console.log("viewers[0]:", viewers[0]);
-        window.setTimeout(function() {
-            viewers[0].autoResize();
-        }, 150);
         setSpan();
+        resizeViewers();
       })
 
       $(".3x4").click(function(){
@@ -202,6 +212,7 @@
         rows = 3;
         windowScaler.scale(rows);
         setSpan();
+        resizeViewers();
       })
 
       $(".4x4").click(function(){
@@ -209,6 +220,7 @@
         rows = 4;
         windowScaler.scale(rows);
         setSpan();
+        resizeViewers();
       })
 
       $(window).resize(function(){
