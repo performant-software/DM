@@ -60,6 +60,15 @@ sc.canvas.CanvasViewer = function(options) {
                                        false, this);
 
     this.maxMarqueeSize = new goog.math.Size(100, 100);
+
+    this.mainViewport.addEventListener('mouseover', function(event) {
+        if (event.getFeature().type != 'image') {
+            jQuery(this.mainViewport.getElement()).addClass('sc-CanvasViewport-hand');
+        }
+    }, false, this);
+    this.mainViewport.addEventListener('mouseout', function(event) {
+        jQuery(this.mainViewport.getElement()).removeClass('sc-CanvasViewport-hand');
+    }, false, this);
 };
 
 sc.canvas.CanvasViewer.prototype.options = {

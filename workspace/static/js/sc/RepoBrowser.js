@@ -269,13 +269,15 @@ sc.RepoBrowser.prototype.slideToManuscripts = function(opt_after) {
 sc.RepoBrowser.prototype.prefetchInitialRdf = function() {
     var repos = this.options.repositories;
 
-    for (var i=0, len=repos.length; i<len; i++) {
-        var repo = repos[i];
+    if (repos) {
+        for (var i=0, len=repos.length; i<len; i++) {
+            var repo = repos[i];
 
-        var url = repo.url;
+            var url = repo.url;
 
-        if (url) {
-            this.databroker.fetchRdf(url);
+            if (url) {
+                this.databroker.fetchRdf(url);
+            }
         }
     }
 };
@@ -383,13 +385,11 @@ sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, 
 
     this.databroker.getDeferredResource(manifestUri).done(function(resource) {
         var aggregatedUris = this.databroker.getAggregationContentsUris(manifestUri);
-        console.log("aggregatedUris:", aggregatedUris);
 
         var fragment = this.options.doc.createDocumentFragment();
 
         for (var i = 0, len = aggregatedUris.length; i < len; i++) {
             var uri = aggregatedUris[i];
-            console.log("uri:", uri);
 
             this.addManifestItem(uri, clickHandler, fragment);
         }

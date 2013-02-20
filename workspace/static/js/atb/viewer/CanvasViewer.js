@@ -124,7 +124,7 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
                        var uri = this.webService.resourceIdToUri(id);
                        
                        try {
-                       viewport.canvas.removeFeature(uri);
+                       viewport.canvas.removeObjectByUri(uri);
                        } catch (error) {}
                        }, false, this);
     
@@ -255,7 +255,6 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         uri,
         this.databroker,
-        {width: 100, height: 100},
         opt_sequenceUris,
         opt_sequenceIndex,
         opt_onLoad ? atb.Util.scopeAsyncHandler(opt_onLoad, opt_scope) : null
@@ -299,12 +298,13 @@ atb.viewer.CanvasViewer.prototype.autoResize = function() {
 atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
     var viewport = this.viewer.mainViewport;
     
-    viewport.canvas.removeFeature(uri);
+    viewport.canvas.removeObjectByUri(uri);
+    viewport.requestFrameRender();
     
     var id = this.webService.resourceUriToId(uri);
     
-    var webService = this.clientApp.getWebService();
-    webService.withDeletedResource(id, function (response) {}, this, jQuery.proxy(this.flashErrorIcon, this));
+    // var webService = this.clientApp.getWebService();
+    // webService.withDeletedResource(id, function (response) {}, this, jQuery.proxy(this.flashErrorIcon, this));
     
     var event = new goog.events.Event('resource deleted', id);
     
@@ -314,8 +314,10 @@ atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
 
 atb.viewer.CanvasViewer.prototype.hideFeature = function(uri) {
     var viewport = this.viewer.mainViewport;
-    
-    viewport.canvas.hideFeatureByUri(uri);
+
+    var obj = viewport.canvas.getFabricObjectByUri(uri);
+    viewport.canvas.hideObject(obj);
+    viewport.requestFrameRender();
 };
 
 atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
@@ -332,7 +334,9 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 };
 
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
+    console.log("createTextAnno uri:", uri);
     var id = this.webService.resourceUriToId(uri);
+    var svgUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
     var canvasUri = this.viewer.mainViewport.canvas.getUri();
     var canvasResource = this.databroker.getResource(canvasUri);
@@ -344,29 +348,25 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var textEditor = new atb.viewer.Editor(this.clientApp);
     textEditor.setPurpose('anno');
 
-    var newTextResource = this.databroker.createText("", "");
+    var newTextResource = this.databroker.createText(textTitle, "");
     var newTextId = newTextResource.uri;
 
-    var newAnno = this.databroker.createAnno(newTextId, id, null);
+    // This should be a convenience method in the data broker
+    var specificTargets = [];
+    this.databroker.quadStore.forEachQuadMatchingQuery(
+        null, this.databroker.namespaces.expand('oa', 'hasSelector'), svgUri, null,
+        function(quad) {
+            specificTargets.push(quad.subject);
+        },
+        this
+    );
+       
+    var newAnno = this.databroker.createAnno(newTextId, specificTargets[0]);
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;
     textEditor.annotationUid = annoId;
     textEditor.toggleIsAnnoText(true);
-        
-    /* Need to tell text editor to save and create anno in data broker.
-    textEditor.saveContents(function() {
-        this.webService.withSavedAnno(annoId, {
-            'id': annoId,
-            'type': 'anno',
-            'anno': {
-                'targets': [id],
-                'bodies': [newTextId]
-            }
-        }, jQuery.noop, this);
-    }, this);
-    };
-    */
 
     var otherContainer = this.getPanelManager().getAnotherPanel(
         this.getPanelContainer());
@@ -380,31 +380,27 @@ atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE = {
 };
 
 atb.viewer.CanvasViewer.prototype.highlightFeature = function(uri) {
-    var feature = this.viewer.mainViewport.canvas.getFeature(uri);
-    
-    feature.data('oldStroke', feature.attr('stroke'));
-    feature.data('oldFill', feature.attr('fill'));
-    
-    feature.animate(atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE,
-                    sc.canvas.Canvas.FADE_SPEED);
+    var feature = this.viewer.mainViewport.canvas.getFabricObjectByUri(uri);
     
     this.lastHighlightedFeatureUri = uri;
+    this.lastHighlightedFeatureStyle = {
+        stroke: feature.get('stroke'),
+        fill: feature.get('fill')
+    };
+    
+    feature.set(atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE);
+    this.viewer.mainViewport.requestFrameRender();
 };
 
 atb.viewer.CanvasViewer.prototype.unhighlightFeature = function(uri) {
-    var feature = this.viewer.mainViewport.canvas.getFeature(uri);
+    var feature = this.viewer.mainViewport.canvas.getFabricObjectByUri(uri);
     
-    if (feature.data('oldStroke') == null ||
-        feature.data('oldFill')) {
-        return;
+    if (this.lastHighlightedFeatureStyle) {
+        feature.set(this.lastHighlightedFeatureStyle);
     }
     
-    feature.animate({'stroke': feature.data('oldStroke'),
-                    'fill': feature.data('oldFill')},
-                    sc.canvas.Canvas.FADE_SPEED);
-    
-    feature.removeData('oldStroke');
-    feature.removeData('oldFill');
+    feature.set(this.lastHighlightedFeatureStyle);
+    this.viewer.mainViewport.requestFrameRender();
 };
 
 atb.viewer.CanvasViewer.prototype.flashFeatureHighlight = function(uri) {

@@ -21,6 +21,9 @@ atb.viewer.TextEditorAnnotate = function(set_thisViewer)
 {
 	this.thisViewer = set_thisViewer;//HACK
     goog.editor.Plugin.call(this);
+
+    this.clientApp = this.thisViewer.clientApp;
+    this.databroker = this.clientApp.getDatabroker();
 	
 	this.lastStartNode = null;
 	this.lastEndNode = null;//debug hack
@@ -92,13 +95,8 @@ atb.viewer.TextEditorAnnotate.prototype.execCommandInternal = function (command)
         this.deleteAnnotation(selectedAnnotation);
     }
 	else {
-	    this.thisViewer.webService.withUid(
-		    function (uid) {
-                this.addAnnotation(uid, range);
-		    },
-		    this,
-            errorHandler
-	    );
+		var uid = this.databroker.createUuid();
+		this.addAnnotation(uid, range);
     }
 
     return true;
@@ -845,95 +843,20 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function (spanElem)
     var myResourceId = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
     
     var errorHandler = atb.Util.scopeAsyncHandler(this.thisViewer.flashErrorIcon, this.thisViewer);
-        	
-    this.thisViewer.webService.withUidList(
-        2,
-        function (uids) {
-            var newTextId = uids[0];
-            var annoId = uids[1];
-            
-            annoBodyEditor.resourceId = newTextId;
-            annoBodyEditor.annotationUid = annoId;
-            this.thisViewer.annotationUid = annoId;
-            
-            annoBodyEditor.setTitle('New Annotation on ' + targetTextTitle);
-            annoBodyEditor.toggleIsAnnoText(true);
-            
-            this.thisViewer.setAnnotationBody(newTextId);
-            
-            annoBodyEditor.saveContents(
-            	function () {
-            		this.thisViewer.webService.withSavedAnno(
-            			annoId,
-            			{
-            				'id': annoId,
-            				'type': 'anno',
-            				'anno': {
-            					'targets': [myResourceId],
-            					'bodies': [newTextId]
-            				}
-            			},
-            			function (response) {
-            				
-            			},
-            			this
-            		);
-            	},
-            	this
-            );
-        },
-        this,
-        errorHandler
-    );
 
-    //viewer.toggleAnnotationMode(true);
-    /*
-    this.thisViewer.saveContents(
-        function () {
-        	var myResourceId = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
+    var newTextId = this.databroker.createUuid();
+    var annoId = this.databroker.createUuid();
         	
-        	this.thisViewer.webService.withUidList(
-            		2,
-            		function (uids) {
-            			var newTextId = uids[0];
-            			var annoId = uids[1];
-            			
-            			annoBodyEditor.resourceId = newTextId;
-            			annoBodyEditor.annotationUid = annoId;
-            			this.thisViewer.annotationUid = annoId;
-            			
-            			annoBodyEditor.setTitle('New Annotation on ' + targetTextTitle);
-            			annoBodyEditor.toggleIsAnnoText(true);
-            			
-            			this.thisViewer.setAnnotationBody(newTextId);
-            			
-            			annoBodyEditor.saveContents(
-            				function () {
-            					this.thisViewer.webService.withSavedAnno(
-            							annoId,
-            							{
-            								'id': annoId,
-            								'type': 'anno',
-            								'anno': {
-            									'targets': [myResourceId],
-            									'bodies': [newTextId]
-            								}
-            							},
-            							function (response) {
-            								
-            							},
-            							this
-            						);
-            				},
-            				this
-            			);
-            		},
-            		this
-    		);
-        },
-        this
-    );
-    */
+    annoBodyEditor.resourceId = newTextId;
+    annoBodyEditor.annotationUid = annoId;
+    this.thisViewer.annotationUid = annoId;
+    
+    annoBodyEditor.setTitle('New Annotation on ' + targetTextTitle);
+    annoBodyEditor.toggleIsAnnoText(true);
+    
+    this.thisViewer.setAnnotationBody(newTextId);
+
+    this.databroker.createAnno(newTextId, myResourceId);
 
     otherContainer.setViewer( annoBodyEditor );
     otherContainer.setTabContents('New Annotation');

@@ -1,4 +1,4 @@
-goog.require('openlayers.OpenLayers');
+
 
 function reloadDmIfOrphaned () {
     if (! window.opener) {

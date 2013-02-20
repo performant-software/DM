@@ -2,8 +2,6 @@ goog.provide("atb.util.DomTraverser");
 goog.require("atb.util.Set");
 goog.require("atb.util.Map");
 
-goog.require("atb.debug.DebugTools");//hack
-
 //atb.util.DomTraverser = function(commonAncestor, start, end)
 atb.util.DomTraverser = function(start, end)
 {

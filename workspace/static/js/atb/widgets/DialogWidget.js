@@ -2,7 +2,6 @@ goog.provide("atb.widgets.DialogWidget");
 
 goog.require("goog.ui.Dialog");
 goog.require("goog.ui.Dialog.ButtonSet");
-goog.require("atb.debug.DebugTools");
 goog.require("atb.util.StyleUtil");
 goog.require("atb.util.ReferenceUtil");
 goog.require("atb.widgets.MenuUtil");

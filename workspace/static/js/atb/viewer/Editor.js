@@ -34,7 +34,6 @@ goog.require('atb.widgets.IMenu');
 goog.require('atb.widgets.Toolbar');
 goog.require('atb.widgets.MenuItem');
 goog.require('atb.widgets.MenuUtil');
-goog.require('atb.debug.DebugTools');//HACK
 goog.require('atb.util.StyleUtil');
 goog.require('atb.util.ReferenceUtil');
 //end radial menus test includes
@@ -784,13 +783,6 @@ atb.viewer.Editor.prototype.loadResource = function (resource) {
 
 atb.viewer.Editor.prototype.setAnnotationBody = function (bodyResourceId) {
     this.bodyResourceId = bodyResourceId;
-
-    this.webService.withUid(
-        function (uid) {
-            this.annotationUid = uid;
-        },
-        this
-    );
 };
 
 
@@ -841,6 +833,12 @@ atb.viewer.Editor.prototype.DEFAULT_DOCUMENT_TITLE = 'Untitled text document';
 
 atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
 	var myResourceId = opt_myResourceId || this.resourceId;
+    var targetUri = this.webService.resourceIdToUri(myResourceId);
+
+    var databroker = this.clientApp.getDatabroker();
+    var bodyUri = databroker.createUuid();
+
+    var anno = databroker.createAnno(bodyUri, targetUri);
 	
 	var otherContainer = this.getOtherPanelHelper();
     if (otherContainer == null)
@@ -852,52 +850,17 @@ atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
 		this.clientApp,
         ''
     );
-    
-    var targetTextTitle = this.getTitle();
-    
-    this.saveContents(
-        function () {
-        	this.webService.withUidList(
-        		2,
-        		function (uids) {
-        			var newTextId = uids[0];
-        			var annoId = uids[1];
-        			
-        			annoBodyEditor.resourceId = newTextId;
-        			annoBodyEditor.annotationUid = annoId;
-        			this.annotationUid = annoId;
-        			
-        			//annoBodyEditor.addAnnotationTarget(myResourceId);
-        			annoBodyEditor.setTitle('New Annotation on ' + targetTextTitle);
-        			annoBodyEditor.toggleIsAnnoText(true);
-        			
-        			this.setAnnotationBody(newTextId);
-        			
-        			annoBodyEditor.saveContents(function () {
-        				this.webService.withSavedAnno(
-							annoId,
-							{
-								'id': annoId,
-								'type': 'anno',
-								'anno': {
-									'targets': [myResourceId],
-									'bodies': [newTextId]
-								}
-							},
-							function (response) {
-								
-							},
-							this
-						);
-        			}, this);
-        		},
-        		this
-        	);
-        },
-        this
-    );
+    annoBodyEditor.resourceId = bodyUri;
+    annoBodyEditor.annotationUid = anno.getUri();
 
-    otherContainer.setViewer( annoBodyEditor );
+    this.annotationUid = anno.getUri();
+
+    annoBodyEditor.setTitle('New Annotation on ' + this.getTitle());
+    annoBodyEditor.toggleIsAnnoText(true);
+
+    this.setAnnotationBody(bodyUri);
+
+    otherContainer.setViewer(annoBodyEditor);
 
     this.toggleAnnotationMode(true);
 };
@@ -916,18 +879,6 @@ atb.viewer.Editor.prototype.showAnnos = function (opt_myResourceId) {
 atb.viewer.Editor.prototype.linkAnnotation = function (opt_myResourceId, opt_myAnnoId) {
 	var myResourceId = opt_myResourceId || this.resourceId;
 	var myAnnoId = opt_myAnnoId || this.annotationUid;
-	
-	if (!myAnnoId) {
-		this.webService.withUid(
-			function (uid) {
-				this.annotationUid = uid;
-				this.linkAnnotation(myResourceId);
-			},
-			this
-		);
-		
-		return; //This method will be called again when the server responds
-	}
     
     this.highlightDocumentIcon();
 	

@@ -1,7 +1,6 @@
 goog.provide("atb.ClientApp");
 
 goog.require("atb.WebService");
-goog.require("atb.DataStore");
 goog.require("atb.viewer.PanelManager");
 
 goog.require("atb.util.StyleUtil"); //used for a giant hack
@@ -300,31 +299,8 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     if (this.annoLinkCreationBodyId) {
         var bodyId = this.annoLinkCreationBodyId;
         this.annoLinkCreationBodyId = null;
-        
-        var withId = function (uid) {
-            this.createdAnnoLinkIds.push(uid);
-            
-            var anno = new atb.resource.AnnotationResource(uid, uid);
-            anno.bodies = [bodyId];
-            anno.targets = [id];
-            
-            this.webService.withSavedResource(anno, function (response) {
-                
-            }, this);
-            
-            var exitedEvent = new atb.events.LinkingModeExited(this.annoLinkCreationAnnoId, anno);
-            this.eventDispatcher.dispatchEvent(exitedEvent);
-            
-            this.showUndoLinkCreationUI();
-        };
-        
-        
-        if (this.annoLinkCreationAnnoId) {
-            withId.call(this, this.annoLinkCreationAnnoId);
-        }
-        else {
-            this.webService.withUid(withId, this);
-        }
+
+        this.databroker.createAnno(bodyId, id);
         
         var bezel = new atb.ui.Bezel('atb-bezel-linked');
         bezel.show();

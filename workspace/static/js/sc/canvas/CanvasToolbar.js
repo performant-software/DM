@@ -4,7 +4,9 @@ goog.require('goog.dom');
 goog.require('goog.events');
 goog.require('goog.structs.Map');
 goog.require('sc.canvas.ImageChoicePicker');
+goog.require('sc.canvas.PageChooser');
 goog.require('goog.ui.ToggleButton');
+goog.require('goog.ui.ToolbarSeparator');
 goog.require('goog.ui.Toolbar');
 goog.require('goog.ui.editor.ToolbarFactory');
 goog.require('jquery.jQuery');
@@ -133,10 +135,23 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     );
     this.addButton(rightButton);
 
+    var pageChooserButton = this.createButton(
+        'pageChooser',
+        'Pick another folia from this manuscript to view',
+        '\u25BC',
+        '',
+        this.handlePageChooserClick
+    );
+    this.setupPageChooser();
+    this.addButton(pageChooserButton);
+
     this.autoEnableNavButtons();
-    this.viewer.mainViewport.addEventListener('canvasAdded',
-                                              this.autoEnableNavButtons,
-                                              false, this);
+    this.viewer.mainViewport.addEventListener(
+        'canvasAdded',
+        this.autoEnableNavButtons,
+        false, this);
+
+    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
     var panZoomButton = this.createButton(
         'pan-zoom',
@@ -184,6 +199,32 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     );
     this.addButton(drawBoxButton);
 
+    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+
+    var toggleMarkersButton = this.createButton(
+        'toggle-markers',
+        'Toggle the visibility of markers on the canvas',
+        '',
+        'sc-CanvasToolbar-toggleMarkersIcon',
+        this.handleToggleMarkers
+    );
+    this.addButton(toggleMarkersButton);
+    toggleMarkersButton.setChecked(true);
+    this.viewer.mainViewport.addEventListener(
+        'canvasAdded',
+        function(event) {
+            toggleMarkersButton.setChecked(true);
+        });
+    for (var name in this.controls) {
+        if (this.controls.hasOwnProperty(name)) {
+            var control = this.controls[name];
+
+            goog.events.listen(control, ['beginDraw', 'finishDraw'], function(event) {
+                toggleMarkersButton.setChecked(true);
+            });
+        }
+    }
+
     var transcriptionsButton = this.createButton(
         'transcriptions',
         'Show and hide transcriptions',
@@ -198,8 +239,8 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         }
     }, false, this);
     transcriptionsButton.addEventListener('leave',
-                                          this.handleTranscriptionsClick,
-                                          false, this);
+        this.handleTranscriptionsClick,
+        false, this);
     this.addButton(transcriptionsButton);
     
     var imageChoicesButton = this.createButton(
@@ -210,6 +251,64 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         this.handleImageChoicesClick
     );
     this.addButton(imageChoicesButton);
+};
+
+sc.canvas.CanvasToolbar.prototype.setupPageChooser = function() {
+    var self = this;
+    
+    this.pageChooser = new sc.canvas.PageChooser(
+        this.buttonsByName['pageChooser'],
+        this.databroker,
+        100
+    );
+    this.updatePageChooser();
+    goog.events.listen(this.viewer.mainViewport, 'canvasAdded', this.updatePageChooser,
+                       false, this);
+
+    goog.events.listen(this.pageChooser, 'pageChosen', this.handlePageChoice, false, this);
+};
+
+sc.canvas.CanvasToolbar.prototype.handlePageChooserClick = function(event) {
+    var button = this.buttonsByName['imageChoices'];
+    
+    if (this.pageChooser.isShowingChoices) {
+        this.pageChooser.hideChoices();
+    }
+    else if (this.pageChooser.pageUris.length > 0) {
+        this.pageChooser.showChoices();
+    }
+    else {
+        button.setChecked(false);
+    }
+};
+
+sc.canvas.CanvasToolbar.prototype.updatePageChooser = function() {
+    var canvas = this.viewer.mainViewport.canvas;
+
+    this.pageChooser.clear();
+
+    if (canvas && canvas.knowsSequenceInformation()) {
+        var canvasResource = this.databroker.getResource(canvas.uri);
+        var urisInOrder = canvas.urisInOrder;
+
+        this.pageChooser.addPages(urisInOrder, canvas.uri);
+    }
+};
+
+sc.canvas.CanvasToolbar.prototype.handleToggleMarkers = function(event) {
+    var canvas = this.viewer.mainViewport.canvas;
+    var button = this.buttonsByName['toggle-markers'];
+
+    if (canvas) {
+        if (button.isChecked()) {
+            canvas.showMarkers();
+            button.setChecked(true);
+        }
+        else {
+            canvas.hideMarkers();
+            button.setChecked(false);
+        }
+    }
 };
 
 sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
@@ -453,10 +552,9 @@ sc.canvas.CanvasToolbar.prototype.setCanvasByUri = function(uri, urisInOrder,
                                                             index) {
     var self = this;
     
-    var deferredCanvas = sc.canvas.Canvas.createDeferredCanvas(
+    var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         uri,
         this.databroker,
-        this.viewer.getDisplaySize(),
         urisInOrder,
         index
     ).done(function(canvas) {
@@ -507,6 +605,27 @@ sc.canvas.CanvasToolbar.prototype.handleNextClick = function(event) {
     var newUri = urisInOrder[newIndex];
 
     this.setCanvasByUri(newUri, urisInOrder, newIndex);
+};
+
+sc.canvas.CanvasToolbar.prototype.handlePageChoice = function(event) {
+    var uri = event.uri;
+    var button = this.buttonsByName['pageChooser'];
+
+    this.pageChooser.hideChoices();
+
+    button.setChecked(false);
+
+    var canvas = this.viewer.mainViewport.canvas;
+
+    if (! canvas) {
+        return;
+    }
+
+    var urisInOrder = canvas.urisInOrder;
+
+    var newIndex = urisInOrder.indexOf(uri);
+
+    this.setCanvasByUri(uri, urisInOrder, newIndex);
 };
 
 sc.canvas.CanvasToolbar.prototype.handleImageChoicesClick = function(event) {

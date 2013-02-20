@@ -4,22 +4,16 @@ goog.provide('atb.WebService');
 goog.require('goog.math.Size');
 goog.require('goog.net.CrossDomainRpc');
 goog.require('goog.net.EventType');
-goog.require('atb.marker.Point');
-goog.require('atb.marker.Line');
-goog.require('atb.marker.Polygon');
 goog.require('atb.Util');
 goog.require('jquery.jQuery');
 goog.require('goog.ui.IdGenerator');
 goog.require('atb.util.Stack');
 
-goog.require("atb.debug.DebugFilter");
 /**
  * @constructor
  * @param rootURI {string}
  */
 atb.WebService = function(rootURI, mediaURI) {
-    this.debugFilter = new atb.debug.DebugFilter();
-	
     if (rootURI[rootURI.length-1] != '/') {
         this.rootURI = rootURI + "/"; 
     } else {
@@ -185,71 +179,6 @@ atb.WebService.prototype.withRegionMarker = function(
         this, 
         opt_handlerScope);
     jQuery.getJSON(uri, parseAndHandle);
-};
-
-atb.WebService.prototype.parsePointsJson = function(
-    markerId,
-    pointsJson, 
-    radius, 
-    stroke,
-    strokeColor,
-    fill
-) {
-    var nPointsJson = pointsJson.length;
-    var markerPoints = [];
-    for (var i=0; i<nPointsJson; i++) {
-        markerPoints.push(new atb.marker.Point(
-            atb.marker.Point.vertexId(markerId, i),
-            pointsJson[i][0],
-            pointsJson[i][1],
-            radius,
-            stroke,
-            strokeColor,
-            fill));
-    }
-    return markerPoints;
-}
-
-atb.WebService.prototype.parseRegionMarkerJson = function(m) {
-    if (m.shape == "point") {
-        return new atb.marker.Point(
-            m.id,
-            m.circle.cx,
-            m.circle.cy,
-            m.circle.radius,
-            m.circle.stroke,
-            m.circle.strokeColor,
-            m.circle.fill
-        );
-    } else if (m.shape == "line") {
-        var l = m.polyline;
-        var points = this.parsePointsJson(
-            m.id,
-            l.points, 
-            atb.marker.Point.DEFAULT_RADIUS,
-            l.stroke,
-            l.strokeColor,
-            l.fill
-        );
-        return new atb.marker.Line(
-            m.id, l.stroke, l.strokeColor, l.fill, points
-        );
-    } else if (m.shape == "polygon") {
-        var poly = m.polygon;
-        var points = this.parsePointsJson(
-            m.id,
-            poly.points, 
-            atb.marker.Point.DEFAULT_RADIUS,
-            poly.stroke,
-            poly.strokeColor,
-            poly.fill
-        );
-        return new atb.marker.Polygon(
-            m.id, poly.stroke, poly.strokeColor, poly.fill, points
-        );
-    } else {
-        throw new Error("Unrecognized marker type");
-    }
 };
 
 
@@ -477,26 +406,19 @@ atb.WebService.prototype.requestResources = function(remoteIds, callback)
 	var self = this;
 	incrementalFunc = function()//response)
 	{
-		//this.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "incrementalFunc!");
-		self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "incrementalFunc!");
+		
 		if (items.isEmpty())
 		{
-			//this.debugFilter.debugPrint(atb.debug.DebugFilter.CAT_TRACE, 
-			//this.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, 
-			self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "incremental - done; doing callback!");
-			//this.this.debugFilter.debugPrint(atb.debug.DebugFilter.CAT_TRACE, 
+			
 			callback(responses);
 		}
 		else
 		{
 			lastQuery = items.pop();
-			//this.this.debugFilter.debugPrint(atb.debug.DebugFilter.CAT_TRACE, 
-			self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "now requesting: "+lastQuery);
+
 			var uri = uriBase + lastQuery;
 			//uri = "http://localhost/Drew/work/anno/anno/html/dummyQuery.json.php?resourceId=5";//hack
-			self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "&nbsp;&nbsp;&nbsp;&nbsp;"+"uri = <a href='"+uri+"'>"+uri+"</a>");
-			//debugPrint(""+jquery.getJSON);
-			//debugPrint(""+jQuery.getJSON);
+			
 			jQuery.getJSON(uri, responseFunc);
 		}
 	};
@@ -514,11 +436,6 @@ atb.WebService.prototype.requestResources = function(remoteIds, callback)
 		}
 
 		*/
-		self.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, "responseFunc; response:");
-		self.debugFilter.debugDumpObject(atb.debug.DebugFilter.CAT_TRACE, response);
-		self.debugFilter.debugNewline(atb.debug.DebugFilter.CAT_TRACE);
-		//this.debugFilter.debugMessage(atb.debug.DebugFilter.CAT_TRACE, 
-		//, "&nbsp;");//lolhack!
 		
 		responses.push({
 			id: lastQuery,
