@@ -134,6 +134,35 @@
     .border-radius(0 0 5px 5px);
 }
 
+.sc-canvas-PageChooser {
+    position: relative;
+    display: inline-block;
+}
+
+.sc-canvas-PageChooser-pages {
+    position: absolute;
+    z-index: 10000;
+    
+    li {
+        display: block;
+        cursor: pointer;
+    }
+    
+    background-color: rgb(229, 229, 229);
+    background-image: url(../../img/toolbar-bg-horz.png);
+    background-repeat: repeat-x;
+    
+    padding: 5px;
+    max-height: 500px;
+    max-width: 300px;
+    overflow: auto;
+    
+    .border-radius(0 0 5px 5px);
+
+    list-style: none;
+    display: block;
+}
+
 .sc-CanvasViewer-zoomSlider {
     width: 8px;
     height: 250px;
