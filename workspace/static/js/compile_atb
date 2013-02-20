@@ -1,2 +1,2 @@
 #!/bin/sh
-closure-library/closure/bin/build/closurebuilder.py --root=closure-library/ --root=atb --root=jquery --root=openlayers --namespace="atb.start" --output_mode=compiled --compiler_jar=compiler.jar> atb/start-compiled.js
+closure-library/closure/bin/build/closurebuilder.py --root=closure-library/ --root=atb --root=jquery --namespace="atb.start" --output_mode=compiled --compiler_jar=compiler.jar> atb/start-compiled.js

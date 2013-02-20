@@ -6,12 +6,12 @@ goog.provide("atb.widgets.MenuButtonSet");
  * @author John O'Meara
 **/
 
+goog.require('goog.asserts');
 goog.require("goog.ui.Dialog.ButtonSet");
 goog.require("goog.dom");
 goog.require("atb.widgets.MenuUtil");
 goog.require("jquery.jQuery");
 goog.require("atb.util.ReferenceUtil");
-goog.require("atb.debug.DebugUtil");
 goog.require("atb.widgets.MenuActionEvent");
 
 atb.widgets.MenuButtonSet = function(set_dialogWidget, opt_domHelper)
@@ -149,7 +149,7 @@ atb.widgets.MenuButtonSet.prototype.onSelectEvent=function(selectEvent)
 	
 	if (atb.util.ReferenceUtil.isBadReferenceValue(menuEntry))
 	{
-		atb.debug.DebugUtil.debugAssertion(false, "atb.widgets.MenuButtonSet::onSelectEvent: key not found: '"+withKey+"'");
+		goog.asserts.assert(false, "atb.widgets.MenuButtonSet::onSelectEvent: key not found: '"+withKey+"'");
 		return;
 	}
 	

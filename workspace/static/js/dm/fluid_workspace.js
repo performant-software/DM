@@ -1,18 +1,15 @@
 goog.require("atb.ClientApp");
 goog.require("atb.WebService");
-goog.require("atb.DataStore");
 goog.require('atb.viewer.PanelManager');
 goog.require('atb.viewer.PanelContainer');
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
-goog.require('atb.viewer.StandardSimpleMarkerEditor');
 goog.require('atb.viewer.Editor');
 goog.require('atb.ui.Preferences');
 goog.require('atb.widgets.MenuUtil');
 goog.require('atb.ClientApp');
 goog.require('goog.events');
 goog.require('goog.dom');
-goog.require('atb.ui.search.AutoComplete');
 goog.require('atb.ui.WindowScaler'); // We may be able to remove this in the future
 goog.require('atb.ui.PanelScaler'); // We may be able to remove this in the future
 goog.require('atb.viewer.RepoBrowser');
@@ -80,12 +77,6 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     workingResourcesViewer.loadUser(username);
 
     goog.events.listen(workingResourcesViewer, 'panelChosen', handlePanelChoice);
-
-    //DEMO - REMOVE
-    clientApp.getDatabroker().fetchRdf('http://ada.drew.edu/tandres/WRDemoCollection.xml', function() {
-        workingResourcesViewer.loadManifest('http://dm.drew.edu/tests/working-resources-collection');
-    });
-    //END DEMO
 
     return workingResourcesViewer;
 };
@@ -172,6 +163,8 @@ var setupCurrentProject = function(clientApp, username) {
         }
         if (uris.length == 1) {
             db.currentProject = uris[0];
+
+            workingResourcesViewer.loadManifest(uris[0]);
         }
     });
 }
@@ -180,12 +173,8 @@ var setupCurrentProject = function(clientApp, username) {
 //          tenure of their panelcontainer's tag...
 //			maybe wrap them in another child tag that they "keep" owning and stops being a child when it moves...??
 
-function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, olImgPath)
+function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
 {
-    if (olImgPath != undefined) {
-        OpenLayers.ImgPath = olImgPath;
-    }
-
 	//Q: should these dm package methods just take a clientApp...?
     var markerEditor;
     var textEditor;

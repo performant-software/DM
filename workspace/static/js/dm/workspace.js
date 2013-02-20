@@ -1,11 +1,9 @@
 goog.require("atb.ClientApp");
 goog.require("atb.WebService");
-goog.require("atb.DataStore");
 goog.require('atb.viewer.PanelManager');
 goog.require('atb.viewer.PanelContainer');
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
-goog.require('atb.viewer.StandardSimpleMarkerEditor');
 goog.require('atb.viewer.Editor');
 goog.require('atb.ui.Preferences');
 goog.require('atb.widgets.MenuUtil');
@@ -76,15 +74,14 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     jQuery(wrContainer).hide();
 
     workingResourcesViewer.render(wrContainer);
-    workingResourcesViewer.loadUser(username);
+
+    if (databroker.currentProject) {
+        databroker.getDeferredResource(databroker.currentProject).done(function(project) {
+            workingResourcesViewer.loadManifest(project.uri);
+        });
+    }
 
     goog.events.listen(workingResourcesViewer, 'panelChosen', handlePanelChoice);
-
-    //DEMO - REMOVE
-    clientApp.getDatabroker().fetchRdf('http://ada.drew.edu/tandres/WRDemoCollection.xml', function() {
-        workingResourcesViewer.loadManifest('http://dm.drew.edu/tests/working-resources-collection');
-    });
-    //END DEMO
 
     return workingResourcesViewer;
 };
@@ -171,6 +168,8 @@ var setupCurrentProject = function(clientApp, username) {
         }
         if (uris.length == 1) {
             db.currentProject = uris[0];
+
+            workingResourcesViewer.loadManifest(uris[0]);
         }
     });
 }
@@ -179,15 +178,9 @@ var setupCurrentProject = function(clientApp, username) {
 //          tenure of their panelcontainer's tag...
 //			maybe wrap them in another child tag that they "keep" owning and stops being a child when it moves...??
 
-function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, olImgPath)
+function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
 {
-    if (olImgPath != undefined) {
-        OpenLayers.ImgPath = olImgPath;
-    }
-
 	//Q: should these dm package methods just take a clientApp...?
-    var markerEditor;
-    var textEditor;
 	goog.global.clientApp = new atb.ClientApp(
 		new atb.PassThroughLoginWebService(wsURI, mediawsURI, wsSameOriginURI, username), 
         username,
@@ -284,11 +277,10 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     }
     ];
 	
-    var resourceViewer = new atb.viewer.Finder(clientApp);//new atb.viewer.ResourceListViewer(clientApp);
+    // var resourceViewer = new atb.viewer.Finder(clientApp);
     
-    leftContainer.setViewer(resourceViewer);
-//    resourceViewer.addSummariesFromUserId(username);
-    resourceViewer.loadSummaries([username]);
+    // leftContainer.setViewer(resourceViewer);
+    // resourceViewer.loadSummaries([username]);
 		
     leftContainer.setToolbarHangingLeft(true);
     leftContainer.autoHideToolbars();
@@ -318,10 +310,10 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
 
+    setupCurrentProject(clientApp, username);
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
     setupControls(clientApp, workingResourcesViewer);
-    setupCurrentProject(clientApp, username);
     
 }
 

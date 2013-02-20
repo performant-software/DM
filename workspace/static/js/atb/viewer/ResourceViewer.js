@@ -3,7 +3,6 @@ goog.provide('atb.viewer.ResourceViewer');
 goog.require('goog.math.Size');
 goog.require('atb.resource.Image');
 goog.require('atb.DMWebService');
-goog.require('openlayers.OpenLayers');
 goog.require('jquery.jQuery');
 goog.require("atb.util.ReferenceUtil");
 goog.require("atb.ClientApp");

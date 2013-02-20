@@ -107,6 +107,22 @@ sc.canvas.FabricCanvas.RDF_ENUM = {
     title: ['dc:title']
 };
 
+/**
+ * The default styles to be applied to features on the canvas
+ */
+sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES = {
+    fill: 'rgba(15, 108, 214, 0.6)',
+    stroke: 'rgba(3, 75, 158, 0.7)',
+    strokeWidth: 5
+};
+
+sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    textBackgroundColor: 'rgba(3, 75, 158, 1.0)',
+    fontFamily: 'Helvetica, Arial, Sans-Sefif',
+    opacity: 1
+};
+
 sc.canvas.FabricCanvas.prototype.clone = function() {
     //TODO
 };
@@ -145,13 +161,6 @@ sc.canvas.FabricCanvas.prototype.addTextAnnotation = function(annoResource, cons
     }
 
     return addedTextUris;
-};
-
-sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    textBackgroundColor: '#000000',
-    fontFamily: 'Helvetica, Arial, Sans-Sefif',
-    opacity: 1
 };
 
 /**
@@ -275,6 +284,69 @@ sc.canvas.FabricCanvas.prototype.fadeTextAnnosToOpacity = function(opacity) {
 
         text.animate('opacity', opacity, params);
     }, this);
+};
+
+sc.canvas.FabricCanvas.MARKER_TYPES = new goog.structs.Set([
+    'circle',
+    'ellipse',
+    'polyline',
+    'path',
+    'line',
+    'pathgroup',
+    'polygon',
+    'rect',
+    'triangle'
+]);
+
+sc.canvas.FabricCanvas.prototype.showObject = function(obj) {
+    obj.set('opacity', 1);
+};
+
+sc.canvas.FabricCanvas.prototype.hideObject = function(obj) {
+    obj.set('opacity', 0);
+};
+
+sc.canvas.FabricCanvas.prototype.showMarkers = function() {
+    goog.structs.forEach(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type)) {
+            this.showObject(obj);
+        }
+    }, this);
+
+    this.requestFrameRender();
+};
+
+sc.canvas.FabricCanvas.prototype.hideMarkers = function() {
+    goog.structs.forEach(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type)) {
+            this.hideObject(obj);
+        }
+    }, this);
+
+    this.requestFrameRender();
+};
+
+sc.canvas.FabricCanvas.prototype.isHidingAllMarkers = function() {
+    return goog.structs.every(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && obj.get('opacity') != 0) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }, this);
+};
+
+sc.canvas.FabricCanvas.prototype.getNumMarkers = function() {
+    var count = 0;
+
+    goog.structs.forEach(this.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && obj.get('opacity') != 0) {
+            count ++;
+        }
+    }, this);
+
+    return count;
 };
 
 /**
@@ -485,7 +557,8 @@ sc.canvas.FabricCanvas.prototype.chooseImage = function(uri) {
  * @return {fabric.Rect} The fabric element created.
  */
 sc.canvas.FabricCanvas.prototype.addRect = function(x, y, width, height, uri) {
-    var rect = new fabric.Rect({
+    var rect = new fabric.Rect(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+    rect.set({
         width: width,
         height: height
     });
@@ -506,7 +579,8 @@ sc.canvas.FabricCanvas.prototype.addRect = function(x, y, width, height, uri) {
  * @return {fabric.Circle} The fabric element created.
  */
 sc.canvas.FabricCanvas.prototype.addCircle = function(cx, cy, r, uri) {
-    var circle = new fabric.Circle({
+    var circle = new fabric.Circle(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+    circle.set({
         r: r
     });
     this.setFeatureCoords(circle, cx + r/2, cy + r/2);
@@ -527,7 +601,8 @@ sc.canvas.FabricCanvas.prototype.addCircle = function(cx, cy, r, uri) {
  * @return {fabric.Ellipse} The fabric circle created.
  */
 sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
-    var ellipse = new fabric.Ellipse({
+    var ellipse = new fabric.Ellipse(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+    ellipse.set({
         left: cx - this.group.get('width') / 2,
         top: cy - this.group.get('height') / 2,
         width: rx,
@@ -539,11 +614,6 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
     this.addFabricObject(ellipse, uri);
 
     return ellipse;
-};
-
-sc.canvas.FabricCanvas.LINE_STYLE = {
-    stroke: '#000000',
-    strokeWidth: 5
 };
 
 /**
@@ -560,7 +630,7 @@ sc.canvas.FabricCanvas.prototype.addPolyline = function(points, uri) {
     points = this.originToCenterPoints(points);
 
     var line = new fabric.Polyline(points);
-    line.set(sc.canvas.FabricCanvas.LINE_STYLE);
+    line.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
 
     this.addFabricObject(line, uri);
 
@@ -581,7 +651,7 @@ sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
     points = this.originToCenterPoints(points);
 
     var polygon = new fabric.Polygon(points);
-    polygon.set(sc.canvas.FabricCanvas.LINE_STYLE);
+    polygon.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
 
     this.addFabricObject(polygon, uri);
 

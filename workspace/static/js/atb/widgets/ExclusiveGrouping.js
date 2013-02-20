@@ -5,7 +5,6 @@ goog.provide("atb.widgets.ExclusiveGrouping");
 **/
 
 goog.require("atb.util.ReferenceUtil");
-goog.require("atb.debug.DebugUtil");
 
 
 atb.widgets.ExclusiveGrouping = function(set_groupName, set_itemUpdaterFunc, opt_setInitialValue, opt_initial_items)

@@ -630,15 +630,17 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
 
     this.newResourceUris.add(uri);
-    
-    var quad = new sc.data.Quad(
-        uri,
-        this.namespaces.expand('rdf', 'type'),
-        this.namespaces.autoExpand(type),
-        null
-    );
-    
-    this.addNewQuad(quad);
+
+    if (type) {
+        var quad = new sc.data.Quad(
+            uri,
+            this.namespaces.expand('rdf', 'type'),
+            this.namespaces.autoExpand(type),
+            null
+        );
+        
+        this.addNewQuad(quad);
+    }
     
     return this.getResource(uri);
 };
@@ -1435,22 +1437,25 @@ sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
 
 
 sc.data.Databroker.prototype.createText = function(title, content) {
-    var text = this.createResource(this.createUuid());
-    text.addProperty(
-        this.namespaces.autoExpand('rdf:type'),
-        this.namespaces.autoExpand('dctypes:Text')
-    );
+    var text = this.createResource(this.createUuid(), 'dctypes:Text');
     this.updateTextResource(text.uri, title, content);
     return text;
 };
 
 
 sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
-    var anno = this.createResource(this.createUuid());
-    anno.addProperty(
-        this.namespaces.autoExpand('rdf:type'),
-        this.namespaces.autoExpand('oac:Annotation')
+    var quads = this.quadStore.query(
+        null,
+        this.namespaces.expand('oa', 'hasBody'),
+        sc.util.Namespaces.wrapWithAngleBrackets(bodyUri),
+        null
     );
+    if (quads.length > 0) {
+        var anno = this.getResource(quads[0].subject);
+    }
+    else {
+        var anno = this.createResource(this.createUuid(), 'oac:Annotation');
+    }
 
     if (opt_annoType) {
         anno.addProperty(
