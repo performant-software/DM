@@ -56,7 +56,7 @@ atb.PassThroughLoginWebService.prototype.resourceMetaDataURI = function(
 };
 
 atb.PassThroughLoginWebService.prototype.resourceIdToUri = function(id) {
-    if (goog.isNumber(id)) {
+    if (goog.isNumber(id) || /^\d+$/.test(id)) {
         return this.rootURI + 'resource/' + id;
     }
     else {
