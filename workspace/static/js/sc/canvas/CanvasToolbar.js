@@ -293,7 +293,7 @@ sc.canvas.CanvasToolbar.prototype.updatePageChooser = function() {
         var canvasResource = this.databroker.getResource(canvas.uri);
         var urisInOrder = canvas.urisInOrder;
 
-        this.pageChooser.addPages(urisInOrder);
+        this.pageChooser.addPages(urisInOrder, canvas.uri);
     }
 };
 
