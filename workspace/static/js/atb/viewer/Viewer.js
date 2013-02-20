@@ -109,7 +109,6 @@ atb.viewer.Viewer.prototype.render = function () {
     /** @type {HtmlElement} */
     this.rootDiv = this.domHelper.createDom('div');
     
-    
     var spinnerTop = 70;
     var spinnerLeft = 50; // These coordinates will be changed when
                           // showLoadingSpinner() is called

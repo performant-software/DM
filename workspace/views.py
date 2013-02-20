@@ -9,7 +9,8 @@ from django.conf import settings
 def workspace(request):
     context = RequestContext(request,
                              {'use_compiled_js': settings.USE_COMPILED_JS})    
-    return render_to_response("workspace/workspace.html", 
+#    return render_to_response("workspace/workspace.html", context_instance=context)
+    return render_to_response("fluid_workspace/workspace.html", 
                               context_instance=context)
 
 
