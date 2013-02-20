@@ -311,8 +311,10 @@ atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
 
 atb.viewer.CanvasViewer.prototype.hideFeature = function(uri) {
     var viewport = this.viewer.mainViewport;
-    
-    viewport.canvas.hideFeatureByUri(uri);
+
+    var obj = viewport.canvas.getFabricObjectByUri(uri);
+    viewport.canvas.hideObject(obj);
+    viewport.requestFrameRender();
 };
 
 atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
