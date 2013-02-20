@@ -9,8 +9,6 @@ goog.require('goog.ui.ToggleButton');
 goog.require('goog.ui.ToolbarSeparator');
 goog.require('goog.ui.Toolbar');
 goog.require('goog.ui.editor.ToolbarFactory');
-goog.require('goog.ui.Select');
-goog.require('goog.ui.Option');
 goog.require('jquery.jQuery');
 goog.require('sc.canvas.PanZoomGesturesControl');
 goog.require('sc.canvas.DrawEllipseControl');
