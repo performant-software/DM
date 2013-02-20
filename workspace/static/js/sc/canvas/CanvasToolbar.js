@@ -5,6 +5,7 @@ goog.require('goog.events');
 goog.require('goog.structs.Map');
 goog.require('sc.canvas.ImageChoicePicker');
 goog.require('goog.ui.ToggleButton');
+goog.require('goog.ui.ToolbarSeparator');
 goog.require('goog.ui.Toolbar');
 goog.require('goog.ui.editor.ToolbarFactory');
 goog.require('jquery.jQuery');
@@ -139,6 +140,8 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         this.autoEnableNavButtons,
         false, this);
 
+    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+
     var panZoomButton = this.createButton(
         'pan-zoom',
         'Pan and zoom the canvas',
@@ -184,6 +187,8 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         this.handleDrawBoxClick
     );
     this.addButton(drawBoxButton);
+
+    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
     var toggleMarkersButton = this.createButton(
         'toggle-markers',
