@@ -52,11 +52,11 @@ sc.canvas.PageChooser.prototype.clear = function() {
     this.pageUris = [];
 };
 
-sc.canvas.PageChooser.prototype.addPage = function(uri) {
-    this.addPages([uri]);
+sc.canvas.PageChooser.prototype.addPage = function(uri, opt_currentUri) {
+    this.addPages([uri], opt_currentUri);
 };
 
-sc.canvas.PageChooser.prototype.addPages = function(uris) {
+sc.canvas.PageChooser.prototype.addPages = function(uris, opt_currentUri) {
     this.pageUris = this.pageUris.concat(uris);
 
     this.button.setEnabled(true);
@@ -69,6 +69,11 @@ sc.canvas.PageChooser.prototype.addPages = function(uris) {
         jQuery(li).text(title);
         jQuery(li).data('pageUri', uri);
         jQuery(li).click(this.handlePageClick.bind(this));
+
+        if (uri == opt_currentUri) {
+            jQuery(li).addClass('sc-canvas-PageChooser-currentPage');
+        }
+
         jQuery(this.pagesElement).append(li);
     }, this);
 };
