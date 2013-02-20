@@ -55,8 +55,8 @@ class Command(BaseCommand):
         manifest_file = options['manifest_file']
         rep_uri = options['rep_uri']
         rep_title = options['rep_title']
-        if ((not col_url) or (not manifest_file) or (not col_uri) or 
-            (not store_host) or (not rep_uri) or (not rep_title)):
+        if ((not ((col_url or manifest_file) and col_uri)) or 
+            (not (store_host and rep_uri and rep_title))):
             print "url or manifest_file and uri arguments are required."
             exit(0)
         rep_uri = URIRef(rep_uri)
