@@ -16,6 +16,25 @@
   #grid {
       padding-top: 120px;
   }
+
+  .modal-body .sc-RepoBrowser {
+    height: 400px;
+  }
+
+  .atb-wrapper-container {
+    width: 100%;
+    height: 100%;
+
+    padding: 10px;
+  }
+
+  /*.atb-wrapper-inner {
+    height: auto;
+  }*/
+
+  .atb-wrapper-heading {
+    display: none;
+  }
 </style>
 {% endblock %}
 
@@ -39,12 +58,13 @@
       <button class="3x3 btn-large">3x3</button>
       <button class="3x4 btn-large">3x4</button>
       <button class="4x4 btn-large">4x4</button>
-      <a href="#myModal" role="button" class="btn" data-toggle="modal">Repositories</a>
+      <a href="#repoBrowserModal" role="button" class="btn" data-toggle="modal">Repositories</a>
       <button class="add btn-large">+</button>
 
     </div>
   </div>
   <div class="row-fluid" id="grid">
+  <!--
     <div>
       <div class="atb-wrapper atb-wrapper-one-col">
         <div class="atb-wrapper-container">
@@ -53,6 +73,7 @@
         </div>
       </div>
     </div>
+    
     <div>
       <p>One</p>
     </div>
@@ -100,7 +121,7 @@
     </div>
     <div>
       <p>Sixteen</p>
-    </div>
+    </div>-->
   </div>
 </div>
 
@@ -145,11 +166,19 @@
       }
 
       function resizeViewers() {
-        jQuery(viewers).each(function(){
-          if (jQuery.isFunction(this.autoResize)) {
-            this.autoResize();
+        goog.structs.forEach(viewers, function(viewer, i) {
+          if (viewer.viewer && viewer.viewer.resize) {
+            var div = $('#grid').children().get(i);
+            $(div).find('.atb-wrapper-inner').height($(div).height());
+            viewer.viewer.resize(jQuery(div).width(), jQuery(div).height());
           }
-        })
+        });
+
+        // jQuery(viewers).each(function(){
+        //   if (jQuery.isFunction(this.autoResize)) {
+        //     this.autoResize();
+        //   }
+        // })
       }
 
       setSpan();
@@ -232,17 +261,16 @@
 
 
 <!-- Modal -->
-<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div id="repoBrowserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="myModalLabel">Modal header</h3>
+    <h3 id="myModalLabel">Repositories</h3>
   </div>
   <div class="modal-body">
-    <p>One fine body…</p>
+
   </div>
   <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-    <button class="btn btn-primary">Save changes</button>
+    <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Done</button>
   </div>
 </div>
 
@@ -271,24 +299,23 @@
       var canvasViewportDiv = document.getElementById('canvasViewport');
       console.log("canvasViewportDiv:", canvasViewportDiv);
 	
-      var leftTabId = "left";
-      var leftContainer = new atb.viewer.PanelContainer(
-          "leftPane", 
-          document.getElementById(leftTabId), 
-          'leftTab',
-          null,
-          null,
-          windowScaler
-      );
+     //  var leftTabId = "left";
+     //  var leftContainer = new atb.viewer.PanelContainer(
+     //      "leftPane", 
+     //      document.getElementById(leftTabId), 
+     //      'leftTab',
+     //      null,
+     //      null,
+     //      windowScaler
+     //  );
 
-  	  var panelManager = clientApp.getPanelManager();
-      panelManager.addPanelSlot(leftContainer);
+  	  // var panelManager = clientApp.getPanelManager();
+     //  panelManager.addPanelSlot(leftContainer);
 
-      var viewer = new atb.viewer.CanvasViewer(clientApp);
-      viewers.push(viewer);
-      leftContainer.setViewer(viewer);
-      leftContainer.setToolbarHangingLeft(true);
-      leftContainer.autoHideToolbars();
+     //  var viewer = new atb.viewer.CanvasViewer(clientApp);
+     //  viewers.push(viewer);
+     //  leftContainer.setViewer(viewer);
+     //  leftContainer.toolbar.hide();
 /*
       var viewer = new sc.canvas.FabricCanvasViewport(databroker, {
           doc: window.document
@@ -308,10 +335,10 @@
       });
       */
 
-      var sequenceUris = db.getManuscriptSequenceUris(manuscriptUri);
-      console.log(sequenceUris);
-      pages = db.getListUrisInOrder(sequenceUris[0]);
-      viewer.setCanvasByUri(pages[0], null, null, null, null);
+      // var sequenceUris = db.getManuscriptSequenceUris(manuscriptUri);
+      // console.log(sequenceUris);
+      // pages = db.getListUrisInOrder(sequenceUris[0]);
+      // viewer.setCanvasByUri(pages[0], null, null, null, null);
 //      canvasParentDiv.appendChild(viewer.getElement());
 
       /*

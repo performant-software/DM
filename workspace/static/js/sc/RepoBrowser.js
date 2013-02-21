@@ -295,6 +295,10 @@ sc.RepoBrowser.prototype.loadAllRepositories = function() {
 
     this.breadCrumbs.push('Repositories', this.loadAllRepositories.bind(this));
 
+    if (! repos) {
+        return;
+    }
+
     for (var i=0, len=repos.length; i<len; i++) {
         var repo = repos[i];
 
