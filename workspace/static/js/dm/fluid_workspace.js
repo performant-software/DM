@@ -29,34 +29,18 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
 
     workingResourcesViewer = new atb.widgets.WorkingResources(clientApp.getDatabroker());
 
-    var wrContainer = goog.dom.createDom('div', {'class': 'working-resources-container'},
-        goog.dom.createDom('h3', {}, 'My Working Resources')
-    );
-    wrContainerParent.appendChild(wrContainer);
-    jQuery(wrContainer).hide();
+    var wrContainer = jQuery('#workingResourcesModal .modal-body').get(0);
 
     workingResourcesViewer.render(wrContainer);
     workingResourcesViewer.loadUser(username);
 
-    return workingResourcesViewer;
-};
-
-var showWorkingResources = function() {
-    jQuery('.working-resources-container').show('drop', {'direction': 'down'}, 400);
-    jQuery(glasspane).fadeIn(400);
-
-    goog.events.listenOnce(glasspane, 'click', function(event) {
-        event.stopPropagation();
-
-        hideWorkingResources();
-
-        jQuery(glasspane).fadeOut(400);
+    workingResourcesViewer.addEventListener('panelChosen', function(event) {
+        if (event.resource.hasAnyType(atb.viewer.RepoBrowser.RESOURCE_TYPES.canvases)) {
+            openCanvas(event.uri, event.urisInOrder, event.currentIndex);
+        }
     });
-};
 
-var hideWorkingResources = function() {
-    jQuery('.working-resources-container').hide('drop', {'direction': 'down'}, 400);
-    workingResourcesViewer.hidePanelChooser();
+    return workingResourcesViewer;
 };
 
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
