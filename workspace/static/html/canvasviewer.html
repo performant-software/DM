@@ -136,10 +136,18 @@
     
     var repoBrowser = new sc.RepoBrowser({
         databroker: databroker,
-        repositoryUrlsByName: {
-            'Stanford DMS': 'http://dms-data.stanford.edu/Repository.xml',
-            'Shared Canvas': 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml'
-        },
+        repositories: [
+            {
+                title: 'Stanford DMS',
+                url: 'http://dms-data.stanford.edu/Repository.xml',
+                uri: 'http://dms-data.stanford.edu/Repository'
+            },
+            {
+                title: 'Shared Canvas',
+                url: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml',
+                uri: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository'
+            }
+        ],
         noImages: false,
         showAddButton: false
     });

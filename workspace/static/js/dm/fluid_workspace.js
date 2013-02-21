@@ -24,44 +24,6 @@ var glasspane = null;
 var workingResourcesViewer = null;
 var repoBrowser = null;
 
-var setupControls = function(clientApp, workingResourcesViewer) {
-    // var controlsDiv = goog.dom.createDom('div', {'class': 'atb-clientapp-controls'});
-    var footerControlsDiv = goog.dom.getElement('atb-footer-controls');
-
-    var wrButton = new goog.ui.CustomButton(
-        goog.dom.createDom('div', {'class': 'atb-working-resources-button'})
-    );
-    wrButton.setTooltip('Show the resources in my workspace');
-    goog.events.listen(wrButton, 'action', showWorkingResources);
-    wrButton.render(footerControlsDiv);
-
-    var repoBrowserButton = new goog.ui.CustomButton(
-        goog.dom.createDom('div', {'class': 'atb-repo-browser-button'})
-    );
-    repoBrowserButton.setTooltip('Browse Resource Repositories');
-    goog.events.listen(repoBrowserButton, 'action', showRepoBrowser);
-    repoBrowserButton.render(footerControlsDiv);
-
-    var timelineButton = new goog.ui.CustomButton(goog.dom.createDom('div', {'class':'atb-clientapp-controls-timeline'}));
-    timelineButton.setTooltip('Show resource desktop (Ctrl + D)');
-    goog.events.listen(timelineButton, goog.ui.Component.EventType.ACTION, function (e) {
-         clientApp.viewerThumbnailTimeline.toggleVisibility();
-     });
-    timelineButton.render(footerControlsDiv);
-
-    // goog.dom.getElement('clientAppControls').appendChild(controlsDiv);
-};
-
-var handlePanelChoice = function(event) {
-    if (event.resource.hasAnyType(atb.viewer.RepoBrowser.RESOURCE_TYPES.canvases)) {
-        var viewer = new atb.viewer.CanvasViewer(clientApp);
-        
-        panelManager.getAllPanels()[event.panelId].setViewer(viewer);
-        
-        viewer.setCanvasByUri(event.uri, null, null, event.urisInOrder, event.currentIndex);
-    }
-};
-
 var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var databroker = clientApp.getDatabroker();
 
@@ -75,8 +37,6 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
 
     workingResourcesViewer.render(wrContainer);
     workingResourcesViewer.loadUser(username);
-
-    goog.events.listen(workingResourcesViewer, 'panelChosen', handlePanelChoice);
 
     return workingResourcesViewer;
 };
@@ -100,7 +60,7 @@ var hideWorkingResources = function() {
 };
 
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
-    repoBrowser = new atb.widgets.RepoBrowser(clientApp, {
+    repoBrowser = new sc.RepoBrowser({
         repositories: [
             {
                 title: 'Yale University',
@@ -109,10 +69,23 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
                 uri: 'http://manifests.ydc2.yale.edu/MetaManifest'
                 // uri: 'http://manifests.ydc2.yale.edu/Repository'
             }
-        ]
+        ],
+        databroker: clientApp.getDatabroker()
     });
 
-    repoBrowser.addEventListener('panelChosen', handlePanelChoice);
+    repoBrowser.addEventListener('click', function(event) {
+        var uri = event.uri;
+        var resource = event.resource;
+
+        if (resource.hasAnyType('dms:Canvas')) {
+            var manifestUri = event.manifestUri;
+            var urisInOrder = event.urisInOrder;
+            var index = event.currentIndex;
+            openCanvas(uri, urisInOrder, index);
+
+            event.preventDefault();
+        }
+    });
 
     repoBrowser.addEventListener('add_request', function(event) {
         var resource = event.resource;
@@ -124,33 +97,45 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         console.log(resource.getSourceUrls(), manuscriptResource.getSourceUrls);
     });
 
-    var repoBrowserContainer = goog.dom.createDom('div', {'class': 'atb-repo-browser-container'}, 
-        goog.dom.createDom('h3', {}, 'Online Resource Repositories')
-    );
-    jQuery(repoBrowserContainer).hide();
+    var repoBrowserContainer = jQuery('#repoBrowserModal .modal-body').get(0);
     repoBrowser.render(repoBrowserContainer);
-
-    wrContainerParent.appendChild(repoBrowserContainer);
 };
 
-var showRepoBrowser = function() {
-    jQuery('.atb-repo-browser-container').show('drop', {'direction': 'down'}, 400);
-    jQuery(glasspane).fadeIn(400);
+var openCanvas = function(uri, urisInOrder, index) {
+    var gridDiv = document.createElement('div');
+    var wrapperContainer = goog.dom.createDom('div', {'class': 'atb-wrapper-container'});
+    gridDiv.appendChild(wrapperContainer);
+    var heading = goog.dom.createDom('div', {'class': 'atb-wrapper-heading'});
+    wrapperContainer.appendChild(heading);
+    var inner = goog.dom.createDom('div', {'class': 'atb-wrapper-inner'});
+    wrapperContainer.appendChild(inner);
 
-    goog.events.listenOnce(glasspane, 'click', function(event) {
-        event.stopPropagation();
+    jQuery('#grid.row-fluid').append(gridDiv);
 
-        hideRepoBrowser();
+    var panelContainer = new atb.viewer.PanelContainer(
+        goog.getUid({}), 
+        inner, 
+        heading,
+        null,
+        null,
+        windowScaler
+    );
 
-        jQuery(glasspane).fadeOut(400);
-    });
+    var panelManager = clientApp.getPanelManager();
+    panelManager.addPanelSlot(panelContainer);
+
+    var viewer = new atb.viewer.CanvasViewer(clientApp);
+
+    panelContainer.setViewer(viewer);
+    panelContainer.toolbar.hide();
+
+    viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
+    viewers.push(viewer);
+
+    windowScaler.scale(rows);
+    setSpan();
+    resizeViewers();
 };
-
-var hideRepoBrowser = function() {
-    jQuery('.atb-repo-browser-container').hide('drop', {'direction': 'down'}, 400);
-    repoBrowser.hidePanelChooser();
-};
-
 
 var setupCurrentProject = function(clientApp, username) {
     var db = clientApp.databroker;
@@ -190,17 +175,17 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
     var scalingRules = {
         screenBottom: 10,
         elements: [
-            ['.atb-wrapper', 0],
-            ['.atb-wrapper-inner', 0],
-            ['.atb-resourceviewer', 5],
-            ['.atb-markereditor-pane', 5],
-            ['.editable', 5],
-            ['.atb-RepoBrowser', 5]
+            // ['.atb-wrapper', 0],
+            // ['.atb-wrapper-inner', 0],
+            // ['.atb-resourceviewer', 5],
+            // ['.atb-markereditor-pane', 5],
+            // ['.editable', 5],
+            // ['.atb-RepoBrowser', 5]
         ],
         truncate: true,
         tabs: [
-            ['#leftTab'],
-/*            ['#rightTab'] */
+            // ['#leftTab'],
+            // ['#rightTab'] 
         ]
     };
 //    windowScaler = new atb.ui.WindowScaler(scalingRules);
@@ -275,7 +260,6 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
 
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
-    setupControls(clientApp, workingResourcesViewer);
     setupCurrentProject(clientApp, username);
     
 }
