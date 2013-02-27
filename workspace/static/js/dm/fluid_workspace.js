@@ -94,7 +94,7 @@ var openCanvas = function(uri, urisInOrder, index) {
     var inner = goog.dom.createDom('div', {'class': 'atb-wrapper-inner'});
     wrapperContainer.appendChild(inner);
 
-    jQuery('#grid.row-fluid').append(gridDiv);
+    jQuery('#grid.row-fluid').prepend(gridDiv);
 
     var panelContainer = new atb.viewer.PanelContainer(
         goog.getUid({}), 
