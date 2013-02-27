@@ -105,6 +105,130 @@ sc.data.QuadStore.prototype.forEachQuadMatchingQuery = function(subject, predica
 };
 
 /**
+ * Returns a set of the subjects of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {goog.structs.Set}                 A set of subjects matching the query.
+ */
+sc.data.QuadStore.prototype.subjectsSetMatchingQuery = function(subject, predicate, object, context) {
+    var set = new goog.structs.Set();
+
+    this.forEachQuadMatchingQuery(subject, predicate, object, context,
+        function(quad) {
+            set.add(quad.subject);
+        }, this);
+
+    return set;
+};
+
+/**
+ * Returns a set of the predicates of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {goog.structs.Set}                 A set of predicates matching the query.
+ */
+sc.data.QuadStore.prototype.predicatesSetMatchingQuery = function(subject, predicate, object, context) {
+    var set = new goog.structs.Set();
+
+    this.forEachQuadMatchingQuery(subject, predicate, object, context,
+        function(quad) {
+            set.add(quad.predicate);
+        }, this);
+
+    return set;
+};
+
+/**
+ * Returns a set of the objects of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {goog.structs.Set}                 A set of objects matching the query.
+ */
+sc.data.QuadStore.prototype.objectsSetMatchingQuery = function(subject, predicate, object, context) {
+    var set = new goog.structs.Set();
+
+    this.forEachQuadMatchingQuery(subject, predicate, object, context,
+        function(quad) {
+            set.add(quad.object);
+        }, this);
+
+    return set;
+};
+
+/**
+ * Returns a set of the contexts of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {goog.structs.Set}                 A set of contexts matching the query.
+ */
+sc.data.QuadStore.prototype.contextsSetMatchingQuery = function(subject, predicate, object, context) {
+    var set = new goog.structs.Set();
+
+    this.forEachQuadMatchingQuery(subject, predicate, object, context,
+        function(quad) {
+            set.add(quad.context);
+        }, this);
+
+    return set;
+};
+
+/**
+ * Returns a list of the subjects of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {Array}                            A list of subjects matching the query.
+ */
+sc.data.QuadStore.prototype.subjectsMatchingQuery = function(subject, predicate, object, context) {
+    return this.subjectsSetMatchingQuery(subject, predicate, object, context).getValues();
+};
+
+/**
+ * Returns a list of the predicates of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {Array}                            A list of predicates matching the query.
+ */
+sc.data.QuadStore.prototype.predicatesMatchingQuery = function(subject, predicate, object, context) {
+    return this.predicatesSetMatchingQuery(subject, predicate, object, context).getValues();
+};
+
+/**
+ * Returns a list of the objects of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {Array}                            A list of objects matching the query.
+ */
+sc.data.QuadStore.prototype.objectsMatchingQuery = function(subject, predicate, object, context) {
+    return this.objectsSetMatchingQuery(subject, predicate, object, context).getValues();
+};
+
+/**
+ * Returns a list of the contexts of all quads matching the specified pattern.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {Array}                            A list of contexts matching the query.
+ */
+sc.data.QuadStore.prototype.contextsMatchingQuery = function(subject, predicate, object, context) {
+    return this.contextsSetMatchingQuery(subject, predicate, object, context).getValues();
+};
+
+/**
  * Adds a quad to the store, and indexes it.
  * @param {sc.data.Quad} quad Quad to add.
  */
