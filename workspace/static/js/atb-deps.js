@@ -119,6 +119,7 @@ goog.addDependency('../../../jquery/jquery-1.8.3.js', ['jquery.jQuery'], []);
 goog.addDependency('../../../jquery/jquery-ui-1.8.22.custom.min.js', ['jquery.jQueryUI'], []);
 goog.addDependency('../../../jquery/jquery.animate-enhanced.js', ['jquery.animate_enhanced'], []);
 goog.addDependency('../../../jquery/jquery.event.drag-2.2.js', ['jquery.event.drag'], []);
+goog.addDependency('../../../jquery/jquery.hammer.js', ['jquery.hammer'], []);
 goog.addDependency('../../../jquery/jquery.hoverIntent.minified.js', ['jquery.hoverIntent'], []);
 goog.addDependency('../../../jquery/jquery.mousewheel.js', ['jquery.mousewheel'], []);
 goog.addDependency('../../../jquery/jquery.rdfquery.core-1.0.js', ['jquery.rdfquery'], ['jquery.jQuery']);

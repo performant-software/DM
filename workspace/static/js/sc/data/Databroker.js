@@ -665,20 +665,10 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
             continue
         }
 
-        this.quadStore.forEachQuadMatchingQuery(
-            null, this.namespaces.expand('owl', 'sameAs'), uri, null,
-            function(quad) {
-                sameUris.add(quad.subject)
-            },
-            this
-        );
-        this.quadStore.forEachQuadMatchingQuery(
-            uri, this.namespaces.expand('owl', 'sameAs'), null, null,
-            function(quad) {
-                sameUris.add(quad.object)
-            },
-            this
-        );
+        sameUris.addAll(this.quadStore.subjectsSetMatchingQuery(
+            null, this.namespaces.expand('owl', 'sameAs'), uri, null));
+        sameUris.addAll(this.quadStore.objectsSetMatchingQuery(
+            uri, this.namespaces.expand('owl', 'sameAs'), null, null));
     }
     
     if (sc.util.Namespaces.isAngleBracketWrapped(uris[0])) {
@@ -711,16 +701,11 @@ sc.data.Databroker.prototype.getUrisSetWithProperty = function(predicate, object
     for (var i=0, len=equivalentObjects.length; i<len; i++) {
         var equivalentObject = equivalentObjects[i];
         
-        this.quadStore.forEachQuadMatchingQuery(
+        uris.addAll(this.quadStore.subjectsSetMatchingQuery(
             null,
             this.namespaces.autoExpand(predicate),
             this.namespaces.autoExpand(object),
-            null,
-            function(quad) {
-                uris.add(quad.subject);
-            },
-            this
-        );
+            null));
     }
     
     return uris;
@@ -740,16 +725,11 @@ sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predica
     for (var i=0, len=equivalentUris.length; i<len; i++) {
         var equivalentUri = equivalentUris[i];
 
-        this.quadStore.forEachQuadMatchingQuery(
+        properties.addAll(this.quadStore.objectsSetMatchingQuery(
             sc.util.Namespaces.wrapWithAngleBrackets(equivalentUri),
             this.namespaces.autoExpand(predicate),
             null,
-            null,
-            function(quad) {
-                properties.add(quad.object);
-            },
-            this
-        );
+            null));
     }
     
     return properties;
@@ -1011,27 +991,16 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
 
     var uris = new goog.structs.Set();
 
-    this.quadStore.forEachQuadMatchingQuery(
+    uris.addAll(this.quadStore.objectsSetMatchingQuery(
         url,
         this.namespaces.expand('ore', 'describes'),
         null,
-        null,
-        function(quad) {
-            uris.add(quad.object);
-        },
-        this
-    );
-
-    this.quadStore.forEachQuadMatchingQuery(
-        null,
-        this.namespaces.expand('ore', 'isDescribedBy'),
+        null));
+    uris.addAll(this.quadStore.subjectsSetMatchingQuery(
         url,
+        this.namespaces.expand('ore', 'describes'),
         null,
-        function(quad) {
-            uris.add(quad.subject);
-        },
-        this
-    );
+        null));
     
     return sc.util.Namespaces.stripAngleBrackets(uris.getValues());
 };
@@ -1113,17 +1082,11 @@ sc.data.Databroker.prototype.getManuscriptSequenceUris = function(manifestUri) {
     
     var aggregateUris = this.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
-    var allSequences = new goog.structs.Set();
-    this.quadStore.forEachQuadMatchingQuery(
+    var allSequences = this.quadStore.subjectsSetMatchingQuery(
         null,
         this.namespaces.expand('rdf', 'type'),
         this.namespaces.expand('dms', 'Sequence'),
-        null,
-        function(quad) {
-            allSequences.add(quad.subject);
-        },
-        this
-    );
+        null);
 
     var intersection = allSequences.intersection(aggregateUris);
     return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
@@ -1134,17 +1097,11 @@ sc.data.Databroker.prototype.getManuscriptImageAnnoUris = function(manifestUri) 
     
     var aggregateUris = this.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
-    var allImageAnnos = new goog.structs.Set();
-    this.quadStore.forEachQuadMatchingQuery(
+    var allImageAnnos = this.quadStore.subjectsSetMatchingQuery(
         null,
         this.namespaces.expand('rdf', 'type'),
         this.namespaces.expand('dms', 'ImageAnnotationList'),
-        null,
-        function(quad) {
-            allImageAnnos.add(quad.subject);
-        },
-        this
-    );
+        null);
 
     var intersection = allImageAnnos.intersection(aggregateUris);
     return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
