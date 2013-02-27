@@ -118,6 +118,7 @@ goog.addDependency('../../../jquery/jquery-1.8.3.js', ['jquery.jQuery'], []);
 goog.addDependency('../../../jquery/jquery-ui-1.8.22.custom.min.js', ['jquery.jQueryUI'], []);
 goog.addDependency('../../../jquery/jquery.animate-enhanced.js', ['jquery.animate_enhanced'], []);
 goog.addDependency('../../../jquery/jquery.event.drag-2.2.js', ['jquery.event.drag'], []);
+goog.addDependency('../../../jquery/jquery.hammer.js', ['jquery.hammer'], []);
 goog.addDependency('../../../jquery/jquery.hoverIntent.minified.js', ['jquery.hoverIntent'], []);
 goog.addDependency('../../../jquery/jquery.mousewheel.js', ['jquery.mousewheel'], []);
 goog.addDependency('../../../jquery/jquery.rdfquery.core-1.0.js', ['jquery.rdfquery'], ['jquery.jQuery']);
@@ -131,7 +132,7 @@ goog.addDependency('../../../sc/RepoBrowser.js', ['sc.RepoBrowser'], ['goog.even
 goog.addDependency('../../../sc/RepoBrowserFolio.js', ['sc.RepoBrowserFolio'], ['sc.RepoBrowserItem']);
 goog.addDependency('../../../sc/RepoBrowserItem.js', ['sc.RepoBrowserItem'], ['jquery.jQuery']);
 goog.addDependency('../../../sc/RepoBrowserManuscript.js', ['sc.RepoBrowserManuscript'], ['goog.dom', 'goog.math.Size', 'goog.ui.AnimatedZippy', 'sc.RepoBrowserItem']);
-goog.addDependency('../../../sc/canvas/CanvasToolbar.js', ['sc.canvas.CanvasToolbar'], ['goog.dom', 'goog.events', 'goog.structs.Map', 'goog.ui.Option', 'goog.ui.Select', 'goog.ui.ToggleButton', 'goog.ui.Toolbar', 'goog.ui.ToolbarSeparator', 'goog.ui.editor.ToolbarFactory', 'jquery.jQuery', 'sc.canvas.DragFeatureControl', 'sc.canvas.DrawCircleControl', 'sc.canvas.DrawEllipseControl', 'sc.canvas.DrawLineControl', 'sc.canvas.DrawPolygonControl', 'sc.canvas.DrawRectControl', 'sc.canvas.ImageChoicePicker', 'sc.canvas.PageChooser', 'sc.canvas.PanZoomGesturesControl']);
+goog.addDependency('../../../sc/canvas/CanvasToolbar.js', ['sc.canvas.CanvasToolbar'], ['goog.dom', 'goog.events', 'goog.structs.Map', 'goog.ui.ToggleButton', 'goog.ui.Toolbar', 'goog.ui.ToolbarSeparator', 'goog.ui.editor.ToolbarFactory', 'jquery.jQuery', 'sc.canvas.DragFeatureControl', 'sc.canvas.DrawCircleControl', 'sc.canvas.DrawEllipseControl', 'sc.canvas.DrawLineControl', 'sc.canvas.DrawPolygonControl', 'sc.canvas.DrawRectControl', 'sc.canvas.ImageChoicePicker', 'sc.canvas.PageChooser', 'sc.canvas.PanZoomGesturesControl']);
 goog.addDependency('../../../sc/canvas/CanvasViewer.js', ['sc.canvas.CanvasViewer'], ['goog.dom', 'goog.events', 'goog.math.Size', 'jquery.jQuery', 'sc.canvas.CanvasToolbar', 'sc.canvas.DragFeatureControl', 'sc.canvas.FabricCanvas', 'sc.canvas.FabricCanvasFactory', 'sc.canvas.FabricCanvasViewport', 'sc.canvas.ZoomSliderControl']);
 goog.addDependency('../../../sc/canvas/CommentedCanvasViewer.js', ['sc.canvas.CommentedCanvasViewer'], ['goog.events', 'sc.CommentViewer', 'sc.canvas.CanvasViewer']);
 goog.addDependency('../../../sc/canvas/Control.js', ['sc.canvas.Control'], ['goog.events.Event', 'goog.events.EventTarget']);
