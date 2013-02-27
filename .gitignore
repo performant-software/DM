@@ -2,6 +2,7 @@
 workspace/static/js/closure-library/*
 static/js/closure-library/*
 settings_local.py
+runserver
 
 #python specific
 *.pyc
