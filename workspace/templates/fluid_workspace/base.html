@@ -84,7 +84,9 @@
           <input type="text" class="search-query" placeholder="Search">
         </form>
         <ul class="nav pull-right">
-          <li><a href="">add resources</a></li>
+          <!--<li><a href="">add resources</a></li>-->
+          {% block header_buttons %}
+          {% endblock %}
           <li class="divider-vertical"></li>
           {% if user %}
           <li class="dropdown">
