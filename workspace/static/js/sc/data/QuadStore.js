@@ -94,13 +94,25 @@ sc.data.QuadStore.prototype.numQuadsMatchingQuery = function(subject, predicate,
  * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
  * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
  * @param  {Function(sc.data.Quad)} fn        A function which takes a Quad as its first paramater.
+ *                                            If the function returns false, iteration will stop.
  * @param  {Object}                 [varname] [description]
  */
 sc.data.QuadStore.prototype.forEachQuadMatchingQuery = function(subject, predicate, object, context, fn, opt_obj) {
-    goog.structs.forEach(
+    if (opt_obj) {
+        fn = fn.bind(opt_obj);
+    }
+
+    goog.structs.every(
         this._queryReturningSet(subject, predicate, object, context),
-        fn,
-        opt_obj
+        function(quad) {
+            if (fn(quad, this) === false) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        },
+        this
     );
 };
 
