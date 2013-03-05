@@ -58,13 +58,6 @@ atb.viewer.Viewer = function (clientApp) {
     
     /** @type {number} */
     this.timeOfLastThumbnailRegistration = 0;
-    
-    goog.events.listen(this, atb.events.ViewerHasEnteredBackground.EVENT_TYPE,
-                       this.viewerHasEnteredBackground, false, this);
-    goog.events.listen(this, 'viewer has reentered foreground',
-                       this.viewerHasReenteredForeground, false, this);
-    goog.events.listen(this, 'viewer will be purged',
-                       this.viewerWillBePurged, false, this);
 };
 goog.inherits(atb.viewer.Viewer, goog.events.EventTarget);
 
@@ -344,24 +337,6 @@ atb.viewer.Viewer.prototype.flashDocumentIconHighlight = function () {
         this.unHighlightDocumentIcon
     ];
     atb.Util.timeoutSequence(250, timeoutFns, this);
-};
-
-/**
- * Called by a panel container whenever the viewer becomes no longer visible and
- * placed in the container's history
- */
-atb.viewer.Viewer.prototype.viewerHasEnteredBackground = function (event) {
-    if (goog.isFunction(this.onPaneUnloaded)) {
-        this.onPaneUnloaded();
-    }
-};
-
-atb.viewer.Viewer.prototype.viewerHasReenteredForeground = function (event) {
-    
-};
-
-atb.viewer.Viewer.prototype.viewerWillBePurged = function (event) {
-    
 };
 
 /**

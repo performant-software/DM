@@ -1,7 +1,5 @@
 goog.require("atb.ClientApp");
 goog.require("atb.WebService");
-goog.require('atb.viewer.PanelManager');
-goog.require('atb.viewer.PanelContainer');
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
 goog.require('atb.viewer.Editor');
@@ -19,7 +17,6 @@ goog.require('sc.canvas.FabricCanvas');
 goog.require('atb.viewer.ViewerGrid');
 goog.require('atb.viewer.ViewerContainer');
 
-var panelManager = null;
 var clientApp = null;
 var glasspane = null;
 var workingResourcesViewer = null;
@@ -147,51 +144,6 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
 
     resizeViewerGrid();
     jQuery(window).bind('resize', resizeViewerGrid);
-
-    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-	
-    var mnuOpenMarkerViewerInOtherPane =
-    new atb.widgets.MenuItem(
-        "loadMarkerViewerIntoAnotherPane",
-        createButtonGenerator("radialButton-newDocument"),
-        function(actionEvent)
-        {
-            var pane = actionEvent.getPane();
-
-            var menu = actionEvent.getMenu();
-					
-            var panelContainer = pane.getCurrentPanelContainer();
-            //currentPanel;
-            var panelManager = panelContainer.getPanelManager();
-            var otherContainer = panelManager.getAnotherPanel(panelContainer);
-					
-            if (otherContainer === null) {
-                alert("only one panel container!");
-                return;
-            }
-            var viewer = new atb.viewer.Editor(clientApp);
-            otherContainer.setViewer( viewer );
-            otherContainer.setTabContents('New Annotation');
-
-            pane.dismissContextMenu(menu);
-        }
-        );
-	
-    //// Left Pane: ///////////////////////////////////////////////
-		
-    var augmentedMenuItems = [
-    {
-        menuName: "testMenu",
-				
-        items: [
-        mnuOpenMarkerViewerInOtherPane
-        ]
-    }
-    ];
-
-    //setup keybindings / etc. :
-  	panelManager = clientApp.getPanelManager();
-    panelManager.registerGlobalHandlers();
 	
     /*
     var searchField = goog.dom.getElement("titleBarSearch");
