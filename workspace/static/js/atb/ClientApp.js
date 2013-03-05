@@ -1,7 +1,6 @@
 goog.provide("atb.ClientApp");
 
 goog.require("atb.WebService");
-goog.require("atb.viewer.PanelManager");
 
 goog.require("atb.util.StyleUtil"); //used for a giant hack
 goog.require("atb.util.ReferenceUtil");
@@ -46,7 +45,6 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     
 	this.force_styleRoot = atb.util.ReferenceUtil.applyDefaultValue(opt_hack_set_styleRoot, null);
 	
-	this.panelManager = new atb.viewer.PanelManager(this);
 	this.resourceCrawler = new atb.resource.ResourceCrawler(this);
     
 	atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.getStyleRoot(); // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
@@ -71,10 +69,6 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
 
 atb.ClientApp.prototype.getWebService = function () {
 	return this.webService;
-};
-
-atb.ClientApp.prototype.getPanelManager = function () {
-	return this.panelManager;
 };
 
 atb.ClientApp.prototype.getEventDispatcher = function () {
@@ -108,15 +102,15 @@ atb.ClientApp.prototype.clearActiveAnnotation = function () {
 	this.setActiveAnnotation(null);
 	this.setAnnotationBody(null);
 	
-	var panelContainers = this.getPanelManager().getAllPanels();
-	for (var x in panelContainers) {
-		var viewer = panelContainers[x].getViewer();
+	// var panelContainers = this.getPanelManager().getAllPanels();
+	// for (var x in panelContainers) {
+	// 	var viewer = panelContainers[x].getViewer();
 		
-		try {
-			viewer.unHighlightDocumentIcon();
-		}
-		catch (e) {}
-	}
+	// 	try {
+	// 		viewer.unHighlightDocumentIcon();
+	// 	}
+	// 	catch (e) {}
+	// }
 };
 
 
@@ -251,10 +245,6 @@ atb.ClientApp.prototype.renderLinkCreationUI = function () {
             this.undoLinkCreationPopup.setPosition(computeCenteredPosition(undoLinkCreationPopupDiv));
             this.undoLinkCreationPopup.reposition();
         }
-    }, false, this);
-    
-    goog.events.listen(this.eventDispatcher, atb.events.ViewerHasEnteredBackground.EVENT_TYPE, function (e) {
-        this.hideUndoLinkCreationUI();
     }, false, this);
 };
 
