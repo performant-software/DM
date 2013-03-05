@@ -63,13 +63,7 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     
     this.setupEventListeners();
     
-    this.autoResize();
-    
     this.viewer.render(this.rootDiv);
-
-    window.setTimeout(function() {
-        self.autoResize();
-    }, 100);
 };
 
 atb.viewer.CanvasViewer.prototype.finishRender = function(div) {
@@ -101,12 +95,6 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     viewport.addEventListener('click', this.onResourceClick, false, this);
     viewport.addEventListener('mouseover', this.onFeatureHover, false, this);
     viewport.addEventListener('mouseout', this.onFeatureMouseout, false, this);
-    
-    jQuery(window).resize(function() {
-        window.setTimeout(function() {
-            self.autoResize();
-        }, 150);
-    });
     
     viewport.addEventListener('canvasAdded', this.onCanvasAdded, false, this);
     
@@ -280,17 +268,7 @@ function(id, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
                         opt_sequenceIndex);
 };
 
-
-atb.viewer.CanvasViewer.prototype.autoResize = function() {
-    var panelContainer = this.getPanelContainer();
-    
-    if (!panelContainer) return;
-    
-    var panelContainerDiv = this.getPanelContainer().rootDiv;
-    
-    var width = jQuery(panelContainerDiv).width();
-    var height = jQuery(panelContainerDiv).height();
-    
+atb.viewer.CanvasViewer.prototype.resize = function(width, height) {
     this.viewer.resize(width, height);
 };
 

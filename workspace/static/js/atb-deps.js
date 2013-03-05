@@ -86,7 +86,9 @@ goog.addDependency('../../../atb/viewer/TiledLayoutManager.js', ['atb.viewer.Til
 goog.addDependency('../../../atb/viewer/UndoStack.js', ['atb.viewer.UndoStack'], []);
 goog.addDependency('../../../atb/viewer/VerticalLayoutManager.js', ['atb.viewer.VerticalLayoutManager'], ['atb.viewer.LayoutManager', 'goog.style']);
 goog.addDependency('../../../atb/viewer/Viewer.js', ['atb.viewer.Viewer'], ['atb.Util', 'atb.ui.AnnoTitlesList', 'atb.util.StyleUtil', 'atb.widgets.Toolbar', 'goog.events', 'goog.events.EventTarget', 'goog.events.EventType', 'goog.events.KeyCodes', 'goog.math.Coordinate', 'goog.ui.Popup', 'jquery.jQuery']);
+goog.addDependency('../../../atb/viewer/ViewerContainer.js', ['atb.viewer.ViewerContainer'], ['goog.dom.DomHelper', 'goog.events.EventTarget', 'jquery.jQuery']);
 goog.addDependency('../../../atb/viewer/ViewerFactory.js', ['atb.viewer.ViewerFactory'], []);
+goog.addDependency('../../../atb/viewer/ViewerGrid.js', ['atb.viewer.ViewerGrid'], ['atb.util.OrderedSet', 'goog.dom.DomHelper', 'goog.events', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map']);
 goog.addDependency('../../../atb/viewer/ViewerThumbnail.js', ['atb.viewer.ViewerThumbnail'], ['jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/BreadCrumbs.js', ['atb.widgets.BreadCrumbs'], ['goog.array', 'goog.dom.DomHelper', 'goog.structs.Map', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/CursorFollower.js', ['atb.widgets.CursorFollower'], ['goog.dom', 'goog.events', 'jquery.jQuery']);
