@@ -17,7 +17,7 @@ goog.require('goog.events.EventType');
 goog.require('goog.events.KeyCodes');
 
 /**
- * Defines a generic Viewer which can be loaded into a PanelContainer
+ * Defines a generic Viewer which can be loaded into a ViewerContainer
  *
  * @note Never create dom elements in the constructor, they should be created in
  * render()
@@ -93,10 +93,14 @@ atb.viewer.Viewer.prototype.getResourceId = function () {
 };
 
 /**
- * @return {atb.resource.Resource}
+ * Should be overrided if the viewer needs to be resized programatically.
+ * @param  {number} width     The width of the viewer.
+ * @param  {number} height    The height of the viewer.
+ * @return {atb.viewer.Viwer} this.
  */
-atb.viewer.Viewer.prototype.getResource = function () {
-    return this.resource;
+atb.viewer.Viewer.prototype.resize = function(width, height) {
+    
+    return this;
 };
 
 /**
@@ -107,7 +111,7 @@ atb.viewer.Viewer.prototype.render = function () {
     this.domHelper = this.getDomHelper();
     
     /** @type {HtmlElement} */
-    this.rootDiv = this.domHelper.createDom('div');
+    this.rootDiv = this.domHelper.createDom('div', {'class': 'atb-Viewer'});
     
     var spinnerTop = 70;
     var spinnerLeft = 50; // These coordinates will be changed when
@@ -164,6 +168,11 @@ atb.viewer.Viewer.prototype.render = function () {
     if (this.clientApp.isAnnoLinkingInProgress()) {
         this.disableHoverMenus();
     }
+
+    //Remove in cleanup
+    if (goog.isFunction(this.finishRender)) {
+        this.finishRender();
+    }
 };
 
 atb.viewer.Viewer.prototype.handleKeyDown_ = function (event) {
@@ -172,14 +181,6 @@ atb.viewer.Viewer.prototype.handleKeyDown_ = function (event) {
         
         this.hideHoverMenu();
     }
-};
-
-/**
- * Is called each time the viewer is made visible
- * @abstract
- */
-atb.viewer.Viewer.prototype.finishRender = function () {
-    
 };
 
 /**
@@ -194,31 +195,12 @@ atb.viewer.Viewer.prototype.getElement = function () {
     return this.rootDiv;
 };
 
-/**
- * @returns {atb.viewer.PanelContainer}
- */
-atb.viewer.Viewer.prototype.getPanelContainer = function () {
-    return this.panelContainer;
-};
-atb.viewer.Viewer.prototype.getCurrentPanelContainer =
-atb.viewer.Viewer.prototype.getPanelContainer;
-
-/**
- * @param panelContainer {atb.viewer.PanelContainer}
- */
-atb.viewer.Viewer.prototype.setPanelContainer = function (panelContainer) {
-    this.panelContainer = panelContainer;
+atb.viewer.Viewer.prototype.setContainer = function(container) {
+    this.container = container;
 };
 
-/**
- * @returns {atb.viewer.PanelManager}
- */
-atb.viewer.Viewer.prototype.getPanelManager = function () {
-    if (! this.panelContainer) {
-        throw "No PanelContainer is set";
-    }
-    
-    return this.getPanelContainer().getPanelManager();
+atb.viewer.Viewer.prototype.getContainer = function() {
+    return this.container;
 };
 
 /**
@@ -229,11 +211,11 @@ atb.viewer.Viewer.prototype.getPanelManager = function () {
  */
 atb.viewer.Viewer.prototype.getDomHelper = function () {
     if (! this.domHelper) {
-        if ( this.panelContainer ) {
-            this.domHelper = this.getPanelContainer().getDomHelper();
+        if ( this.container ) {
+            this.domHelper = this.container.getDomHelper();
         }
         else {
-            throw "Viewer does not yet have a panel container";
+            throw "Viewer does not yet have a container";
         }
     }
     
@@ -245,14 +227,14 @@ atb.viewer.Viewer.prototype.getDomHelper = function () {
  * @param editable {boolean}
  */
 atb.viewer.Viewer.prototype.setTitleEditable = function (editable) {
-    var panelContainer = this.getPanelContainer();
+    var container = this.getContainer();
     
-    if (! panelContainer) {
-        throw "Viewer does not yet have a panel container. " +
+    if (! container) {
+        throw "Viewer does not yet have a container. " +
         "Call setTitleEditable() after rendering.";
     }
     
-    panelContainer.setTitleEditable(editable);
+    container.setTitleEditable(editable);
 };
 
 /**
@@ -260,27 +242,21 @@ atb.viewer.Viewer.prototype.setTitleEditable = function (editable) {
  * @param title {string}
  */
 atb.viewer.Viewer.prototype.setTitle = function (title) {
-    var panelContainer = this.getPanelContainer();
+    var container = this.getContainer();
     
-    if (! panelContainer) {
-        throw "Viewer does not yet have a panel container." +
+    if (! container) {
+        throw "Viewer does not yet have a container." +
         "Call setTitleEditable() after rendering.";
     }
     
-    panelContainer.setTitle(title);
+    container.setTitle(title);
 };
 
 /**
  * Shows a spinning loading indicator
  */
 atb.viewer.Viewer.prototype.showLoadingSpinner = function () {
-    var div;
-    if (this.getPanelContainer()) {
-        div = this.getPanelContainer().rootDiv;
-    }
-    else {
-        div = this.rootDiv;
-    }
+    var div = this.rootDiv;
     
     var top = jQuery(div).height() / 2 - 16;
     var left = jQuery(div).width() / 2 - 16;
@@ -303,13 +279,7 @@ atb.viewer.Viewer.prototype.hideLoadingSpinner = function () {
 atb.viewer.Viewer.prototype.flashErrorIcon = function () {
     this.hideLoadingSpinner();
     
-    var div;
-    if (this.getPanelContainer()) {
-        div = this.getPanelContainer().rootDiv;
-    }
-    else {
-        div = this.rootDiv;
-    }
+    var div = this.rootDiv;
     
     var top = jQuery(div).height() / 2 - 18;
     var left = jQuery(div).width() / 2 - 18;
@@ -340,7 +310,7 @@ atb.viewer.Viewer.prototype.showMessage = function (text) {
     var textHeight = jQuery(this.messageDiv).height();
     jQuery(this.messageDiv).css({'display': 'none', 'visibility': 'visible'});
     
-    var div = this.getPanelContainer().rootDiv;
+    var div = this.rootDiv;
     
     var top = (jQuery(div).height()) / 2 - (textHeight / 2);
     var left = 0;
@@ -618,31 +588,31 @@ atb.viewer.Viewer.prototype.generateViewerThumbnail = function () {
  */
 atb.viewer.Viewer.prototype.registerThumbnailToPanel =
 function(opt_synchronous) {
-    if (goog.now() - this.timeOfLastThumbnailRegistration > 500) {
-        this.timeOfLastThumbnailRegistration = goog.now();
+    // if (goog.now() - this.timeOfLastThumbnailRegistration > 500) {
+    //     this.timeOfLastThumbnailRegistration = goog.now();
         
-        var code = function () {
-            var thumbnail = this.generateViewerThumbnail();
+    //     var code = function () {
+    //         var thumbnail = this.generateViewerThumbnail();
             
-            var panelContainer = this.getPanelContainer();
-            if (this.panelContainer) {
-                panelContainer.registerViewerThumbnail(thumbnail);
-            }
-        };
-        code = jQuery.proxy(code, this);
+    //         var panelContainer = this.getPanelContainer();
+    //         if (this.panelContainer) {
+    //             panelContainer.registerViewerThumbnail(thumbnail);
+    //         }
+    //     };
+    //     code = jQuery.proxy(code, this);
         
-        if (opt_synchronous) {
-            code();
-        }
-        else {
-            window.setTimeout(code, 500);
-        }
+    //     if (opt_synchronous) {
+    //         code();
+    //     }
+    //     else {
+    //         window.setTimeout(code, 500);
+    //     }
         
-        return true;
-    }
-    else {
-        return false;
-    }
+    //     return true;
+    // }
+    // else {
+    //     return false;
+    // }
 };
 
 atb.viewer.Viewer.prototype.equals = function (other) {

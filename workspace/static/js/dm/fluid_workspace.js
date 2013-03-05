@@ -10,19 +10,21 @@ goog.require('atb.widgets.MenuUtil');
 goog.require('atb.ClientApp');
 goog.require('goog.events');
 goog.require('goog.dom');
-goog.require('atb.ui.WindowScaler'); // We may be able to remove this in the future
-goog.require('atb.ui.PanelScaler'); // We may be able to remove this in the future
 goog.require('atb.viewer.RepoBrowser');
 goog.require('atb.widgets.WorkingResources');
 goog.require('atb.widgets.RepoBrowser');
 goog.require('goog.ui.Dialog');
 goog.require('sc.canvas.FabricCanvas');
 
+goog.require('atb.viewer.ViewerGrid');
+goog.require('atb.viewer.ViewerContainer');
+
 var panelManager = null;
 var clientApp = null;
 var glasspane = null;
 var workingResourcesViewer = null;
 var repoBrowser = null;
+var viewerGrid = null;
 
 var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var databroker = clientApp.getDatabroker();
@@ -86,39 +88,13 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
 };
 
 var openCanvas = function(uri, urisInOrder, index) {
-    var gridDiv = document.createElement('div');
-    var wrapperContainer = goog.dom.createDom('div', {'class': 'atb-wrapper-container'});
-    gridDiv.appendChild(wrapperContainer);
-    var heading = goog.dom.createDom('div', {'class': 'atb-wrapper-heading'});
-    wrapperContainer.appendChild(heading);
-    var inner = goog.dom.createDom('div', {'class': 'atb-wrapper-inner'});
-    wrapperContainer.appendChild(inner);
-
-    jQuery('#grid.row-fluid').prepend(gridDiv);
-
-    var panelContainer = new atb.viewer.PanelContainer(
-        goog.getUid({}), 
-        inner, 
-        heading,
-        null,
-        null,
-        windowScaler
-    );
-
-    var panelManager = clientApp.getPanelManager();
-    panelManager.addPanelSlot(panelContainer);
-
+    var viewerContainer = new atb.viewer.ViewerContainer();
     var viewer = new atb.viewer.CanvasViewer(clientApp);
-
-    panelContainer.setViewer(viewer);
-    panelContainer.toolbar.hide();
+    viewerContainer.setViewer(viewer);
 
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
-    viewers.push(viewer);
 
-    windowScaler.scale(rows);
-    setSpan();
-    resizeViewers();
+    viewerGrid.addViewerContainer(viewerContainer);
 };
 
 var setupCurrentProject = function(clientApp, username) {
@@ -138,6 +114,17 @@ var setupCurrentProject = function(clientApp, username) {
     });
 }
 
+var GRID_BOTTOM_MARGIN = 20;
+var GRID_LEFT_MARGIN = 20;
+var GRID_RIGHT_MARGIN = 20;
+
+var resizeViewerGrid = function() {
+    var height = jQuery(window).height() - jQuery(viewerGrid.getElement()).offset().top - GRID_BOTTOM_MARGIN;
+    var width = jQuery(window).width() - GRID_LEFT_MARGIN - GRID_RIGHT_MARGIN;
+
+    viewerGrid.resize(width, height);
+}
+
 //TODO: kill the default content of the left/right panes probably and let the panels add the children of those tags themselves as they see fit, during their
 //          tenure of their panelcontainer's tag...
 //			maybe wrap them in another child tag that they "keep" owning and stops being a child when it moves...??
@@ -155,30 +142,11 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
 
     goog.global.databroker = clientApp.getDatabroker();
 
-    // activate auto heights for window and widgets
-    var scalingRules = {
-        screenBottom: 10,
-        elements: [
-            // ['.atb-wrapper', 0],
-            // ['.atb-wrapper-inner', 0],
-            // ['.atb-resourceviewer', 5],
-            // ['.atb-markereditor-pane', 5],
-            // ['.editable', 5],
-            // ['.atb-RepoBrowser', 5]
-        ],
-        truncate: true,
-        tabs: [
-            // ['#leftTab'],
-            // ['#rightTab'] 
-        ]
-    };
-//    windowScaler = new atb.ui.WindowScaler(scalingRules);
-    windowScaler = new atb.ui.PanelScaler(scalingRules);
-    $(window).bind('resize', function() {
-        if (windowScaler.resizeTimer) clearTimeout(windowScaler.resizeTimer);
-        windowScaler.resizeTimer = setTimeout('windowScaler.scale();', 100);
-    });
-    windowScaler.scale(2);
+    goog.global.viewerGrid = new atb.viewer.ViewerGrid();
+    viewerGrid.render(goog.dom.getElement('grid'));
+
+    resizeViewerGrid();
+    jQuery(window).bind('resize', resizeViewerGrid);
 
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
 	
