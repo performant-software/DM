@@ -24,7 +24,6 @@ goog.addDependency('../../../atb/resource/MarkerCollection.js', ['atb.resource.M
 goog.addDependency('../../../atb/resource/MarkerResource.js', ['atb.resource.MarkerResource', 'atb.resource.MarkerResource.shapes'], ['atb.resource.Resource']);
 goog.addDependency('../../../atb/resource/MarkerSummary.js', ['atb.resource.MarkerSummary'], ['atb.resource.ResourceSummary', 'goog.math.Size']);
 goog.addDependency('../../../atb/resource/MetaData.js', ['atb.resource.MetaData'], []);
-goog.addDependency('../../../atb/resource/OAC.js', ['atb.resource.OAC', 'atb.resource.OAC.jAgent', 'atb.resource.OAC.jAnno', 'atb.resource.OAC.jConstraint', 'atb.resource.OAC.jResource'], ['atb.resource.OAC.rdfQuery', 'jquery.jQuery']);
 goog.addDependency('../../../atb/resource/Resource.js', ['atb.resource.Resource'], []);
 goog.addDependency('../../../atb/resource/ResourceCollection.js', ['atb.resource.ResourceCollection'], ['atb.resource.ResourceSummary', 'atb.widgets.TwirlDown', 'goog.dom']);
 goog.addDependency('../../../atb/resource/ResourceCrawler.js', ['atb.resource.ResourceCrawler'], ['atb.Util', 'goog.structs.Map', 'goog.structs.Set']);
@@ -36,7 +35,6 @@ goog.addDependency('../../../atb/resource/TextHighlightSummary.js', ['atb.resour
 goog.addDependency('../../../atb/resource/TextResource.js', ['atb.resource.TextResource'], ['atb.resource.Resource']);
 goog.addDependency('../../../atb/resource/TextSummary.js', ['atb.resource.TextSummary'], ['atb.resource.ResourceSummary']);
 goog.addDependency('../../../atb/resource/UserResource.js', ['atb.resource.UserResource'], ['atb.resource.Resource', 'goog.array']);
-goog.addDependency('../../../atb/resource/jquery.rdfquery.rdfa.min-1.0.js', ['atb.resource.OAC.rdfQuery'], []);
 goog.addDependency('../../../atb/start.js', ['atb.start'], ['atb.DMWebService', 'atb.viewer.Editor', 'atb.widgets.MenuUtil', 'goog.math.Size']);
 goog.addDependency('../../../atb/ui/AnnoTitlesList.js', ['atb.ui.AnnoTitlesList'], ['atb.resource.ResourceSummaryFactory', 'atb.viewer.ViewerFactory', 'goog.dom.DomHelper', 'goog.structs.Map', 'goog.structs.Set']);
 goog.addDependency('../../../atb/ui/Bezel.js', ['atb.ui.Bezel'], ['atb.util.StyleUtil', 'goog.dom', 'goog.math.Coordinate', 'goog.math.Size', 'jquery.jQuery']);
@@ -96,10 +94,7 @@ goog.addDependency('../../../atb/widgets/MenuItem.js', ['atb.widgets.MenuItem'],
 goog.addDependency('../../../atb/widgets/MenuUtil.js', ['atb.widgets.MenuUtil'], ['atb.util.LangUtil', 'atb.util.ReferenceUtil', 'atb.widgets.MenuItem', 'goog.asserts', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/PanelChooser.js', ['atb.widgets.PanelChooser'], ['goog.dom.DomHelper', 'goog.events', 'goog.math.Size', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/PropertyEditorPane.js', ['atb.widgets.PropertyEditorPane'], []);
-goog.addDependency('../../../atb/widgets/RadialMenu.js', ['atb.widgets.RadialMenu'], ['atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.widgets.ExclusiveGrouping', 'atb.widgets.IMenu', 'jquery.jQuery', 'jquery.plugins.radmenu']);
 goog.addDependency('../../../atb/widgets/RepoBrowser.js', ['atb.widgets.RepoBrowser'], ['atb.viewer.CanvasViewer', 'goog.dom', 'goog.dom.DomHelper', 'sc.RepoBrowser']);
-goog.addDependency('../../../atb/widgets/StringPropertyEditor.js', ['atb.widgets.StringPropertyEditor'], []);
-goog.addDependency('../../../atb/widgets/TemplateGenerator.js', ['atb.widgets.TemplateGenerator'], ['atb.util.LangUtil', 'atb.util.Map', 'atb.util.ObjectMap', 'atb.util.ReferenceUtil', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/Toolbar.js', ['atb.widgets.Toolbar'], ['atb.util.Map', 'atb.util.ReferenceUtil', 'atb.widgets.IMenu', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
 goog.addDependency('../../../atb/widgets/TwirlDown.js', ['atb.widgets.TwirlDown'], ['goog.ui.AnimatedZippy', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/VerticalToolbar.js', ['atb.widgets.VerticalToolbar'], ['atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.widgets.IMenu', 'goog.dom', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.Container', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
