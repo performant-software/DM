@@ -66,10 +66,6 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     this.viewer.render(this.rootDiv);
 };
 
-atb.viewer.CanvasViewer.prototype.finishRender = function(div) {
-    
-};
-
 atb.viewer.CanvasViewer.prototype.handleDocumentIconClick_ = function(event) {
     
 };
