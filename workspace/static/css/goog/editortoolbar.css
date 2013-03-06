@@ -26,8 +26,4 @@
 
 .goog-toolbar {
     background-image: url(../../img/toolbar-bg-horz.png);
-    /* TODO: this hides buttons when the screen isn't wide enough */
-    /* we need them to wrap down probably but this is how we want it for now */
-    overflow: hidden;
-    height: 32px;
 }

@@ -121,29 +121,29 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'previousPage',
         'Go to the previous canvas in this sequence',
         '',
-        'sc-CanvasToolbar-previous',
+        'icon-chevron-left',
         this.handlePreviousClick
     );
     this.addButton(leftButton);
+
+    var pageChooserButton = this.createButton(
+        'pageChooser',
+        'Pick another folia from this manuscript to view',
+        '',
+        'icon-list',
+        this.handlePageChooserClick
+    );
+    this.setupPageChooser();
+    this.addButton(pageChooserButton);
 
     var rightButton = this.createButton(
         'nextPage',
         'Go to the next canvas in this sequence',
         '',
-        'sc-CanvasToolbar-next',
+        'icon-chevron-right',
         this.handleNextClick
     );
     this.addButton(rightButton);
-
-    var pageChooserButton = this.createButton(
-        'pageChooser',
-        'Pick another folia from this manuscript to view',
-        '\u25BC',
-        '',
-        this.handlePageChooserClick
-    );
-    this.setupPageChooser();
-    this.addButton(pageChooserButton);
 
     this.autoEnableNavButtons();
     this.viewer.mainViewport.addEventListener(
@@ -157,7 +157,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'pan-zoom',
         'Pan and zoom the canvas',
         '',
-        'sc-CanvasToolbar-panZoomIcon',
+        'icon-hand-up',
         this.handlePanZoomClick
     );
     this.selectButton(panZoomButton);
@@ -205,7 +205,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'toggle-markers',
         'Toggle the visibility of markers on the canvas',
         '',
-        'sc-CanvasToolbar-toggleMarkersIcon',
+        'icon-eye-close',
         this.handleToggleMarkers
     );
     this.addButton(toggleMarkersButton);
@@ -229,7 +229,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'transcriptions',
         'Show and hide transcriptions',
         '',
-        'sc-CanvasToolbar-transcriptionsIcon',
+        'icon-font',
         this.handleTranscriptionsClick
     );
     transcriptionsButton.setChecked(true);
@@ -258,8 +258,7 @@ sc.canvas.CanvasToolbar.prototype.setupPageChooser = function() {
     
     this.pageChooser = new sc.canvas.PageChooser(
         this.buttonsByName['pageChooser'],
-        this.databroker,
-        100
+        this.databroker
     );
     this.updatePageChooser();
     goog.events.listen(this.viewer.mainViewport, 'canvasAdded', this.updatePageChooser,
