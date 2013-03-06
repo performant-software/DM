@@ -96,10 +96,7 @@ atb.viewer.Viewer.prototype.resize = function(width, height) {
     return this;
 };
 
-/**
- * Is called the first time the viewer is rendered
- */
-atb.viewer.Viewer.prototype.render = function () {
+atb.viewer.Viewer.prototype.render = function (div) {
     /** @type {goog.dom.DomHelper} */
     this.domHelper = this.getDomHelper();
     
@@ -165,6 +162,10 @@ atb.viewer.Viewer.prototype.render = function () {
     //Remove in cleanup
     if (goog.isFunction(this.finishRender)) {
         this.finishRender();
+    }
+
+    if (div) {
+        div.appendChild(this.rootDiv);
     }
 };
 

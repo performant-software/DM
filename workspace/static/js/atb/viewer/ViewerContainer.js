@@ -26,9 +26,7 @@ atb.viewer.ViewerContainer.prototype.setViewer = function(viewer) {
 
     this.viewer = viewer;
     this.viewer.setContainer(this);
-    viewer.render();
-    this.viewerEl.appendChild(viewer.getElement());
-    //This structure needs to be cleaned up
+    viewer.render(this.viewerEl);
 };
 
 atb.viewer.ViewerContainer.prototype.getViewer = function() {
