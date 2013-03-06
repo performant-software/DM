@@ -35,6 +35,17 @@
     border-bottom-right-radius: @radius;
 }
 
+.14x14spriteBackground(@index) {
+    @squareSize: 14px;
+
+    width: @squareSize;
+    height: @squareSize;
+
+    background-image: url("../../img/icons-14x14-sprite.png");
+    background-position: -@index * @squareSize 0;
+    background-repeat: no-repeat;
+}
+
 .16x16spriteBackground(@index) {
     @squareSize: 16px;
     
