@@ -246,8 +246,8 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     var imageChoicesButton = this.createButton(
         'imageChoices',
         'Show alternate image choices',
-        'Image choices...',
         '',
+        'icon-picture',
         this.handleImageChoicesClick
     );
     this.addButton(imageChoicesButton);
