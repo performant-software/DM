@@ -658,6 +658,27 @@ sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
     return polygon;
 };
 
+sc.canvas.FabricCanvas.svgStringToElement = function(string) {
+    //Based on fabric.js implementation
+
+    string = string.trim();
+    var doc;
+    if (typeof DOMParser !== 'undefined') {
+        var parser = new DOMParser();
+        if (parser && parser.parseFromString) {
+            doc = parser.parseFromString(string, 'text/xml');
+        }
+    }
+    else if (fabric.window.ActiveXObject) {
+        doc = new ActiveXObject('Microsoft.XMLDOM');
+        doc.async = 'false';
+        //IE chokes on DOCTYPE
+        doc.loadXML(string.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i,''));
+    }
+
+    return doc.firstChild;
+}
+
 /**
  * Adds a feature to the canvas from a string in the svg feature format
  * (e.g., <path d="m 1 2..." />).
