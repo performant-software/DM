@@ -140,6 +140,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
     goog.global.databroker = clientApp.getDatabroker();
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
+    viewerGrid.setDimensions(2,2);
     viewerGrid.render(goog.dom.getElement('grid'));
 
     resizeViewerGrid();
