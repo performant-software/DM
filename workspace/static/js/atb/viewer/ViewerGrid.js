@@ -1,7 +1,8 @@
 goog.provide('atb.viewer.ViewerGrid');
 
-goog.require('atb.util.OrderedSet');
+goog.require('goog.structs.Set');
 goog.require('goog.structs.Map');
+goog.require('goog.array');
 goog.require('goog.math.Size');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.events');
@@ -10,7 +11,8 @@ goog.require('goog.events.EventTarget');
 atb.viewer.ViewerGrid = function (opt_domHelper) {
     goog.events.EventTarget.call(this);
 
-    this.containers = new atb.util.OrderedSet();
+    this.containersSet = new goog.structs.Set();
+    this.containers = [];
     this.wrappersByContainer = new goog.structs.Map();
     this.wrappers = [];
 
@@ -36,17 +38,33 @@ atb.viewer.ViewerGrid.prototype.decorate = function(div) {
 };
 
 atb.viewer.ViewerGrid.prototype.addViewerContainer = function(container) {
-    if (this.containers.contains(container)) {
+    this.addViewerContainerAt(container, 0);
+};
+
+atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(container, index) {
+    if (this.containersSet.contains(container)) {
         throw "ViewerGrid already contains the given viewer";
     }
     else {
-        this.containers.add(container);
+        this.containersSet.add(container);
+        goog.array.insertAt(this.containers, container, index);
 
-        var wrapperEl = this.domHelper.createDom('div', {'class': 'atb-ViewerGrid-cell '});
+        var wrapperEl = this.domHelper.createDom('div', {'class': 'atb-ViewerGrid-cell'});
         container.render(wrapperEl);
 
+        var wrapperAtIndex = this.wrappers[index];
+        if (index === 0 && wrapperAtIndex == null) {
+            jQuery(this.element).prepend(wrapperEl);
+        }
+        else if (wrapperAtIndex == null) {
+            jQuery(this.element).append(wrapperEl);
+        }
+        else {
+            jQuery(wrapperAtIndex).before(wrapperEl);
+        }
+
         this.wrappersByContainer.set(container, wrapperEl);
-        this.wrappers.push(wrapperEl);
+        goog.array.insertAt(this.wrappers, wrapperEl, index);
 
         this._setAllContainerDimensions();
 
@@ -57,9 +75,11 @@ atb.viewer.ViewerGrid.prototype.addViewerContainer = function(container) {
 
 atb.viewer.ViewerGrid.prototype.removeViewerContainer = function(container) {
     jQuery(container.getElement()).detach();
-    goog.array.remove(this.wrappers, this.wrappersByContainer.get(container));
+    var wrapper = this.wrappersByContainer.get(container);
+    goog.array.remove(this.wrappers, wrapper);
     this.wrappersByContainer.remove(container);
-    return this.containers.remove(container);
+    goog.array.remove(this.containers, container);
+    return this.containersSet.remove(container);
 };
 
 atb.viewer.ViewerGrid.prototype.resize = function(width, height) {
@@ -97,7 +117,7 @@ atb.viewer.ViewerGrid.prototype._setAllContainerDimensions = function() {
         function(wrapper, index) {
             jQuery(wrapper).addClass(this.spanClass);
 
-            if ((this.wrappers.length - index) % this.dimensions.columns === 1 || this.dimensions.columns === 1) {
+            if (index % this.dimensions.columns === 0 || this.dimensions.columns === 1) {
                 jQuery(wrapper).addClass('override-margin-left');
             }
             else {
