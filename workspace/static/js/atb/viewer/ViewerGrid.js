@@ -104,7 +104,7 @@ atb.viewer.ViewerGrid.prototype._setAllContainerDimensions = function() {
                 jQuery(wrapper).removeClass('override-margin-left');
             }
 
-            jQuery(wrapper).height(this.size.height / this.dimensions.rows);
+            jQuery(wrapper).outerHeight(this.size.height / this.dimensions.rows);
         }, this);
 
     this.resizeAllContainers();
