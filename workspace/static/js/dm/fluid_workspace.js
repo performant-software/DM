@@ -33,7 +33,7 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     workingResourcesViewer.render(wrContainer);
     workingResourcesViewer.loadUser(username);
 
-    workingResourcesViewer.addEventListener('panelChosen', function(event) {
+    workingResourcesViewer.addEventListener('openRequested', function(event) {
         if (event.resource.hasAnyType(atb.viewer.RepoBrowser.RESOURCE_TYPES.canvases)) {
             openCanvas(event.uri, event.urisInOrder, event.currentIndex);
         }
