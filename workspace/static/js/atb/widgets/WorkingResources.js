@@ -1,7 +1,6 @@
 goog.provide('atb.widgets.WorkingResources');
 
 goog.require('atb.util.StyleUtil');
-goog.require('atb.widgets.PanelChooser');
 goog.require('atb.widgets.WorkingResourcesFolio');
 goog.require('atb.widgets.WorkingResourcesItem');
 goog.require('atb.widgets.WorkingResourcesManuscript');
@@ -39,7 +38,6 @@ atb.widgets.WorkingResources = function(databroker, opt_domHelper) {
         'class': 'atb-WorkingResources-scroller'
     });
 
-    this.setupPanelChooser();
     this.div.appendChild(this.scrollingDiv);
 
     this.itemsByUri = new goog.structs.Map();
@@ -143,114 +141,16 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
     return item;
 };
 
-atb.widgets.WorkingResources.prototype.setupPanelChooser = function() {
-    var hoverMenuDiv = this.domHelper.createDom('div', {
-        'class': 'basic-popup atb-WorkingResources-hoverMenu'
-    });
-    var hoverMenuCalloutTriangle = this.domHelper.createDom('div', {
-        'class': 'atb-WorkingResources-calloutTriangle'
-    });
-    hoverMenuDiv.appendChild(hoverMenuCalloutTriangle);
-    this.domHelper.getDocument().body.appendChild(hoverMenuDiv);
-    this.hoverMenuPopup = new goog.ui.Popup(hoverMenuDiv);
-    this.hoverMenuPopup.setVisible(false);
-    goog.events.listen(hoverMenuDiv, 'mouseover', function(event) {
-         this.mouseIsOverFloatingMenu = true;
-     }, false, this);
-    goog.events.listen(hoverMenuDiv, 'mouseout', function(event) {
-        this.mouseIsOverFloatingMenu = false;
-    }, false, this);
-
-    this.panelChooserDiv = this.domHelper.createDom('div', {
-        'class': 'atb-WorkingResources-panelChooser'
-    });
-
-    goog.events.listen(this.panelChooserDiv, 'click', function(event) {
-        event.stopPropagation();
-        this.hidePanelChooser();
-    }, false, this);
-
-    this.panelChooser = new atb.widgets.PanelChooser(
-        jQuery.proxy(this.handlePanelChoice, this),
-        this.domHelper
-    );
-    this.panelChooser.render(this.panelChooserDiv);
-
-    hoverMenuDiv.appendChild(this.panelChooserDiv);
-};
-
-atb.widgets.WorkingResources.prototype.showPanelChooser = function(item) {
-    var itemElement = item.getElement();
-    var itemOffset = goog.style.getClientPosition(itemElement);
-    var itemSize = goog.style.getSize(itemElement);
-    var uri = item.getUri();
-
-    this.currentlyHoveredItem = item;
-
-    var hoverMenuDiv = this.hoverMenuPopup.getElement();
-    var chooserSize = this.panelChooser.getSize();
-
-    var position = atb.util.StyleUtil.maintainPopupPositionWithinWindow(
-        new goog.math.Coordinate(itemOffset.x + itemSize.width / 2 - chooserSize.width / 2,
-                                 itemOffset.y + itemSize.height),
-        hoverMenuDiv,
-        this.domHelper
-    );
-    this.hoverMenuPopup.setPosition(
-        new goog.positioning.ClientPosition(position)
-    );
-
-    this.hoverMenuPopup.setVisible(true);
-};
-
-atb.widgets.WorkingResources.prototype.hidePanelChooser = function() {
-    this.hoverMenuPopup.setVisible(false);
-
-    this.cancelMaybeHideHoverMenuCommand();
-
-    this.currentlyHoveredItem = null;
-};
-
-atb.widgets.WorkingResources.prototype.maybeHidePanelChooser = function() {
-    if (this.maybeHideHoverMenuTimeoutId != null) {
-        return;
-    }
-
-    var afterTimer = function() {
-        this.cancelMaybeHideHoverMenuCommand();
-
-        if (! (this.mouseIsOverFloatingMenu ||
-               this.mouseIsOverFloatingMenuParent)) {
-            this.hidePanelChooser();
-        }
-    };
-    afterTimer = jQuery.proxy(afterTimer, this);
-    this.maybeHideHoverMenuTimeoutId = window.setTimeout(afterTimer,
-                                                         atb.widgets.WorkingResources.HOVER_HIDE_DELAY);
-};
-
-atb.widgets.WorkingResources.prototype.cancelMaybeHideHoverMenuCommand =
-function() {
-    if (this.maybeHideHoverMenuTimeoutId != null) {
-        window.clearTimeout(this.maybeHideHoverMenuTimeoutId);
-        this.maybeHideHoverMenuTimeoutId = null;
-    }
-};
-
 atb.widgets.WorkingResources.EVENT_TYPES = {
-    'panelChosen': 'panelChosen'
+    'openRequested': 'openRequested'
 };
 
-atb.widgets.WorkingResources.prototype.handlePanelChoice =
-function(index, chooser) {
-    var uri = this.currentlyHoveredItem.getUri();
-
-    var event = new goog.events.Event('panelChosen', this);
-    event.uri = uri;
-    event.panelId = index;
-    event.resource = this.databroker.getResource(uri);
-    event.urisInOrder = this.currentlyHoveredItem.manuscriptUrisInOrder;
-    event.currentIndex = this.currentlyHoveredItem.manuscriptIndex;
+atb.widgets.WorkingResources.prototype.fireOpenRequest = function(item) {
+    var event = new goog.events.Event('openRequested', this);
+    event.uri = item.getUri();
+    event.resource = this.databroker.getResource(event.uri);
+    event.urisInOrder = item.manuscriptUrisInOrder;
+    event.currentIndex = item.manuscriptIndex;
 
     this.dispatchEvent(event);
 };
@@ -440,30 +340,9 @@ atb.widgets.WorkingResources.prototype.addListenersToItem = function(item) {
                        false, this);
 
     if (! resource.hasAnyType(atb.widgets.WorkingResources.MANUSRCIPT_TYPES)) {
-        var onMouseover = function(event) {
-            this.mouseIsOverFloatingMenuParent = true;
-
-            var afterTimer = function() {
-                if (this.mouseIsOverFloatingMenuParent) {
-                    this.showPanelChooser(item);
-                }
-            };
-            afterTimer = jQuery.proxy(afterTimer, this);
-            var t = window.setTimeout(
-                afterTimer,
-                atb.widgets.WorkingResources.HOVER_SHOW_DELAY
-            );
-            goog.events.listenOnce(event.target, 'mouseout', function(event) {
-                window.clearTimeout(t);
-
-                this.mouseIsOverFloatingMenuParent = false;
-
-                this.maybeHidePanelChooser();
-            }, false, this);
-        };
-
-        goog.events.listen(item.getElement(), 'mouseover', onMouseover,
-                           false, this);
+        goog.events.listen(item.getElement(), 'click', function(event) {
+            this.fireOpenRequest(item);
+        }, false, this);
     }
 };
 
