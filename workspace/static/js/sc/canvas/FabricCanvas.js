@@ -328,7 +328,8 @@ sc.canvas.FabricCanvas.prototype.hideMarkers = function() {
 
 sc.canvas.FabricCanvas.prototype.isHidingAllMarkers = function() {
     return goog.structs.every(this.objectsByUri, function(obj, uri) {
-        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && obj.get('opacity') != 0) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && 
+            obj.get('opacity') != 0) {
             return false;
         }
         else {
@@ -391,6 +392,7 @@ sc.canvas.FabricCanvas.prototype.setFeatureCoords = function(feature, x, y) {
 };
 
 sc.canvas.FabricCanvas.prototype.getFeatureCoords = function(feature) {
+    console.log("setting feature coords");
     var x = feature.get('left');
     var y = feature.get('top');
 

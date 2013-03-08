@@ -108,6 +108,13 @@ sc.canvas.FeatureControl.prototype.layerToCanvasCoord = function(x, y) {
 sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
     var canvas = this.viewport.canvas;
 
+    console.log("feature: ", this.feature);
+    console.log("getSvgTransform: ", this.getSvgTransform);
+    console.log("feature.toObject(): ", this.feature.toObject());
+    console.log("fabric.Object:", fabric.Object);
+    console.log("fabric:", fabric);
+    console.log("origin coords: ", 
+                fabric.Object.translateToOriginPoint(this.feature.left)); 
     var featureClone = this.feature.clone();
 
     var coords = canvas.getFeatureCoords(this.feature);
