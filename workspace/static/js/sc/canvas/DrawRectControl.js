@@ -64,7 +64,7 @@ sc.canvas.DrawRectControl.prototype.handleMousedown = function(opts) {
     this.viewport.registerHandledMouseEvent(event);
 
     var canvasCoords = this.viewport.pageToCanvasCoord(event.pageX,
-                                                            event.pageY);
+                                                       event.pageY);
 
     this.startX = canvasCoords.x;
     this.startY = canvasCoords.y;
@@ -73,6 +73,10 @@ sc.canvas.DrawRectControl.prototype.handleMousedown = function(opts) {
 
     this.feature = canvas.addRect(this.startX, this.startY,
                                   this.width, this.height, this.uri);
+
+    console.log("startX: ", this.startX);
+    console.log("startY: ", this.startY);
+    console.log(this.feature);
 
     this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
     this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);

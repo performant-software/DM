@@ -84,7 +84,7 @@ sc.canvas.FeatureControl.prototype.pageToCanvasCoord = function(x, y) {
  * Converts client coordinates (such as those from a mouse event) into
  * coordinates on the canvas.
  *
- * @see sc.canvas.CanvasViewport.prototype.canvasToPageCoord
+ * @see sc.Canvas.CanvasViewport.prototype.canvasToPageCoord
  *
  * @param {(number|Object)} x The client x coordinate or an object with x and y
  * properties.
@@ -109,13 +109,13 @@ sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
     var canvas = this.viewport.canvas;
 
     console.log("feature: ", this.feature);
-    console.log("getSvgTransform: ", this.getSvgTransform);
+    console.log("getSvgTransform: ", this.feature.getSvgTransform());
     console.log("feature.toObject(): ", this.feature.toObject());
     console.log("fabric.Object:", fabric.Object);
     console.log("fabric:", fabric);
-    console.log("origin coords: ", 
-                fabric.Object.translateToOriginPoint(this.feature.left)); 
+    console.log("feature.toSVG():", this.feature.toSVG());
     var featureClone = this.feature.clone();
+    console.log("featureClone.toSVG():", featureClone.toSVG());
 
     var coords = canvas.getFeatureCoords(this.feature);
 

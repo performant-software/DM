@@ -691,6 +691,42 @@ sc.canvas.FabricCanvas.svgStringToElement = function(string) {
  * the feature type is unrecognized.
  */
 sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
+    var self = this;
+
+    var svgDoc = 
+        '<?xml version="1.0" standalone="no"?>'
+        + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"'
+        + ' "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
+        + ' <svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
+        + str
+        + '</svg>';
+//    console.log("about to loadSVGFromString: ", svgDoc);
+    fabric.loadSVGFromString(svgDoc, function(objects, options) {
+        var obj = objects[0];
+//        console.log("obj: ", obj);
+//        console.log("obj svg transform:", obj.getSvgTransform());
+
+        var x = 0;
+        var y = 0;
+        if (obj.hasOwnProperty("x")) {
+            x = obj.x;
+            y = obj.y;
+        } else if (obj.hasOwnProperty("rx")) {
+            x = Math.round((-obj.rx / 2.0) * 100) / 100;
+            y = Math.round((-obj.ry / 2.0) * 100) / 100;
+        } else {
+            x = Math.round((-obj.width / 2.0) * 100) / 100;
+            y = Math.round((-obj.height / 2.0) * 100) / 100;
+        }
+
+        var clonedObject = obj.clone();
+        clonedObject.left = Math.ceil(obj.transformMatrix[4] - x - self.group.get('width') / 2.0);
+        clonedObject.top = Math.ceil(obj.transformMatrix[5] - y - self.group.get('height') / 2.0);
+//        console.log("clonedObject: ", clonedObject);
+        self.addFabricObject(clonedObject, uri);
+    });
+
+/*
     var re = /^<?\s*(?:svg:)?([\w\-:]+)[\s*>]/;
     var match = re.exec(str);
 
@@ -741,6 +777,7 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
                 break;
         }
     }
+*/
 };
 
 
