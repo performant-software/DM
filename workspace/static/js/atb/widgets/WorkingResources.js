@@ -57,8 +57,7 @@ atb.widgets.WorkingResources.prototype.loadUser = function(username) {
  * @param {string} uri The uri of the manifest.
  * @param {?Function} opt_doAfter An optional function to call after the manifest has loaded.
  */
-atb.widgets.WorkingResources.prototype.loadManifest =
-function(uri, opt_doAfter) {
+atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter) {
     var withManifest = function(manifest) {
         this.clear();
 
@@ -204,24 +203,23 @@ atb.widgets.WorkingResources.prototype.updateManuscript = function(item) {
     item.setTooltip('Show the folia in ' +
                     item.getTitle() || 'this manuscript');
 
-    var thumbSrc = this.databroker.getCanvasImageUris(uri)[0];
-
-    if (thumbSrc) {
-        var image = this.databroker.getResource(thumbSrc);
-
-        var size = new goog.math.Size(
-            image.getOneProperty('exif:width'),
-            image.getOneProperty('exif:height')
-        ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
-
-        var src = thumbSrc + '?w=' + Math.round(size.width) + '&h=' + Math.round(size.height);
-
-        item.setThumb(src, size.width, size.height);
-    }
-
     var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
     if (sequenceUri) {
         var foliaUris = this.databroker.getListUrisInOrder(sequenceUri);
+
+        var thumbSrc = this.databroker.getCanvasImageUris(foliaUris[0])[0];
+        if (thumbSrc) {
+            var image = this.databroker.getResource(thumbSrc);
+            var size = new goog.math.Size(
+                image.getOneProperty('exif:width'),
+                image.getOneProperty('exif:height')
+            ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
+
+            var src = thumbSrc + '?w=' + Math.round(size.width) + '&h=' + 
+                Math.round(size.height);
+
+            item.setThumb(src, size.width, size.height);
+        }
 
         for (var i = 0, len = foliaUris.length; i < len; i++) {
             var folioUri = foliaUris[i];
@@ -285,24 +283,30 @@ atb.widgets.WorkingResources.prototype.refreshItem = function(item) {
     }
 
     var withResource = function(resource) {
-        var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
-        var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(uri)[0];
-
-        if (resource.hasAnyType(
-                atb.widgets.WorkingResources.MANUSRCIPT_TYPES)) {
+        if (resource.hasAnyType(atb.widgets.WorkingResources.MANUSRCIPT_TYPES)) {
             var withSequence = function(sequence) {
                 this.updateItem(item);
             };
             withSequence = jQuery.proxy(withSequence, this);
-
+            
+            var aggregatedUris = this.databroker.getManuscriptAggregationUris(uri);
+            for (var i=0; i<aggregatedUris.length; i++) {
+                this.databroker.getDeferredResource(aggregatedUris[i]).
+                    progress(withSequence).done(withSequence);
+            }
+             
+            /*
+            var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
+            var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(uri)[0];
             if (sequenceUri) {
                 this.databroker.getDeferredResource(sequenceUri).
-                progress(withSequence).done(withSequence);
+                    progress(withSequence).done(withSequence);
             }
             if (imageAnnoUri) {
                 this.databroker.getDeferredResource(imageAnnoUri).
-                progress(withSequence).done(withSequence);
+                    progress(withSequence).done(withSequence);
             }
+            */
         }
 
         if (goog.isFunction(item.hideFoliaMessage)) {

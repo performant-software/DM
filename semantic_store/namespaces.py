@@ -12,6 +12,7 @@ ns = dict(
     exif=Namespace("http://www.w3.org/2003/12/exif/ns#"),
     tei=Namespace("http://www.tei-c.org/ns/1.0/"),
     oa=Namespace("http://www.openannotation.org/ns/"),
+    cnt08=Namespace("http://www.w3.org/2008/content#"),
     cnt=Namespace("http://www.w3.org/2011/content#"),
     dcterms=Namespace("http://purl.org/dc/terms/"),
     dctypes=Namespace("http://purl.org/dc/dcmitype/"),

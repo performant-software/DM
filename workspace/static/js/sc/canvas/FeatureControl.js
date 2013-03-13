@@ -108,20 +108,25 @@ sc.canvas.FeatureControl.prototype.layerToCanvasCoord = function(x, y) {
 sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
     var canvas = this.viewport.canvas;
 
+    /*
     console.log("feature: ", this.feature);
     console.log("getSvgTransform: ", this.feature.getSvgTransform());
     console.log("feature.toObject(): ", this.feature.toObject());
     console.log("fabric.Object:", fabric.Object);
     console.log("fabric:", fabric);
     console.log("feature.toSVG():", this.feature.toSVG());
+    */
     var featureClone = this.feature.clone();
-    console.log("featureClone.toSVG():", featureClone.toSVG());
+//    console.log("featureClone.toSVG():", featureClone.toSVG());
 
     var coords = canvas.getFeatureCoords(this.feature);
 
     featureClone.set('left', coords.x).set('top', coords.y);
+    
+    var svgString = featureClone.toSVG();
+    svgString = svgString.replace(/\"/g, "'");
 
-    return featureClone.toSVG();
+    return svgString;
 };
 
 /**
@@ -131,8 +136,11 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     if (! this.shouldSaveChanges) {
         return;
     }
-
-    var svgString = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
+    /*
+    var svgStringEscaped = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
+    */
+    var svgString = this.exportFeatureToSvg();
+    console.log("svgString: ", svgString);
     
     var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) ||
         this.databroker.createUuid();
@@ -152,6 +160,7 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     var annotation = this.databroker.createResource(
         this.databroker.createUuid(), 'oac:Annotation');
     annotation.addProperty('oac:hasTarget', specificResource.bracketedUri);
+    this.databroker.scheduleForSync(annotation);
 };
 
 /**

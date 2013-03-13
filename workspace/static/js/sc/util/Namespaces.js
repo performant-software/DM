@@ -19,7 +19,7 @@ sc.util.Namespaces.DEFAULT_NAMESPACES = {
     'oac': 'http://www.openannotation.org/ns/',
     'oa': 'http://www.openannotation.org/ns/',
     'dms': 'http://dms.stanford.edu/ns/',
-    'cnt': 'http://www.w3.org/2008/content#',
+    'cnt': 'http://www.w3.org/2011/content#',
     'owl': 'http://www.w3.org/2002/07/owl#',
     'media-types': 'http://purl.org/NET/mediatypes/'
 };
@@ -68,7 +68,13 @@ sc.util.Namespaces.wrapWithAngleBrackets = function(str) {
 };
 
 sc.util.Namespaces.isQuoteWrapped = function(str) {
-    return str.charAt(0) == '"' && str.charAt(str.length - 1) == '"';
+    if ((str.charAt(0) == '"') && (str.charAt(str.length - 1) == '"')) {
+        return true;
+    } else if ((str.charAt(0) == "'") && (str.charAt(str.length - 1) == "'")) {
+        return true;
+    } else {
+        return false;
+    }
 };
 
 sc.util.Namespaces.stripWrappingQuotes = function(str) {

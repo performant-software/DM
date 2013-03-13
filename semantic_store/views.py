@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, \
     HttpResponseNotFound
 from django.conf import settings
@@ -9,9 +10,11 @@ from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef
 
 from semantic_store import collection
+from semantic_store.models import ProjectPermission
+from semantic_store.namespaces import NS
 from .rdfstore import rdfstore, default_identifier
 
-from .namespaces import ns
+from .namespaces import bind_namespaces, ns
 from .validators import AnnotationValidator
 from .annotation_views import create_or_update_annotations, get_annotations, \
     search_annotations
@@ -97,15 +100,34 @@ def project_annotations(request, project_uri=None, anno_uri=None):
     return annotations(request, project_uri, anno_uri)
 
 def resources(request, uri, ext=None):
+    if request.user.is_authenticated():
+        perms = ProjectPermission.objects.filter(user=request.user)
+    else:
+        perms = []
+
     uri = uri.rstrip('/')
     try:
-        manifest_g = Graph(store=rdfstore(), identifier=URIRef(uri))
-        if len(manifest_g) > 0:
-            return HttpResponse(manifest_g.serialize(), mimetype='text/xml')
+        g = Graph(store=rdfstore(), identifier=URIRef(uri))
+        if len(g) > 0:
+            for i in perms:
+                anno_uri = settings.URI_MINT_BASE \
+                    + "/projects/" + i.identifier \
+                    + "/resources/" + uri \
+                    + "/annotations/"
+                anno_url = reverse('semantic_store_project_annotations', 
+                                   kwargs={'project_uri': i.identifier}) \
+                                   + "?uri=" + uri
+                g.add((URIRef(uri), NS.ore['aggregates'], URIRef(anno_uri)))
+                g.add((URIRef(anno_uri), NS.ore['isDescribedBy'], URIRef(anno_url)))
+                g.add((URIRef(anno_uri), NS.rdf['type'], NS.ore['Aggregation']))
+                g.add((URIRef(anno_uri), NS.rdf['type'], NS.rdf['List']))
+                g.add((URIRef(anno_uri), NS.rdf['type'], NS.dms['AnnotationList']))
+            return HttpResponse(g.serialize(), mimetype='text/xml')
         else:
             main_graph = ConjunctiveGraph(store=rdfstore(), 
                                           identifier=default_identifier)
             g = Graph()
+            bind_namespaces(g)
             for t in main_graph.triples((URIRef(uri), None, None)):
                 g.add(t)
             if len(g) > 0:
