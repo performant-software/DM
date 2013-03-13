@@ -78,8 +78,7 @@ atb.widgets.WorkingResourcesItem.prototype.getUri = function() {
     return this.uri;
 };
 
-atb.widgets.WorkingResourcesItem.prototype.setThumb =
-function(src, width, height) {
+atb.widgets.WorkingResourcesItem.prototype.setThumb = function(src, width, height) {
     jQuery(this.thumbnailImg).attr({
         'src': src,
         'width': width,
@@ -87,8 +86,7 @@ function(src, width, height) {
     });
 };
 
-atb.widgets.WorkingResourcesItem.prototype.setAttribute =
-function(name, value) {
+atb.widgets.WorkingResourcesItem.prototype.setAttribute = function(name, value) {
     if (this.attributeDivsByName.containsKey(name)) {
         var div = this.attributeDivsByName.get(name);
     }

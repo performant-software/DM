@@ -222,7 +222,8 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
             }
 
             if (selector.hasType('cnt:ContentAsText')) {
-                var svgText = selector.getOneProperty('cnt:chars');
+                var svgText = selector.getOneUnescapedProperty('cnt:chars');
+                console.log("FabricCanvasFactory, svgText: ", svgText);
 
                 if (svgText) {
                     if (canvas.getFabricObjectByUri(selector.getUri())) {

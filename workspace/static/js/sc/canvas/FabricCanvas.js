@@ -700,7 +700,7 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
         + ' <svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
         + str
         + '</svg>';
-//    console.log("about to loadSVGFromString: ", svgDoc);
+    console.log("about to loadSVGFromString: ", svgDoc);
     fabric.loadSVGFromString(svgDoc, function(objects, options) {
         var obj = objects[0];
 //        console.log("obj: ", obj);

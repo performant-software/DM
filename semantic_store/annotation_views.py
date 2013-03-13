@@ -11,6 +11,7 @@ from .validators import AnnotationValidator
 from .rdfstore import rdfstore, default_identifier
 from .namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
+from semantic_store import manuscripts
 
 def graph():
     g = Graph()
@@ -126,6 +127,15 @@ def get_annotations(request, graph_uri, anno_uris=[]):
 
 def search_annotations(request, graph_uri, search_uri):
     g = destination_graph(graph_uri)
-    anno_uris = annotation_ancestors(g, search_uri)
+    anno_uris = set(annotation_ancestors(g, search_uri))
+    if not anno_uris:
+        canvases = manuscripts.canvases(search_uri)
+        anno_uris = set()
+        for i in canvases:
+            canvas_anno_uris = set(annotation_ancestors(g, i))
+            anno_uris = anno_uris | canvas_anno_uris
+    anno_uris = list(anno_uris)
+    if not anno_uris:
+        return HttpResponseNotFound()
     return get_annotations(request, graph_uri, anno_uris)
 

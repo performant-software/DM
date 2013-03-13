@@ -376,6 +376,8 @@ sc.data.Databroker.prototype.postQuads = function(url, quads, opt_handler, opt_f
     var errorHandler = function(jqXhr, textStatus, errorThrown) {
         
     };
+
+    console.log("postQuads url: ", url);
     
     var jqXhr = jQuery.ajax({
         type: 'POST',
@@ -624,12 +626,11 @@ sc.data.Databroker.prototype.getResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.createResource = function(uri, type) {
+    console.log("createResource(uri, type): ", uri, type); 
     if (uri == null) {
         uri = this.createUuid();
     }
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
-
-    this.newResourceUris.add(uri);
 
     if (type) {
         var quad = new sc.data.Quad(
@@ -643,6 +644,10 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
     }
     
     return this.getResource(uri);
+};
+
+sc.data.Databroker.prototype.scheduleForSync = function(resource) {
+    this.newResourceUris.add(resource.bracketedUri);
 };
 
 sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
@@ -1044,7 +1049,6 @@ sc.data.Databroker.prototype.getManuscriptAggregationUris = function(manifestUri
  */
 sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
     var bracketedListUri = sc.util.Namespaces.wrapWithAngleBrackets(listUri);
-    console.log(bracketedListUri)
     
     var uris = [];
 
@@ -1334,6 +1338,9 @@ sc.data.Databroker.prototype.sendResource = function(uri, method) {
 
         url = this.restUrl(this.currentProject, resType, null, {});
     }
+
+    console.log("resource.getTypes():", resource.getTypes());
+    console.log("url:", url);
 
     var dataDump = this.dumpQuads(quadsToPost);
 

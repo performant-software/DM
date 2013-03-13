@@ -515,6 +515,8 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
 };
 
 sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manuscriptItem) {
+    console.log("generateManuscriptFolia(manuscriptUri, manuscriptItem): ", 
+                manuscriptUri, manuscriptItem);
     var sequenceUri = this.databroker.getManuscriptSequenceUris(manuscriptUri)[0];
     var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(manuscriptUri)[0];
 
