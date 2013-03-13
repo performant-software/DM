@@ -56,6 +56,7 @@ def harvest_collection(col_url, col_uri, store_host, manifest_file=None):
                 if aggr_url:
                     collection.fetch_and_parse(aggr_url, res_g)
                     localize_describes(store_host, aggr_uri, aggr_url, res_g)
+                    localize_describes(store_host, aggr_uri, aggr_url, col_g)
 
             seq_uris_urls = collection.aggregated_seq_uris_urls(res_uri, res_g)
             for seq_uri, seq_url in seq_uris_urls:
