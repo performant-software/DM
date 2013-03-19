@@ -8,6 +8,7 @@ atb.viewer.ViewerContainer = function(opt_domHelper) {
     goog.events.EventTarget.call(this);
 
     this.viewer = null;
+    this.grid = null;
     this.domHelper = opt_domHelper || new goog.dom.DomHelper();
 
     this.element = this.domHelper.createDom('div', {'class': 'atb-ViewerContainer'});
@@ -65,5 +66,13 @@ atb.viewer.ViewerContainer.prototype.autoResize = function() {
         var height = $el.innerHeight() - jQuery(this.titleEl).outerHeight();
 
         this.viewer.resize(width, height);
+    }
+};
+
+atb.viewer.ViewerContainer.prototype.close = function() {
+    
+
+    if (this.grid) {
+        this.grid.removeViewerContainer(this);
     }
 };
