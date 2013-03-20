@@ -11,6 +11,7 @@ runserver
 *~
 \#*#
 \.#
+*\.\#*
 *.lock
 *.DS_Store
 *.swp
