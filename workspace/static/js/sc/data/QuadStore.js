@@ -245,6 +245,8 @@ sc.data.QuadStore.prototype.contextsMatchingQuery = function(subject, predicate,
  * @param {sc.data.Quad} quad Quad to add.
  */
 sc.data.QuadStore.prototype.addQuad = function(quad) {
+    this.quads.add(quad);
+
     var keys = sc.data.QuadStore.generateIndexKeys(quad);
 
     for (var i=0, len=keys.length; i<len; i++) {
@@ -270,6 +272,8 @@ sc.data.QuadStore.prototype.addQuads = function(quads) {
 };
 
 sc.data.QuadStore.prototype.removeQuad = function(quad) {
+    this.quads.remove(quad);
+
     var keys = sc.data.QuadStore.generateIndexKeys(quad);
 
     goog.structs.forEach(keys, function(key) {
