@@ -226,7 +226,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
                 console.log("FabricCanvasFactory, svgText: ", svgText);
 
                 if (svgText) {
-                    if (canvas.getFabricObjectByUri(selector.getUri())) {
+                    if (canvas.hasFeature(selector.getUri())) {
                         canvas.removeObjectByUri(selector.getUri());
                     }
                     

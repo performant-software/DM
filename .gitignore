@@ -4,6 +4,11 @@ static/js/closure-library/*
 settings_local.py
 runserver
 
+static/*
+static/*/
+!static/admin
+!static/admin/
+
 #python specific
 *.pyc
  
