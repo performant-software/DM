@@ -409,14 +409,18 @@ sc.canvas.FabricCanvas.prototype.getFeatureCoords = function(feature) {
 };
 
 sc.canvas.FabricCanvas.prototype.addFabricObject = function(obj, uri, opt_noEvent) {
-    this.group.add(obj);
-
     if (uri == null) {
         uri = this.databroker.createUuid();
     }
 
+    if (this.hasFeature(uri)) {
+        throw "Fabric Object with uri " + uri + " has already been added to the canvas";
+    }
+
+    this.group.add(obj);
+
     this.objectsByUri.set(uri, obj);
-    this.urisByObject.set(obj, uri);
+    this.urisByObject.set(goog.getUid(obj), uri);
 
     if (!opt_noEvent) {
         this.fireAddedFeature(obj, uri);
@@ -425,12 +429,18 @@ sc.canvas.FabricCanvas.prototype.addFabricObject = function(obj, uri, opt_noEven
     return this;
 };
 
+sc.canvas.FabricCanvas.prototype.hasFeature = function(uri) {
+    return this.objectsByUri.containsKey(uri);
+};
+
 sc.canvas.FabricCanvas.prototype.removeFabricObject = function(obj, opt_noEvent) {
+    goog.asserts.assert(obj != null, 'Attempting to remove a null object from a canvas');
+
     this.group.remove(obj);
 
     var uri = this.getFabricObjectUri(obj);
     this.objectsByUri.remove(uri);
-    this.urisByObject.remove(obj);
+    this.urisByObject.remove(goog.getUid(obj));
 
     if (!opt_noEvent) {
         this.fireRemovedFeature(obj, uri);
@@ -461,7 +471,12 @@ sc.canvas.FabricCanvas.prototype.removeObjectByUri = function(uri, opt_noEvent) 
 };
 
 sc.canvas.FabricCanvas.prototype.getFabricObjectUri = function(obj) {
-    return this.urisByObject.get(obj);
+    if (obj == null) {
+        return null;
+    }
+    else {
+        return this.urisByObject.get(goog.getUid(obj));
+    }
 };
 
 sc.canvas.FabricCanvas.prototype.getFabricObjectByUri = function(uri) {
@@ -700,7 +715,7 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
         + ' <svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
         + str
         + '</svg>';
-    console.log("about to loadSVGFromString: ", svgDoc);
+
     fabric.loadSVGFromString(svgDoc, function(objects, options) {
         var obj = objects[0];
 //        console.log("obj: ", obj);

@@ -127,6 +127,7 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousedown = function(opts) {
     this.lastPageX = event.pageX;
     this.lastPageY = event.pageY;
 
+    this.viewport.registerHandledMouseEvent(event);
     event.preventDefault();
 };
 
@@ -154,6 +155,7 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMouseup = function(opts) {
     this.timeOfLastDragEnd = event.timeStamp;
     this.viewport.registerHandledMouseEvent(event);
 
+    this.viewport.registerHandledMouseEvent(event);
     event.preventDefault();
 };
 

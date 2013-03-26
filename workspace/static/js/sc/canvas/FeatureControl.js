@@ -20,6 +20,13 @@ sc.canvas.FeatureControl = function(viewport, databroker) {
     /** @type {sc.data.Databroker} */
     this.databroker = databroker;
     
+    this.resetFeature();
+    
+    this.shouldSaveChanges = true;
+};
+goog.inherits(sc.canvas.FeatureControl, sc.canvas.Control);
+
+sc.canvas.FeatureControl.prototype.resetFeature = function() {
     /**
      * The current feature being drawn.
      * @type {(Raphael.Element|null)}
@@ -30,11 +37,8 @@ sc.canvas.FeatureControl = function(viewport, databroker) {
      * The uri for the feature being drawn
      * @type {string}
      */
-    this.uri = '';
-    
-    this.shouldSaveChanges = true;
+    this.uri = this.databroker.createUuid();
 };
-goog.inherits(sc.canvas.FeatureControl, sc.canvas.Control);
 
 /**
  * This method should be called when the shape of a feature is updated.
@@ -142,8 +146,7 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     var svgString = this.exportFeatureToSvg();
     console.log("svgString: ", svgString);
     
-    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) ||
-        this.databroker.createUuid();
+    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature);
     var canvasUri = this.viewport.canvas.getUri();
 
     var selector = this.databroker.createResource(
@@ -161,6 +164,8 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
         this.databroker.createUuid(), 'oac:Annotation');
     annotation.addProperty('oac:hasTarget', specificResource.bracketedUri);
     this.databroker.scheduleForSync(annotation);
+
+    this.resetFeature();
 };
 
 /**

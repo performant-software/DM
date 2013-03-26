@@ -62,7 +62,8 @@ sc.canvas.CanvasViewer = function(options) {
     this.maxMarqueeSize = new goog.math.Size(100, 100);
 
     this.mainViewport.addEventListener('mouseover', function(event) {
-        if (event.getFeature().type != 'image') {
+        var feature = event.getFeature();
+        if (feature && feature.type != 'image') {
             jQuery(this.mainViewport.getElement()).addClass('sc-CanvasViewport-hand');
         }
     }, false, this);
