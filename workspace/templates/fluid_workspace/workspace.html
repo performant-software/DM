@@ -34,6 +34,7 @@
 {% endblock %}
 
 {% block header_buttons %}
+  <li id="new_project_buton"><a href="#newProjectModal" role="button" data-toggle="modal">new project</a></li>
   <li id="my_resources_button"><a href="#workingResourcesModal" role="button" data-toggle="modal">my resources</a></li>
   <li id="repositories_button"><a href="#repoBrowserModal" role="button" data-toggle="modal">repositories</a></li>
   <li class="dropdown">
@@ -61,7 +62,7 @@
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Repo Browser Modal -->
 <div id="repoBrowserModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
@@ -75,6 +76,7 @@
   </div>
 </div>
 
+<!-- Working Resources Modal -->
 <div id="workingResourcesModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
@@ -88,18 +90,138 @@
   </div>
 </div>
 
+<!-- New Project Modal -->
+<div class="modal hide fade" id="newProjectModal">
+
+  <div class="modal-header">
+    <!--close "button" on top right of modal-->
+    <a class="close" data-dismiss="modal">x</a>
+
+    <h3>New Project Creation</h3>
+  </div>
+
+  <div class="modal-body">
+    <!--New Project Form-->
+    <form>
+      <fieldset>  
+        <!--Title area-->
+        <!--limit title length?-->
+        <label id="titleLabel">Title:</label>
+        <input type="text" placeholder="New Project" id="title">
+        
+        <!--Description area in long block form-->
+        <label>Description:</label>
+        <p class="help-block">Please enter a brief description of your new project.</p>
+        <textarea rows="3" id="description"></textarea>
+        
+        <!--Text-ahead username submission for additional editors-->
+        <label>Add Users:</label>
+        <!--The following help block can be used once typeahead is working.
+        <p class="help-block">Start typing the username and suggestions will appear. Use the up &amp; down arrow keys to select the user, enter to select that username, and then shift+enter to add the user to the project.</p>
+            Substitute help block below.-->
+        <p class="help-block">Type a username, and then hit shift+enter to add that user to your project.</p>
+
+        <!--This block is specifically for displaying the added users
+            It will NOT display until a user is added/tagged-->
+        <p class="help-block users"></p>
+
+        <input type="text" id="users" data-provide="typeahead">
+        <!--use data-source to specify usernames above-->
+
+        <span class="help-block" id="help"></span>
+      </fieldset>
+    </form>
+  </div>
+
+  <!--The footer holds the create/cancel buttons at the bottom of the modal.
+      Currently, neither does anything but close the modal.-->
+  <div class="modal-footer">
+    <a href="#newProjectModal" class="btn" data-toggle="modal">Cancel</a>
+    <a href="#newProjectModal" class="btn btn-primary" data-toggle="modal" id="create">Create New Project</a>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block init_scripts %}
 <script type="text/javascript" >
+  /* Begin script for "tag" system for usernames
+   * Appends username from input field into corresponding paragraph
+   * MUST be placed before initWorkspace call or it doesn't respond
+   * Multiple elements; each has a description preceding
+  */
+
+  var usernames = {{ js_users|safe }};
+  var addedUsers = [];
+  var usr = $("#users");
+  var shift = false;
+
+  /* Ensures shift is down
+   * Shift+Return combo needed because the typeahead system uses Return
+  */
+  usr.keydown(function(e){
+    // Watches the shift key
+    if (e.which == 16) shift = true;
+
+    //Toggles off the "incorrect user" help text
+    $("#help").text("");
+  })
+
+  /* Script which adds users
+   * Usernames assigned to project are stored in addedUsers
+   * 'keyup' call ensures that the user has finished typing the username
+   * Looks for Shift+Return combination ONLY
+   * Checks for users already added
+   * Rejects invalid usernames
+   * ((Next Up: suggests usernames using typeahead))
+  */
+  usr.keyup(function(e){
+    if (e.which == 13&&shift){
+      var val = usr.val();
+      if (usernames.indexOf(val) != -1){
+        if (addedUsers.indexOf(val) == -1){
+          // "&nbsp" text allows 3 character widths between usernames
+          $(".users").append('<a href="#" onClick="removeUser(this)">' + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
+          addedUsers.push(val);
+
+          usr.val("");        
+        }
+        else{
+          $("#help").text("You already added this user.");
+        }
+      }
+      else{
+        $("#help").text("This is not a valid user.");
+      }
+    }
+    else if (e.which == 16) shift = false;
+  })
+
+  /* Removes the user from the array of users
+   * Removes the "tag" displaying the username
+   * The user may be added again by re-typing the username
+  */
+  function removeUser(e){
+    var u = $(e).attr("text");
+    addedUsers.pop(u);
+    e.remove();
+
+  }
+
+  // End script(s) for various elements of username tag system
+
+  // Workspace setup code
   var staticUrl = "{{ STATIC_URL }}";
   var styleRoot = "{{ STATIC_URL }}css/";
   var wsURI = "{{ WEBSERVICE_URI }}";
   var mediawsURI = "{{ MEDIA_WEBSERVICE_URI }}";
-  var wsSameOriginURI = "/"
+  var wsSameOriginURI = "/";
+
   initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", 
                 styleRoot);
 
+
+  // Begin script for layout selection
   $("#1x1_layout_button").click(function(){
     viewerGrid.setDimensions(1,1);
   })
@@ -131,5 +253,8 @@
   $("#4x4_layout_button").click(function(){
     viewerGrid.setDimensions(4,4);
   })
+  // End script for layout selection
+
+
 </script>
 {% endblock %}
