@@ -258,6 +258,7 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr) {
     }
     
     this.processJQueryRdf(rdf, url);
+    rdf = null;
 };
 
 /**

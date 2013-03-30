@@ -51,6 +51,11 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
                 url: '/store/resources/http://manifests.ydc2.yale.edu/MetaManifest',
                 uri: 'http://manifests.ydc2.yale.edu/MetaManifest'
                 // uri: 'http://manifests.ydc2.yale.edu/Repository'
+            },
+            {
+                title: 'Shared-canvas.org Demos',
+                url: '/store/resources/http://ada.drew.edu/tandres/repos/SharedCanvas/Main/Collection',
+                uri: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Main/Collection'
             }
         ],
         databroker: clientApp.getDatabroker()
@@ -88,9 +93,9 @@ var openCanvas = function(uri, urisInOrder, index) {
     var viewerContainer = new atb.viewer.ViewerContainer();
     var viewer = new atb.viewer.CanvasViewer(clientApp);
     viewerContainer.setViewer(viewer);
-
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
-
+    console.log("viewerContainer: ", viewerContainer);
+    console.log("viewerGrid: ", viewerGrid);
     viewerGrid.addViewerContainer(viewerContainer);
 };
 

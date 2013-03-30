@@ -19,9 +19,10 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
     }, options || {});
 
     this.domHelper = new goog.dom.DomHelper(this.options.doc);
+    var domHelper = new goog.dom.DomHelper(this.options.doc);
 
-    this.baseDiv = this.domHelper.createDom('div', {'class': 'sc-CanvasViewport'});
-    var canvasElement = this.domHelper.createDom('canvas');
+    this.baseDiv = domHelper.createDom('div', {'class': 'sc-CanvasViewport'});
+    var canvasElement = domHelper.createDom('canvas');
     this.fabricCanvas = new fabric.Canvas(canvasElement, {
         selection: false,
         defaultCursor: 'inherit',

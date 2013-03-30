@@ -77,7 +77,7 @@ goog.addDependency('../../../atb/viewer/UndoStack.js', ['atb.viewer.UndoStack'],
 goog.addDependency('../../../atb/viewer/Viewer.js', ['atb.viewer.Viewer'], ['atb.Util', 'atb.ui.AnnoTitlesList', 'atb.util.StyleUtil', 'atb.widgets.Toolbar', 'goog.events', 'goog.events.EventTarget', 'goog.events.EventType', 'goog.events.KeyCodes', 'goog.math.Coordinate', 'goog.ui.Popup', 'jquery.jQuery']);
 goog.addDependency('../../../atb/viewer/ViewerContainer.js', ['atb.viewer.ViewerContainer'], ['goog.dom.DomHelper', 'goog.events.EventTarget', 'jquery.jQuery']);
 goog.addDependency('../../../atb/viewer/ViewerFactory.js', ['atb.viewer.ViewerFactory'], []);
-goog.addDependency('../../../atb/viewer/ViewerGrid.js', ['atb.viewer.ViewerGrid'], ['atb.util.OrderedSet', 'goog.dom.DomHelper', 'goog.events', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map']);
+goog.addDependency('../../../atb/viewer/ViewerGrid.js', ['atb.viewer.ViewerGrid'], ['goog.array', 'goog.dom.DomHelper', 'goog.events', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map', 'goog.structs.Set']);
 goog.addDependency('../../../atb/viewer/ViewerThumbnail.js', ['atb.viewer.ViewerThumbnail'], ['jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/BreadCrumbs.js', ['atb.widgets.BreadCrumbs'], ['goog.array', 'goog.dom.DomHelper', 'goog.structs.Map', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/CursorFollower.js', ['atb.widgets.CursorFollower'], ['goog.dom', 'goog.events', 'jquery.jQuery']);
@@ -98,11 +98,11 @@ goog.addDependency('../../../atb/widgets/RepoBrowser.js', ['atb.widgets.RepoBrow
 goog.addDependency('../../../atb/widgets/Toolbar.js', ['atb.widgets.Toolbar'], ['atb.util.Map', 'atb.util.ReferenceUtil', 'atb.widgets.IMenu', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
 goog.addDependency('../../../atb/widgets/TwirlDown.js', ['atb.widgets.TwirlDown'], ['goog.ui.AnimatedZippy', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/VerticalToolbar.js', ['atb.widgets.VerticalToolbar'], ['atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.widgets.IMenu', 'goog.dom', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.Container', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
-goog.addDependency('../../../atb/widgets/WorkingResources.js', ['atb.widgets.WorkingResources'], ['atb.util.StyleUtil', 'atb.widgets.PanelChooser', 'atb.widgets.WorkingResourcesFolio', 'atb.widgets.WorkingResourcesItem', 'atb.widgets.WorkingResourcesManuscript', 'goog.dom.DomHelper', 'goog.events.Event', 'goog.events.EventTarget', 'goog.math.Coordinate', 'goog.math.Size', 'goog.positioning.ClientPosition', 'goog.structs.Map', 'goog.style', 'goog.ui.Popup', 'jquery.jQuery']);
+goog.addDependency('../../../atb/widgets/WorkingResources.js', ['atb.widgets.WorkingResources'], ['atb.util.StyleUtil', 'atb.widgets.WorkingResourcesFolio', 'atb.widgets.WorkingResourcesItem', 'atb.widgets.WorkingResourcesManuscript', 'goog.dom.DomHelper', 'goog.events.Event', 'goog.events.EventTarget', 'goog.math.Coordinate', 'goog.math.Size', 'goog.positioning.ClientPosition', 'goog.structs.Map', 'goog.style', 'goog.ui.Popup', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesFolio.js', ['atb.widgets.WorkingResourcesFolio'], ['atb.widgets.WorkingResourcesItem', 'sc.RepoBrowserFolio']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesItem.js', ['atb.widgets.WorkingResourcesItem'], ['goog.dom.DomHelper', 'goog.events', 'goog.events.ActionEvent', 'goog.events.EventTarget', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesManuscript.js', ['atb.widgets.WorkingResourcesManuscript'], ['atb.widgets.WorkingResourcesItem', 'goog.structs.Map', 'goog.ui.AnimatedZippy']);
-goog.addDependency('../../../fabric/fabric0.9.15.min.js', ['fabric'], []);
+goog.addDependency('../../../fabric/fabric.js', ['fabric'], []);
 goog.addDependency('../../../jquery/jquery-1.8.3.js', ['jquery.jQuery'], []);
 goog.addDependency('../../../jquery/jquery-ui-1.8.22.custom.min.js', ['jquery.jQueryUI'], []);
 goog.addDependency('../../../jquery/jquery.animate-enhanced.js', ['jquery.animate_enhanced'], []);

@@ -91,9 +91,8 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     viewport.addEventListener('click', this.onResourceClick, false, this);
     viewport.addEventListener('mouseover', this.onFeatureHover, false, this);
     viewport.addEventListener('mouseout', this.onFeatureMouseout, false, this);
-    
     viewport.addEventListener('canvasAdded', this.onCanvasAdded, false, this);
-    
+
     var panZoomControl = this.viewer.toolbar.controls.panZoom;
     panZoomControl.addEventListener('activated', function(event) {
                                     this.enableHoverMenus();
@@ -101,7 +100,8 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     panZoomControl.addEventListener('deactivated', function(event) {
                                     this.disableHoverMenus();
                                     }, false, this);
-    
+/* SGB    
+*/
     goog.events.listen(eventDispatcher, 'resource deleted', function (e) {
                        if (e && e.target)
                        var id = e.target;

@@ -46,6 +46,10 @@ atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(container, index
     }
     else {
         this.containersSet.add(container);
+        console.log("this.containers: ", this.containers);
+        console.log("this.containers.length(): ", this.containers.length);
+        console.log("container: ", container);
+        console.log("index: ", index);
         goog.array.insertAt(this.containers, container, index);
 
         container.grid = this;
