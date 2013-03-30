@@ -56,6 +56,7 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
         top: size.height / 2,
         left: size.width / 2
     });
+
     this.objectsByUri = new goog.structs.Map();
     this.urisByObject = new goog.structs.Map();
 
@@ -63,11 +64,12 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
     this.imagesBySrc = new goog.structs.Map();
     this.imageSrcsInProgress = new goog.structs.Set();
     this.textsByUri = new goog.structs.Map();
-
+     
     /**
      * @type {sc.canvas.FabricCanvasViewport}
      */
-    this.viewport = null;
+
+    this.viewport = null; 
 
     this.segmentUris = new goog.structs.Set();
 
@@ -75,6 +77,12 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
     this.textCanvas = new fabric.StaticCanvas(textCanvasElement, {
         renderOnAddition: false
     });
+    /*
+      setDimensions() was adding about 25 MB to the memory footprint in Firefox. 
+      I downloaded the latest version of Fabric (the all.js file from the 
+      Github /dist subdir.) I renamed all.js to fabric.js and placed it in our repo.
+      -SGB
+    */
     this.textCanvas.setDimensions(this.size);
 };
 goog.inherits(sc.canvas.FabricCanvas, goog.events.EventTarget);
@@ -99,6 +107,7 @@ sc.canvas.FabricCanvas.RDF_ENUM = {
     hasBody: ['oac:hasBody'],
     hasTarget: ['oac:hasTarget'],
     cntChars: ['cnt:chars'],
+    cnt08Chars: ['cnt08:chars'],
     constrainedBody: ['oac:ConstrainedBody'],
     constrainedTarget: ['oac:ConstrainedTarget'],
     constrains: 'oac:constrains',
@@ -144,20 +153,28 @@ sc.canvas.FabricCanvas.prototype.addTextAnnotation = function(annoResource, cons
     for (var k = 0, lenk = bodyUris.length; k < lenk; k++) {
         var bodyUri = bodyUris[k];
         var bodyResource = databroker.getResource(bodyUri);
+
+        var text = "";
         if (bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cntChars)) {
-            var text = bodyResource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
-
-            var textBox = this.addTextBox(
-                Number(constraintAttrs.x),
-                Number(constraintAttrs.y),
-                Number(constraintAttrs.width),
-                Number(constraintAttrs.height),
-                text,
-                bodyUri
-            );
-
-            addedTextUris.push(bodyUri);
+            text = bodyResource.getOneProperty(
+                sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
+        } else if (
+            bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars)
+        ){
+            text = bodyResource.getOneProperty(
+                sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars);
         }
+
+        var textBox = this.addTextBox(
+            Number(constraintAttrs.x),
+            Number(constraintAttrs.y),
+            Number(constraintAttrs.width),
+            Number(constraintAttrs.height),
+            text,
+            bodyUri
+        );
+
+        addedTextUris.push(bodyUri);
     }
 
     return addedTextUris;
@@ -459,7 +476,7 @@ sc.canvas.FabricCanvas.prototype.bringObjectToFront = function(obj) {
 sc.canvas.FabricCanvas.prototype.sendObjectToBack = function(obj) {
     this.group.remove(obj);
 
-    goog.array.insertAt(this.group.objects, obj, 0);
+    goog.array.insertAt(this.group.getObjects(), obj, 0);
 
     this.requestFrameRender();
 };

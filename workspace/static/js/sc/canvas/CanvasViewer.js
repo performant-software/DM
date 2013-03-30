@@ -34,21 +34,22 @@ sc.canvas.CanvasViewer = function(options) {
     
     this.baseDiv = document.createElement('div');
     jQuery(this.baseDiv).addClass('sc-CanvasViewer');
-    
+
     this.mainViewport = new sc.canvas.FabricCanvasViewport(this.databroker);
     this.marqueeViewport = new sc.canvas.FabricCanvasViewport(this.databroker);
-    
+
     this.toolbar = this.options.toolbar || new sc.canvas.CanvasToolbar(this);
-    
     this.setupControls();
-    
     this.toolbarDiv = this.toolbar.getElement();
+
     this.mainViewportDiv = this.mainViewport.getElement();
     this.marqueeViewportDiv = this.marqueeViewport.getElement();
     jQuery(this.marqueeViewportDiv).addClass('sc-CanvasViewer-marquee');
-    
+
     this.toolbar.render(this.baseDiv);
+
     this.mainViewport.render(this.baseDiv);
+
     this.marqueeViewport.render(this.baseDiv);
     
     this.marqueeViewport.resize(this.options.marqueeSize.width,
@@ -95,10 +96,12 @@ sc.canvas.CanvasViewer.prototype.resize = function(width, height) {
         height = width.height;
         width = width.width;
     }
-    
+
     var toolbarHeight = jQuery(this.toolbarDiv).height();
     
     this.mainViewport.resize(width, height - toolbarHeight);
+    /* SGB
+    */
 };
 
 sc.canvas.CanvasViewer.prototype.getDisplaySize = function() {
@@ -122,10 +125,10 @@ sc.canvas.CanvasViewer.MARQUEE_BOX_STYLE = {
 sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     this.mainViewport.clear();
     this.marqueeViewport.clear();
-    
+
     this.mainViewport.setCanvas(canvas);
     this.mainViewport.zoomToFit();
-    
+
     var deferredMarqueeCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         canvas.getUri(),
         this.databroker,
@@ -158,6 +161,7 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
             this
         );
     }.bind(this));
+
 
     this.marqueeBox = new fabric.Rect({
         left: 0,
@@ -260,7 +264,8 @@ sc.canvas.CanvasViewer.prototype.updateMarqueeBox = function() {
 
         this.marqueeBox.set('left', centeredCoords.x).set('top', centeredCoords.y);
         this.marqueeBox.set('width', width).set('height', height);
-        this.marqueeBox.setGradientFill({
+//        this.marqueeBox.setGradientFill({ // this method name changed to setGradient
+        this.marqueeBox.setGradient({
             x1: 0, y1: 0,
             x2: 0, y2: this.marqueeBox.height,
             colorStops: {

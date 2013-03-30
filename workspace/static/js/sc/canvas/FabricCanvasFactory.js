@@ -263,6 +263,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
 
                 if (annoResource.hasAnyType(sc.canvas.FabricCanvas.RDF_ENUM.
                                             textAnno)) {
+                    console.log("found text annotation: ", annoUri);
                     addedTextUris = addedTextUris.concat(
                         canvas.addTextAnnotation(annoResource, constraintAttrs)
                     );
@@ -285,5 +286,5 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
             }
         }
     }
-    // canvas.showTextAnnos();
+    canvas.showTextAnnos();
 };
