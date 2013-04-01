@@ -135,8 +135,8 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {
     if (this.isDragging && this.viewport.canvas) {
         var event = opts.e;
 
-        var dx = this.lastPageX - event.pageX;
-        var dy = this.lastPageY - event.pageY;
+        var dx = event.pageX - this.lastPageX;
+        var dy = event.pageY - this.lastPageY;
 
         this.lastPageX = event.pageX;
         this.lastPageY = event.pageY;
