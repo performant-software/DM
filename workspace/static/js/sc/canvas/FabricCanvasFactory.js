@@ -8,8 +8,8 @@ sc.canvas.FabricCanvasFactory.createFromResource = function(resource) {
     var databroker = resource.getDatabroker();
 
     var size = new goog.math.Size(
-        resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.width),
-        resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.height)
+        Number(resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.width)),
+        Number(resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.height))
     );
 
     var canvas = new sc.canvas.FabricCanvas(uri, databroker, size);
