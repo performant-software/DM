@@ -264,7 +264,6 @@ sc.canvas.CanvasViewer.prototype.updateMarqueeBox = function() {
 
         this.marqueeBox.set('left', centeredCoords.x).set('top', centeredCoords.y);
         this.marqueeBox.set('width', width).set('height', height);
-//        this.marqueeBox.setGradientFill({ // this method name changed to setGradient
         this.marqueeBox.setGradient({
             x1: 0, y1: 0,
             x2: 0, y2: this.marqueeBox.height,
