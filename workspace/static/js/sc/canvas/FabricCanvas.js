@@ -3,6 +3,7 @@ goog.provide('sc.canvas.FabricCanvas');
 goog.require('fabric');
 goog.require('goog.events.EventTarget');
 goog.require('goog.math.Size');
+goog.require('goog.math.Coordinate');
 goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
 
@@ -48,15 +49,10 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
     this.uri = this.resource.getUri();
 
     this.size = size;
+    this.displayToActualSizeRatio = 1;
+    this.offset = new goog.math.Coordinate(0, 0);
 
-    this.group = new fabric.Group([], {
-        width: size.width,
-        height: size.height,
-        selectable: false,
-        top: size.height / 2,
-        left: size.width / 2
-    });
-
+    this.objects = [];
     this.objectsByUri = new goog.structs.Map();
     this.urisByObject = new goog.structs.Map();
 
@@ -122,7 +118,8 @@ sc.canvas.FabricCanvas.RDF_ENUM = {
 sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES = {
     fill: 'rgba(15, 108, 214, 0.6)',
     stroke: 'rgba(3, 75, 158, 0.7)',
-    strokeWidth: 5
+    strokeWidth: 5,
+    selectable: false
 };
 
 sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
@@ -240,8 +237,8 @@ sc.canvas.FabricCanvas.prototype.addTextBoxes = function(options_list) {;
         t.scaleToHeight(renderedSize.height);
 
         t.set({
-            left: t.get('left') + renderedSize.width / 2 - this.group.get('width') / 2,
-            top: t.get('top') + renderedSize.height / 2 - this.group.get('height') / 2
+            left: t.get('left') + renderedSize.width / 2,
+            top: t.get('top') + renderedSize.height / 2
         });
 
         this.textCanvas.remove(t);
@@ -255,7 +252,7 @@ sc.canvas.FabricCanvas.prototype.showTextAnnos = function() {
     this.isShowingTextAnnos = true;
 
     goog.structs.forEach(this.textsByUri, function(text, uri) {
-        this.group.add(text);
+        this.objects.push(text);
     }, this);
 
     this.requestFrameRender();
@@ -265,7 +262,7 @@ sc.canvas.FabricCanvas.prototype.hideTextAnnos = function() {
     this.isShowingTextAnnos = false;
 
     goog.structs.forEach(this.textsByUri, function(text, uri) {
-        this.group.remove(text);
+        goog.array.remove(this.objects, text);
     }, this);
 
     this.requestFrameRender();
@@ -399,25 +396,21 @@ sc.canvas.FabricCanvas.prototype.setFeatureCoords = function(feature, x, y) {
         x = x.x;
     }
 
-    var featureCenteredCoords = sc.canvas.FabricCanvas.toCenteredCoords(x, y,
-        feature.getBoundingRectWidth(), feature.getBoundingRectHeight());
-
-    x = featureCenteredCoords.x - this.group.get('width') / 2;
-    y = featureCenteredCoords.y - this.group.get('height') / 2;
+    x += feature.getBoundingRectWidth() / 2;
+    y += feature.getBoundingRectHeight() / 2;
 
     feature.set('left', x).set('top', y);
 };
 
 sc.canvas.FabricCanvas.prototype.getFeatureCoords = function(feature) {
-    console.log("setting feature coords");
     var x = feature.get('left');
     var y = feature.get('top');
 
     var featureTopLeftCoords = sc.canvas.FabricCanvas.toTopLeftCoords(x, y,
         feature.getBoundingRectWidth(), feature.getBoundingRectHeight());
 
-    x = featureTopLeftCoords.x + this.group.get('width') / 2;
-    y = featureTopLeftCoords.y + this.group.get('height') / 2;
+    x = featureTopLeftCoords.x;
+    y = featureTopLeftCoords.y;
 
     return {
         x: x,
@@ -434,7 +427,7 @@ sc.canvas.FabricCanvas.prototype.addFabricObject = function(obj, uri, opt_noEven
         throw "Fabric Object with uri " + uri + " has already been added to the canvas";
     }
 
-    this.group.add(obj);
+    this.objects.push(obj);
 
     this.objectsByUri.set(uri, obj);
     this.urisByObject.set(goog.getUid(obj), uri);
@@ -453,7 +446,7 @@ sc.canvas.FabricCanvas.prototype.hasFeature = function(uri) {
 sc.canvas.FabricCanvas.prototype.removeFabricObject = function(obj, opt_noEvent) {
     goog.asserts.assert(obj != null, 'Attempting to remove a null object from a canvas');
 
-    this.group.remove(obj);
+    goog.array.remove(this.objects, obj);
 
     var uri = this.getFabricObjectUri(obj);
     this.objectsByUri.remove(uri);
@@ -467,16 +460,16 @@ sc.canvas.FabricCanvas.prototype.removeFabricObject = function(obj, opt_noEvent)
 };
 
 sc.canvas.FabricCanvas.prototype.bringObjectToFront = function(obj) {
-    this.group.remove(obj);
-    this.group.add(obj);
+    goog.array.remove(this.objects, obj);
+    this.objects.push(obj);
 
     this.requestFrameRender();
 };
 
 sc.canvas.FabricCanvas.prototype.sendObjectToBack = function(obj) {
-    this.group.remove(obj);
+    goog.array.remove(this.objects, obj);
 
-    goog.array.insertAt(this.group.getObjects(), obj, 0);
+    goog.array.insertAt(this.objects, obj, 0);
 
     this.requestFrameRender();
 };
@@ -520,7 +513,7 @@ sc.canvas.FabricCanvas.prototype.addImage = function(src, size, opt_coords, opt_
 
     if (this.imagesBySrc.containsKey(src)) {
         var image = this.imagesBySrc.get(src);
-        this.group.remove(image);
+        goog.array.remove(this.objects, image);
     }
 
     var x = 0, y = 0;
@@ -534,10 +527,20 @@ sc.canvas.FabricCanvas.prototype.addImage = function(src, size, opt_coords, opt_
         this.imagesBySrc.set(src, image);
         this.imageSrcsInProgress.remove(src);
 
+        image.set('selectable', false);
+
         if (! size.isEmpty()) {
             image.set('scaleX', size.width / image.get('width'));
             image.set('scaleY', size.height / image.get('height'));
         }
+
+        // This is asynchronous, so we need to worry about panning and zooming in the interim
+        image.set({
+            scaleX: image.get('scaleX') * this.displayToActualSizeRatio,
+            scaleY: image.get('scaleY') * this.displayToActualSizeRatio,
+            left: image.get('left') + this.offset.x,
+            top: image.get('top') + this.offset.y
+        });
 
         this.setFeatureCoords(image, x, y);
 
@@ -569,11 +572,10 @@ sc.canvas.FabricCanvas.prototype.chooseImage = function(uri) {
     var image = this.imagesBySrc.get(uri);
 
     goog.structs.forEach(this.imagesBySrc, function(image, src) {
-        this.group.remove(image);
+        goog.array.remove(this.objects, image);
     }, this);
 
-    this.group.add(image);
-    this.sendObjectToBack(image);
+    goog.array.insertAt(this.objects, image, 0);
 
     this.requestFrameRender();
 
@@ -637,8 +639,8 @@ sc.canvas.FabricCanvas.prototype.addCircle = function(cx, cy, r, uri) {
 sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
     var ellipse = new fabric.Ellipse(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
     ellipse.set({
-        left: cx - this.group.get('width') / 2,
-        top: cy - this.group.get('height') / 2,
+        left: cx,
+        top: cy,
         width: rx,
         height: ry,
         rx: rx,
@@ -892,86 +894,6 @@ sc.canvas.FabricCanvas.prototype.fireHiddenFeature = function(feature, uri) {
     this.dispatchEvent(event);
 };
 
-sc.canvas.FabricCanvas.toCenteredCoords = function(x, y, width, height) {
-    if (y == null) {
-        width = x.width;
-        height = x.height;
-        y = x.y;
-        x = x.x;
-    }
-
-    x += width / 2;
-    y += height / 2
-
-    return {
-        x: x,
-        y: y,
-        left: x,
-        top: y
-    };
-};
-
-sc.canvas.FabricCanvas.prototype.originToCenterPoints = function(points) {
-    var newPoints = [];
-
-    for (var i=0, len=points.length; i<len; i++) {
-        var point = {
-            x: points[i].x,
-            y: points[i].y
-        };
-
-        point.x -= this.group.get('width') / 2;
-        point.y -= this.group.get('height') / 2;
-
-        newPoints.push(point);
-    }
-
-    return newPoints;
-};
-
-sc.canvas.FabricCanvas.prototype.originToCenterPoint = function(point) {
-    return this.originToCenterPoints([point]);
-};
-
-sc.canvas.FabricCanvas.prototype.toCenteredCanvasCoord = function(x, y) {
-    if (y == null) {
-        y = x.y;
-        x = x.x;
-    }
-
-    var size = this.getSize();
-
-    return sc.canvas.FabricCanvas.toTopLeftCoords(x, y, size.width, size.height);
-};
-
-sc.canvas.FabricCanvas.toTopLeftCoords = function(x, y, width, height) {
-    if (y == null) {
-        width = x.width;
-        height = x.height;
-        y = x.y;
-        x = x.x;
-    }
-
-    x -= width / 2;
-    y -= height / 2;
-
-    return {
-        x: x,
-        y: y,
-        left: x,
-        top: y
-    };
-};
-
-sc.canvas.FabricCanvas.objectTopLeftCoords = function(object) {
-    return sc.canvas.FabricCanvas.toTopLeftCoords(
-        object.get('left'),
-        object.get('top'),
-        object.get('width'),
-        object.get('height')
-    );
-};
-
 sc.canvas.FabricCanvas.prototype.requestFrameRender = function() {
     if (this.viewport) {
         this.viewport.requestFrameRender();
@@ -1018,8 +940,8 @@ sc.canvas.FabricCanvas.prototype.knowsSequenceInformation = function() {
  */
 sc.canvas.FabricCanvas.prototype.getDisplaySize = function() {
     return new goog.math.Size(
-        this.group.get('width') * this.group.get('scaleX'),
-        this.group.get('height') * this.group.get('scaleY')
+        this.size.width * this.displayToActualSizeRatio,
+        this.size.height * this.displayToActualSizeRatio
     );
 };
 
@@ -1029,39 +951,48 @@ sc.canvas.FabricCanvas.prototype.getDisplaySize = function() {
  * @return {number} display width / actual width
  */
 sc.canvas.FabricCanvas.prototype.getDisplayToActualSizeRatio = function() {
-    var actualWidth = this.getSize().width;
-    var displayWidth = this.getDisplaySize().width;
-
-    return displayWidth / actualWidth;
+    return this.displayToActualSizeRatio;
 };
 
-sc.canvas.FabricCanvas.prototype.objectContainsPoint = function(target, event) {
-    var canvas = this.group.canvas;
+sc.canvas.FabricCanvas.prototype.setDisplayToActualSizeRatio = function(ratio) {
+    ratio = Math.abs(ratio);
 
-    var pointer = canvas.getPointer(event);
-    var xy = canvas._normalizePointer(target, pointer);
-    var x = (xy.x - this.group.get('left')) / this.group.get('scaleX');
-    var y = (xy.y - this.group.get('top')) / this.group.get('scaleY');
+    goog.structs.forEach(this.objects, function(obj) {
+        obj.set({
+            scaleX: (obj.get('scaleX') / this.displayToActualSizeRatio) * ratio,
+            scaleY: (obj.get('scaleY') / this.displayToActualSizeRatio) * ratio,
+            left: (obj.get('left') / this.displayToActualSizeRatio) * ratio,
+            top: (obj.get('top') / this.displayToActualSizeRatio) * ratio
+        });
+    }, this);
 
-    // http://www.geog.ubc.ca/courses/klink/gis.notes/ncgia/u32.html
-    // http://idav.ucdavis.edu/~okreylos/TAship/Spring2000/PointInPolygon.html
-    
-    if (!target.oCoords) {
-        return false;
+    this.offset.x = (this.offset.x / this.displayToActualSizeRatio) * ratio;
+    this.offset.y = (this.offset.y / this.displayToActualSizeRatio) * ratio;
+
+    this.displayToActualSizeRatio = ratio;
+};
+
+sc.canvas.FabricCanvas.prototype.getOffset = function() {
+    return this.offset;
+};
+
+sc.canvas.FabricCanvas.prototype.setOffset = function(x, y) {
+    if (y == null) {
+        y = x.y;
+        x = x.x;
     }
 
-    // we iterate through each object. If target found, return it.
-    var iLines = target._getImageLines(target.oCoords);
-    var xpoints = target._findCrossPoints(x, y, iLines);
+    var dx = this.offset.x + x;
+    var dy = this.offset.y + y;
 
-    // if xcount is odd then we clicked inside the object
-    // For the specific case of square images xcount === 1 in all true cases
-    if ((xpoints && xpoints % 2 === 1) || target._findTargetCorner(event, canvas._offset)) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    goog.structs.forEach(this.objects, function(obj) {
+        obj.set({
+            left: obj.get('left') - dx,
+            top: obj.get('top') - dy
+        });
+    }, this);
+
+    this.offset = new goog.math.Coordinate(x, y);
 };
 
 /**
@@ -1102,5 +1033,24 @@ sc.canvas.FabricCanvas.prototype.proportionalToCanvasCoord = function(x, y) {
     return {
         'x': x * this.size.width,
         'y': y * this.size.height
+    };
+};
+
+sc.canvas.FabricCanvas.toCenteredCoords = function(x, y, width, height) {
+    if (y == null) {
+        width = x.width;
+        height = x.height;
+        y = x.y;
+        x = x.x;
+    }
+
+    x += width / 2;
+    y += height / 2
+
+    return {
+        x: x,
+        y: y,
+        left: x,
+        top: y
     };
 };

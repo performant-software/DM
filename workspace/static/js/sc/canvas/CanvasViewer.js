@@ -169,7 +169,7 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
         fill: 'rgba(15,108,214,0.4)',
         stroke: 'rgba(15,108,214,0.8)',
         strokeWidth: 1,
-        selectable: true
+        selectable: false
     });
     
     goog.events.listenOnce(this.marqueeViewport, 'canvasAdded', function(e) {
@@ -178,7 +178,7 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
 
         this.marqueeViewport.zoomToFit();
 
-        this.marqueeViewport.fabricCanvas.add(this.marqueeBox);
+        this.marqueeViewport.canvas.objects.push(this.marqueeBox);
         
         this.updateMarqueeBox();
     }, false, this);
@@ -273,7 +273,7 @@ sc.canvas.CanvasViewer.prototype.updateMarqueeBox = function() {
                 1: 'rgba(15, 108, 214, 0.25)'
             }
         });
-        this.marqueeBox.bringToFront();
+        this.marqueeViewport.canvas.bringObjectToFront(this.marqueeBox);
 
         this.marqueeViewport.requestFrameRender();
     }

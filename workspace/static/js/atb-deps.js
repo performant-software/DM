@@ -132,7 +132,7 @@ goog.addDependency('../../../sc/canvas/DrawFeatureControl.js', ['sc.canvas.DrawF
 goog.addDependency('../../../sc/canvas/DrawLineControl.js', ['sc.canvas.DrawLineControl'], ['goog.array', 'goog.events.KeyCodes', 'sc.canvas.DrawFeatureControl']);
 goog.addDependency('../../../sc/canvas/DrawPolygonControl.js', ['sc.canvas.DrawPolygonControl'], ['sc.canvas.DrawLineControl']);
 goog.addDependency('../../../sc/canvas/DrawRectControl.js', ['sc.canvas.DrawRectControl'], ['sc.canvas.DrawFeatureControl']);
-goog.addDependency('../../../sc/canvas/FabricCanvas.js', ['sc.canvas.FabricCanvas'], ['fabric', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map', 'goog.structs.Set']);
+goog.addDependency('../../../sc/canvas/FabricCanvas.js', ['sc.canvas.FabricCanvas'], ['fabric', 'goog.events.EventTarget', 'goog.math.Coordinate', 'goog.math.Size', 'goog.structs.Map', 'goog.structs.Set']);
 goog.addDependency('../../../sc/canvas/FabricCanvasFactory.js', ['sc.canvas.FabricCanvasFactory'], ['goog.array', 'sc.canvas.FabricCanvas']);
 goog.addDependency('../../../sc/canvas/FabricCanvasViewport.js', ['sc.canvas.FabricCanvasViewport', 'sc.canvas.FabricCanvasViewportEvent'], ['fabric', 'goog.async.Throttle', 'goog.dom.DomHelper', 'goog.events.Event', 'goog.events.EventTarget', 'goog.object', 'goog.structs.Set', 'jquery.jQuery']);
 goog.addDependency('../../../sc/canvas/FeatureControl.js', ['sc.canvas.FeatureControl'], ['sc.canvas.Control']);
