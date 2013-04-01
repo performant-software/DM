@@ -20,13 +20,22 @@ atb.viewer.ViewerContainer.prototype._setupDom = function() {
 
     this.titleWrapper = this.domHelper.createDom('div', {'class': 'atb-ViewerContainer-titleWrapper'});
     this.titleEl = this.domHelper.createDom('h3', {'class': 'atb-ViewerContainer-title'});
-    this.closeButton = this.domHelper.createDom('div', {'class': 'icon-remove-sign atb-ViewerContainer-close'});
+    this.closeButton = this.domHelper.createDom('div', {
+        'class': 'icon-remove-sign atb-ViewerContainer-close',
+        'title': 'Close'
+    });
+    this.maximizeButton = this.domHelper.createDom('div', {
+        'class': 'icon-fullscreen atb-ViewerContainer-maximize',
+        'title': 'Maximize/Minimize'
+    });
 
     goog.events.listen(this.closeButton, 'click', this.close, false, this);
+    goog.events.listen(this.maximizeButton, 'click', this.toggleMaximized, false, this);
 
     this.viewerEl = this.domHelper.createDom('div', {'class': 'atb-ViewerContainer-viewer'});
 
     this.titleWrapper.appendChild(this.closeButton);
+    this.titleWrapper.appendChild(this.maximizeButton);
     this.titleWrapper.appendChild(this.titleEl);
     
     this.element.appendChild(this.titleWrapper);
@@ -86,9 +95,13 @@ atb.viewer.ViewerContainer.prototype.autoResize = function() {
 };
 
 atb.viewer.ViewerContainer.prototype.close = function() {
-    
-
     if (this.grid) {
         this.grid.removeViewerContainer(this);
+    }
+};
+
+atb.viewer.ViewerContainer.prototype.toggleMaximized = function() {
+    if (this.grid) {
+        
     }
 };

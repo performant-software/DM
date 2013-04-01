@@ -36,12 +36,21 @@
         font-size: 16px;
         line-height: 16px;
         margin: 0;
-        margin-right: 14px;
+        margin-right: 32px;
         text-overflow: ellipsis;
     }
 
-    .atb-ViewerContainer-close {
+    .atb-ViewerContainer-titleButton {
         float: right;
+        margin-left: 2px;
+    }
+
+    .atb-ViewerContainer-close {
+        .atb-ViewerContainer-titleButton;
+    }
+
+    .atb-ViewerContainer-maximize {
+        .atb-ViewerContainer-titleButton;
     }
 }
 
