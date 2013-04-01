@@ -25,7 +25,8 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
     this.fabricCanvas = new fabric.Canvas(canvasElement, {
         selection: false,
         defaultCursor: 'inherit',
-        hoverCursor: 'inherit'
+        hoverCursor: 'inherit',
+        renderOnAddittion: false
     });
     this.baseDiv.appendChild(canvasElement);
     this.baseDiv.appendChild(this.fabricCanvas.getSelectionElement());
@@ -38,7 +39,7 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
     this.inactiveControls = new goog.structs.Set();
 
     this.renderThrottle = new goog.async.Throttle(
-        this.renderThrottleHandler.bind(this),
+        this._renderCanvas.bind(this),
         sc.canvas.FabricCanvasViewport.RENDER_INTERVAL
     );
 };
@@ -46,9 +47,17 @@ goog.inherits(sc.canvas.FabricCanvasViewport, goog.events.EventTarget);
 
 sc.canvas.FabricCanvasViewport.RENDER_INTERVAL = 18;
 
-sc.canvas.FabricCanvasViewport.prototype.renderThrottleHandler = function() {
+sc.canvas.FabricCanvasViewport.prototype._renderCanvas = function() {
     this.isRendering = true;
-    this.fabricCanvas.renderAll()
+
+    this.fabricCanvas.clear();
+    if (this.canvas) {
+        goog.structs.forEach(this.canvas.objects, function(obj) {
+            this.fabricCanvas.add(obj);
+        }, this);
+    }
+    this.fabricCanvas.renderAll();
+
     this.isRendering = false;
     this.isAwaitingRenderFinish = false;
 };
@@ -195,7 +204,9 @@ sc.canvas.FabricCanvasViewport.prototype.setCanvas = function(canvas) {
 
     this.fabricCanvas.clear();
 
-    this.fabricCanvas.add(canvas.group);
+    goog.structs.forEach(canvas.objects, function(obj) {
+        this.fabricCanvas.add(obj);
+    }, this);
 
     this.requestFrameRender();
 
@@ -255,10 +266,8 @@ sc.canvas.FabricCanvasViewport.prototype.panByPageCoords = function(x, y) {
 
     this.complainIfNoCanvas();
 
-    var group = this.canvas.group;
-    
-    group.set('left', group.get('left') - x);
-    group.set('top', group.get('top') - y);
+    var offset = this.canvas.getOffset();
+    this.canvas.setOffset(offset.x - x, offset.y - y);
 
     this.requestFrameRender();
 
@@ -266,42 +275,44 @@ sc.canvas.FabricCanvasViewport.prototype.panByPageCoords = function(x, y) {
 };
 
 sc.canvas.FabricCanvasViewport.prototype.centerOnLayerCoord = function(x, y) {
+    this.centerOnCanvasCoord(this.layerToCanvasCoord(x, y));
+};
+
+sc.canvas.FabricCanvasViewport.prototype.centerOnCanvasCoord = function(x, y) {
     if (y == null) {
         y = x.y;
         x = x.x;
     }
 
-    this.complainIfNoCanvas();
+    var size = this.getDisplaySize();
 
-    var viewportSize = this.getDisplaySize();
-    var viewportCenterX = viewportSize.width / 2;
-    var viewportCenterY = viewportSize.height / 2;
-
-    var dx = x - viewportCenterX;
-    var dy = y - viewportCenterY;
-
-    var group = this.canvas.group;
-    group.set('left', group.get('left') - dx);
-    group.set('top', group.get('top') - dy);
+    this.moveCanvasCoordToLayerCoord(
+        {
+            x: x,
+            y: y
+        },
+        {
+            x: size.width / 2,
+            y: size.height / 2
+        }
+    );
 
     this.requestFrameRender();
-};
-
-sc.canvas.FabricCanvasViewport.prototype.centerOnCanvasCoord = function(x, y) {
-    this.centerOnLayerCoord(this.canvasToLayerCoord(x, y));
 };
 
 sc.canvas.FabricCanvasViewport.prototype.moveCanvasCoordToLayerCoord = function(canvasCoord, layerCoord) {
-    var canvasLayerCoord = this.canvasToLayerCoord(canvasCoord);
+    var canvasLayerCoord = {
+        x: canvasCoord.x * this.canvas.getDisplayToActualSizeRatio(),
+        y: canvasCoord.y * this.canvas.getDisplayToActualSizeRatio()
+    };
 
-    var dx = canvasLayerCoord.x - layerCoord.x;
-    var dy = canvasLayerCoord.y - layerCoord.y;
-
-    var group = this.canvas.group;
-    group.set('left', group.get('left') - dx);
-    group.set('top', group.get('top') - dy);
+    this.canvas.setOffset(
+        canvasLayerCoord.x + layerCoord.x,
+        canvasLayerCoord.y + layerCoord.y
+    );
 
     this.requestFrameRender();
+    this.fireBoundsChanged();
 };
 
 sc.canvas.FabricCanvasViewport.prototype.panToCanvasCoord = function(x, y) {
@@ -333,10 +344,9 @@ sc.canvas.FabricCanvasViewport.prototype.getCanvasOffset = function() {
     var x = viewportOffset.left;
     var y = viewportOffset.top;
 
-    var group = this.canvas.group;
-    var canvasDisplaySize = this.canvas.getDisplaySize();
-    x += group.get('left') - canvasDisplaySize.width / 2;
-    y += group.get('top') - canvasDisplaySize.height / 2;
+    var internalOffset = canvas.getOffset();
+    x += internalOffset.x;
+    y += internalOffset.y;
 
     return {
         left: x,
@@ -352,13 +362,11 @@ sc.canvas.FabricCanvasViewport.prototype.layerToCanvasCoord = function(x, y) {
 
     this.complainIfNoCanvas();
 
-    var group = this.canvas.group;
-    var canvasDisplaySize = this.canvas.getDisplaySize();
-    x -= group.get('left') - canvasDisplaySize.width / 2;
-    y -= group.get('top') - canvasDisplaySize.height / 2;
+    var offset = this.canvas.getOffset();
+    x -= offset.x;
+    y -= offset.y;
 
     var ratio = this.canvas.getDisplayToActualSizeRatio();
-
     x /= ratio;
     y /= ratio;
 
@@ -377,14 +385,12 @@ sc.canvas.FabricCanvasViewport.prototype.canvasToLayerCoord = function(x, y) {
     this.complainIfNoCanvas();
 
     var ratio = this.canvas.getDisplayToActualSizeRatio();
-
     x *= ratio;
     y *= ratio;
 
-    var group = this.canvas.group;
-    var canvasDisplaySize = this.canvas.getDisplaySize();
-    x += group.get('left') - canvasDisplaySize.width / 2;
-    y += group.get('top') - canvasDisplaySize.height / 2;
+    var offset = this.canvas.getOffset();
+    x += offset.x;
+    y += offset.y;
 
     return {
         x: x,
@@ -647,7 +653,7 @@ sc.canvas.FabricCanvasViewport.prototype.zoomByFactor = function(factor,
         return;
     }
 
-    this.zoomToRatio(factor * this.canvas.group.get('scaleX'), opt_centerOn);
+    this.zoomToRatio(factor * this.canvas.getDisplayToActualSizeRatio(), opt_centerOn);
 };
 
 /**
@@ -661,7 +667,7 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRatio = function(ratio, opt_cente
     var canvas = this.canvas;
     this.complainIfNoCanvas();
 
-    if (canvas.group.get('scaleX') == ratio && canvas.group.get('scaleY') == ratio) {
+    if (canvas.getDisplayToActualSizeRatio() == ratio) {
         return;
     }
 
@@ -680,7 +686,7 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRatio = function(ratio, opt_cente
         return;
     }
 
-    canvas.group.set('scaleX', ratio).set('scaleY', ratio);
+    canvas.setDisplayToActualSizeRatio(ratio);
     this.centerOnCanvasCoord(center);
 
     this.requestFrameRender();
@@ -773,10 +779,17 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToFit = function() {
         viewportDisplaySize.height / canvasSize.height
     );
 
-    this.canvas.group.set('scaleX', ratio).set('scaleY', ratio);
+    this.canvas.setDisplayToActualSizeRatio(ratio);
 
-    this.canvas.group.set('left', viewportDisplaySize.width / 2);
-    this.canvas.group.set('top', viewportDisplaySize.height / 2);
+    this.moveCanvasCoordToLayerCoord({
+        // Move the center of the canvas...
+        x: canvasSize.width / 2,
+        y: canvasSize.height / 2
+    }, {
+        // to the center of the viewport
+        x: viewportDisplaySize.width / 2,
+        y: viewportDisplaySize.height / 2
+    });
 
     this.requestFrameRender();
     this.fireBoundsChanged();
@@ -827,34 +840,10 @@ sc.canvas.FabricCanvasViewport.prototype.getDisplaySize = function() {
 
 sc.canvas.FabricCanvasViewport.prototype.getSize = sc.canvas.FabricCanvasViewport.prototype.getDisplaySize;
 
-sc.canvas.FabricCanvasViewport.prototype.getObjectAtLayerCoord = function(event) {
+sc.canvas.FabricCanvasViewport.prototype.getObjectAtLayerCoord = function(x, y) {
     this.complainIfNoCanvas();
 
-    var group = this.canvas.group;
-    var target = null;
-    var pointer = this.fabricCanvas.getPointer(event);
-
-    var possibleTargets = [];
-    for (var i = group.size(); i--; ) {
-        if (group.item(i) && this.canvas.objectContainsPoint(group.item(i), event)) {
-            if (group.canvas.perPixelTargetFind || group.item(i).perPixelTargetFind) {
-                possibleTargets.push(group.item(i));
-            }
-            else {
-                target = group.item(i);
-                break;
-            }
-        }
-    }
-    for (var j = 0, len = possibleTargets.length; j < len; j++) {
-        var isTransparent = group.canvas._isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
-        if (!isTransparent) {
-            target = possibleTargets[j];
-            break;
-        }
-    }
-
-    return target;
+    return null;
 };
 
 sc.canvas.FabricCanvasViewport.MOUSE_EVENTS = new goog.structs.Set([
@@ -877,7 +866,7 @@ sc.canvas.FabricCanvasViewport.prototype._setupEventListeners = function() {
         goog.events.listen(this.baseDiv, type, function(event) {
             if (this.shouldFireMouseEvents()) {
                 var customEvent = new sc.canvas.FabricCanvasViewportEvent(
-                    type, event, this,
+                    event.type, event, this,
                     type == 'mouseover' || type == 'mouseout' ? this : null
                 );
 
@@ -921,8 +910,15 @@ sc.canvas.FabricCanvasViewportEvent = function(type, originalEvent, viewport, op
 
     this.canvas = viewport.canvas;
 
+    this.layerX = originalEvent.offsetX;
+    this.layerY = originalEvent.offsetY;
+    this.layerCoord = {
+        x: this.layerX,
+        y: this.layerY
+    };
+
     if (this.canvas) {
-        this.canvasCoord = viewport.layerToCanvasCoord(originalEvent.offsetX, originalEvent.offsetY);
+        this.canvasCoord = viewport.layerToCanvasCoord(this.layerCoord);
         this.canvasX = this.canvasCoord.x;
         this.canvasY = this.canvasCoord.y;
     }
@@ -940,7 +936,7 @@ goog.inherits(sc.canvas.FabricCanvasViewportEvent, goog.events.BrowserEvent);
 
 sc.canvas.FabricCanvasViewportEvent.prototype.getFeature = function() {
     if (! this._feature && ! this.viewport.isEmpty()) {
-        this._feature = this.viewport.getObjectAtLayerCoord(this.getBrowserEvent());
+        this._feature = this.viewport.getObjectAtLayerCoord(this.layerCoord);
     }
 
     return this._feature;

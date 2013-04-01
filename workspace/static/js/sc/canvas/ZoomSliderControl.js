@@ -76,8 +76,6 @@ function(value) {
     var actualCanvasSize = this.viewport.canvas.getSize();
     
     var ratio = size / actualCanvasSize.getShortest();
-
-    var center = this.viewport.getCenterCoord();
     
     this.viewport.zoomToRatio(ratio);
     
