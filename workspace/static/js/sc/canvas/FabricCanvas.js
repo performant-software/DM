@@ -982,13 +982,10 @@ sc.canvas.FabricCanvas.prototype.setOffset = function(x, y) {
         x = x.x;
     }
 
-    var dx = this.offset.x + x;
-    var dy = this.offset.y + y;
-
     goog.structs.forEach(this.objects, function(obj) {
         obj.set({
-            left: obj.get('left') - dx,
-            top: obj.get('top') - dy
+            left: Number(obj.get('left')) - this.offset.x + x,
+            top: Number(obj.get('top')) - this.offset.y + y
         });
     }, this);
 
