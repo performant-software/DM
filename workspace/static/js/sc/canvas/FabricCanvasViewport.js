@@ -268,7 +268,7 @@ sc.canvas.FabricCanvasViewport.prototype.panByPageCoords = function(x, y) {
     this.complainIfNoCanvas();
 
     var offset = this.canvas.getOffset();
-    this.canvas.setOffset(offset.x - x, offset.y - y);
+    this.canvas.setOffset(offset.x + x, offset.y + y);
 
     this.requestFrameRender();
 
