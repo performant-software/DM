@@ -22,7 +22,6 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
 
     atb.viewer.Viewer.prototype.render.call(this, div);
-    console.log("rootDiv:", this.rootDiv);
     jQuery(this.rootDiv).addClass('atb-CanvasViewer');
 
     var menuButtons = [
@@ -141,69 +140,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
-        if (this.mouseIsOverFloatingMenuParent) {
-            var menuButtons = [
-                new atb.widgets.MenuItem(
-                    "getMarkerInfo",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-info"),
-                    function(actionEvent) {
-                        var pane = new atb.ui.InfoPane(self.clientApp, id, self.domHelper);
-                        pane.show();
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Get marker info'
-                ),
-                new atb.widgets.MenuItem(
-                    "deleteThisMarker",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-delete"),
-                    function(actionEvent) {
-                        self.deleteFeature(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Delete this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "hideMarker",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-hide-marker"),
-                    function(actionEvent) {
-                        self.hideFeature(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Temporarily hide this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "showLinkedAnnos",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
-                    function(actionEvent) {
-                        self.showAnnos(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Show other resources which are linked to this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "linkAway",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
-                    function(actionEvent) {
-                        self.clientApp.createAnnoLink(id);
-                        self.highlightFeature(uri);
-                    },
-                    'Link another resource to this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "newTextAnno",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
-                    function(actionEvent) {
-                        self.createTextAnno(uri);
-                    },
-                    'Annotate this marker'
-                )
-            ];
-            this.showHoverMenu(menuButtons, id);
-        }
+        
     };
     afterTimer = atb.Util.scopeAsyncHandler(afterTimer, this)
     window.setTimeout(afterTimer, atb.viewer.Viewer.HOVER_SHOW_DELAY);
@@ -216,18 +153,84 @@ atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
 
 atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var uri = event.uri;
-    var feature = event.feature;
+    var feature = event.getFeature();
+
+    console.log('resource click', event, uri, feature)
     
     if (! uri) return;
-    
+    if (! feature) return;
     if (feature.type == 'image') return;
     
     var resourceId = this.webService.resourceUriToId(uri);
     
     var event = new atb.events.ResourceClicked(resourceId, null, this);
+
+    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    eventDispatcher.dispatchEvent(event);
+    if (eventDispatcher.dispatchEvent(event)) {console.log('about to run menu button code')
+        var menuButtons = [
+            new atb.widgets.MenuItem(
+                "getMarkerInfo",
+                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-info"),
+                function(actionEvent) {
+                    var pane = new atb.ui.InfoPane(self.clientApp, id, self.domHelper);
+                    pane.show();
+                    
+                    self.hideHoverMenu();
+                },
+                'Get marker info'
+            ),
+            new atb.widgets.MenuItem(
+                "deleteThisMarker",
+                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-delete"),
+                function(actionEvent) {
+                    self.deleteFeature(uri);
+                    
+                    self.hideHoverMenu();
+                },
+                'Delete this marker'
+            ),
+            new atb.widgets.MenuItem(
+                "hideMarker",
+                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-hide-marker"),
+                function(actionEvent) {
+                    self.hideFeature(uri);
+                    
+                    self.hideHoverMenu();
+                },
+                'Temporarily hide this marker'
+            ),
+            new atb.widgets.MenuItem(
+                "showLinkedAnnos",
+                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
+                function(actionEvent) {
+                    self.showAnnos(uri);
+                    
+                    self.hideHoverMenu();
+                },
+                'Show other resources which are linked to this marker'
+            ),
+            new atb.widgets.MenuItem(
+                "linkAway",
+                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
+                function(actionEvent) {
+                    self.clientApp.createAnnoLink(id);
+                    self.highlightFeature(uri);
+                },
+                'Link another resource to this marker'
+            ),
+            new atb.widgets.MenuItem(
+                "newTextAnno",
+                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
+                function(actionEvent) {
+                    self.createTextAnno(uri);
+                },
+                'Annotate this marker'
+            )
+        ];
+        this.showHoverMenu(menuButtons, id);
+    }
 };
 
 atb.viewer.CanvasViewer.prototype.setCanvasByUri =
