@@ -836,12 +836,6 @@ sc.canvas.FabricCanvasViewport.prototype.getDisplaySize = function() {
 
 sc.canvas.FabricCanvasViewport.prototype.getSize = sc.canvas.FabricCanvasViewport.prototype.getDisplaySize;
 
-sc.canvas.FabricCanvasViewport.prototype.getObjectAtLayerCoord = function(x, y) {
-    this.complainIfNoCanvas();
-
-    return null;
-};
-
 sc.canvas.FabricCanvasViewport.MOUSE_EVENTS = new goog.structs.Set([
     'click',
     'dblclick',
@@ -897,6 +891,25 @@ sc.canvas.FabricCanvasViewport.prototype._handleMouseMove = function(event) {
     }
 };
 
+sc.canvas.FabricCanvasViewport.prototype.getFeatureForEvent = function(event) {
+    var feature = null;
+
+    if (this.canvas) {
+        var candidates = this.canvas.objects;
+
+        for (var i=candidates.length - 1; i>=0; i--) {
+            var obj = this.canvas.objects[i];
+
+            if (this.fabricCanvas.containsPoint(event, obj)) {
+                feature = obj;
+                break;
+            }
+        }
+    }
+
+    return feature;
+};
+
 goog.provide('sc.canvas.FabricCanvasViewportEvent');
 sc.canvas.FabricCanvasViewportEvent = function(type, originalEvent, viewport, opt_feature) {
     goog.events.BrowserEvent.call(this, originalEvent, viewport);
@@ -932,7 +945,7 @@ goog.inherits(sc.canvas.FabricCanvasViewportEvent, goog.events.BrowserEvent);
 
 sc.canvas.FabricCanvasViewportEvent.prototype.getFeature = function() {
     if (! this._feature && ! this.viewport.isEmpty()) {
-        this._feature = this.viewport.getObjectAtLayerCoord(this.layerCoord);
+        this._feature = this.viewport.getFeatureForEvent(this);
     }
 
     return this._feature;
