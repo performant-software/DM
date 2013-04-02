@@ -112,20 +112,7 @@ sc.canvas.FeatureControl.prototype.layerToCanvasCoord = function(x, y) {
 sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
     var canvas = this.viewport.canvas;
 
-    /*
-    console.log("feature: ", this.feature);
-    console.log("getSvgTransform: ", this.feature.getSvgTransform());
-    console.log("feature.toObject(): ", this.feature.toObject());
-    console.log("fabric.Object:", fabric.Object);
-    console.log("fabric:", fabric);
-    console.log("feature.toSVG():", this.feature.toSVG());
-    */
-    var featureClone = this.feature.clone();
-//    console.log("featureClone.toSVG():", featureClone.toSVG());
-
-    var coords = canvas.getFeatureCoords(this.feature);
-
-    featureClone.set('left', coords.x).set('top', coords.y);
+    var featureClone = canvas.getCanvasSizedFeatureClone(this.feature);
     
     var svgString = featureClone.toSVG();
     svgString = svgString.replace(/\"/g, "'");
