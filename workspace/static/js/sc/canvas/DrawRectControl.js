@@ -63,8 +63,7 @@ sc.canvas.DrawRectControl.prototype.handleMousedown = function(opts) {
     
     this.viewport.registerHandledMouseEvent(event);
 
-    var canvasCoords = this.viewport.pageToCanvasCoord(event.pageX,
-                                                       event.pageY);
+    var canvasCoords = this.pageToCanvasCoord(event.pageX, event.pageY);
 
     this.startX = canvasCoords.x;
     this.startY = canvasCoords.y;
@@ -85,10 +84,11 @@ sc.canvas.DrawRectControl.prototype.handleMousedown = function(opts) {
 sc.canvas.DrawRectControl.prototype.handleMousemove = function(opts) {
     var event = opts.e;
 
+    var canvas = this.viewport.canvas;
+
     this.viewport.registerHandledMouseEvent(event);
     
-    var canvasCoords = this.viewport.pageToCanvasCoord(event.pageX,
-                                                            event.pageY);
+    var canvasCoords = this.pageToCanvasCoord(event.pageX, event.pageY);
 
     var x, y;
 
@@ -111,11 +111,9 @@ sc.canvas.DrawRectControl.prototype.handleMousemove = function(opts) {
     this.width = Math.abs(canvasCoords.x - this.startX);
     this.height = Math.abs(canvasCoords.y - this.startY);
 
-    var coord = this.viewport.canvas.toCenteredCanvasCoord(x, y);
-
     this.feature.set({
-        'left': coord.x + this.width / 2,
-        'top': coord.y + this.height / 2,
+        'left': (x + this.width / 2) * canvas.displayToActualSizeRatio + canvas.offset.x,
+        'top': (y + this.height / 2) * canvas.displayToActualSizeRatio + canvas.offset.y,
         'width': this.width,
         'height': this.height
     });
