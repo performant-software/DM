@@ -77,6 +77,7 @@ sc.canvas.DrawEllipseControl.prototype.handleMousedown = function(opts) {
     var ry = 0;
 
     this.feature = canvas.addEllipse(cx, cy, rx, ry, this.uri);
+    this.updateFeatureCoords();
 
     this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
     this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);

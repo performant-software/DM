@@ -72,6 +72,7 @@ sc.canvas.DrawRectControl.prototype.handleMousedown = function(opts) {
 
     this.feature = canvas.addRect(this.startX, this.startY,
                                   this.width, this.height, this.uri);
+    this.updateFeatureCoords();
 
     this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
     this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);
