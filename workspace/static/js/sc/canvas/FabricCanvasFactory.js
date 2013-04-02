@@ -69,10 +69,10 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
         }
         else {
             if (! canvas) {
-                var actualWidth = resource.getOneProperty(
-                    sc.canvas.FabricCanvas.RDF_ENUM.width);
-                var actualHeight = resource.getOneProperty(
-                    sc.canvas.FabricCanvas.RDF_ENUM.height);
+                var actualWidth = Number(resource.getOneProperty(
+                    sc.canvas.FabricCanvas.RDF_ENUM.width));
+                var actualHeight = Number(resource.getOneProperty(
+                    sc.canvas.FabricCanvas.RDF_ENUM.height));
 
                 if (actualWidth == null || actualHeight == null) {
                     return;
