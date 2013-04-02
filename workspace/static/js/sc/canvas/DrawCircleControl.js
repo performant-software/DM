@@ -74,6 +74,7 @@ sc.canvas.DrawCircleControl.prototype.handleMousedown = function(event) {
     var r = 0;
 
     this.feature = canvas.addCircle(cx, cy, r, this.uri);
+    this.updateFeatureCoords();
 
     this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
     this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);

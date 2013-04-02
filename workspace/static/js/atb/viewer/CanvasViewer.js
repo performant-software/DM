@@ -229,7 +229,7 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
                 'Annotate this marker'
             )
         ];
-        this.showHoverMenu(menuButtons, id);
+        this.showHoverMenu(menuButtons, uri);
     }
 };
 

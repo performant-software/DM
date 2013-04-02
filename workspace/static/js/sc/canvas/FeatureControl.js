@@ -40,6 +40,13 @@ sc.canvas.FeatureControl.prototype.resetFeature = function() {
     this.uri = this.databroker.createUuid();
 };
 
+sc.canvas.FeatureControl.prototype.updateFeatureCoords = function() {
+    this.feature.setCoords();
+    if (this.feature._calcDimensions) {
+        this.feature._calcDimensions();
+    }
+};
+
 /**
  * This method should be called when the shape of a feature is updated.
  */
@@ -48,10 +55,7 @@ sc.canvas.FeatureControl.prototype.updateFeature = function() {
                                       EVENT_TYPES.updateFeature, this.uri);
     event.feature = this.feature;
 
-    this.feature.setCoords();
-    if (this.feature._calcDimensions) {
-        this.feature._calcDimensions();
-    }
+    this.updateFeatureCoords();
 
     this.viewport.requestFrameRender();
 
