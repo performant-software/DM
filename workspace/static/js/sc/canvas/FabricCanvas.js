@@ -534,15 +534,11 @@ sc.canvas.FabricCanvas.prototype.addImage = function(src, size, opt_coords, opt_
             image.set('scaleY', size.height / image.get('height'));
         }
 
-        // This is asynchronous, so we need to worry about panning and zooming in the interim
+        this._scaleAndPositionNewFeature(image);
         image.set({
-            scaleX: image.get('scaleX') * this.displayToActualSizeRatio,
-            scaleY: image.get('scaleY') * this.displayToActualSizeRatio,
-            left: image.get('left') + this.offset.x,
-            top: image.get('top') + this.offset.y
+            left: image.getBoundingRectWidth() / 2 + x * this.displayToActualSizeRatio + this.offset.x,
+            top: image.getBoundingRectHeight() / 2 + y * this.displayToActualSizeRatio + this.offset.y
         });
-
-        this.setFeatureCoords(image, x, y);
 
         this.addFabricObject(image, src);
         this.sendObjectToBack(image);
@@ -955,6 +951,7 @@ sc.canvas.FabricCanvas.prototype.getDisplayToActualSizeRatio = function() {
 };
 
 sc.canvas.FabricCanvas.prototype.setDisplayToActualSizeRatio = function(ratio) {
+    goog.asserts.assert(ratio !== 0, 'Display to actual size ratio cannot be 0');
     ratio = Math.abs(ratio);
 
     goog.structs.forEach(this.objects, function(obj) {
@@ -970,6 +967,15 @@ sc.canvas.FabricCanvas.prototype.setDisplayToActualSizeRatio = function(ratio) {
     this.offset.y = (this.offset.y / this.displayToActualSizeRatio) * ratio;
 
     this.displayToActualSizeRatio = ratio;
+};
+
+sc.canvas.FabricCanvas.prototype._scaleAndPositionNewFeature = function(feature) {
+    feature.set({
+        scaleX: feature.get('scaleX') * this.displayToActualSizeRatio,
+        scaleY: feature.get('scaleY') * this.displayToActualSizeRatio,
+        left: feature.get('left') + this.offset.x,
+        top: feature.get('top') + this.offset.y
+    });
 };
 
 sc.canvas.FabricCanvas.prototype.getOffset = function() {
