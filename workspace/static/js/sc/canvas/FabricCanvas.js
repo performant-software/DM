@@ -241,6 +241,8 @@ sc.canvas.FabricCanvas.prototype.addTextBoxes = function(options_list) {;
             top: t.get('top') + renderedSize.height / 2
         });
 
+        this._scaleAndPositionNewFeature(t);
+
         this.textCanvas.remove(t);
         this.addFabricObject(t, options.uri);
     }
@@ -596,6 +598,8 @@ sc.canvas.FabricCanvas.prototype.addRect = function(x, y, width, height, uri) {
     });
     this.setFeatureCoords(rect, x, y);
 
+    this._scaleAndPositionNewFeature(rect);
+
     this.addFabricObject(rect, uri);
 
     return rect;
@@ -616,6 +620,8 @@ sc.canvas.FabricCanvas.prototype.addCircle = function(cx, cy, r, uri) {
         r: r
     });
     this.setFeatureCoords(circle, cx + r/2, cy + r/2);
+
+    this._scaleAndPositionNewFeature(circle);
 
     this.addFabricObject(circle, uri);
 
@@ -643,6 +649,8 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
         ry: ry
     });
 
+    this._scaleAndPositionNewFeature(ellipse);
+
     this.addFabricObject(ellipse, uri);
 
     return ellipse;
@@ -664,6 +672,8 @@ sc.canvas.FabricCanvas.prototype.addPolyline = function(points, uri) {
     var line = new fabric.Polyline(points);
     line.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
 
+    this._scaleAndPositionNewFeature(line);
+
     this.addFabricObject(line, uri);
 
     return line;
@@ -684,6 +694,8 @@ sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
 
     var polygon = new fabric.Polygon(points);
     polygon.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+
+    this._scaleAndPositionNewFeature(polygon);
 
     this.addFabricObject(polygon, uri);
 
@@ -973,9 +985,22 @@ sc.canvas.FabricCanvas.prototype._scaleAndPositionNewFeature = function(feature)
     feature.set({
         scaleX: feature.get('scaleX') * this.displayToActualSizeRatio,
         scaleY: feature.get('scaleY') * this.displayToActualSizeRatio,
-        left: feature.get('left') + this.offset.x,
-        top: feature.get('top') + this.offset.y
+        left: feature.get('left') * this.displayToActualSizeRatio + this.offset.x,
+        top: feature.get('top') * this.displayToActualSizeRatio + this.offset.y
     });
+};
+
+sc.canvas.FabricCanvas.prototype.getCanvasSizedFeatureClone = function(feature) {
+    var newFeature = feature.clone();
+
+    newFeature.set({
+        scaleX: feature.get('scaleX') / this.displayToActualSizeRatio,
+        scaleY: feature.get('scaleY') / this.displayToActualSizeRatio,
+        left: (feature.get('left') - this.offset.x) / this.displayToActualSizeRatio,
+        top: (feature.get('top') - this.offset.y) / this.displayToActualSizeRatio
+    });
+
+    return newFeature;
 };
 
 sc.canvas.FabricCanvas.prototype.getOffset = function() {

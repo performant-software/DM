@@ -89,6 +89,8 @@ sc.canvas.DrawEllipseControl.prototype.handleMousedown = function(opts) {
 sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(opts) {
     var event = opts.e;
 
+    var canvas = this.viewport.canvas;
+
     this.viewport.registerHandledMouseEvent(event);
     
     var canvasCoords = this.clientToCanvasCoord(event.clientX, event.clientY);
@@ -101,15 +103,15 @@ sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(opts) {
     var cx = this.x + rx;
     var cy = this.y + ry;
 
-    var coords = this.viewport.canvas.toCenteredCanvasCoord(cx, cy);
-
     this.feature.set({
-        'left': coords.x,
-        'top': coords.y,
+        'left': cx * canvas.displayToActualSizeRatio + canvas.offset.x,
+        'top': cy * canvas.displayToActualSizeRatio + canvas.offset.y,
         'rx': Math.abs(rx),
         'ry': Math.abs(ry),
-        'width': Math.abs(rx),
-        'height': Math.abs(ry)
+        'width': Math.abs(rx * 2),
+        'height': Math.abs(ry * 2),
+        'scaleX': canvas.displayToActualSizeRatio,
+        'scaleY': canvas.displayToActualSizeRatio
     });
 
     this.updateFeature();
