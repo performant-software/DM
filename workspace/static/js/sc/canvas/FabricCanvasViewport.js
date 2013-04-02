@@ -302,14 +302,9 @@ sc.canvas.FabricCanvasViewport.prototype.centerOnCanvasCoord = function(x, y) {
 };
 
 sc.canvas.FabricCanvasViewport.prototype.moveCanvasCoordToLayerCoord = function(canvasCoord, layerCoord) {
-    var canvasLayerCoord = {
-        x: canvasCoord.x * this.canvas.getDisplayToActualSizeRatio(),
-        y: canvasCoord.y * this.canvas.getDisplayToActualSizeRatio()
-    };
-
     this.canvas.setOffset(
-        canvasLayerCoord.x + layerCoord.x,
-        canvasLayerCoord.y + layerCoord.y
+        layerCoord.x - (canvasCoord.x * this.canvas.displayToActualSizeRatio),
+        layerCoord.y - (canvasCoord.y * this.canvas.displayToActualSizeRatio)
     );
 
     this.requestFrameRender();
