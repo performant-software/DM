@@ -474,12 +474,9 @@ sc.canvas.FabricCanvasViewport.prototype.pageToClientCoord = function(x, y) {
         x = x.x;
     }
 
-    var scrollTop = jQuery(window).scrollTop();
-    var scrollLeft = jQuery(window).scrollLeft();
-
     return {
-        'x': x - scrollLeft,
-        'y': y - scrollTop
+        'x': x - jQuery(window).scrollLeft(),
+        'y': y - jQuery(window).scrollTop()
     };
 };
 
@@ -489,12 +486,9 @@ sc.canvas.FabricCanvasViewport.prototype.clientToPageCoord = function(x, y) {
         x = x.x;
     }
 
-    var scrollTop = jQuery(window).scrollTop();
-    var scrollLeft = jQuery(window).scrollLeft();
-
     return {
-        'x': x + scrollLeft,
-        'y': y + scrollTop
+        'x': x + jQuery(window).scrollLeft(),
+        'y': y + jQuery(window).scrollTop()
     };
 };
 
