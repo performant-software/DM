@@ -16,7 +16,7 @@ def create_project(request):
         g.parse(data=request.body)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
-    project_uris
+    #project_uris
     
     validator = ProjectValidator(g, project)
     main_graph = ConjunctiveGraph(store=rdfstore(), identifier=default_identifier)

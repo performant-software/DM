@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.conf import settings
 from django.contrib.auth.models import User
 from json import dumps
+from semantic_store.views import projects
 
 @login_required
 def workspace(request):
@@ -23,5 +24,5 @@ def workspace(request):
                               {'js_users':dumps(users),}, 
                               context_instance=context, )
 
-
-    
+def prints(request):
+    return projects(request)

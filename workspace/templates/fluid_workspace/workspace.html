@@ -107,7 +107,7 @@
         <!--Title area-->
         <!--limit title length?-->
         <label id="titleLabel">Title:</label>
-        <input type="text" placeholder="New Project" id="title">
+        <input type="text" placeholder="New Project" class="title">
         
         <!--Description area in long block form-->
         <label>Description:</label>
@@ -137,7 +137,7 @@
       Currently, neither does anything but close the modal.-->
   <div class="modal-footer">
     <a href="#newProjectModal" class="btn" data-toggle="modal">Cancel</a>
-    <a href="#newProjectModal" class="btn btn-primary" data-toggle="modal" id="create">Create New Project</a>
+    <a href="#newProjectModal" onclick="sendData()" class="btn btn-primary" data-toggle="modal" id="create">Create New Project</a>
   </div>
 </div>
 
@@ -145,70 +145,10 @@
 
 {% block init_scripts %}
 <script type="text/javascript" >
-  /* Begin script for "tag" system for usernames
-   * Appends username from input field into corresponding paragraph
-   * MUST be placed before initWorkspace call or it doesn't respond
-   * Multiple elements; each has a description preceding
-  */
-
   var usernames = {{ js_users|safe }};
-  var addedUsers = [];
   var usr = $("#users");
-  var shift = false;
-
-  /* Ensures shift is down
-   * Shift+Return combo needed because the typeahead system uses Return
-  */
-  usr.keydown(function(e){
-    // Watches the shift key
-    if (e.which == 16) shift = true;
-
-    //Toggles off the "incorrect user" help text
-    $("#help").text("");
-  })
-
-  /* Script which adds users
-   * Usernames assigned to project are stored in addedUsers
-   * 'keyup' call ensures that the user has finished typing the username
-   * Looks for Shift+Return combination ONLY
-   * Checks for users already added
-   * Rejects invalid usernames
-   * ((Next Up: suggests usernames using typeahead))
-  */
-  usr.keyup(function(e){
-    if (e.which == 13&&shift){
-      var val = usr.val();
-      if (usernames.indexOf(val) != -1){
-        if (addedUsers.indexOf(val) == -1){
-          // "&nbsp" text allows 3 character widths between usernames
-          $(".users").append('<a href="#" onClick="removeUser(this)">' + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
-          addedUsers.push(val);
-
-          usr.val("");        
-        }
-        else{
-          $("#help").text("You already added this user.");
-        }
-      }
-      else{
-        $("#help").text("This is not a valid user.");
-      }
-    }
-    else if (e.which == 16) shift = false;
-  })
-
-  /* Removes the user from the array of users
-   * Removes the "tag" displaying the username
-   * The user may be added again by re-typing the username
-  */
-  function removeUser(e){
-    var u = $(e).attr("text");
-    addedUsers.pop(u);
-    e.remove();
-
-  }
-
-  // End script(s) for various elements of username tag system
+  // User "tagging" system abstracted to fluid_workspace.js
+  userTagSystem(usr, usernames);
 
   // Workspace setup code
   var staticUrl = "{{ STATIC_URL }}";
