@@ -180,3 +180,197 @@ var createCanvasViewer = function(uri) {
     viewer.setCanvasByUri(uri, null, null, null, null);
     return viewer;
 }
+
+/* Instantiate two variables with scope outside userTagSystem
+ * Need to be accesibly by removeUser as well
+ * Instatiated here because they belong with the "tag system"
+*/
+var addedUsers = [];
+var shift = false;
+
+/* Appends username from input field into corresponding paragraph
+ * Multiple elements; each has a description preceding
+ * usr: Username input field
+ * usernames: List of usernames in the database
+ * * usernames is passed with an json dump in render_to_response
+ * * ((Is there a better way to send things from python to js?))
+*/
+function userTagSystem(usr, usernames){
+
+    /* Ensures shift is down
+    * Shift+Return combo needed because the typeahead system uses Return
+    */
+    usr.keydown(function(e){
+        // Watches the shift key
+        if (e.which == 16) shift = true;
+
+        //Toggles off the "incorrect user" help text
+        $("#help").text("");
+    })
+
+    /* Script which adds users
+    * Usernames assigned to project are stored in addedUsers
+    * 'keyup' call ensures that the user has finished typing the username
+    * Looks for Shift+Return combination ONLY
+    * Checks for users already added
+    * Rejects invalid usernames
+    * ((Next Up: suggests usernames using typeahead))
+    */
+    usr.keyup(function(e){
+        if (e.which == 13&&shift){
+            var val = usr.val();
+            
+            if(val == clientApp.username){
+                $("#help").text("Your username is automatically added to the project.");
+            }
+            else{
+                if (usernames.indexOf(val) != -1){
+                    if (addedUsers.indexOf(val) == -1){
+                        // "&nbsp" text allows 3 character widths between usernames
+                        $(".users").append('<a href="#" onClick="removeUser(this)">' + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
+                        addedUsers.push(val);
+
+                        usr.val("");
+                    }
+                    else{
+                        $("#help").text("You already added this user.");
+                    }
+                }
+                else{
+                    $("#help").text("This is not a valid user.");
+                }
+            }
+        }
+        else if (e.which == 16) shift = false;
+    })
+}
+
+/* Removes the user from the array of users
+ * Removes the "tag" displaying the username
+ * e: html object - link with username as text
+ * The user may be added again by re-typing the username
+*/
+function removeUser(e){
+    var u = $(e).attr("text");
+    addedUsers.splice(addedUsers.indexOf(u) - 1, 1);
+    e.remove();
+}
+
+/* Collects data from new project modal
+ * Clears the data so that another project can be created without refresh
+ * Serializes data and sends POST request /workspace/project_forward/
+ * * POST CURRENTLY RETURNS 500 ERROR
+ * * (final create_project method is unfinished)
+*/
+function sendData(){
+    addedUsers.push(clientApp.username);
+    //Collect data
+    var t = $(".title"), d = $("#description");
+    /*
+    console.log("Title:", t.val());
+    console.log("Description:", d.val());
+    console.log("Users:", addedUsers);
+    */
+
+    var data = $.rdf.databank([], { namespaces: {
+                                    ore: "http://www.openarchives.org/ore/terms/", 
+                                    dc: "http://purl.org/dc/elements/1.1/", 
+                                    dcterms: "http://purl.org/dc/terms/",
+                                    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
+                                    dcmitype: "http://purl.org/dc/dcmitype/",
+                                    }
+                                  });
+
+    //Create UUID for new project
+    var p = goog.global.databroker.createUuid();
+
+    if(t.val() != ""){
+        if (d.val() != ""){
+            //Link user(s) and project
+            var db = clientApp.databroker;
+            for (var i = 0; i < addedUsers.length; i++) {
+                var u = db.restUri(null, db.RESTYPE.user, addedUsers[i], null);
+                data.add("<" + u + "> ore:aggregates <" + p + ">");
+            };
+
+            //Give project title
+            data.add('<' + p + '> dc:title "' + t.val() + '"');
+
+            //Give project description
+            data.add('<' + p + '> dcterms:description "' + d.val() + '"');
+
+            //Set types on project
+            data.add('<' + p + '> rdf:type dcmitype:Collection');
+            data.add('<' + p + '> rdf:type ore:Aggregation');
+
+            //$.post('<url>', data [string])
+            var postdata = data.dump({format: 'application/rdf+xml', 
+                                      serialize:true});
+            //console.log("data:", postdata);
+
+            /* Part of csrf-token setup
+             * Copied from Django documentation
+             * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+            */
+            $.ajaxSetup({
+                crossDomain: false,
+                beforeSend: function(xhr, settings) {
+                    if (!csrfSafeMethod(settings.type)) {
+                        xhr.setRequestHeader("X-CSRFToken", 
+                                             getCookie("csrftoken"));
+                    }
+                }
+            });
+            
+            /* For some reason the following line doesn't send request properly
+             * * Yields 500 error with "global request not defined" as cause
+             * * Abstracting it one level fixes that problem                   
+             * 'project_forward/' links to a method that calls projects (/store/projects/)
+            */
+            //$.post('/store/projects/', postdata);
+            $.post('project_forward/', postdata);
+            console.log(postdata);
+
+        }
+
+        else{
+            console.log("Your project needs a description.")
+        }
+    }
+
+    else{
+        console.log("Your project needs a title.")
+    }
+
+
+    //Clear data
+    t.val("");
+    d.val("");
+    addedUsers = [];
+    $(".users").text("");
+}
+
+/* The following two methods are copied from Django documentation
+ * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+ * Necessary to avoid 403 error when posting data
+*/
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+};
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
