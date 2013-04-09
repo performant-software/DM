@@ -64,7 +64,6 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
     /**
      * @type {sc.canvas.FabricCanvasViewport}
      */
-
     this.viewport = null; 
 
     this.segmentUris = new goog.structs.Set();
@@ -119,7 +118,8 @@ sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES = {
     fill: 'rgba(15, 108, 214, 0.6)',
     stroke: 'rgba(3, 75, 158, 0.7)',
     strokeWidth: 5,
-    selectable: false
+    selectable: false,
+    perPixelTargetFind: true
 };
 
 sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
@@ -530,6 +530,7 @@ sc.canvas.FabricCanvas.prototype.addImage = function(src, size, opt_coords, opt_
         this.imageSrcsInProgress.remove(src);
 
         image.set('selectable', false);
+        image.set('perPixelTargetFind', false);
 
         if (! size.isEmpty()) {
             image.set('scaleX', size.width / image.get('width'));
@@ -656,6 +657,81 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
     return ellipse;
 };
 
+sc.canvas.FabricCanvas.getPointsBoundingBox = function(points) {
+    var fabricPoints = [];
+    goog.structs.forEach(points, function(pt) {
+        fabricPoints.push(new fabric.Point(pt.x, pt.y));
+    }, this);
+
+    var utilMin = fabric.util.array.min;
+    var utilMax = fabric.util.array.max;
+
+    // Based on fabric js pencil brush implementation
+    var xBounds = [];
+    var yBounds = [];
+    var p1 = fabricPoints[0];
+    var p2 = fabricPoints[1];
+    var startPoint = p1;
+
+    for (var i = 1, len = fabricPoints.length; i < len; i++) {
+        var midPoint = p1.midPointFrom(p2);
+        // with startPoint, p1 as control point, midpoint as end point
+        xBounds.push(startPoint.x);
+        xBounds.push(midPoint.x);
+        yBounds.push(startPoint.y);
+        yBounds.push(midPoint.y);
+
+        p1 = fabricPoints[i];
+        p2 = fabricPoints[i+1];
+        startPoint = midPoint;
+    }
+
+    xBounds.push(p1.x);
+    yBounds.push(p1.y);
+
+    return {
+        minx: utilMin(xBounds),
+        miny: utilMin(yBounds),
+        maxx: utilMax(xBounds),
+        maxy: utilMax(yBounds)
+    };
+};
+
+sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smooth, opt_boundingBox) {
+    var fabricPoints = [];
+    goog.structs.forEach(points, function(pt) {
+        fabricPoints.push(new fabric.Point(pt.x, pt.y));
+    }, this);
+
+    var boundingBox = opt_boundingBox || sc.canvas.FabricCanvas.getPointsBoundingBox(points);
+
+    var pathCommands = [];
+    var p1 = new fabric.Point(fabricPoints[0].x - boundingBox.minx, fabricPoints[0].y - boundingBox.miny);
+    if (points.length > 1) {
+        var p2 = new fabric.Point(fabricPoints[1].x - boundingBox.minx, fabricPoints[1].y - boundingBox.miny);
+    }
+
+    pathCommands.push('M ', fabricPoints[0].x - boundingBox.minx, ' ', fabricPoints[0].y - boundingBox.miny, ' ');
+    for (var i = 1, len = fabricPoints.length; i < len; i++) {
+        // p1 is our bezier control point
+        // midpoint is our endpoint
+        // start point is p(i-1) value.
+        if (opt_smooth) {
+            var midPoint = p1.midPointFrom(p2);
+            path.push('Q ', p1.x, ' ', p1.y, ' ', midPoint.x, ' ', midPoint.y, ' ');
+        }
+        else {
+            pathCommands.push('L ', p1.x, ' ', p1.y, ' ');
+        }
+        p1 = new fabric.Point(fabricPoints[i].x - boundingBox.minx, fabricPoints[i].y - boundingBox.miny);
+        if ((i+1) < fabricPoints.length) {
+            p2 = new fabric.Point(fabricPoints[i+1].x - boundingBox.minx, fabricPoints[i+1].y - boundingBox.miny);
+        }
+    }
+    pathCommands.push('L ', p1.x, ' ', p1.y, ' ');
+    return pathCommands.join('');
+};
+
 /**
  * Adds a line or polyline to the canvas.
  *
@@ -667,8 +743,6 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
  * @return {fabric.Path} The fabric element created.
  */
 sc.canvas.FabricCanvas.prototype.addPolyline = function(points, uri) {
-    points = this.originToCenterPoints(points);
-
     var line = new fabric.Polyline(points);
     line.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
 
@@ -677,6 +751,17 @@ sc.canvas.FabricCanvas.prototype.addPolyline = function(points, uri) {
     this.addFabricObject(line, uri);
 
     return line;
+};
+
+sc.canvas.FabricCanvas.prototype.addPath = function(pathCommands, uri) {
+    var path = new fabric.Path(pathCommands);
+    path.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+
+    this._scaleAndPositionNewFeature(path);
+
+    this.addFabricObject(path, uri);
+
+    return path;
 };
 
 /**
@@ -690,8 +775,6 @@ sc.canvas.FabricCanvas.prototype.addPolyline = function(points, uri) {
  * @return {fabric.Path} The fabric element created.
  */
 sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
-    points = this.originToCenterPoints(points);
-
     var polygon = new fabric.Polygon(points);
     polygon.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
 
