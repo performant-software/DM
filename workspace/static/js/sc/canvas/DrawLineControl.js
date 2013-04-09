@@ -242,14 +242,13 @@ sc.canvas.DrawLineControl.prototype.updateLine = function(points) {
     var boundingBox = sc.canvas.FabricCanvas.getPointsBoundingBox(layerPoints);
 
     var canvas = this.viewport.canvas;
-    canvas.removeFabricObject(this.feature, true);
-    this.feature = canvas.addPath(
+    this.feature = canvas.updatePath(
+        this.feature,
         sc.canvas.FabricCanvas.convertPointsToSVGPathCommands(
             this.normalizePoints(points),
             null,
             boundingBox
-        ),
-        this.uri
+        )
     );
 
     this.feature.set({

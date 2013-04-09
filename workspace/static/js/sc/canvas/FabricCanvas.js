@@ -764,6 +764,20 @@ sc.canvas.FabricCanvas.prototype.addPath = function(pathCommands, uri) {
     return path;
 };
 
+sc.canvas.FabricCanvas.prototype.updatePath = function(path, pathCommands) {
+    this.removeFabricObject(path, true);
+    var uri = this.getFabricObjectUri(path);
+
+    path = new fabric.Path(pathCommands);
+    path.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+
+    this._scaleAndPositionNewFeature(path);
+
+    this.addFabricObject(path, uri, true);
+
+    return path;
+};
+
 /**
  * Adds a polygon to the canvas.
  *
