@@ -140,6 +140,10 @@ sc.canvas.FabricCanvasViewport.prototype.registerHandledMouseEvent = function(op
     else {
         this.timeOfLastHandledClick = goog.now();
     }
+
+    if (goog.isFunction(opt_time.stopPropagation)) {
+        opt_time.stopPropagation();
+    }
 };
 
 /**

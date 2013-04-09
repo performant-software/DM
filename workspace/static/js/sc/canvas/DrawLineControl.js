@@ -139,20 +139,20 @@ sc.canvas.DrawLineControl.prototype.handleMouseup = function(event) {
     var viewportDiv = this.viewport.getElement();
     var canvas = this.viewport.canvas;
 
-    var canvasCoords = this.clientToCanvasCoord(event.clientX, event.clientY);
+    var canvasCoord = this.clientToCanvasCoord(event.clientX, event.clientY);
 
     if (this.useDragToDraw) {
-        this.points.push(canvasCoords);
+        this.points.push(canvasCoord);
         this.finishDrawFeature();
     }
     else {
         if (this.isFirstClick()) {
-            this.createInitialLine(canvasCoords);
+            this.createInitialLine(canvasCoord);
 
             jQuery(viewportDiv).bind('mousemove', this.proxiedHandleMousemove);
         }
         else {
-            this.points.push(canvasCoords);
+            this.points.push(canvasCoord);
         }
     }
 };
@@ -172,23 +172,14 @@ sc.canvas.DrawLineControl.prototype.createInitialLine = function(canvasCoord) {
 
     this.points.push(canvasCoord);
     
-    this.feature = canvas.addPolyline([canvasCoord], this.uri);
+    this.feature = canvas.addPath([], this.uri);
     this.feature.set({
-        top: canvasCoord.y - canvas.group.get('height') / 2,
-        left: canvasCoord.x - canvas.group.get('width') / 2
+        top: canvasCoord.y * canvas.displayToActualSizeRatio + canvas.offset.x,
+        left: canvasCoord.x * canvas.displayToActualSizeRatio + canvas.offset.y,
+        scaleX: canvas.displayToActualSizeRatio,
+        scaleY: canvas.displayToActualSizeRatio
     });
-};
-
-/**
- * Aliases the sc.canvas.Canvas.createPathCommandsFromPoints function with the
- * closePath param set to false.
- *
- * @param {Array.<Object>} points An array of canvas coordinates.
- * @return {string} The svg path commands.
- */
-sc.canvas.DrawLineControl.prototype.createPathCommandsFromPoints = function(
-                                                                    points) {
-    return this.viewport.canvas.createPathCommandsFromPoints(points, false);
+    this.updateFeatureCoords();
 };
 
 /**
@@ -230,7 +221,7 @@ sc.canvas.DrawLineControl.prototype.normalizePoints = function(points) {
         point.x -= initialPoint.x;
         point.y -= initialPoint.y;
 
-        newPoints.push(point)
+        newPoints.push(point);
     }
 
     for (var i=newPoints.length - 1; i>=0; i--) {
@@ -243,21 +234,28 @@ sc.canvas.DrawLineControl.prototype.normalizePoints = function(points) {
 };
 
 sc.canvas.DrawLineControl.prototype.updateLine = function(points) {
-    points = this.normalizePoints(points);
+    var layerPoints = [];
+    goog.structs.forEach(points, function(point) {
+        layerPoints.push(this.viewport.canvasToLayerCoord(point));
+    }, this);
 
-    var initialPoint = this.points[0];
+    var boundingBox = sc.canvas.FabricCanvas.getPointsBoundingBox(layerPoints);
 
-    this.feature.set('points', points);
-    this.feature.setCoords();
-    this.feature._calcDimensions();
-
-    this.updateFeature();
-};
-
-sc.canvas.DrawLineControl.prototype.updatePath = function(commands) {
     var canvas = this.viewport.canvas;
+    canvas.removeFabricObject(this.feature, true);
+    this.feature = canvas.addPath(
+        sc.canvas.FabricCanvas.convertPointsToSVGPathCommands(
+            this.normalizePoints(points),
+            null,
+            boundingBox
+        ),
+        this.uri
+    );
 
-    this.feature = canvas.updatePath(this.feature, commands);
+    this.feature.set({
+        left: boundingBox.minx + ((boundingBox.maxx - boundingBox.minx) / 2),
+        top: boundingBox.miny + ((boundingBox.maxy - boundingBox.miny) / 2)
+    });
 
     this.updateFeature();
 };
