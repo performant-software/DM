@@ -17,6 +17,7 @@ goog.require('sc.canvas.FabricCanvas');
 goog.require('atb.viewer.ViewerGrid');
 goog.require('atb.viewer.ViewerContainer');
 
+
 var clientApp = null;
 var glasspane = null;
 var workingResourcesViewer = null;
@@ -285,57 +286,50 @@ function sendData(){
     var p = goog.global.databroker.createUuid();
 
     if(t.val() != ""){
-        if (d.val() != ""){
-            //Link user(s) and project
-            var db = clientApp.databroker;
-            for (var i = 0; i < addedUsers.length; i++) {
-                var u = db.restUri(null, db.RESTYPE.user, addedUsers[i], null);
-                data.add("<" + u + "> ore:aggregates <" + p + ">");
-            };
+        //Link user(s) and project
+        var db = clientApp.databroker;
+        for (var i = 0; i < addedUsers.length; i++) {
+            var u = db.restUri(null, db.RESTYPE.user, addedUsers[i], null);
+            data.add("<" + u + "> ore:aggregates <" + p + ">");
+        };
 
-            //Give project title
-            data.add('<' + p + '> dc:title "' + t.val() + '"');
+        //Give project title
+        data.add('<' + p + '> dc:title "' + t.val() + '"');
 
-            //Give project description
-            data.add('<' + p + '> dcterms:description "' + d.val() + '"');
+        //Give project description
+        data.add('<' + p + '> dcterms:description "' + d.val() + '"');
 
-            //Set types on project
-            data.add('<' + p + '> rdf:type dcmitype:Collection');
-            data.add('<' + p + '> rdf:type ore:Aggregation');
+        //Set types on project
+        data.add('<' + p + '> rdf:type dcmitype:Collection');
+        data.add('<' + p + '> rdf:type ore:Aggregation');
 
-            //$.post('<url>', data [string])
-            var postdata = data.dump({format: 'application/rdf+xml', 
-                                      serialize:true});
-            //console.log("data:", postdata);
+        //$.post('<url>', data [string])
+        var postdata = data.dump({format: 'application/rdf+xml', 
+                                  serialize:true});
+        //console.log("data:", postdata);
 
-            /* Part of csrf-token setup
-             * Copied from Django documentation
-             * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-            */
-            $.ajaxSetup({
-                crossDomain: false,
-                beforeSend: function(xhr, settings) {
-                    if (!csrfSafeMethod(settings.type)) {
-                        xhr.setRequestHeader("X-CSRFToken", 
-                                             getCookie("csrftoken"));
-                    }
+        /* Part of csrf-token setup
+         * Copied from Django documentation
+         * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+        */
+        $.ajaxSetup({
+            crossDomain: false,
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type)) {
+                    xhr.setRequestHeader("X-CSRFToken", 
+                                         getCookie("csrftoken"));
                 }
-            });
-            
-            /* For some reason the following line doesn't send request properly
-             * * Yields 500 error with "global request not defined" as cause
-             * * Abstracting it one level fixes that problem                   
-             * 'project_forward/' links to a method that calls projects (/store/projects/)
-            */
-            //$.post('/store/projects/', postdata);
-            $.post('project_forward/', postdata);
-            console.log(postdata);
-
-        }
-
-        else{
-            console.log("Your project needs a description.")
-        }
+            }
+        });
+        
+        /* For some reason the following line doesn't send request properly
+         * * Yields 500 error with "global request not defined" as cause
+         * * Abstracting it one level fixes that problem                   
+         * 'project_forward/' links to a method that calls projects (/store/projects/)
+        */
+        //$.post('/store/projects/', postdata);
+        $.post('project_forward/', postdata);
+        console.log(postdata);
     }
 
     else{
