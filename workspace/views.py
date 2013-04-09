@@ -25,4 +25,5 @@ def workspace(request):
                               context_instance=context, )
 
 def prints(request):
-    return projects(request)
+    projects(request)
+    return HttpResponse("Success")

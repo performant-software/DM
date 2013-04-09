@@ -2,24 +2,83 @@ from django.db import transaction
 from django.http import HttpResponse
 
 from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef
+import rdflib
 
 from .validators import ProjectValidator
 from .rdfstore import rdfstore
 from .namespaces import ns
 
+from semantic_store.models import ProjectPermission
+from semantic_store.namespaces import NS, bind_namespaces
+from semantic_store.projects import create_project_graph
+from semantic_store.permissions import Permission
+
+from settings_local import SITE_ATTRIBUTES
+
+from django.contrib.auth.models import User
 
 
-def create_project(request):
+def create_project_from_request(request):
     g = Graph()
+    bind_namespaces(g)
     try:
         g.parse(data=request.body)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
-    #project_uris
-    
-    validator = ProjectValidator(g, project)
-    main_graph = ConjunctiveGraph(store=rdfstore(), identifier=default_identifier)
+
+    #Register plugins for querying graph
+    rdflib.plugin.register(
+    'sparql', rdflib.query.Processor,
+    'rdfextras.sparql.processor', 'Processor')
+    rdflib.plugin.register(
+    'sparql', rdflib.query.Result,
+    'rdfextras.sparql.query', 'SPARQLQueryResult')
+
+    #Query for the new project URI
+    query = g.query("""SELECT ?uri ?user
+                    WHERE {
+                        ?uri rdf:type dcmitype:Collection .
+                        ?uri rdf:type ore:Aggregation .
+                        ?user ore:aggregates ?uri .
+                    }""", initNs = ns)
+    indentifier = None
+    user = None
+     
+    for q in query:
+        t = tuple(q)
+        identifier = t[0]
+
+        # This method takes the username out of the uri
+        # This method fails if "/" is an acceptable character in a username
+        name = None
+        for n in t[1].split("/"):
+            name = n
+        user = User.objects.get(username = name)
+    host = SITE_ATTRIBUTES.get("hostname") 
+
+
+    create_project_graph(g, indentifier, identifier, host, user.email)
+    ProjectPermission.objects.create(identifier=identifier,
+                                     user=user,
+                                     permission=Permission.read_write)
+    #main_graph = ConjunctiveGraph(store=rdfstore(), identifier=default_identifier)
+
+
+# Consider abstracting above method to this one so that the management command
+# is welcome to call this method with the given parameters (to avoid duplication)
+# errors/inconsistent coding 
+def create_project(user, project_identifier, title, host):
+    g = Graph()
+    bind_namespaces(g)
+    project = BNode()
+    title = Literal("Default project")
+    g.add((project, NS.rdf['type'], NS.dcmitype['Collection']))
+    g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
+    g.add((project, NS.dc['title'], title))
+    create_project_graph(g, project, project_identifier, host, user.email)
+    ProjectPermission.objects.create(identifier=project_identifier,
+                                     user=user,
+                                     permission=Permission.read_write)
 
 def read_project(request, uri):
     pass

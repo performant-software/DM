@@ -18,7 +18,7 @@ from .namespaces import bind_namespaces, ns
 from .validators import AnnotationValidator
 from .annotation_views import create_or_update_annotations, get_annotations, \
     search_annotations
-from .project_views import create_project, read_project, update_project, delete_project
+from .project_views import create_project_from_request, read_project, update_project, delete_project
 
 
 def repositories(request, uri=None):
@@ -31,7 +31,7 @@ def projects(request, uri=None):
         if uri:
             return HttpResponse(status=400, 
                                 content="Project create request may not specify URI.")
-        return create_project(request) 
+        return create_project_from_request(request) 
     elif request.method == 'GET':
         if not uri:
             return HttpResponse(status=400, 
