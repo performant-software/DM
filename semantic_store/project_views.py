@@ -17,6 +17,8 @@ from settings_local import SITE_ATTRIBUTES
 
 from django.contrib.auth.models import User
 
+from rdflib import BNode, Literal
+
 
 def create_project_from_request(request):
     g = Graph()
@@ -54,27 +56,26 @@ def create_project_from_request(request):
         for n in t[1].split("/"):
             name = n
         user = User.objects.get(username = name)
-    host = SITE_ATTRIBUTES.get("hostname") 
 
-
-    create_project_graph(g, indentifier, identifier, host, user.email)
-    ProjectPermission.objects.create(identifier=identifier,
+        #create_project(user, indentifier, host, title = title, description = description)
+        ProjectPermission.objects.create(identifier=identifier,
                                      user=user,
                                      permission=Permission.read_write)
-    #main_graph = ConjunctiveGraph(store=rdfstore(), identifier=default_identifier)
+        main_graph = ConjunctiveGraph(store=rdfstore(), identifier=identifier)
 
 
 # Consider abstracting above method to this one so that the management command
 # is welcome to call this method with the given parameters (to avoid duplication)
 # errors/inconsistent coding 
-def create_project(user, project_identifier, title, host):
+def create_project(user, project_identifier, host, title = Literal("Default project"), description = None):
     g = Graph()
     bind_namespaces(g)
     project = BNode()
-    title = Literal("Default project")
     g.add((project, NS.rdf['type'], NS.dcmitype['Collection']))
     g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
-    g.add((project, NS.dc['title'], title))
+    g.add((project, NS.dc['title'], Literal(title)))
+    if (description):
+        g.add((project, NS.dcterm['description'], description))
     create_project_graph(g, project, project_identifier, host, user.email)
     ProjectPermission.objects.create(identifier=project_identifier,
                                      user=user,
