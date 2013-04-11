@@ -658,36 +658,16 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
 };
 
 sc.canvas.FabricCanvas.getPointsBoundingBox = function(points) {
-    var fabricPoints = [];
-    goog.structs.forEach(points, function(pt) {
-        fabricPoints.push(new fabric.Point(Number(pt.x), Number(pt.y)));
-    }, this);
-
     var utilMin = fabric.util.array.min;
     var utilMax = fabric.util.array.max;
 
-    // Based on fabric js pencil brush implementation
     var xBounds = [];
     var yBounds = [];
-    var p1 = fabricPoints[0];
-    var p2 = fabricPoints[1];
-    var startPoint = p1;
 
-    for (var i = 1, len = fabricPoints.length; i < len; i++) {
-        var midPoint = p1.midPointFrom(p2);
-        // with startPoint, p1 as control point, midpoint as end point
-        xBounds.push(startPoint.x);
-        xBounds.push(midPoint.x);
-        yBounds.push(startPoint.y);
-        yBounds.push(midPoint.y);
-
-        p1 = fabricPoints[i];
-        p2 = fabricPoints[i+1];
-        startPoint = midPoint;
-    }
-
-    xBounds.push(p1.x);
-    yBounds.push(p1.y);
+    goog.structs.forEach(points, function(point) {
+        xBounds.push(Number(point.x));
+        yBounds.push(Number(point.y));
+    }, this);
 
     return {
         minx: utilMin(xBounds),
