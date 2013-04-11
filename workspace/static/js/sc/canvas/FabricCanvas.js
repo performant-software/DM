@@ -660,7 +660,7 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
 sc.canvas.FabricCanvas.getPointsBoundingBox = function(points) {
     var fabricPoints = [];
     goog.structs.forEach(points, function(pt) {
-        fabricPoints.push(new fabric.Point(pt.x, pt.y));
+        fabricPoints.push(new fabric.Point(Number(pt.x), Number(pt.y)));
     }, this);
 
     var utilMin = fabric.util.array.min;
