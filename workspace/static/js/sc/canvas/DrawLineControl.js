@@ -252,8 +252,8 @@ sc.canvas.DrawLineControl.prototype.updateLine = function(points) {
     );
 
     this.feature.set({
-        left: boundingBox.minx + (this.feature.getBoundingRectWidth() / 2),
-        top: boundingBox.miny + (this.feature.getBoundingRectHeight() / 2)
+        left: boundingBox.minx + ((boundingBox.maxx - boundingBox.minx) / 2),
+        top: boundingBox.miny + ((boundingBox.maxy - boundingBox.miny) / 2)
     });
 
     this.updateFeature();
