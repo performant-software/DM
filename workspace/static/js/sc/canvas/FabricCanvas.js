@@ -697,7 +697,7 @@ sc.canvas.FabricCanvas.getPointsBoundingBox = function(points) {
     };
 };
 
-sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smooth, opt_boundingBox) {
+sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smooth, opt_boundingBox, opt_close) {
     var fabricPoints = [];
     goog.structs.forEach(points, function(pt) {
         fabricPoints.push(new fabric.Point(pt.x, pt.y));
@@ -729,6 +729,11 @@ sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smo
         }
     }
     pathCommands.push('L ', p1.x, ' ', p1.y, ' ');
+
+    if (opt_close) {
+        pathCommands.push('Z');
+    }
+
     return pathCommands.join('');
 };
 

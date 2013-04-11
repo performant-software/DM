@@ -41,6 +41,33 @@ sc.canvas.DrawPolygonControl.prototype.createInitialLine = function(canvasCoord)
     this.updateFeatureCoords();
 };
 
+sc.canvas.DrawPolygonControl.prototype.updateLine = function(points) {
+    var layerPoints = [];
+    goog.structs.forEach(points, function(point) {
+        layerPoints.push(this.viewport.canvasToLayerCoord(point));
+    }, this);
+
+    var boundingBox = sc.canvas.FabricCanvas.getPointsBoundingBox(layerPoints);
+
+    var canvas = this.viewport.canvas;
+    this.feature = canvas.updatePath(
+        this.feature,
+        sc.canvas.FabricCanvas.convertPointsToSVGPathCommands(
+            this.normalizePoints(points),
+            null,
+            boundingBox,
+            true
+        )
+    );
+
+    this.feature.set({
+        left: boundingBox.minx + ((boundingBox.maxx - boundingBox.minx) / 2),
+        top: boundingBox.miny + ((boundingBox.maxy - boundingBox.miny) / 2)
+    });
+
+    this.updateFeature();
+};
+
 sc.canvas.DrawPolygonControl.prototype.normalizePoints = function(points) {
     var newPoints = [];
 
