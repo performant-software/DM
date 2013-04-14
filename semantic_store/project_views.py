@@ -28,7 +28,7 @@ def create_project_from_request(request):
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
-    #Register plugins for querying graph
+    # Register plugins for querying graph
     rdflib.plugin.register(
     'sparql', rdflib.query.Processor,
     'rdfextras.sparql.processor', 'Processor')
@@ -36,15 +36,37 @@ def create_project_from_request(request):
     'sparql', rdflib.query.Result,
     'rdfextras.sparql.query', 'SPARQLQueryResult')
 
-    #Query for the new project URI
-    query = g.query("""SELECT ?uri ?user
+    host = SITE_ATTRIBUTES['hostname']
+
+    # Query for the new project URI, added user(s), and title
+    query = g.query("""SELECT ?uri ?user ?title
                     WHERE {
                         ?uri rdf:type dcmitype:Collection .
                         ?uri rdf:type ore:Aggregation .
                         ?user ore:aggregates ?uri .
+                        ?uri dc:title ?title .
                     }""", initNs = ns)
-    indentifier = None
-    user = None
+
+    # Description needs to be referenced inside the try-except and outside
+    # Declared as None type because create_project knows not to do anything
+    # # if no description is found    
+    description = None
+
+    # Query for description wrapped in try-except statement
+    # Description is an optional field, so 
+    try:
+        query2 = g.query("""SELECT ?description
+                         WHERE{
+                            ?uri rdf:type ore:Aggregation .
+                            ?uri dcterms:description ?description .
+                         }""", initNs = ns)
+
+        for q in query2:
+            t = tuple(q)
+            descripton = t[0]
+    except Exception, e:
+        pass
+
      
     for q in query:
         t = tuple(q)
@@ -57,16 +79,13 @@ def create_project_from_request(request):
             name = n
         user = User.objects.get(username = name)
 
-        #create_project(user, indentifier, host, title = title, description = description)
-        ProjectPermission.objects.create(identifier=identifier,
-                                     user=user,
-                                     permission=Permission.read_write)
-        main_graph = ConjunctiveGraph(store=rdfstore(), identifier=identifier)
+        title = t[2]
+
+        create_project(user, identifier, host, title = title, description = description)
+        # If you want to see/manipulated the new data, uncomment the following
+        #main_graph = ConjunctiveGraph(store=rdfstore(), identifier=identifier)
 
 
-# Consider abstracting above method to this one so that the management command
-# is welcome to call this method with the given parameters (to avoid duplication)
-# errors/inconsistent coding 
 def create_project(user, project_identifier, host, title = Literal("Default project"), description = None):
     g = Graph()
     bind_namespaces(g)
@@ -75,8 +94,10 @@ def create_project(user, project_identifier, host, title = Literal("Default proj
     g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
     g.add((project, NS.dc['title'], Literal(title)))
     if (description):
-        g.add((project, NS.dcterm['description'], description))
+        g.add((project, NS.dcterm['description'], Literal(description)))
+
     create_project_graph(g, project, project_identifier, host, user.email)
+
     ProjectPermission.objects.create(identifier=project_identifier,
                                      user=user,
                                      permission=Permission.read_write)
