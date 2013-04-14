@@ -1446,4 +1446,47 @@ sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoT
     return anno;
 };
 
+/* Setter & getter methods for current project
+ * * (variable already existed)
+ * Also created ability to add projects to "allProjects"
+ * * (allows cross-check that project is valid in setCurrentProject)
+ * * Method should be added to newProject modal's project creation
+*/
 
+
+sc.data.Databroker.prototype.getCurrentProject = function() {
+    return this.currentProject;
+};
+
+sc.data.Databroker.prototype.setCurrentProject = function(uri) {
+    var isValid = false
+    for (var i = 0; i < this.allProjects.length; i++) {
+        if (this.allProjects[i] == uri) isValid = true;
+    };
+    
+    if (isValid) this.currentProject = uri;
+    
+    /* Returning "false" when invalid project allows for error to be manipulated
+     * and/or otherwise formatted when the function is used
+    */
+    return isValid;
+};
+
+sc.data.Databroker.prototype.getAllProjects = function() {
+    return this.allProjects;
+};
+
+sc.data.Databroker.prototype.addNewProject = function(uri) {
+    var isNewProject = true;
+    for (var i = 0; i < this.allProjects.length; i++) {
+        if (this.allProjects[i] == uri) isNewProject = false;
+    };
+
+    if (isNewProject) this.allProjects.push(uri);
+
+    return isNewProject;
+};
+
+
+
+    
