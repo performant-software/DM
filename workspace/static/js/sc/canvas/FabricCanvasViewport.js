@@ -27,7 +27,7 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
         selection: false,
         defaultCursor: 'inherit',
         hoverCursor: 'inherit',
-        renderOnAddittion: false
+        renderOnAddition: false
     });
     this.baseDiv.appendChild(canvasElement);
     this.baseDiv.appendChild(this.fabricCanvas.getSelectionElement());
