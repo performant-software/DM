@@ -1340,8 +1340,8 @@ sc.data.Databroker.prototype.sendResource = function(uri, method) {
         url = this.restUrl(this.currentProject, resType, null, {});
     }
 
-    console.log("resource.getTypes():", resource.getTypes());
-    console.log("url:", url);
+    // console.log("resource.getTypes():", resource.getTypes());
+    // console.log("url:", url);
 
     var dataDump = this.dumpQuads(quadsToPost);
 
