@@ -131,9 +131,7 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     if (! this.shouldSaveChanges) {
         return;
     }
-    /*
-    var svgStringEscaped = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
-    */
+    
     var svgString = this.exportFeatureToSvg();
     console.log("svgString: ", svgString);
     

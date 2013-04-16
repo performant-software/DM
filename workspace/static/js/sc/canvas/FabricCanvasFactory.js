@@ -59,9 +59,13 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
     var canvas = null;
 
     var withResource = function(resource) {
-        if (!(resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.width) &&
-            resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.height)) &&
-            deferredResource.state() == 'resolved') {
+        if (
+                !(
+                    resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.width) &&
+                    resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.height)
+                ) &&
+                deferredResource.state() == 'resolved'
+            ) {
             deferredCanvas.rejectWith(
                 canvas,
                 ['Manuscript ' + uri + ' has no width and height data', canvas]
@@ -69,16 +73,18 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
         }
         else {
             if (! canvas) {
-                var actualWidth = Number(resource.getOneProperty(
-                    sc.canvas.FabricCanvas.RDF_ENUM.width));
-                var actualHeight = Number(resource.getOneProperty(
-                    sc.canvas.FabricCanvas.RDF_ENUM.height));
+                var width = Number(resource.getOneProperty(
+                    sc.canvas.FabricCanvas.RDF_ENUM.width
+                ));
+                var height = Number(resource.getOneProperty(
+                    sc.canvas.FabricCanvas.RDF_ENUM.height
+                ));
 
-                if (actualWidth == null || actualHeight == null) {
+                if (width == null || height == null) {
                     return;
                 }
 
-                var actualSize = new goog.math.Size(actualWidth, actualHeight);
+                var actualSize = new goog.math.Size(width, height);
 
                 canvas = new sc.canvas.FabricCanvas(
                     uri,
@@ -227,7 +233,6 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
 
             if (selector.hasType('cnt:ContentAsText')) {
                 var svgText = selector.getOneUnescapedProperty('cnt:chars');
-                console.log("FabricCanvasFactory, svgText: ", svgText);
 
                 if (svgText) {
                     if (canvas.hasFeature(selector.getUri())) {
