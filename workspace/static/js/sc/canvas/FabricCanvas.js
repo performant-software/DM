@@ -122,6 +122,14 @@ sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES = {
     perPixelTargetFind: true
 };
 
+/**
+ * These styles should even override what is specified in saved feature data.
+ */
+sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES = {
+    selectable: false,
+    perPixelTargetFind: true
+};
+
 sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     textBackgroundColor: 'rgba(3, 75, 158, 1.0)',
@@ -784,27 +792,6 @@ sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
     return polygon;
 };
 
-sc.canvas.FabricCanvas.svgStringToElement = function(string) {
-    //Based on fabric.js implementation
-
-    string = string.trim();
-    var doc;
-    if (typeof DOMParser !== 'undefined') {
-        var parser = new DOMParser();
-        if (parser && parser.parseFromString) {
-            doc = parser.parseFromString(string, 'text/xml');
-        }
-    }
-    else if (fabric.window.ActiveXObject) {
-        doc = new ActiveXObject('Microsoft.XMLDOM');
-        doc.async = 'false';
-        //IE chokes on DOCTYPE
-        doc.loadXML(string.replace(/<!DOCTYPE[\s\S]*?(\[[\s\S]*\])*?>/i,''));
-    }
-
-    return doc.firstChild;
-}
-
 /**
  * Adds a feature to the canvas from a string in the svg feature format
  * (e.g., <path d="m 1 2..." />).
@@ -815,8 +802,6 @@ sc.canvas.FabricCanvas.svgStringToElement = function(string) {
  * the feature type is unrecognized.
  */
 sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
-    var self = this;
-
     var svgDoc = 
         '<?xml version="1.0" standalone="no"?>'
         + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"'
@@ -827,81 +812,23 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
 
     fabric.loadSVGFromString(svgDoc, function(objects, options) {
         var obj = objects[0];
-//        console.log("obj: ", obj);
-//        console.log("obj svg transform:", obj.getSvgTransform());
 
-        var x = 0;
-        var y = 0;
-        if (obj.hasOwnProperty("x")) {
-            x = obj.x;
-            y = obj.y;
-        } else if (obj.hasOwnProperty("rx")) {
-            x = Math.round((-obj.rx / 2.0) * 100) / 100;
-            y = Math.round((-obj.ry / 2.0) * 100) / 100;
-        } else {
-            x = Math.round((-obj.width / 2.0) * 100) / 100;
-            y = Math.round((-obj.height / 2.0) * 100) / 100;
-        }
+        var transformMatrix = obj.transformMatrix;
+        // console.log(obj, transformMatrix)
+        obj.transformMatrix = null;
+        obj.set('left', obj.get('left') + transformMatrix[4]);
+        obj.set('top', obj.get('top') + transformMatrix[5]);
 
-        var clonedObject = obj.clone();
-        clonedObject.left = Math.ceil(obj.transformMatrix[4] - x - self.group.get('width') / 2.0);
-        clonedObject.top = Math.ceil(obj.transformMatrix[5] - y - self.group.get('height') / 2.0);
-//        console.log("clonedObject: ", clonedObject);
-        self.addFabricObject(clonedObject, uri);
-    });
+        obj.set(sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
 
-/*
-    var re = /^<?\s*(?:svg:)?([\w\-:]+)[\s*>]/;
-    var match = re.exec(str);
+        obj.setCoords();
+        // console.log(obj);
+        this._scaleAndPositionNewFeature(obj);
 
-    if (match) {
-        var featureType = match[1].toLowerCase();
-
-        var attrs = sc.util.svg.parseAttrsFromString(str);
-
-        switch (featureType) {
-            case 'path':
-                return this.addPath(attrs.d, uri);
-                break;
-            case 'circle':
-                return this.addCircle(attrs.cx, attrs.cy, attrs.r, uri);
-                break;
-            case 'rect':
-                return this.addRect(
-                    attrs.x,
-                    attrs.y,
-                    attrs.width,
-                    attrs.height,
-                    uri
-                );
-                break;
-            case 'ellipse':
-                return this.addEllipse(attrs.cx, attrs.cy, attrs.rx, attrs.ry, uri);
-                break;
-            case 'line':
-                var points = [
-                    {x: attrs.x1, y: attrs.y1},
-                    {x: attrs.x2, y: attrs.y2}
-                ];
-                return this.addPolyline(points, uri);
-                break;
-            case 'polyline':
-                var points = sc.canvas.FabricCanvas.pointsStringToPointsArray(
-                                                                    attrs.points);
-                return this.addPolyline(points, uri);
-                break;
-            case 'polygon':
-                var points = sc.canvas.FabricCanvas.pointsStringToPointsArray(
-                                                                    attrs.points);
-                return this.addPolygon(points, uri);
-                break;
-            default:
-                console.warn('Unrecognized feature type', str);
-                return null;
-                break;
-        }
-    }
-*/
+        this.addFabricObject(obj, uri);
+        
+        this.requestFrameRender();
+    }.bind(this));
 };
 
 
