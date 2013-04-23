@@ -239,7 +239,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
                         canvas.removeObjectByUri(selector.getUri());
                     }
                     
-                    canvas.addFeatureFromTagString(svgText, selector.getUri());
+                    canvas.addFeatureFromSVGString(svgText, selector.getUri());
                 }
             }
             else {
