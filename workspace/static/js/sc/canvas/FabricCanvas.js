@@ -677,12 +677,17 @@ sc.canvas.FabricCanvas.getPointsBoundingBox = function(points) {
         yBounds.push(Number(point.y));
     }, this);
 
-    return {
-        minx: utilMin(xBounds),
-        miny: utilMin(yBounds),
-        maxx: utilMax(xBounds),
-        maxy: utilMax(yBounds)
+    var box = {
+        x1: utilMin(xBounds),
+        y1: utilMin(yBounds),
+        x2: utilMax(xBounds),
+        y2: utilMax(yBounds)
     };
+
+    box.width = box.x2 - box.x1;
+    box.height = box.y2 - box.y1;
+
+    return box;
 };
 
 sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smooth, opt_boundingBox, opt_close) {
@@ -694,12 +699,12 @@ sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smo
     var boundingBox = opt_boundingBox || sc.canvas.FabricCanvas.getPointsBoundingBox(points);
 
     var pathCommands = [];
-    var p1 = new fabric.Point(fabricPoints[0].x - boundingBox.minx, fabricPoints[0].y - boundingBox.miny);
+    var p1 = new fabric.Point(fabricPoints[0].x - boundingBox.x1, fabricPoints[0].y - boundingBox.y1);
     if (points.length > 1) {
-        var p2 = new fabric.Point(fabricPoints[1].x - boundingBox.minx, fabricPoints[1].y - boundingBox.miny);
+        var p2 = new fabric.Point(fabricPoints[1].x - boundingBox.x1, fabricPoints[1].y - boundingBox.y1);
     }
 
-    pathCommands.push('M ', fabricPoints[0].x - boundingBox.minx, ' ', fabricPoints[0].y - boundingBox.miny, ' ');
+    pathCommands.push('M ', fabricPoints[0].x - boundingBox.x1, ' ', fabricPoints[0].y - boundingBox.y1, ' ');
     for (var i = 1, len = fabricPoints.length; i < len; i++) {
         // p1 is our bezier control point
         // midpoint is our endpoint
@@ -711,9 +716,9 @@ sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smo
         else {
             pathCommands.push('L ', p1.x, ' ', p1.y, ' ');
         }
-        p1 = new fabric.Point(fabricPoints[i].x - boundingBox.minx, fabricPoints[i].y - boundingBox.miny);
+        p1 = new fabric.Point(fabricPoints[i].x - boundingBox.x1, fabricPoints[i].y - boundingBox.y1);
         if ((i+1) < fabricPoints.length) {
-            p2 = new fabric.Point(fabricPoints[i+1].x - boundingBox.minx, fabricPoints[i+1].y - boundingBox.miny);
+            p2 = new fabric.Point(fabricPoints[i+1].x - boundingBox.x1, fabricPoints[i+1].y - boundingBox.y1);
         }
     }
     pathCommands.push('L ', p1.x, ' ', p1.y, ' ');
@@ -801,7 +806,7 @@ sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
  * @return {fabric.Object|null} The fabric element created, or null if
  * the feature type is unrecognized.
  */
-sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
+sc.canvas.FabricCanvas.prototype.addFeatureFromSVGString = function(str, uri) {
     var svgDoc = 
         '<?xml version="1.0" standalone="no"?>'
         + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"'
