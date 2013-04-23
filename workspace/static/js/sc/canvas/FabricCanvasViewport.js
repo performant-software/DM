@@ -171,19 +171,14 @@ sc.canvas.FabricCanvasViewport.prototype.resize = function(width, height) {
 
     jQuery(this.baseDiv).width(width).height(height);
 
+    if (! this.isEmpty()) {
+        var center = this.getCenterCoord();
+    }
+
     this.fabricCanvas.setWidth(width).setHeight(height);
 
-    if (! this.isEmpty()) {
-        if (oldSize) {
-            var deltaWidth = width - oldSize.width;
-            var deltaHeight = height - oldSize.height;
-
-            this.panByPageCoords(-deltaWidth / 2, -deltaHeight / 2)
-        }
-        else {
-            this.fireBoundsChanged();
-            this.requestFrameRender();
-        }
+    if (center) {
+        this.centerOnCanvasCoord(center);
     }
 
     return this;
