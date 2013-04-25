@@ -168,7 +168,7 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    if (eventDispatcher.dispatchEvent(event)) {console.log('about to run menu button code')
+    if (eventDispatcher.dispatchEvent(event)) {
         var menuButtons = [
             new atb.widgets.MenuItem(
                 "getMarkerInfo",

@@ -767,11 +767,11 @@ sc.canvas.FabricCanvas.prototype.updatePath = function(path, pathCommands) {
     var uri = this.getFabricObjectUri(path);
 
     path = new fabric.Path(pathCommands);
-    path.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+    path.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES); // In the future, this should copy the old path's styles
 
     this._scaleAndPositionNewFeature(path);
 
-    this.addFabricObject(path, uri, true);
+    this.addFabricObject(path, uri, true); // In the future, this should ensure that the path remains at the same z-index
 
     return path;
 };
@@ -819,19 +819,17 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromSVGString = function(str, uri) {
         var obj = objects[0];
 
         var transformMatrix = obj.transformMatrix;
-        // console.log(obj, transformMatrix)
-        obj.transformMatrix = null;
+        delete obj.transformMatrix;
+
         obj.set('left', obj.get('left') + transformMatrix[4]);
         obj.set('top', obj.get('top') + transformMatrix[5]);
 
         obj.set(sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
 
-        obj.setCoords();
-        // console.log(obj);
         this._scaleAndPositionNewFeature(obj);
 
         this.addFabricObject(obj, uri);
-        
+
         this.requestFrameRender();
     }.bind(this));
 };
