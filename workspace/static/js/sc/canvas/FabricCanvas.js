@@ -127,7 +127,8 @@ sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES = {
  */
 sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES = {
     selectable: false,
-    perPixelTargetFind: true
+    perPixelTargetFind: true,
+    minScaleLimit: 0
 };
 
 sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
