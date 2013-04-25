@@ -43,7 +43,7 @@ sc.canvas.FeatureControl.prototype.resetFeature = function() {
 sc.canvas.FeatureControl.prototype.updateFeatureCoords = function() {
     this.feature.setCoords();
     if (this.feature._calcDimensions) {
-        this.feature._calcDimensions();
+        this.feature._calcDimensions(true);
     }
 };
 
