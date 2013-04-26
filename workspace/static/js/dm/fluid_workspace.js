@@ -94,8 +94,8 @@ var openCanvas = function(uri, urisInOrder, index) {
     var viewerContainer = new atb.viewer.ViewerContainer();
     var viewer = new atb.viewer.CanvasViewer(clientApp);
     viewerContainer.setViewer(viewer);
-    viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
     viewerGrid.addViewerContainer(viewerContainer);
+    viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
 var setupCurrentProject = function(clientApp, username) {
