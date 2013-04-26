@@ -1,7 +1,13 @@
 @import "Common";
 
 .sc-CanvasViewport {
-    position: relative;}
+    position: relative;
+}
+
+.sc-CanvasViewport-pointer {
+    cursor: pointer;
+    .user-select(none);
+}
 
 .sc-CanvasViewport-drag {
     cursor: move;
