@@ -826,6 +826,9 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromSVGString = function(str, uri) {
         obj.set('top', obj.get('top') + transformMatrix[5]);
 
         obj.set(sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
+        if (!obj.isType('image')) {
+            obj.set('perPixelTargetFind', true);
+        }
 
         this._scaleAndPositionNewFeature(obj);
 

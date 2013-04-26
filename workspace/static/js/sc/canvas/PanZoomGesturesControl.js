@@ -161,6 +161,7 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMouseup = function(opts) {
     if (!(this.mouseDownX == event.pageX && this.mouseDownY == event.pageY)) {
         this.viewport.registerHandledMouseEvent(event);
         event.preventDefault();
+        event.stopPropagation();
     }
 };
 
