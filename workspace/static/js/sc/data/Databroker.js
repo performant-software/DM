@@ -435,6 +435,32 @@ sc.data.Databroker.prototype.getAllQuadsForSave = function(quads) {
     return additionalQuads;
 };
 
+sc.data.Databroker.prototype.getManifestsContainingCanvas = function(canvasUri) {
+    canvasUri = sc.util.Namespaces.wrapWithAngleBrackets(canvasUri);
+
+    var manifestUris = new goog.structs.Set();
+
+    this.quadStore.forEachQuadMatchingQuery(
+        null, this.namespaces.autoExpand('ore:aggregates'), canvasUri, null,
+        function(quad) {
+            var sequence = this.getResource(quad.subject);
+
+            if (sequence.hasType('dms:Sequence')) {
+                this.quadStore.forEachQuadMatchingQuery(
+                    null, this.namespaces.autoExpand('ore:aggregates'), quad.subject, null,
+                    function(quad) {
+                        var manifest = this.getResource(quad.subject);
+
+                        if (manifest.hasType('dms:Manifest')) {
+                            manifestUris.add(manifest.uri);
+                        }
+                    }.bind(this));
+            }
+        }.bind(this));
+
+    return manifestUris.getValues();
+};
+
 /**
  * Returns a set of urls to request for resources, including guesses if no data is known about the resources
  * @param {Array.<string>} uris
@@ -456,6 +482,14 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
             )
         );
         allUris.addAll(resourcesForCanvas);
+
+        var resource = this.getResource(uri);
+        if (resource.hasType('dms:Canvas')) {
+            var manifestUris = this.getManifestsContainingCanvas(uri);
+            goog.structs.forEach(manifestUris, function(manifestUri) {
+                allUris.addAll(this.getManuscriptAggregationUris(manifestUri));
+            }, this);
+        }
     }
 
     uris = allUris.getValues();
@@ -513,7 +547,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
     var self = this;
 
     var deferredResource = jQuery.Deferred();
-    
+
     window.setTimeout(function() {
         var resourceTypes = this.getResourceTypesSet(uri);
 
