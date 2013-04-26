@@ -253,8 +253,6 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     
     deferredCanvas.done(function(canvas) {
         self.hideLoadingSpinner();
-
-        self.viewer.mainViewport.zoomToFit();
     }).fail(function(canvas) {
         self.hideLoadingSpinner();
         self.flashErrorIcon();
