@@ -247,7 +247,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
 			var endOffset = rangeHack.endOffset;
 			
 			if ((this.lastStartNode == startNode) || (this.lastEndNode == endNode)) {
-				debugPrint("!?!");
+				console.log("!?!");
 			}
 			this.lastStartNode = startNode;
 			this.lastEndNode = endNode;
@@ -257,7 +257,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
 			
 			var bStartNodeIsElement =(startNode.nodeType===TypeElement);
 			var bEndNodeIsElement =(endNode.nodeType===TypeElement);
-			debugPrint("startOffset: "+startOffset+"; endOffset: "+endOffset);
+			console.log("startOffset: "+startOffset+"; endOffset: "+endOffset);
 			
 			//element start tag; startOffset: 1
 			if (bStartNodeIsElement)
@@ -304,7 +304,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
 				var endNodeSelText = endNodeText.substring(0, endOffset);
 				var endNodeAfterText = endNodeText.substring(endOffset);// + 1);
 				//if (
-				//debugPrint("startOffset:"+startOffset+", endOffset:"+endOffset);
+				//console.log("startOffset:"+startOffset+", endOffset:"+endOffset);
 				var beforeTextNode = document.createTextNode(beforeText);
 				var startSelTextNode =document.createTextNode(startNodeSelText);
 				
@@ -322,17 +322,17 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
 					//startPRime = startNode;//hack...?
 					
 					//TODO: split the parent tag in two, maybe...?
-					debugPrint("warning: starting on an element!");
+					console.log("warning: starting on an element!");
 					if (startOffset != 0)
 					{
-						debugPrint("WARNING: starting on an element, w/o a start-offset of zero!");
+						console.log("WARNING: starting on an element, w/o a start-offset of zero!");
 						//:
 					}
 					startPrime = startNode;//hack...?
 				}
 				else
 				{
-					debugPrint("textStart");
+					console.log("textStart");
 					startParent.replaceChild(startSelTextNode, startNode);//NORMAL -- null here...?
 					startParent.insertBefore(beforeTextNode,startSelTextNode);
 					startPrime = startSelTextNode;
@@ -340,17 +340,17 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
 				
 				if (bEndNodeIsElement)
 				{
-					debugPrint("warning: ending on an element!");
+					console.log("warning: ending on an element!");
 					if (endOffset != 0)
 					{
-						debugPrint("WARNING: ending on an element, w/o a end-offset of zero!");
+						console.log("WARNING: ending on an element, w/o a end-offset of zero!");
 						//:
 					}
 					endPrime = endNode;//hack...?
 				}
 				else
 				{
-					debugPrint("textEnd");
+					console.log("textEnd");
 					endParent.replaceChild(afterTextNode, endNode);//another bug...?
 					endParent.insertBefore(endNodeSelTextNode,afterTextNode);
 					endPrime = endNodeSelTextNode;
@@ -397,7 +397,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
 				//document.createElement(
 			}
 			
-			debugPrint("# new parents: "+newParents.length);
+			console.log("# new parents: "+newParents.length);
 		
 			
         }
@@ -479,7 +479,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	var menuButtons = [
 		new atb.widgets.MenuItem(
 			"newTextAnno",
-			createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
+			createButtonGenerator("atb-radialmenu-button icon-pencil"),
 			function(actionEvent) {
 	            self.createNewAnnoBody(object);
 	        },
@@ -496,7 +496,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 		),
 		new atb.widgets.MenuItem(
 		        "showLinkedAnnos",
-		        createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
+		        createButtonGenerator("atb-radialmenu-button icon-search"),
 		        function(actionEvent)
 		        {
 		            self.showAnnos(object);
@@ -505,7 +505,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 		    ),
 		new atb.widgets.MenuItem(
 				'delete_highlight_button',
-				createButtonGenerator('atb-radialmenu-button atb-radialmenu-button-delete'),
+				createButtonGenerator('atb-radialmenu-button icon-remove'),
 				function(actionEvent)
 				{
 					self.thisViewer.hideHoverMenu()
@@ -809,7 +809,7 @@ atb.viewer.TextEditorAnnotate.prototype.enforceSingleSelectionRules = function(e
 		if ((jqA.length < 1) &&(jqB.length < 1))
 		{
 			//in case we still didn't find something, make sure we know that something odd is up:
-			debugPrint("warning: hoverAnnotationId not matched: '"+hoverAnnotationId+"'");
+			console.log("warning: hoverAnnotationId not matched: '"+hoverAnnotationId+"'");
 		}
 	}
 };
@@ -915,6 +915,6 @@ atb.viewer.TextEditorAnnotate.prototype.createNewResourceListViewer = function (
 	// TODO: editor loads with a null DIV id but right now the resource viewer needs one (rightPane)...needs modified
     // TODO: resource viewer needs root div to unload properly, right now viewers just append instead of replace
 	
-	//debugPrint(
+	//console.log(
 	this.showErrorMessage("TODO: implement 'atb.viewer.TextEditorAnnotate.prototype.createNewResourceListViewer'...!");
 };
