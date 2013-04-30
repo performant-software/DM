@@ -31,7 +31,7 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
             "showLinkedAnnos",
             createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
             function(actionEvent) {
-                self.showAnnos(self.getResourceId());
+                self.showAnnos(self.getUri());
                 
                 self.hideHoverMenu();
             },
@@ -41,7 +41,7 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
             "newTextAnno",
             createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
             function(actionEvent) {
-                self.createTextAnno(self.getResourceId());
+                self.createTextAnno(self.getUri());
                 
                 self.hideHoverMenu();
             },
@@ -270,7 +270,11 @@ function(id, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
 };
 
 atb.viewer.CanvasViewer.prototype.resize = function(width, height) {
+    atb.viewer.Viewer.prototype.resize.call(this, width, height);
+
     this.viewer.resize(width, height);
+
+    return this;
 };
 
 
@@ -314,7 +318,6 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     console.log("createTextAnno uri:", uri);
-    var id = this.webService.resourceUriToId(uri);
     var svgUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
     var canvasUri = this.viewer.mainViewport.canvas.getUri();
@@ -347,9 +350,8 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     textEditor.annotationUid = annoId;
     textEditor.toggleIsAnnoText(true);
 
-    var otherContainer = this.getPanelManager().getAnotherPanel(
-        this.getPanelContainer());
-    otherContainer.setViewer(textEditor);
+    this.openRelatedViewer(textEditor);
+
     textEditor.setTitle(textTitle);
 };
 
