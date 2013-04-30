@@ -92,7 +92,8 @@ atb.viewer.Viewer.prototype.getResourceId = function () {
  * @return {atb.viewer.Viwer} this.
  */
 atb.viewer.Viewer.prototype.resize = function(width, height) {
-    
+    this.repositionLoadingSpinner();
+
     return this;
 };
 
@@ -159,11 +160,6 @@ atb.viewer.Viewer.prototype.render = function (div) {
         this.disableHoverMenus();
     }
 
-    //Remove in cleanup
-    if (goog.isFunction(this.finishRender)) {
-        this.finishRender();
-    }
-
     if (div) {
         div.appendChild(this.rootDiv);
     }
@@ -195,6 +191,12 @@ atb.viewer.Viewer.prototype.setContainer = function(container) {
 
 atb.viewer.Viewer.prototype.getContainer = function() {
     return this.container;
+};
+
+atb.viewer.Viewer.prototype.openRelatedViewer = function(viewer) {
+    var container = new atb.viewer.ViewerContainer(this.getDomHelper());
+    container.setViewer(viewer);
+    this.getContainer().grid.addViewerContainerAt(container, this.container.getIndex() + 1);
 };
 
 /**
@@ -246,10 +248,7 @@ atb.viewer.Viewer.prototype.setTitle = function (title) {
     container.setTitle(title);
 };
 
-/**
- * Shows a spinning loading indicator
- */
-atb.viewer.Viewer.prototype.showLoadingSpinner = function () {
+atb.viewer.Viewer.prototype.repositionLoadingSpinner = function() {
     var div = this.rootDiv;
     
     var top = jQuery(div).height() / 2 - 16;
@@ -259,6 +258,13 @@ atb.viewer.Viewer.prototype.showLoadingSpinner = function () {
     if (left < 0) left = 0;
     
     jQuery(this.spinner).css({'top': top, 'left': left});
+};
+
+/**
+ * Shows a spinning loading indicator
+ */
+atb.viewer.Viewer.prototype.showLoadingSpinner = function () {
+    this.repositionLoadingSpinner();
     
     jQuery(this.spinner).fadeIn(200);
 };

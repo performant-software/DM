@@ -40,6 +40,10 @@ atb.viewer.ViewerGrid.prototype.addViewerContainer = function(container) {
     this.addViewerContainerAt(container, 0);
 };
 
+atb.viewer.ViewerGrid.prototype.addViewerContainerAtEnd = function(container) {
+    this.addViewerContainerAt(container, this.containers.length);
+};
+
 atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(container, index) {
     if (this.containersSet.contains(container)) {
         throw "ViewerGrid already contains the given viewer";
@@ -54,10 +58,7 @@ atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(container, index
         container.render(wrapperEl);
 
         var wrapperAtIndex = this.wrappers[index];
-        if (index === 0 && wrapperAtIndex == null) {
-            jQuery(this.element).prepend(wrapperEl);
-        }
-        else if (wrapperAtIndex == null) {
+        if (wrapperAtIndex == null) {
             jQuery(this.element).append(wrapperEl);
         }
         else {
@@ -70,7 +71,6 @@ atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(container, index
 
         this._setAllContainerDimensions();
 
-        jQuery(this.element).prepend(wrapperEl);
         container.autoResize();
     }
 };
@@ -86,6 +86,10 @@ atb.viewer.ViewerGrid.prototype.removeViewerContainer = function(container) {
 
     jQuery(wrapper).detach();
     this._setAllContainerDimensions();
+};
+
+atb.viewer.ViewerGrid.prototype.indexOf = function(container) {
+    return goog.array.indexOf(this.containers, container);
 };
 
 atb.viewer.ViewerGrid.prototype.resize = function(width, height) {
