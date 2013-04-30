@@ -92,3 +92,12 @@ atb.viewer.ViewerContainer.prototype.close = function() {
         this.grid.removeViewerContainer(this);
     }
 };
+
+atb.viewer.ViewerContainer.prototype.getIndex = function() {
+    if (this.grid) {
+        return this.grid.indexOf(this);
+    }
+    else {
+        return -1;
+    }
+};
