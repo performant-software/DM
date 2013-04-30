@@ -2,9 +2,9 @@ goog.provide('atb.viewer.Editor');
 
 goog.require('goog.dom');
 goog.require('goog.dom.DomHelper');
+
 goog.require('goog.editor.Command');
 goog.require('goog.editor.Field');
-
 goog.require('goog.editor.plugins.BasicTextFormatter');
 goog.require('goog.editor.plugins.EnterHandler');
 goog.require('goog.editor.plugins.HeaderFormatter');
@@ -17,12 +17,11 @@ goog.require('goog.editor.plugins.SpacesTabHandler');
 goog.require('goog.editor.plugins.UndoRedo');
 goog.require('goog.ui.editor.DefaultToolbar');
 goog.require('goog.ui.editor.ToolbarController');
-
-goog.require('goog.asserts');
-goog.require('goog.dom');
-goog.require('goog.string');
 goog.require('goog.editor.Command');
 goog.require('goog.cssom.iframe.style');
+
+goog.require('goog.asserts');
+goog.require('goog.string');
 
 goog.require('atb.viewer.Finder');
 goog.require('atb.viewer.Viewer');
@@ -39,10 +38,7 @@ goog.require('atb.util.StyleUtil');
 goog.require('atb.util.ReferenceUtil');
 //end radial menus test includes
 
-goog.require('goog.ui.IdGenerator');
-
 goog.require('atb.widgets.DialogWidget');
-goog.require('atb.ClientApp');
 
 goog.require('atb.viewer.TextEditorAnnotate');
 goog.require('atb.viewer.EditorPropertiesPane');
