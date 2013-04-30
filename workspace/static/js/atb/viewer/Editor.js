@@ -20,6 +20,7 @@ goog.require('goog.ui.editor.ToolbarController');
 
 goog.require('goog.asserts');
 goog.require('goog.dom');
+goog.require('goog.string');
 goog.require('goog.editor.Command');
 goog.require('goog.cssom.iframe.style');
 
@@ -39,8 +40,6 @@ goog.require('atb.util.ReferenceUtil');
 //end radial menus test includes
 
 goog.require('goog.ui.IdGenerator');
-
-goog.require('atb.util.HtmlUtil');
 
 goog.require('atb.widgets.DialogWidget');
 goog.require('atb.ClientApp');
@@ -82,8 +81,7 @@ atb.viewer.Editor = function(clientApp, opt_initialTextContent, opt_annoBodyId) 
 	
 	this.isAnnoText = false;
 	
-	var id = atb.util.HtmlUtil.generateUniqueId();
-	this.useID = id;
+	this.useID = 'atb_ui_editor_' + goog.string.getRandomString();
 
     this._title = null;
     this.resourceId = null;
