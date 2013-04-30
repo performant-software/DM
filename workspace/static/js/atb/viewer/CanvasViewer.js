@@ -379,8 +379,7 @@ atb.viewer.CanvasViewer.prototype.unhighlightFeature = function(uri) {
     if (this.lastHighlightedFeatureStyle) {
         feature.set(this.lastHighlightedFeatureStyle);
     }
-    
-    feature.set(this.lastHighlightedFeatureStyle);
+
     this.viewer.mainViewport.requestFrameRender();
 };
 
@@ -405,7 +404,7 @@ atb.viewer.CanvasViewer.prototype.handleLinkingModeExited = function(event) {
     var anno = event.getResource();
     
     if (! anno) {
-        if (this.lastHighlightedFeature) {
+        if (this.lastHighlightedFeatureUri) {
             this.unhighlightFeature(this.lastHighlightedFeatureUri);
         }
         
