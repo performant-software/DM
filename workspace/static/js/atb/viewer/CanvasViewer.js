@@ -29,7 +29,7 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     var menuButtons = [
         new atb.widgets.MenuItem(
             "showLinkedAnnos",
-            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
+            createButtonGenerator("atb-radialmenu-button icon-search"),
             function(actionEvent) {
                 self.showAnnos(self.getUri());
                 
@@ -39,7 +39,7 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
         ),
         new atb.widgets.MenuItem(
             "newTextAnno",
-            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
+            createButtonGenerator("atb-radialmenu-button icon-pencil"),
             function(actionEvent) {
                 self.createTextAnno(self.getUri());
                 
@@ -146,7 +146,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
             var menuButtons = [
                 new atb.widgets.MenuItem(
                     "getMarkerInfo",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-info"),
+                    createButtonGenerator("atb-radialmenu-button icon-info-sign"),
                     function(actionEvent) {
                         var pane = new atb.ui.InfoPane(self.clientApp, id, self.domHelper);
                         pane.show();
@@ -157,7 +157,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                 ),
                 new atb.widgets.MenuItem(
                     "deleteThisMarker",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-delete"),
+                    createButtonGenerator("atb-radialmenu-button icon-remove"),
                     function(actionEvent) {
                         self.deleteFeature(uri);
                         
@@ -167,7 +167,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                 ),
                 new atb.widgets.MenuItem(
                     "hideMarker",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-hide-marker"),
+                    createButtonGenerator("atb-radialmenu-button icon-eye-close"),
                     function(actionEvent) {
                         self.hideFeature(uri);
                         
@@ -177,7 +177,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                 ),
                 new atb.widgets.MenuItem(
                     "showLinkedAnnos",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
+                    createButtonGenerator("atb-radialmenu-button icon-search"),
                     function(actionEvent) {
                         self.showAnnos(uri);
                         
@@ -196,7 +196,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                 ),
                 new atb.widgets.MenuItem(
                     "newTextAnno",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
+                    createButtonGenerator("atb-radialmenu-button icon-pencil"),
                     function(actionEvent) {
                         self.createTextAnno(uri);
                     },

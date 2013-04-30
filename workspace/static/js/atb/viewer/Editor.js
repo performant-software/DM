@@ -401,15 +401,77 @@ atb.viewer.Editor.prototype.render = function(div) {
     this.field.registerPlugin(new goog.editor.plugins.SpacesTabHandler());
     this.field.registerPlugin(new goog.editor.plugins.EnterHandler());
     this.field.registerPlugin(new goog.editor.plugins.HeaderFormatter());
-    var opt_initialTextContent = this._initialTextContent_;
-    //this.field.registerPlugin(new goog.editor.plugins.LoremIpsum(this._initialTextContent_));
-    
-    this._initialTextContent_  = null;
-
     this.field.registerPlugin(new goog.editor.plugins.LinkDialogPlugin());
     this.field.registerPlugin(new goog.editor.plugins.LinkBubble());
     this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
 
+    this._renderToolbar();
+    
+    this.field.makeEditable();
+    
+    this.pasteHandler = new goog.events.PasteHandler(this.field);
+    this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e) {
+        window.setTimeout(function() {
+            this.onTextPasted();
+        }.bind(this), 1);
+    }.bind(this));
+    
+    this.editorIframeElement = this.domHelper.getElement(this.useID);
+    this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
+    this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
+    
+    this.finishRenderPropertiesPane();
+    
+    this.addGlobalEventListeners();
+
+    if (this.container) {
+        this.container.autoResize();
+    }
+};
+
+atb.viewer.Editor.prototype._renderDocumentIcon = function() {
+    this.documentIcon = this.domHelper.createDom('div', {'class': 'atb-viewer-documentIcon'});
+    goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
+    
+    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
+    var menuItems = [
+        new atb.widgets.MenuItem(
+                "showLinkedAnnos",
+                createButtonGenerator("atb-radialmenu-button icon-search"),
+                function(actionEvent) {
+                    this.showAnnos(this.resourceId);
+                }.bind(this), 
+                'Show resources linked to this document'
+        ),
+        new atb.widgets.MenuItem(
+            "createLink",
+            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
+            function(actionEvent) {
+                this.linkAnnotation();
+            }.bind(this),
+            'Link another resource to this document'
+        ),
+        new atb.widgets.MenuItem(
+            "newTextAnno",
+            createButtonGenerator("atb-radialmenu-button icon-pencil"),
+            function(actionEvent) {
+                this.createNewTextBody(this.resourceId);
+            }.bind(this),
+            'Annotate this document'
+        )
+    ];
+    this.addHoverMenuListenersToElement(
+        this.documentIcon,
+        menuItems,
+        function() {
+            return this.resourceId;
+        }.bind(this)
+    );
+    
+    this.rootDiv.appendChild(this.documentIcon);
+};
+
+atb.viewer.Editor.prototype._renderToolbar = function() {
     // Specify the buttons to add to the toolbar, using built in default buttons.
     var buttons = [
         goog.editor.Command.BOLD,
@@ -442,7 +504,7 @@ atb.viewer.Editor.prototype.render = function(div) {
         atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
         'Annotate selected text',
         '',
-        'atb-editor-button-annotate');
+        'icon-tag');
     /*
     //lol@seems un-needed, and infact causes a redundant event, it would seem, from what i can tell:
     goog.events.listen(annotateButton, goog.ui.Component.EventType.ACTION, function (e) {
@@ -458,76 +520,13 @@ atb.viewer.Editor.prototype.render = function(div) {
         'properties',
         'Edit this document\'s properties',
         '',
-        'atb-editor-button-properties'
+        'icon-info-sign'
     );
     goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
     myToolbar.addChild(this.propertiesButton, true);
 
     // Hook the toolbar into the field.
     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
-    
-    this.field.makeEditable();
-    
-    this.pasteHandler = new goog.events.PasteHandler(this.field);
-    this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e) {
-        window.setTimeout(function() {
-            this.onTextPasted();
-        }.bind(this), 1);
-    }.bind(this));
-    
-    this.editorIframeElement = this.domHelper.getElement(this.useID);
-    this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
-    this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
-    
-    this.finishRenderPropertiesPane();
-    
-    this.addGlobalEventListeners();
-
-    if (this.container) {
-        this.container.autoResize();
-    }
-};
-
-atb.viewer.Editor.prototype._renderDocumentIcon = function() {
-    this.documentIcon = this.domHelper.createDom('div', {'class': 'atb-viewer-documentIcon'});
-    goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
-    
-    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-    var menuItems = [
-        new atb.widgets.MenuItem(
-                "showLinkedAnnos",
-                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
-                function(actionEvent) {
-                    this.showAnnos(this.resourceId);
-                }.bind(this), 
-                'Show resources linked to this document'
-        ),
-        new atb.widgets.MenuItem(
-            "createLink",
-            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
-            function(actionEvent) {
-                this.linkAnnotation();
-            }.bind(this),
-            'Link another resource to this document'
-        ),
-        new atb.widgets.MenuItem(
-            "newTextAnno",
-            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
-            function(actionEvent) {
-                this.createNewTextBody(this.resourceId);
-            }.bind(this),
-            'Annotate this document'
-        )
-    ];
-    this.addHoverMenuListenersToElement(
-        this.documentIcon,
-        menuItems,
-        function() {
-            return this.resourceId;
-        }.bind(this)
-    );
-    
-    this.rootDiv.appendChild(this.documentIcon);
 };
 
 atb.viewer.Editor.prototype.renderPropertiesPane = function () {
