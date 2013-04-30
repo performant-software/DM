@@ -6,8 +6,6 @@ goog.require('goog.editor.Plugin');
 goog.require('atb.viewer.ResourceListViewer');
 goog.require('atb.ui.Bezel');
 goog.require('atb.events.ResourceClicked');
-goog.require('atb.resource.TextHighlightResource');
-goog.require('atb.resource.ResourceFactory');
 
 goog.require("atb.widgets.ForegroundMenuDisplayer");
 goog.require("atb.util.DomTraverser");//lolhack!
@@ -19,7 +17,7 @@ goog.require("atb.util.DomTraverser");//lolhack!
  */
 atb.viewer.TextEditorAnnotate = function(set_thisViewer)
 {
-	this.thisViewer = set_thisViewer;//HACK
+	this.thisViewer = set_thisViewer;
     goog.editor.Plugin.call(this);
 
     this.clientApp = this.thisViewer.clientApp;
@@ -173,18 +171,12 @@ atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper2_ = function(info)
 };
 	
 
-atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(annoId)
-{
-	//var count = counter;
-	//counter += 1;
+atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(annoId) {
 	var domHelper = this.fieldObject.getEditableDomHelper();
 	var span = domHelper.createElement('span');
 	
-	var newAnnotationId = annoId;
 	var cssClassNames = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + " " +
-		//atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED + " " +  // start selected
-        //atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID + newAnnotationId;
-	    atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID + newAnnotationId;
+	    atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID + annoId;
 	span.setAttribute('class', cssClassNames);
 	this.addListeners(span);
 	return span;
@@ -797,13 +789,11 @@ atb.viewer.TextEditorAnnotate.prototype.enforceSingleSelectionRules = function(e
 	}
 };
 
-atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg)
-{
+atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
 	this.thisViewer.showErrorMessage(msg);
 };
 
-atb.viewer.TextEditorAnnotate.prototype.getOtherPanelHelper = function()
-{
+atb.viewer.TextEditorAnnotate.prototype.getOtherPanelHelper = function() {
 	return this.thisViewer.getOtherPanelHelper();
 };
 
@@ -836,9 +826,7 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
     this.thisViewer.openRelatedViewer(annoBodyEditor);
 };
 
-
-
-atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function (tag) {
+atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(tag) {
 	var myResourceId = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
     
     this.thisViewer.clientApp.createAnnoLink(myResourceId);
@@ -846,47 +834,16 @@ atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function (tag) {
     this.selectAnnotationSpan(tag);
 };
 
-
-
-atb.viewer.TextEditorAnnotate.prototype.showAnnos = function (tag) {
+atb.viewer.TextEditorAnnotate.prototype.showAnnos = function(tag) {
 	var id = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
-	
-	var otherContainer = this.getOtherPanelHelper();
 	
 	var finder = new atb.viewer.Finder(this.thisViewer.clientApp, id);
     finder.setContextType(atb.viewer.Finder.ContextTypes.RESOURCE);
     
-	otherContainer.setViewer(finder);
-/*
-	this.thisViewer.saveContents(function () {
-		var id = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
-	
-	    var otherContainer = this.getOtherPanelHelper();
-	
-		var finder = new atb.viewer.Finder(this.thisViewer.clientApp, id);
-        finder.setContextType(atb.viewer.Finder.ContextTypes.RESOURCE);
-
-		otherContainer.setViewer(finder);
-	}, this);
-*/
+	this.thisViewer.openRelatedViewer(finder);
 };
 
+atb.viewer.TextEditorAnnotate.prototype.createNewResourceListViewer = function(myAnnoId) {
 
-
-atb.viewer.TextEditorAnnotate.prototype.createNewResourceListViewer = function (myAnnoId)
-{
-	var otherContainer = this.getOtherPanelHelper();
-
-    if (otherContainer == null)
-	{
-		this.showErrorMessage("Annotate::createNewResourceListViewer(): only one panel container!");
-        //alert("only one panel container!");
-        return;
-    }
-	
-	// TODO: editor loads with a null DIV id but right now the resource viewer needs one (rightPane)...needs modified
-    // TODO: resource viewer needs root div to unload properly, right now viewers just append instead of replace
-	
-	//console.log(
 	this.showErrorMessage("TODO: implement 'atb.viewer.TextEditorAnnotate.prototype.createNewResourceListViewer'...!");
 };
