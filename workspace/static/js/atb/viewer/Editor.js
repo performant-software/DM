@@ -758,12 +758,6 @@ atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
 
     var anno = databroker.createAnno(bodyUri, targetUri);
 	
-	var otherContainer = this.getOtherPanelHelper();
-    if (otherContainer == null)
-	{
-		this.showErrorMessage("only one panel container!");
-        return;
-    }
     var annoBodyEditor = new atb.viewer.Editor(
 		this.clientApp,
         ''
@@ -778,9 +772,9 @@ atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
 
     this.setAnnotationBody(bodyUri);
 
-    otherContainer.setViewer(annoBodyEditor);
-
     this.toggleAnnotationMode(true);
+
+    this.openRelatedViewer(annoBodyEditor);
 };
 
 atb.viewer.Editor.prototype.showAnnos = function (opt_myResourceId) {
