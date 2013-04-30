@@ -125,7 +125,7 @@ atb.viewer.Editor.prototype.getSanitizedHtml = function () {
  * @param {!string} htmlString the html to be written to the editor
  **/
 atb.viewer.Editor.prototype.setHtml = function (htmlString, opt_fireDelayedChange) {
-    if(this.field) {
+    if (this.field) {
 	    this.field.setHtml(false, htmlString, !opt_fireDelayedChange);
     }
 };
@@ -351,59 +351,55 @@ atb.viewer.Editor.prototype.scrollIntoViewByResourceId = function (resourceId) {
     this.scrollIntoView(tag);
 };
 
-atb.viewer.Editor.prototype.toggleAnnotationMode = function (inAnnoMode) {
+atb.viewer.Editor.prototype.toggleAnnotationMode = function(inAnnoMode) {
     this.inAnnoMode = inAnnoMode;
 };
 
-atb.viewer.Editor.prototype.resize = function (size) {
+atb.viewer.Editor.prototype.resize = function(width, height) {
+    atb.viewer.Viewer.prototype.resize(width, height);
 
-	this.width=size.width;
-	this.height=size.height;
+	this.width = width;
+	this.height = height;
 	
 	var elem = this.domHelper.getElement(this.useID);
 	var style;
         
-	if (elem != null)
-	{
+	if (elem != null) {
 		style =elem.style;
 		style.height = size.height;
 	}
 
-	if (this.toolbarDiv != null)
-	{
+	if (this.toolbarDiv != null) {
         jQuery(this.toolbarDiv).contents().filter('.goog-toolbar').width(size.width);
 		this.toolbarDiv.style.width = size.width;
 	}
 	
-	
-	if (this.editorDiv != null)
-	{
+	if (this.editorDiv != null) {
 		style=this.editorDiv.style;
 		style.width = size.width;
 		style.height = size.height;
 	}	
 };
 
-atb.viewer.Editor.prototype.getWidth = function()
-{
-	return this.width;
-};
-
-atb.viewer.Editor.prototype.getHeight=function()
-{
-	return this.height;
-};
-
-atb.viewer.Editor.prototype.render=function()
-{
-	if (this.rootDiv != null)
-	{
+atb.viewer.Editor.prototype.render = function() {
+	if (this.rootDiv != null) {
 		return;
 	}
-	
     atb.viewer.Viewer.prototype.render.call(this);
-	
-	this.renderHelper_();
+
+    this.baseDiv = this.domHelper.createElement("div");
+
+    this.editorDiv = this.domHelper.createDom('div', {'id': this.useID});
+    this.toolbarDiv = this.domHelper.createDom('div');
+    
+    this.rootDiv.appendChild(this.baseDiv);
+    this.baseDiv.appendChild(this.toolbarDiv);
+    
+    this.renderPropertiesPane();
+    
+    this.baseDiv.appendChild(this.editorDiv);
+    
+    this._renderDocumentIcon();
 
     this.syncTitle();//hack
     
@@ -411,42 +407,110 @@ atb.viewer.Editor.prototype.render=function()
         atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
         this.autoSaveInterval);
 
-    var callBeforeUnload = function () {
+    this.clientApp.registerFunctionToCallBeforeUnload(function() {
         this.saveIfModified(true);
-    };
-    this.clientApp.registerFunctionToCallBeforeUnload(
-        atb.Util.scopeAsyncHandler(callBeforeUnload, this));
+    }.bind(this));
     
-    goog.events.listen(this.clientApp.getEventDispatcher(), 
-                       atb.events.LinkingModeExited.EVENT_TYPE, 
-                       this.handleLinkingModeExited, false, this);
+    goog.events.listen(
+        this.clientApp.getEventDispatcher(), 
+        atb.events.LinkingModeExited.EVENT_TYPE, 
+        this.handleLinkingModeExited, false, this);
+
+
+    this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
+    
+    this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
+    this.field.registerPlugin(new goog.editor.plugins.UndoRedo());
+    this.field.registerPlugin(new goog.editor.plugins.ListTabHandler());
+    this.field.registerPlugin(new goog.editor.plugins.SpacesTabHandler());
+    this.field.registerPlugin(new goog.editor.plugins.EnterHandler());
+    this.field.registerPlugin(new goog.editor.plugins.HeaderFormatter());
+    var opt_initialTextContent = this._initialTextContent_;
+    //this.field.registerPlugin(new goog.editor.plugins.LoremIpsum(this._initialTextContent_));
+    
+    this._initialTextContent_  = null;
+
+    this.field.registerPlugin(new goog.editor.plugins.LinkDialogPlugin());
+    this.field.registerPlugin(new goog.editor.plugins.LinkBubble());
+    this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
+
+    // Specify the buttons to add to the toolbar, using built in default buttons.
+    var buttons = [
+        goog.editor.Command.BOLD,
+        goog.editor.Command.ITALIC,
+        goog.editor.Command.UNDERLINE,
+        //goog.editor.Command.FONT_COLOR,
+        //goog.editor.Command.BACKGROUND_COLOR,
+        //goog.editor.Command.FONT_FACE,
+        goog.editor.Command.FONT_SIZE,
+        goog.editor.Command.LINK,
+        //goog.editor.Command.UNDO,
+        //goog.editor.Command.REDO,
+        goog.editor.Command.UNORDERED_LIST,
+        goog.editor.Command.ORDERED_LIST//,
+        //goog.editor.Command.INDENT,
+        //goog.editor.Command.OUTDENT
+        //goog.editor.Command.JUSTIFY_LEFT,
+        //goog.editor.Command.JUSTIFY_CENTER,
+        //goog.editor.Command.JUSTIFY_RIGHT,
+        //goog.editor.Command.SUBSCRIPT,
+        //goog.editor.Command.SUPERSCRIPT,
+        //goog.editor.Command.STRIKE_THROUGH
+    ];
+
+    var myToolbar = goog.ui.editor.DefaultToolbar.makeToolbar(buttons, this.domHelper.getElement(this.toolbarDiv));
+
+    // Create annotate button
+    // TODO: See if we can move this into the plugin instead of here
+    var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
+        atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
+        'Annotate selected text',
+        '',
+        'atb-editor-button-annotate');
+    /*
+    //lol@seems un-needed, and infact causes a redundant event, it would seem, from what i can tell:
+    goog.events.listen(annotateButton, goog.ui.Component.EventType.ACTION, function (e) {
+        //debugPrint("annotate command!");
+        this.field.execCommand(atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION);
+    }, false, this);
+    */
+    annotateButton.queryable = true;//Fixes wierd annotations bug
+
+    myToolbar.addChildAt(annotateButton, 0, true);
+    
+    this.propertiesButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
+        'properties',
+        'Edit this document\'s properties',
+        '',
+        'atb-editor-button-properties'
+    );
+    goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
+    myToolbar.addChild(this.propertiesButton, true);
+
+    // Hook the toolbar into the field.
+    var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
+    
+    this.field.makeEditable();
+    
+    this.pasteHandler = new goog.events.PasteHandler(this.field);
+    this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e) {
+        window.setTimeout(function() {
+            this.onTextPasted();
+        }.bind(this), 1);
+    }.bind(this));
+    
+    this.editorIframeElement = this.domHelper.getElement(this.useID);
+    this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
+    this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
+    
+    this.finishRenderPropertiesPane();
+    
+    this.addGlobalEventListeners();
 };
 
-atb.viewer.Editor.prototype.renderHelper_ = function () {
-    var self = this;
-
-	var style;
-
-	this.baseDiv = this.domHelper.createElement("div");
-
-	var thisWidth = "" + this.width + "px";// lolhack...!
-
-	this.editorDiv = this.domHelper.createElement("div");
-	this.editorDiv.id = this.useID;
-
-	this.toolbarDiv = this.domHelper.createElement("div");
-    
-	this.rootDiv.appendChild(this.baseDiv);
-	this.baseDiv.appendChild(this.toolbarDiv);
-    
-    this.renderPropertiesPane();
-	
-	this.baseDiv.appendChild(this.editorDiv);
-	
-	this.documentIcon = this.domHelper.createElement('div');
-	jQuery(this.documentIcon).addClass('atb-viewer-documentIcon');
-	
-	goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
+atb.viewer.Editor.prototype._renderDocumentIcon = function() {
+    this.documentIcon = this.domHelper.createDom('div', {'class': 'atb-viewer-documentIcon'});
+    goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
     
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     var menuItems = [
@@ -454,31 +518,36 @@ atb.viewer.Editor.prototype.renderHelper_ = function () {
                 "showLinkedAnnos",
                 createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
                 function(actionEvent) {
-                    self.showAnnos(self.resourceId);
-                }, 
+                    this.showAnnos(this.resourceId);
+                }.bind(this), 
                 'Show resources linked to this document'
         ),
         new atb.widgets.MenuItem(
             "createLink",
             createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
             function(actionEvent) {
-                self.linkAnnotation();
-            },
+                this.linkAnnotation();
+            }.bind(this),
             'Link another resource to this document'
         ),
         new atb.widgets.MenuItem(
             "newTextAnno",
             createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
             function(actionEvent) {
-                self.createNewTextBody(self.resourceId);
-            },
+                this.createNewTextBody(this.resourceId);
+            }.bind(this),
             'Annotate this document'
         )
     ];
-    this.addHoverMenuListenersToElement(this.documentIcon, menuItems,
-                                        atb.Util.scopeAsyncHandler(function () {return this.resourceId;}, this));
-	
-	this.baseDiv.appendChild(this.documentIcon);
+    this.addHoverMenuListenersToElement(
+        this.documentIcon,
+        menuItems,
+        function() {
+            return this.resourceId;
+        }.bind(this)
+    );
+    
+    this.baseDiv.appendChild(this.documentIcon);
 };
 
 atb.viewer.Editor.prototype.renderPropertiesPane = function () {
@@ -561,110 +630,6 @@ atb.viewer.Editor.prototype.handleDocumentIconClick_ = function (e) {
     eventDispatcher.dispatchEvent(event);
 };
 
-atb.viewer.Editor.prototype.finishRender=function()
-{
-    if (this.field == null) {
-        this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
-		
-        // Create and register all of the editing plugins you want to use.
-        this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
-        //this.field.registerPlugin(new goog.editor.plugins.RemoveFormatting());
-        this.field.registerPlugin(new goog.editor.plugins.UndoRedo());
-        this.field.registerPlugin(new goog.editor.plugins.ListTabHandler());
-        this.field.registerPlugin(new goog.editor.plugins.SpacesTabHandler());
-        this.field.registerPlugin(new goog.editor.plugins.EnterHandler());
-        this.field.registerPlugin(new goog.editor.plugins.HeaderFormatter());
-        var opt_initialTextContent = this._initialTextContent_;
-		
-        //this.field.registerPlugin(new goog.editor.plugins.LoremIpsum(this._initialTextContent_));
-		
-        this._initialTextContent_  = null;
-
-        this.field.registerPlugin(new goog.editor.plugins.LinkDialogPlugin());
-        this.field.registerPlugin(new goog.editor.plugins.LinkBubble());
-        this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
-
-        // Specify the buttons to add to the toolbar, using built in default buttons.
-        var buttons = [
-        goog.editor.Command.BOLD,
-        goog.editor.Command.ITALIC,
-        goog.editor.Command.UNDERLINE,
-        //goog.editor.Command.FONT_COLOR,
-        //goog.editor.Command.BACKGROUND_COLOR,
-        //goog.editor.Command.FONT_FACE,
-        goog.editor.Command.FONT_SIZE,
-        goog.editor.Command.LINK,
-        //goog.editor.Command.UNDO,
-        //goog.editor.Command.REDO,
-        goog.editor.Command.UNORDERED_LIST,
-        goog.editor.Command.ORDERED_LIST//,
-        //goog.editor.Command.INDENT,
-        //goog.editor.Command.OUTDENT
-        //goog.editor.Command.JUSTIFY_LEFT,
-        //goog.editor.Command.JUSTIFY_CENTER,
-        //goog.editor.Command.JUSTIFY_RIGHT,
-        //goog.editor.Command.SUBSCRIPT,
-        //goog.editor.Command.SUPERSCRIPT,
-        //goog.editor.Command.STRIKE_THROUGH,
-        //goog.editor.Command.REMOVE_FORMAT // Definitely don't offer this option, it would erase annotation spans
-        ];
-
-        var myToolbar = goog.ui.editor.DefaultToolbar.makeToolbar(buttons, this.domHelper.getElement(this.toolbarDiv));
-
-        // Create annotate button
-        // TODO: See if we can move this into the plugin instead of here
-        var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
-            atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
-            'Annotate selected text',
-            '',
-            'atb-editor-button-annotate');
-		/*
-		//lol@seems un-needed, and infact causes a redundant event, it would seem, from what i can tell:
-        goog.events.listen(annotateButton, goog.ui.Component.EventType.ACTION, function (e) {
-			//debugPrint("annotate command!");
-            this.field.execCommand(atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION);
-        }, false, this);
-		*/
-		annotateButton.queryable = true;//Fixes wierd annotations bug
-
-        myToolbar.addChildAt(annotateButton, 0, true);
-        
-        this.propertiesButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
-            'properties',
-            'Edit this document\'s properties',
-            '',
-            'atb-editor-button-properties'
-        );
-        goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
-        myToolbar.addChild(this.propertiesButton, true);
-
-        // Hook the toolbar into the field.
-        var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
-    }
-	
-    this.field.makeEditable();
-	
-	this.pasteHandler = new goog.events.PasteHandler(this.field);
-        var self = this;
-        this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e)
-        {
-			window.setTimeout(function()
-			{
-				self.onTextPasted();
-			},1);
-        });
-		
-	
-	
-    this.editorIframeElement = this.domHelper.getElement(this.useID);
-    this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
-    this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
-    
-    this.finishRenderPropertiesPane();
-    
-    this.addGlobalEventListeners();
-};
-
 atb.viewer.Editor.prototype.addGlobalEventListeners = function () {
     var eventDispatcher = this.clientApp.getEventDispatcher();
     
@@ -691,47 +656,37 @@ atb.viewer.Editor.prototype.addGlobalEventListeners = function () {
                        }, false, this);
 };
 
-atb.viewer.Editor.prototype.dismissContextMenu = function(menu)
-{
+atb.viewer.Editor.prototype.dismissContextMenu = function(menu) {
 	this.unselectAnnotationSpan();
 	menu.hide();//lol!
 };
 
-atb.viewer.Editor.prototype.getTitle = function ()
-{
-    if (this._title == null)
-	{
+atb.viewer.Editor.prototype.getTitle = function () {
+    if (this._title == null) {
         return this.DEFAULT_DOCUMENT_TITLE;//'Untitled text document';
     }
-    else
-	{
+    else {
         return this._title;
     }
 };
 
-atb.viewer.Editor.prototype.setTitle = function(title)
-{
+atb.viewer.Editor.prototype.setTitle = function(title) {
     this._title = title;
 	this.syncTitle();
 };
 
-atb.viewer.Editor.prototype.isTitleEditable = function()
-{
+atb.viewer.Editor.prototype.isTitleEditable = function() {
 	return true;
 };
 
-atb.viewer.Editor.prototype.syncTitle = function()
-{
-	var myPanel = this.getCurrentPanelContainer();
-	if (myPanel != null)
-	{
-		myPanel.setTitle(this.getTitle());
-		myPanel.setTitleEditable(this.isTitleEditable());
-	};
+atb.viewer.Editor.prototype.syncTitle = function() {
+    if (this.container) {
+        this.container.setTitle(this.getTitle());
+        this.container.setTitleEditable(this.isTitleEditable());
+    }
 };
 
-atb.viewer.Editor.prototype.loadResourceById =
-function (resourceId, opt_doAfter, opt_doAfterScope) {
+atb.viewer.Editor.prototype.loadResourceById = function (resourceId, opt_doAfter, opt_doAfterScope) {
     this.showLoadingSpinner();
     
     this.webService.withResource(
@@ -783,22 +738,6 @@ atb.viewer.Editor.prototype.loadResource = function (resource) {
 
 atb.viewer.Editor.prototype.setAnnotationBody = function (bodyResourceId) {
     this.bodyResourceId = bodyResourceId;
-};
-
-
-atb.viewer.Editor.prototype.getOtherPanelHelper = function()
-{
-	var otherPanel = null;
-	var panelContainer = this.getCurrentPanelContainer();
-	if (panelContainer != null)
-	{
-		var panelManager = panelContainer.getPanelManager();
-		if (panelManager != null)
-		{
-			otherPanel = panelManager.getAnotherPanel(panelContainer);
-		}
-	}
-	return otherPanel;
 };
 
 atb.viewer.Editor.prototype.showErrorMessage = function (msg) {
