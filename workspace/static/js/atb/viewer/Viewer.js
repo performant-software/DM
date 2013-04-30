@@ -195,8 +195,8 @@ atb.viewer.Viewer.prototype.getContainer = function() {
 
 atb.viewer.Viewer.prototype.openRelatedViewer = function(viewer) {
     var container = new atb.viewer.ViewerContainer(this.getDomHelper());
-    container.setViewer(viewer);
     this.getContainer().grid.addViewerContainerAt(container, this.container.getIndex() + 1);
+    container.setViewer(viewer);
 };
 
 /**

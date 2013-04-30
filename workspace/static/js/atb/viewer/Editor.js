@@ -355,47 +355,25 @@ atb.viewer.Editor.prototype.toggleAnnotationMode = function(inAnnoMode) {
 
 atb.viewer.Editor.prototype.resize = function(width, height) {
     atb.viewer.Viewer.prototype.resize(width, height);
-
-	this.width = width;
-	this.height = height;
 	
-	var elem = this.domHelper.getElement(this.useID);
-	var style;
-        
-	if (elem != null) {
-		style =elem.style;
-		style.height = size.height;
-	}
-
-	if (this.toolbarDiv != null) {
-        jQuery(this.toolbarDiv).contents().filter('.goog-toolbar').width(size.width);
-		this.toolbarDiv.style.width = size.width;
-	}
-	
-	if (this.editorDiv != null) {
-		style=this.editorDiv.style;
-		style.width = size.width;
-		style.height = size.height;
-	}	
+	jQuery('#' + this.useID).width(width)
+    .height(height - jQuery(this.toolbarDiv).outerHeight(true));
 };
 
-atb.viewer.Editor.prototype.render = function() {
+atb.viewer.Editor.prototype.render = function(div) {
 	if (this.rootDiv != null) {
 		return;
 	}
-    atb.viewer.Viewer.prototype.render.call(this);
-
-    this.baseDiv = this.domHelper.createElement("div");
+    atb.viewer.Viewer.prototype.render.call(this, div);
 
     this.editorDiv = this.domHelper.createDom('div', {'id': this.useID});
     this.toolbarDiv = this.domHelper.createDom('div');
     
-    this.rootDiv.appendChild(this.baseDiv);
-    this.baseDiv.appendChild(this.toolbarDiv);
+    this.rootDiv.appendChild(this.toolbarDiv);
     
     this.renderPropertiesPane();
     
-    this.baseDiv.appendChild(this.editorDiv);
+    this.rootDiv.appendChild(this.editorDiv);
     
     this._renderDocumentIcon();
 
@@ -504,6 +482,10 @@ atb.viewer.Editor.prototype.render = function() {
     this.finishRenderPropertiesPane();
     
     this.addGlobalEventListeners();
+
+    if (this.container) {
+        this.container.autoResize();
+    }
 };
 
 atb.viewer.Editor.prototype._renderDocumentIcon = function() {
@@ -545,7 +527,7 @@ atb.viewer.Editor.prototype._renderDocumentIcon = function() {
         }.bind(this)
     );
     
-    this.baseDiv.appendChild(this.documentIcon);
+    this.rootDiv.appendChild(this.documentIcon);
 };
 
 atb.viewer.Editor.prototype.renderPropertiesPane = function () {
