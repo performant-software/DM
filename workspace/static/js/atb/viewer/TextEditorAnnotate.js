@@ -554,26 +554,8 @@ atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function (
  * @return new annotationId, 1 or higher
  **/
 atb.viewer.TextEditorAnnotate.prototype.getNewAnnotationId = function () {
-
-     var annotationId = 0;
-
-    // get all annotations in an editor
-    // look through their classnames for the number ID
-    // get one higher than it
-    var domHelper = this.fieldObject.getEditableDomHelper();
-    var annotations = domHelper.getElementsByClass(
-                    atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-
-    for(var i = 0; i < annotations.length; i++) {
-        var testId = atb.viewer.TextEditorAnnotate.getAnnotationId(annotations[i]);
-        if(testId > annotationId) {
-            annotationId = testId;
-        }
-    }
-
-    annotationId++; // get just 1 more than the highest existing spanId value
-
-    return annotationId;
+    var databroker = this.thisViewer.clientApp.databroker;
+    return databroker.createUuid();
 };
 
 
@@ -626,17 +608,18 @@ atb.viewer.TextEditorAnnotate.prototype.getAnnotationTagByResourceId = function 
 };
 
 atb.viewer.TextEditorAnnotate.isUsingLocalId = function (spanElem) {
-    var result = false;
+    // var result = false;
 
-    var classNames = spanElem.className.split(" ");
+    // var classNames = spanElem.className.split(" ");
 
-    for (var j=0; j<classNames.length; j++) {
-        if (classNames[j].indexOf('-LOCALID-') != -1) {
-            result = true;
-        }
-    }
+    // for (var j=0; j<classNames.length; j++) {
+    //     if (classNames[j].indexOf('-LOCALID-') != -1) {
+    //         result = true;
+    //     }
+    // }
 
-    return result;
+    // return result;
+    return false;
 };
 
 
@@ -824,18 +807,8 @@ atb.viewer.TextEditorAnnotate.prototype.getOtherPanelHelper = function()
 	return this.thisViewer.getOtherPanelHelper();
 };
 
-atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function (spanElem)
-{
-	var otherContainer = this.getOtherPanelHelper();
-    if (otherContainer == null)
-	{
-		this.showErrorMessage("only one panel container!");
-        return;
-    }
-    var annoBodyEditor = new atb.viewer.Editor(
-		this.thisViewer.clientApp,	//Hack -- maybe there must be a better way than creating these everywhere...?
-        ''
-    );
+atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
+	var annoBodyEditor = new atb.viewer.Editor(this.thisViewer.clientApp);
     annoBodyEditor.setPurpose('anno');
     
     var targetTextTitle = this.thisViewer.getTitle();
@@ -858,10 +831,9 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function (spanElem)
 
     this.databroker.createAnno(newTextId, myResourceId);
 
-    otherContainer.setViewer( annoBodyEditor );
-    otherContainer.setTabContents('New Annotation');
-
     this.thisViewer.toggleAnnotationMode(true);
+
+    this.thisViewer.openRelatedViewer(annoBodyEditor);
 };
 
 
