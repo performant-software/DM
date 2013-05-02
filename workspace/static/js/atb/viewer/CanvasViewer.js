@@ -139,7 +139,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     var id = this.webService.resourceUriToId(uri);
     var self = this;
-    var specificTargetUri = this.databroker.getSvgSelectorSpecificTargetUri(uri);
+    var specificResourceUri = this.databroker.getSvgSelectorSpecificResourceUri(uri);
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
@@ -180,7 +180,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                     "showLinkedAnnos",
                     createButtonGenerator("atb-radialmenu-button icon-search"),
                     function(actionEvent) {
-                        self.showAnnos(uri);
+                        self.showAnnos(specificResourceUri);
                         
                         self.hideHoverMenu();
                     },
@@ -190,7 +190,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                     "linkAway",
                     createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
                     function(actionEvent) {
-                        self.clientApp.createAnnoLink(id);
+                        self.clientApp.createAnnoLink(specificResourceUri);
                         self.highlightFeature(uri);
                     },
                     'Link another resource to this marker'
@@ -199,12 +199,12 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                     "newTextAnno",
                     createButtonGenerator("atb-radialmenu-button icon-pencil"),
                     function(actionEvent) {
-                        self.createTextAnno(uri);
+                        self.createTextAnno(specificResourceUri);
                     },
                     'Annotate this marker'
                 )
             ];
-            this.showHoverMenu(menuButtons, specificTargetUri);
+            this.showHoverMenu(menuButtons, specificResourceUri);
         }
     };
     afterTimer = atb.Util.scopeAsyncHandler(afterTimer, this)
@@ -248,7 +248,7 @@ atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
         this.setCanvasByUri(resource.getOneProperty('oa:hasSource'));
     }
     else if (resource.hasAnyType('oa:SvgSelector')) {
-        var specificResource = this.databroker.getResource(this.databroker.getSvgSelectorSpecificTargetUri(uri));
+        var specificResource = this.databroker.getResource(this.databroker.getSvgSelectorSpecificResourceUri(uri));
         this.setCanvasByUri(specificResource.getOneProperty('oa:hasSource'));
     }
 };
@@ -348,10 +348,8 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
 
     var newTextResource = this.databroker.createText(textTitle, "");
     var newTextId = newTextResource.uri;
-
-    var specificTargetUri = this.databroker.getSvgSelectorSpecificTargetUri(svgUri);
        
-    var newAnno = this.databroker.createAnno(newTextId, specificTargetUri);
+    var newAnno = this.databroker.createAnno(newTextId, uri);
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;
