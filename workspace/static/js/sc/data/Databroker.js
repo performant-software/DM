@@ -44,6 +44,7 @@ sc.data.Databroker = function(options) {
     this.rdfByUrl = new goog.structs.Map();
     
     this.newQuads = [];
+    this.deletedQuadsStore = new sc.data.QuadStore();
 
     this.currentProject = null;
     this.allProjects = [];
@@ -327,6 +328,21 @@ sc.data.Databroker.prototype.addNewQuad = function(quad) {
 sc.data.Databroker.prototype.addNewQuads = function(quads) {
     goog.structs.forEach(quads, function(quad) {
         this.addNewQuad(quad);
+    }, this);
+
+    return this;
+};
+
+sc.data.Databroker.prototype.deleteQuad = function(quad) {
+    this.quadStore.removeQuad(quad);
+    this.deletedQuadsStore.addQuad(quad);
+
+    return this;
+};
+
+sc.data.Databroker.prototype.deleteQuads = function(quads) {
+    goog.structs.forEach(quads, function(quad) {
+        this.deleteQuad(quad);
     }, this);
 
     return this;
@@ -1478,6 +1494,19 @@ sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoT
     }
 
     return anno;
+};
+
+sc.data.Databroker.prototype.getSvgSelectorSpecificTargetUri = function(selectorUri) {
+    var specificTargets = [];
+    this.quadStore.forEachQuadMatchingQuery(
+        null, this.namespaces.expand('oa', 'hasSelector'), sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null,
+        function(quad) {
+            specificTargets.push(quad.subject);
+        },
+        this
+    );
+
+    return sc.util.Namespaces.stripAngleBrackets(specificTargets[0]);
 };
 
 /* Setter & getter methods for current project

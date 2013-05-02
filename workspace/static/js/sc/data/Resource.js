@@ -148,6 +148,20 @@ sc.data.Resource.prototype.addProperty = function(predicate, object) {
     return this;
 };
 
+sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
+    this.databroker.quadStore.forEachQuadMatchingQuery(
+        this.bracketedUri,
+        sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(predicate)),
+        opt_object ? sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(opt_object)) : null,
+        null,
+        function(quad) {
+            this.databroker.deleteQuad(quad);
+        }.bind(this)
+    );
+
+    return this;
+};
+
 sc.data.Resource.prototype.addType = function(type) {
     return this.addProperty('rdf:type', type);
 };
