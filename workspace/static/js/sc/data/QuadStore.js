@@ -87,6 +87,28 @@ sc.data.QuadStore.prototype.numQuadsMatchingQuery = function(subject, predicate,
 };
 
 /**
+ * Checks if this store contains a given quad.
+ * @param  {sc.data.Quad} quad The quad to check for.
+ * @return {boolean}           Whether this store contains the quad.
+ */
+sc.data.QuadStore.prototype.containsQuad = function(quad) {
+    return this.containsQuadMatchingQuery(quad.subject, quad.predicate, quad.object, quad.context);
+};
+
+/**
+ * Checks if the store contains a quad matching a given pattern.
+ * (null or undefined is treated as a wildcard)
+ * @param  {string|null|undefined} subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined} predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined} object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined} context   The context to search for, or null as a wildcard.
+ * @return {boolean}                         Whether a matching quad is found.
+ */
+sc.data.QuadStore.prototype.containsQuadMatchingQuery = function(subject, predicate, object, context) {
+    return this.numQuadsMatchingQuery(subject, predicate, object, context) > 0;
+};
+
+/**
  * Calls a function with each quad matching the specified pattern.
  * (null or undefined is treated as a wildcard)
  * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
@@ -271,28 +293,86 @@ sc.data.QuadStore.prototype.addQuads = function(quads) {
     return this;
 };
 
-sc.data.QuadStore.prototype.removeQuad = function(quad) {
-    this.quads.remove(quad);
+/**
+ * Removes a quad (by reference) from the store.
+ * If you don't have a reference to the quad, use sc.data.QuadStore#removeQuadsMatchingQuery.
+ * @param  {sc.data.Quad} quad A reference to the quad to remove.
+ * @return {boolean}      Whether the quad was found and removed.
+ */
+sc.data.QuadStore.prototype._removeQuad = function(quad) {
+    if (this.quads.remove(quad)) {
+        var keys = sc.data.QuadStore.generateIndexKeys(quad);
 
-    var keys = sc.data.QuadStore.generateIndexKeys(quad);
+        goog.structs.forEach(keys, function(key) {
+            var set = this.indexedQuads.get(key);
 
-    goog.structs.forEach(keys, function(key) {
-        var set = this.indexedQuads.get(key);
+            set.remove(quad);
+        }, this);
 
-        set.remove(quad);
-    }, this);
+        return true;
+    }
+    else {
+        return false;
+    }
 };
 
-sc.data.QuadStore.prototype.removeQuads = function(quads) {
+/**
+ * Removes quads (by reference) from the store.
+ * @param  {array.<sc.data.Quad>} quads The quads to remove.
+ * @return {sc.data.QuadStore}          this.
+ */
+sc.data.QuadStore.prototype._removeQuads = function(quads) {
     goog.structs.forEach(quads, function(quad) {
-        this.removeQuad(quad);
+        this._removeQuad(quad);
     }, this);
+
+    return this;
 };
 
+/**
+ * Removes all quads from the store which match the query.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {boolean}                          Whether any quads were found and removed.
+ */
 sc.data.QuadStore.prototype.removeQuadsMatchingQuery = function(subject, predicate, object, context) {
+    var ret = false;
+
     this.forEachQuadMatchingQuery(subject, predicate, object, context, function(quad) {
-        this.removeQuad(quad);
+        ret = this.removeQuad(quad);
     }, this);
+
+    return ret;
+};
+
+/**
+ * Removes a quad from the store.
+ * @param  {sc.data.Quad} quad The quad to remove.
+ * @return {boolean}           Whether the quad was found and removed.
+ */
+sc.data.QuadStore.prototype.removeQuad = function(quad) {
+    return this.removeQuadsMatchingQuery(quad.subject, quad.predicate, quad.object, quad.context);
+};
+
+/**
+ * Removes the given quads from the store.
+ * @param  {array.<sc.data.Quad>} quads The quads to remove.
+ * @return {boolean}                    Whether any quads were found and removed.
+ */
+sc.data.QuadStore.prototype.removeQuads = function(quads) {
+    var ret = false;
+
+    goog.structs.forEach(quads, function(quad) {
+        var b = this.removeQuad(quad);
+
+        if (b) {
+            ret = true;
+        }
+    })
+
+    return ret;
 };
 
 /**
@@ -309,6 +389,70 @@ sc.data.QuadStore.prototype.getQuads = function() {
  */
 sc.data.QuadStore.prototype.getCount = function() {
     return this.quads.getCount();
+};
+
+/**
+ * Returns a clone of this Quad Store.
+ * @param {boolean} opt_shallow If true, individual quads will not be cloned. This is faster, but may cause referencing issues.
+ * @return {sc.data.QuadStore} cloned store.
+ */
+sc.data.QuadStore.prototype.clone = function(opt_shallow) {
+    var store = new sc.data.QuadStore();
+
+    if (opt_shallow) {
+        store.quads = this.quads.clone();
+        store.indexedQuads = this.indexedQuads.clone();
+    }
+    else {
+        goog.structs.forEach(this.quads, function(quad) {
+            store.addQuad(quad.clone());
+        }, this);
+    }
+
+    return store;
+};
+
+/**
+ * Returns a Quad Store containing quads in both this store and the other store.
+ * @param  {sc.data.QuadStore} other The other store.
+ * @return {sc.data.QuadStore}       A store containing the intersection.
+ */
+sc.data.QuadStore.prototype.intersection = function(other) {
+    var store = new sc.data.QuadStore();
+    var a, b;
+    if (other.getCount() > this.getCount()) {
+        a = this;
+        b = other;
+    }
+    else {
+        a = other;
+        b = this;
+    }
+
+    goog.structs.forEach(a.quads, function(quad) {
+        if (b.contains(quad)) {
+            store.addQuad(quad.clone());
+        }
+    }, this);
+
+    return store;
+};
+
+/**
+ * Finds all values that are present in this store and not in the other store.
+ * @param  {sc.data.QuadStore} other The other store.
+ * @return {sc.data.QuadStore}       A store containing the difference.
+ */
+sc.data.QuadStore.prototype.difference = function(other) {
+    var store = new sc.data.QuadStore(this.quads.difference(other));
+
+    goog.structs.forEach(this.quads, function(quad) {
+        if (!other.contains(quad)) {
+            store.addQuad(quad.clone());
+        }
+    }, this);
+
+    return store;
 };
 
 /**
