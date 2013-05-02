@@ -89,6 +89,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (uri, summary, ev
     var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
     container.setViewer(viewer);
     viewer.loadResourceByUri(uri);
+    container.autoResize();
 };
 
 atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv) {

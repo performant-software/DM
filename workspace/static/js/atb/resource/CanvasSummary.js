@@ -2,7 +2,8 @@ goog.provide('atb.resource.CanvasSummary');
 
 goog.require('atb.resource.ResourceSummary');
 goog.require('goog.math.Size');
-goog.require("atb.util.ReferenceUtil");
+goog.require('sc.canvas.FabricCanvasViewport');
+goog.require('sc.canvas.FabricCanvasFactory');
 
 /**
  * atb.resource.CanvasSummary
@@ -13,30 +14,27 @@ goog.require("atb.util.ReferenceUtil");
  * @constructor
  * @extends atb.resource.ResourceSummary
  */
-atb.resource.CanvasSummary = function (resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions);
+atb.resource.CanvasSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     
-    this.resourceType = 'Canvas';
-    
-	this.thumbURI = resource.getThumbInfo().uri;
-    this.size = resource.getThumbSize();
-    this.title = resource.getTitle();
+    this.size = new goog.math.Size(75, 75);
+    this.title = this.resource.getOneProperty('dc:title');
 	
     this.decorate();
 };
 goog.inherits(atb.resource.CanvasSummary, atb.resource.ResourceSummary);
 
+atb.resource.CanvasSummary.prototype.resourceType = 'Canvas';
+
 atb.resource.CanvasSummary.prototype.decorate = function () {
-    var image = this.domHelper.createDom(
-        'img',
-        {
-            'src': this.webService.mediaURI + this.thumbURI,
-            'width': this.size.width,
-            'height': this.size.height
-        }
-    );
-    
-    if (! this.styleOptions.titleOnly) this.div.appendChild(image);
+    if (! this.styleOptions.titleOnly) {
+        var image = this.domHelper.createDom('div');
+        this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
+        this.viewport.resize(this.size.width, this.size.height);
+        this.viewport.addDeferredCanvas(sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getUri(), this.databroker));
+        
+        this.div.appendChild(image);
+    }
     
     this.titleDiv = this.domHelper.createDom(
         'div',
@@ -44,11 +42,10 @@ atb.resource.CanvasSummary.prototype.decorate = function () {
             'class': 'atb-resourcesummary-title'
         }
     );
-    jQuery(this.titleDiv).html(this.title);
+    jQuery(this.titleDiv).text(this.title);
     jQuery(this.div).append(this.titleDiv);
     
     if (! this.styleOptions.titleOnly) {
-        jQuery(this.div).append('<div class="atb-resourcesummary-user">added by ' + this.resource.getUser() + '</div>');
         jQuery(this.div).append('<div style="clear:both;" />');
     }
 };

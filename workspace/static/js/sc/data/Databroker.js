@@ -1496,7 +1496,7 @@ sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoT
     return anno;
 };
 
-sc.data.Databroker.prototype.getSvgSelectorSpecificTargetUri = function(selectorUri) {
+sc.data.Databroker.prototype.getSvgSelectorSpecificResourceUri = function(selectorUri) {
     var specificTargets = [];
     this.quadStore.forEachQuadMatchingQuery(
         null, this.namespaces.expand('oa', 'hasSelector'), sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null,

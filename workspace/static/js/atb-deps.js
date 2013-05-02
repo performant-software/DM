@@ -15,7 +15,7 @@ goog.addDependency('../../../atb/events/ResourceModified.js', ['atb.events.Resou
 goog.addDependency('../../../atb/resource/AnnotationResource.js', ['atb.resource.AnnotationResource'], ['atb.resource.Resource', 'goog.structs.Map']);
 goog.addDependency('../../../atb/resource/AnnotationSummary.js', ['atb.resource.AnnotationSummary'], ['atb.Util', 'atb.resource.ResourceCollection']);
 goog.addDependency('../../../atb/resource/CanvasResource.js', ['atb.resource.CanvasResource'], ['atb.resource.Resource', 'goog.math.Size', 'goog.structs.Map']);
-goog.addDependency('../../../atb/resource/CanvasSummary.js', ['atb.resource.CanvasSummary'], ['atb.resource.ResourceSummary', 'atb.util.ReferenceUtil', 'goog.math.Size']);
+goog.addDependency('../../../atb/resource/CanvasSummary.js', ['atb.resource.CanvasSummary'], ['atb.resource.ResourceSummary', 'goog.math.Size', 'sc.canvas.FabricCanvasFactory', 'sc.canvas.FabricCanvasViewport']);
 goog.addDependency('../../../atb/resource/Image.js', ['atb.resource.Image'], []);
 goog.addDependency('../../../atb/resource/ManuscriptResource.js', ['atb.resource.ManuscriptResource'], ['atb.resource.Resource']);
 goog.addDependency('../../../atb/resource/ManuscriptSummary.js', ['atb.resource.ManuscriptSummary', 'atb.resource.ManuscriptSummary.PageNumberSummary'], ['atb.resource.ResourceSummary', 'goog.structs.Map']);
