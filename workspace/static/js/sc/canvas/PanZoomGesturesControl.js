@@ -129,9 +129,6 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousedown = function(opts) {
 
     this.mouseDownX = event.pageX;
     this.mouseDownY = event.pageY;
-
-    this.viewport.registerHandledMouseEvent(event);
-    event.preventDefault();
 };
 
 sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {

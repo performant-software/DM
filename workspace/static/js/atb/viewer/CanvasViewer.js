@@ -89,7 +89,7 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     var viewport = this.viewer.mainViewport;
     var eventDispatcher = this.clientApp.getEventDispatcher();
     
-    viewport.addEventListener('click', this.onResourceClick, false, this);
+    viewport.addEventListener('mouseup', this.onResourceClick, false, this);
     viewport.addEventListener('mouseover', this.onFeatureHover, false, this);
     viewport.addEventListener('mouseout', this.onFeatureMouseout, false, this);
     viewport.addEventListener('canvasAdded', this.onCanvasAdded, false, this);
@@ -219,16 +219,15 @@ atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
 atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var uri = event.uri;
     var feature = event.getFeature();
+    var specificResourceUri = this.databroker.getSvgSelectorSpecificResourceUri(uri);
 
     console.log('resource click', event, uri, feature)
     
-    if (! uri) return;
+    if (! uri || !specificResourceUri) return;
     if (! feature) return;
     if (feature.type == 'image') return;
     
-    var resourceId = this.webService.resourceUriToId(uri);
-    
-    var event = new atb.events.ResourceClicked(resourceId, null, this);
+    var event = new atb.events.ResourceClicked(specificResourceUri, null, this);
 
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
