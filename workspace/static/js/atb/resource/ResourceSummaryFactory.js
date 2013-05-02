@@ -21,7 +21,7 @@ atb.resource.ResourceSummaryFactory.createFromUri = function(uri, clickHandler, 
         result = new atb.resource.TextHighlightSummary (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
-    else if (resource.hasAnyType('oac:SvgSelector')) {
+    else if (resource.hasAnyType('oac:SpecificResource')) {
         result = new atb.resource.MarkerSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     

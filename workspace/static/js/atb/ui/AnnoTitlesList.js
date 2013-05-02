@@ -96,7 +96,7 @@ atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderD
     for (var i = 0; i < uris.length; i++) {
         var uri = uris[i];
 
-        if (!uri) {
+        if (!uri || uri == this.uri) {
             continue;
         }
         else {
