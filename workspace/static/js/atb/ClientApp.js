@@ -297,6 +297,9 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
         
         this.hideLinkCreationUI();
     }
+
+    var exitedEvent = new atb.events.LinkingModeExited(this.annoLinkCreationAnnoId);
+    this.eventDispatcher.dispatchEvent(exitedEvent);
 };
 
 atb.ClientApp.prototype.annoLinkCreationKeyHandler_ = function (e) {

@@ -1506,7 +1506,12 @@ sc.data.Databroker.prototype.getSvgSelectorSpecificResourceUri = function(select
         this
     );
 
-    return sc.util.Namespaces.stripAngleBrackets(specificTargets[0]);
+    if (specificTargets.length > 0) {
+        return sc.util.Namespaces.stripAngleBrackets(specificTargets[0]);
+    }
+    else {
+        return null;
+    }
 };
 
 /* Setter & getter methods for current project
