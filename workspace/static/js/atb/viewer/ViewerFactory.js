@@ -12,7 +12,7 @@ atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
     if (resource.hasAnyType('dctypes:Text')) {
         viewer = new atb.viewer.Editor(clientApp);
     }
-    else if (resource.hasAnyType('dms:Canvas')) {
+    else if (resource.hasAnyType(['dms:Canvas', 'oa:SpecificResource'])) {
         viewer = new atb.viewer.CanvasViewer(clientApp);
     }
 

@@ -803,21 +803,19 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRect = function(x, y, width, heig
     }
 
     this.complainIfNoCanvas();
-    
-    console.warn('CanvasViewport#zoomToRect is not yet fully implemented. ' +
-                 'The viewport will pan to the xy coords, but will not zoom.');
-    
-    // Incomplete Implementation
 
-//    var canvas = this.canvas;
-//    var actualSize = canvas.getActualSize();
-//
-//    var largestDimension = Math.max(width, height);
-//
-//    var ratio = largestDimension / actualSize.getLongest();//FIXME
-//
-//    this.zoomToRatio(ratio);
-    this.panToCanvasCoord(x, y);
+    var canvas = this.canvas;
+    var canvasSize = canvas.getSize();
+
+    var ratio = Math.min(
+        width * canvas.displayToActualSizeRatio / canvasSize.width,
+        height * canvas.displayToActualSizeRatio / canvasSize.height
+    );
+
+    // This implementation still might not be 100% correct
+
+    this.zoomToRatio(ratio);
+    this.centerOnCanvasCoord(x + width / 2, y + height / 2);
 };
 
 sc.canvas.FabricCanvasViewport.prototype.getDisplaySize = function() {

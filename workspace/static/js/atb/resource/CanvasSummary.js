@@ -32,6 +32,7 @@ atb.resource.CanvasSummary.prototype.decorate = function () {
         this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
         this.viewport.resize(this.size.width, this.size.height);
         this.viewport.addDeferredCanvas(sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getUri(), this.databroker));
+        this.viewport.render(image);
         
         this.div.appendChild(image);
     }

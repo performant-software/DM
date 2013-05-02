@@ -2,6 +2,8 @@ goog.provide('atb.resource.MarkerSummary');
 
 goog.require('atb.resource.ResourceSummary');
 goog.require('goog.math.Size');
+goog.require('sc.canvas.FabricCanvasViewport');
+goog.require('sc.canvas.FabricCanvasFactory');
 
 /**
  * @extends atb.resource.ResourceSummary
@@ -12,24 +14,20 @@ goog.require('goog.math.Size');
  * @param resource
  * @param webService
  */
-atb.resource.MarkerSummary = function (resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions);
-    
-    this.resourceType = 'Marker';
+atb.resource.MarkerSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
 
     this.selected = false;
 
     this.setTooltip('Show this marker on the canvas');
 
-    this.thumbInfo = {
-                        width: 75,
-                        height: 75,
-                        uri: this.webService.resourceJpgURI(this.resource.getRemoteId(), [75,75], false)
-                    };
+    this.size = new goog.math.Size(75, 75);
 
     this.decorate();
 };
 goog.inherits(atb.resource.MarkerSummary, atb.resource.ResourceSummary);
+
+atb.resource.MarkerSummary.prototype.resourceType = 'Marker';
 
 atb.resource.MarkerSummary.prototype.decorate = function () {
     jQuery(this.outerDiv).addClass('atb-markersummary');
@@ -40,22 +38,23 @@ atb.resource.MarkerSummary.prototype.decorate = function () {
             'class' : 'atb-markersummary-thumb'
         }
     );
-    jQuery(this.imageDiv).width(this.thumbInfo.width);
-    jQuery(this.imageDiv).height(this.thumbInfo.height);
+    jQuery(this.imageDiv).width(this.size.width);
+    jQuery(this.imageDiv).height(this.size.height);
     
-    var image = new Image();
-    image.src = this.thumbInfo.uri;
-    
-    jQuery(image).load(atb.Util.scopeAsyncHandler(function (e) {
-                                                  jQuery(this.imageDiv).fadeTo(200, 0.0, atb.Util.scopeAsyncHandler(function () {
-                                                        jQuery(this.imageDiv).removeClass('atb-markersummary-loadingSpinner');
-                                                        jQuery(this.imageDiv).css('background-image', 'url('+this.thumbInfo.uri+')');
-                                                        jQuery(this.imageDiv).fadeTo(200, 1.0);
-                                                       }, this));
-                                                  
-                                                  }, this));
-    
-    jQuery(this.imageDiv).addClass('atb-markersummary-loadingSpinner');
+    this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
+    this.viewport.resize(this.size.width, this.size.height);
+    var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getOneProperty('oa:hasSource'), this.databroker);
+    this.viewport.pauseRendering();
+    this.viewport.addDeferredCanvas(deferredCanvas);
+    this.viewport.render(this.imageDiv);
+
+    deferredCanvas.done(function(canvas) {
+        var feature = canvas.getFabricObjectByUri(this.resource.getOneProperty('oa:hasSelector'));
+        var boundingBox = canvas.getFeatureBoundingBox(feature);
+
+        this.viewport.zoomToRect(boundingBox);
+        this.viewport.resumeRendering();
+    }.bind(this));
     
     this.div.appendChild(this.imageDiv);
 };

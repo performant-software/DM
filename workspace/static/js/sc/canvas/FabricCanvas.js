@@ -666,6 +666,23 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
     return ellipse;
 };
 
+sc.canvas.FabricCanvas.prototype.getFeatureBoundingBox = function(feature) {
+    feature = this.getCanvasSizedFeatureClone(feature);
+
+    var width = feature.getBoundingRectWidth();
+    var height = feature.getBoundingRectHeight();
+
+    var x = feature.get('left') - width / 2;
+    var y = feature.get('top') - height / 2;
+
+    return {
+        width: width,
+        height: height,
+        x: x,
+        y: y
+    };
+};
+
 sc.canvas.FabricCanvas.getPointsBoundingBox = function(points) {
     var utilMin = fabric.util.array.min;
     var utilMax = fabric.util.array.max;
