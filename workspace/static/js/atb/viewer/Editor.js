@@ -181,25 +181,6 @@ atb.viewer.Editor.prototype.addStylesheetToEditor = function (stylesheetURI)
 };
 
 /**
- * Updates the {atb.resource.TextResource} object with the content from the text editor
- * @return {atb.resource.TextResource | null} the updated TextResource object
- */
-atb.viewer.Editor.prototype.updateResourceObject = function () {
-    if (! this.textResource) {
-        this.textResource = new atb.resource.TextResource(this.resourceId, this.resourceId);
-    }
-    
-    this.textResource.remoteId = this.resourceId;
-    this.textResource.id = this.resourceId;
-    
-    this.textResource.title = this.getTitle();
-    this.textResource.contents = this.getSanitizedHtml();
-    this.textResource.purpose = this.purpose;
-    
-    return this.textResource;
-};
-
-/**
  * saveContents
  * @param opt_doAfter {function=}
  * @param opt_doAfterScope {object=}
@@ -209,107 +190,14 @@ atb.viewer.Editor.prototype.saveContents = function (
 ) {
     if (this.resourceId == null) {
         this.resourceId = this.databroker.createUuid();
-    } else {
-        //Only makes a server request if local ids are being used in this editor
-        this.updateAllPropertiesFromPane();
-        
-        this.unsavedChanges = false;
-        
-        var resourceObject = this.updateResourceObject();
-
-        this.clientApp.databroker.updateTextResource(
-            resourceObject.id,
-            resourceObject.contents,
-            {
-                'title': resourceObject.title, 
-                'purpose': resourceObject.purpose
-            }
-        );
-        
-        this.registerThumbnailToPanel();
     }
-};
+    this.updateAllPropertiesFromPane();
+    
+    this.unsavedChanges = false;
 
-
-/** @deprecated */
-atb.viewer.Editor.prototype.replaceLocalIdsWithServerIds = function (
-    annotations, 
-    ids
-) {
-    for (var a=0; a<annotations.length; a++) {
-        var anno = annotations[a];
-        
-        var annoClasses = anno.className.split(' ');
-        
-        var annoIdClass = '';
-        
-        for (var i in annoClasses) {
-            if (annoClasses[i].indexOf(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID) != -1) {
-                annoIdClass = annoClasses[i];
-                break;
-            }
-        }
-		//TODO: maybe check that we don't repeat this work over and over...?
-        if (annoIdClass != '') {
-			jQuery("."+annoIdClass, this.field.field).each(function()
-			{
-				//jQuery(anno).removeClass(annoIdClass);
-				
-				//jQuery(anno).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID + ids[a]);
-				var jqNode = jQuery(this);//note: this is the dom node
-				var replacementCssClassName = "" + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID + ids[a];
-				
-				jqNode.removeClass(annoIdClass);
-				
-				jqNode.addClass(replacementCssClassName);
-			});
-        }
-        
-    }
-};
-
-/** @deprecated */
-atb.viewer.Editor.prototype.isUsingLocalIds = function (opt_annotations) {
-    var domHelper = this.field.getEditableDomHelper();
-
-    var annotations = opt_annotations || domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-
-    for (var a=0; a<annotations.length; a++) {
-        var anno = annotations[a];
-
-        var annoClasses = anno.className.split(' ');
-
-        for (var i in annoClasses) {
-            if (annoClasses[i].indexOf(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID) != -1) {
-                return true;
-            }
-        }
-
-    }
-    return false;
-};
-
-/** @deprecated */
-atb.viewer.Editor.prototype.getIdsFromServerAndReplaceLocalsAsNeeded = function (onFinish, onFinishScope) {
-    if(this.isUsingLocalIds(annotations)) {
-        var domHelper = this.field.getEditableDomHelper();
-        var annotations = domHelper.getElementsByClass(
-                                                       atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS
-                                                       );
-        
-        this.webService.withUidList(
-            annotations.length,
-            function (ids) {
-                this.replaceLocalIdsWithServerIds(annotations, ids);
-                
-                onFinish.call(onFinishScope);
-            },
-            this
-        );
-    }
-    else {
-        onFinish.call(onFinishScope);
-    }
+    var resource = this.databroker.getResource(this.resourceId);
+    resource.deleteProperty('dc:title').addProperty('dc:title', '"' + this.getTitle() + '"');
+    resource.deleteProperty('cnt:chars').addProperty('cnt:chars', '"' + this.getSanitizedHtml().replace('"', '\\"') + '"');
 };
 
 /**
@@ -709,6 +597,24 @@ atb.viewer.Editor.prototype.loadResource = function (resource) {
     textEditorAnnotate.addListenersToAllHighlights();
     
     this.registerThumbnailToPanel();
+};
+
+atb.viewer.Editor.prototype.loadResourceByUri = function(uri) {
+    var resource = this.databroker.getResource(uri);
+
+    if (resource.hasType('dctypes:Text')) {
+        this.resourceId = resource.getUri();
+        this.setTitle(resource.getOneProperty('dc:title').replace('\\"', '"'));
+        this.setHtml(resource.getOneProperty('cnt:chars').replace('\\"', '"'));
+
+        var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
+        textEditorAnnotate.addListenersToAllHighlights();
+    }
+    else {
+        throw "atb.viewer.Editor cannot load this resource type";
+    }
+
+    return this;
 };
 
 atb.viewer.Editor.prototype.setAnnotationBody = function (bodyResourceId) {

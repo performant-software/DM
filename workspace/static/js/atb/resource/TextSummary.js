@@ -15,14 +15,12 @@ goog.require('atb.resource.ResourceSummary');
  * @param clickHandlerScope {object}
  * @param resource {atb.resource.TextResource}
  */
-atb.resource.TextSummary = function (resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions);
-    
-    this.resourceType = 'Text';
+atb.resource.TextSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
 	
-    this.text = resource.getContents();
-    this.title = resource.getTitle();
-    this.user = resource.getUser();
+    this.text = this.resource.getOneProperty('cnt:chars') || 'no contents';
+    this.title = this.resource.getOneProperty('dc:title') || 'Untitled text';
+    this.user = '';
     
     this.cutoff = this.determineCutoff_(atb.resource.TextSummary.MAX_SUMMARY_LENGTH);
     this.textContinues = this.cutoff < this.text.length;
@@ -32,6 +30,8 @@ atb.resource.TextSummary = function (resourceId, clickHandler, clickHandlerScope
     this.decorate();
 };
 goog.inherits(atb.resource.TextSummary, atb.resource.ResourceSummary);
+
+atb.resource.TextSummary.prototype.type = 'Text';
 
 
 atb.resource.TextSummary.MAX_SUMMARY_LENGTH = 200;
@@ -103,8 +103,6 @@ atb.resource.TextSummary.prototype.decorate = function (opt_titleOnly, opt_label
 //        this.textBody = this.domHelper.createElement('div', {'class':'atb-resourcesummary-textbody'}, null);
 //        this.decorateWithShortText();
     }
-
-    jQuery(this.div).append('<div class="atb-resourcesummary-user">added by ' + this.user + '</div>');
 };
 
 /**

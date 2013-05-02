@@ -139,6 +139,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     var id = this.webService.resourceUriToId(uri);
     var self = this;
+    var specificTargetUri = this.databroker.getSvgSelectorSpecificTargetUri(uri);
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
@@ -203,7 +204,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                     'Annotate this marker'
                 )
             ];
-            this.showHoverMenu(menuButtons, uri);
+            this.showHoverMenu(menuButtons, specificTargetUri);
         }
     };
     afterTimer = atb.Util.scopeAsyncHandler(afterTimer, this)
@@ -234,6 +235,21 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var eventDispatcher = this.clientApp.getEventDispatcher();
     if (eventDispatcher.dispatchEvent(event)) {
         
+    }
+};
+
+atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
+    var resource = this.databroker.getResource(uri);
+
+    if (resource.hasAnyType('dms:Canvas')) {
+        this.setCanvasByUri(resource.getUri());
+    }
+    else if (resource.hasAnyType('oa:SpecificResource')) {
+        this.setCanvasByUri(resource.getOneProperty('oa:hasSource'));
+    }
+    else if (resource.hasAnyType('oa:SvgSelector')) {
+        var specificResource = this.databroker.getResource(this.databroker.getSvgSelectorSpecificTargetUri(uri));
+        this.setCanvasByUri(specificResource.getOneProperty('oa:hasSource'));
     }
 };
 
@@ -333,17 +349,9 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var newTextResource = this.databroker.createText(textTitle, "");
     var newTextId = newTextResource.uri;
 
-    // This should be a convenience method in the data broker
-    var specificTargets = [];
-    this.databroker.quadStore.forEachQuadMatchingQuery(
-        null, this.databroker.namespaces.expand('oa', 'hasSelector'), svgUri, null,
-        function(quad) {
-            specificTargets.push(quad.subject);
-        },
-        this
-    );
+    var specificTargetUri = this.databroker.getSvgSelectorSpecificTargetUri(svgUri);
        
-    var newAnno = this.databroker.createAnno(newTextId, specificTargets[0]);
+    var newAnno = this.databroker.createAnno(newTextId, specificTargetUri);
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;
