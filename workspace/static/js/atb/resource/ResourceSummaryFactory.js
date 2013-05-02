@@ -6,41 +6,39 @@ goog.require('atb.resource.CanvasSummary');
 goog.require('atb.resource.MarkerSummary');
 goog.require('atb.resource.ManuscriptSummary');
 
-/**
- * @param resource {atb.resource.Resource}
- * @return {atb.resource.ResourceSummary}
- */
-atb.resource.ResourceSummaryFactory.createFromResource = function (resource, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+atb.resource.ResourceSummaryFactory.createFromUri = function(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
     var result;
-    var id = resource.getId();
-    var type = resource.getType();
+
+    var type = ''; //TODO: Remove
+
+    var resource = clientApp.getDatabroker().getResource(uri);
     
-    if (type == 'text') {
-        result = new atb.resource.TextSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+    if (resource.hasAnyType('dctypes:Text')) {
+        result = new atb.resource.TextSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else if (type == 'textHighlight') {
-        result = new atb.resource.TextHighlightSummary (id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+        result = new atb.resource.TextHighlightSummary (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
-    else if (type == 'marker') {
-        result = new atb.resource.MarkerSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+    else if (resource.hasAnyType('oac:SvgSelector')) {
+        result = new atb.resource.MarkerSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
-    else if (type == 'canvas') {
-        result = new atb.resource.CanvasSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+    else if (resource.hasAnyType('dms:Canvas')) {
+        result = new atb.resource.CanvasSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else if (type == 'manuscript') {
-        result = new atb.resource.ManuscriptSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+        result = new atb.resource.ManuscriptSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else {
         if (console.log) {
-            console.log(resource);
+            console.error('Unrecognized resource type', resource);
         }
         
-        throw 'Unrecognized resource type in ResourceSummaryFactory: ' + type;
+        // throw 'Unrecognized resource type in ResourceSummaryFactory: ' + type;
     }
     
     return result;

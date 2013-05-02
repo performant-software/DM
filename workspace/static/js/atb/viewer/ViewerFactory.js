@@ -3,6 +3,22 @@ goog.provide('atb.viewer.ViewerFactory');
 //goog.require('atb.viewer.Editor');
 //goog.require('atb.viewer.CanvasViewer');
 
+atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
+    var databroker = clientApp.databroker;
+    var resource = databroker.getResource(uri);
+
+    var viewer = null;
+
+    if (resource.hasAnyType('dctypes:Text')) {
+        viewer = new atb.viewer.Editor(clientApp);
+    }
+    else if (resource.hasAnyType('dms:Canvas')) {
+        viewer = new atb.viewer.CanvasViewer(clientApp);
+    }
+
+    return viewer;
+};
+
 /**
  * Creates an appropriate viewer for the given resource
  *
@@ -38,30 +54,6 @@ atb.viewer.ViewerFactory.createViewerForResource = function (resource, panel, cl
         viewer.loadResourceById(resource.getTextId(), function () {
                                 viewer.scrollIntoViewByResourceId(id);
                                 });
-    }
-    
-    else {
-        throw 'Unrecognized resource type';
-    }
-    
-    return viewer;
-};
-
-atb.viewer.ViewerFactory.createViewerForResourceType = function (type, clientApp) {
-    var viewer;
-    
-    if (type == 'marker') {
-        viewer = new atb.viewer.StandardSimpleMarkerEditor(clientApp);
-        
-    }
-    else if (type == 'canvas') {
-        viewer = new atb.viewer.StandardSimpleMarkerEditor(clientApp);
-    }
-    else if (type == 'text') {
-        viewer = new atb.viewer.Editor(clientApp);
-    }
-    else if (type == 'textHighlight') {
-        viewer = new atb.viewer.Editor(clientApp);
     }
     
     else {

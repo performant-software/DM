@@ -147,6 +147,8 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
     viewerGrid.setDimensions(2,2);
     viewerGrid.render(goog.dom.getElement('grid'));
 
+    clientApp.viewerGrid = goog.global.viewerGrid;
+
     resizeViewerGrid();
     jQuery(window).bind('resize', resizeViewerGrid);
 	

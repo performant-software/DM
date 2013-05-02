@@ -11,15 +11,15 @@ goog.require('goog.structs.Set');
  * A "mini finder" to show up in tooltips for resources
  * @param clientApp {atb.ClientApp}
  * @param viewer {atb.viewer.Viewer}
- * @param opt_resourceId {string} the id of the resource for which the list is being shown
+ * @param opt_uri {string} the id of the resource for which the list is being shown
  * @param opt_domHelper {goog.dom.DomHelper}
  */
-atb.ui.AnnoTitlesList = function (clientApp, viewer, opt_resourceId, opt_domHelper) {
+atb.ui.AnnoTitlesList = function (clientApp, viewer, opt_uri, opt_domHelper) {
     this.clientApp = clientApp;
     this.viewer = viewer;
-    this.crawler = this.clientApp.getResourceCrawler();
+    this.databroker = this.clientApp.getDatabroker();
 
-    this.resourceId = opt_resourceId;
+    this.uri = opt_uri;
 
     this.domHelper = opt_domHelper || new goog.dom.DomHelper();
 
@@ -28,7 +28,7 @@ atb.ui.AnnoTitlesList = function (clientApp, viewer, opt_resourceId, opt_domHelp
         titleOnly: true
     };
 
-    this.summariesById = new goog.structs.Map ();
+    this.summariesByUri = new goog.structs.Map ();
     this.targetSummaries = [];
     this.bodySummaries = [];
 };
@@ -60,8 +60,8 @@ atb.ui.AnnoTitlesList.prototype.decorate = function (div) {
 
     this.rootDiv.appendChild(this.scrollingDiv);
 
-    if (this.resourceId) {
-        this.loadForResource(this.resourceId);
+    if (this.uri) {
+        this.loadForResource(this.uri);
     }
 };
 
@@ -73,133 +73,134 @@ atb.ui.AnnoTitlesList.prototype.render = function (div) {
     return newDiv;
 };
 
-atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (id, summary, event, opt_params) {
+atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (uri, summary, event, opt_params) {
     if (!opt_params)
         opt_params = {};
 
     var resource = summary.resource;
-    var type = resource.getType();
 
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClicked (resource.getId(), resource, this);
+    var event = new atb.events.ResourceClicked(resource.getUri(), resource, this);
     eventDispatcher.dispatchEvent(event);
 
-    var panelManager = this.clientApp.getPanelManager();
-    panelManager.withAppropriatePanel(id, this.viewer.getPanelContainer(), function (panel) {
-        atb.viewer.ViewerFactory.createViewerForResource(resource, panel, this.clientApp);
-    }, this, atb.resource.ResourceSummary.HANDLER_MSG.swapPanels);
+    var viewerGrid = this.clientApp.viewerGrid; console.log(this.viewer, viewerGrid.indexOf(this.viewer.container));
+    var container = new atb.viewer.ViewerContainer(this.domHelper);
+    viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
+    var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
+    container.setViewer(viewer);
+    viewer.loadResourceByUri(uri);
 };
 
-atb.ui.AnnoTitlesList.prototype.loadForResource = function (resourceId) {
-    this.resourceId = resourceId;
+atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv) {
+    for (var i = 0; i < uris.length; i++) {
+        var uri = uris[i];
+
+        if (!uri) {
+            continue;
+        }
+        else {
+            var summary = atb.resource.ResourceSummaryFactory.createFromUri(uri, this.summaryClickHandler, this, this.clientApp, this.domHelper, this.summaryStyleOptions);
+            this.summariesByUri.set(uri, summary);
+
+            var render = function (list, div) {
+                var insert = function (list) {
+                    var index = goog.array.binarySearch(list, summary, atb.resource.ResourceSummary.sortByTitle);
+                    if (index < 0) {
+                        goog.array.insertAt(list, summary, -(index + 1));
+                        return -(index + 1);
+                    }
+                    else {
+                        goog.array.insertAt(list, summary, index);
+                        return index;
+                    }
+                };
+
+                var index = insert(list);
+
+                if (index <= 0) {
+                    var newDiv = summary.render();
+
+                    jQuery(div).prepend(newDiv);
+                }
+                else {
+                    var previousSummaryDiv = list[index - 1].outerDiv;
+                    var newDiv = summary.render();
+
+                    jQuery(previousSummaryDiv).after(newDiv);
+                }
+            }.bind(this);
+
+            if (summary) {
+                render(list, renderDiv);
+            }
+        }
+    }
+};
+
+atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
+    console.log('uri', uri);
+    this.uri = uri;
     
     jQuery(this.noAnnosDiv).hide();
 
-    var withResource = function (resource) {
-        if (!resource) {
+    var deferredResource = this.databroker.getDeferredResource(uri);
+
+    var withResource = function(resource) {
+        var annoUris = this.databroker.getResourceAnnoIds(resource.getUri());
+
+        var bodyUris = [];
+        var targetUris = [];
+
+        goog.structs.forEach(annoUris, function(annoUri) {
+            var annoResource = this.databroker.getResource(annoUri);
+            goog.array.extend(bodyUris, sc.util.Namespaces.stripAngleBrackets(annoResource.getProperties('oa:hasBody')));
+            goog.array.extend(targetUris, sc.util.Namespaces.stripAngleBrackets(annoResource.getProperties('oa:hasTarget')));
+        }, this);
+
+        console.log('annoUris', annoUris, 'bodies', bodyUris, 'targets', targetUris);
+
+        if (bodyUris.length + targetUris.length == 0 && deferredResource.state() == 'resolved') {
             jQuery(this.noAnnosDiv).show();
-            return;
         }
+        else if (bodyUris.length + targetUris.length > 0) {
+            if (bodyUris.length > 0) {
+                this._renderSummaries(bodyUris, this.bodySummaries, this.bodyTitlesDiv);
 
-        var topLevelIds = this.crawler.getTopLevelAnnoTitleIds(resourceId);
+                var headerDiv = this.domHelper.createDom('div', {
+                    'class': 'atb-annoTitlesList-header'
+                }, 'annotations:');
 
-        var bodyIds = topLevelIds.bodies;
-        var targetIds = topLevelIds.targets;
-
-        if (bodyIds.length + targetIds.length == 0) {
-            jQuery(this.noAnnosDiv).show();
-
-            return;
-        }
-
-        var renderSummaries = function (ids, list, renderDiv) {
-            for (var i = 0; i < ids.length; i++) {
-                var topLevelId = ids[i];
-
-                var resourceI = this.crawler.getResource(topLevelId);
-
-                if (!resourceI) {
-                    continue;
-                }
-                else {
-                    var summary = atb.resource.ResourceSummaryFactory.createFromResource(resourceI, this.summaryClickHandler, this, this.clientApp, this.domHelper, this.summaryStyleOptions);
-                    this.summariesById.set(resourceId, summary);
-
-                    var render = function (list, div) {
-                        var insert = function (list) {
-                            var index = goog.array.binarySearch(list, summary, atb.resource.ResourceSummary.sortByTitle);
-                            if (index < 0) {
-                                goog.array.insertAt(list, summary, -(index + 1));
-                                return -(index + 1);
-                            }
-                            else {
-                                goog.array.insertAt(list, summary, index);
-                                return index;
-                            }
-                        };
-
-                        var index = insert(list);
-
-                        if (index <= 0) {
-                            var newDiv = summary.render();
-
-                            jQuery(div).prepend(newDiv);
-                        }
-                        else {
-                            var previousSummaryDiv = list[index - 1].outerDiv;
-                            var newDiv = summary.render();
-
-                            jQuery(previousSummaryDiv).after(newDiv);
-                        }
-                    };
-
-                    render(list, renderDiv);
-                }
+                jQuery(this.bodyTitlesDiv).prepend(headerDiv);
             }
-        };
-        renderSummaries = atb.Util.scopeAsyncHandler(renderSummaries, this);
+            else {
+                var headerDiv = this.domHelper.createDom('div', {
+                    'class': 'atb-annoTitlesList-header'
+                }, 'no annotations');
 
-        if (bodyIds.length > 0) {
-            renderSummaries(bodyIds, this.bodySummaries, this.bodyTitlesDiv);
+                jQuery(this.bodyTitlesDiv).prepend(headerDiv);
+            }
 
-            var headerDiv = this.domHelper.createDom('div', {
-                'class': 'atb-annoTitlesList-header'
-            }, 'annotations:');
+            if (targetUris.length > 0) {
+                this._renderSummaries(targetUris, this.targetSummaries, this.targetTitlesDiv);
 
-            jQuery(this.bodyTitlesDiv).prepend(headerDiv);
+                var headerDiv = this.domHelper.createDom('div', {
+                    'class': 'atb-annoTitlesList-header'
+                }, 'targets:');
+
+                jQuery(this.targetTitlesDiv).prepend(headerDiv);
+            }
+            else {
+                var headerDiv = this.domHelper.createDom('div', {
+                    'class': 'atb-annoTitlesList-header'
+                }, 'no targets');
+
+                jQuery(this.targetTitlesDiv).prepend(headerDiv);
+            }
+
+            jQuery(this.targetTitlesDiv).prepend(this.domHelper.createDom('div', {
+                'class': 'atb-annoTitlesList-hrDiv'
+            }));
         }
-        else {
-            var headerDiv = this.domHelper.createDom('div', {
-                'class': 'atb-annoTitlesList-header'
-            }, 'no annotations');
-
-            jQuery(this.bodyTitlesDiv).prepend(headerDiv);
-        }
-
-        if (targetIds.length > 0) {
-            renderSummaries(targetIds, this.targetSummaries, this.targetTitlesDiv);
-
-            var headerDiv = this.domHelper.createDom('div', {
-                'class': 'atb-annoTitlesList-header'
-            }, 'targets:');
-
-            jQuery(this.targetTitlesDiv).prepend(headerDiv);
-        }
-        else {
-            var headerDiv = this.domHelper.createDom('div', {
-                'class': 'atb-annoTitlesList-header'
-            }, 'no targets');
-
-            jQuery(this.targetTitlesDiv).prepend(headerDiv);
-        }
-
-        jQuery(this.targetTitlesDiv).prepend(this.domHelper.createDom('div', {
-            'class': 'atb-annoTitlesList-hrDiv'
-        }));
-
-    };
-
-    this.crawler.withResource(resourceId, withResource, this, null, false, true);
-    //Just in case the resource isn't in the cache for some reason
-    // the crawler will request it from the webService
+    }.bind(this);
+    deferredResource.done(withResource);
 }; 

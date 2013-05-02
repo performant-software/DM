@@ -24,7 +24,7 @@ atb.resource.RESOURCE_VIEW = 'resource';
  * @constructor
  * @abstract
  *
- * @param resourceId {string}
+ * @param uri {string}
  * @param clickHandler {function (string, atb.resource.ResourceSummary,
  * goog.events.Event, Object)}
  * @param viewer {atb.viewer.Viewer} the click handler will be called with
@@ -34,15 +34,17 @@ atb.resource.RESOURCE_VIEW = 'resource';
  * @param opt_domHelper {!goog.dom.DomHelper}
  * @param opt_styleOptions {!Object} defaults to atb.resource.ResourceSummary.DEFAULT_STYLE_OPTIONS
  */
-atb.resource.ResourceSummary = function (resourceId, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions) {
-    this.resourceId = resourceId;
+atb.resource.ResourceSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    this.uri = uri;
     this.view = null;
     this.clickHandler = clickHandler;
     this.viewer = viewer;
-    this.resource = resource;
     this.clientApp = clientApp;
-    if (clientApp)
+    if (clientApp) {
         this.webService = clientApp.getWebService();
+        this.databroker = clientApp.databroker;
+        this.resource = this.databroker.getResource(this.uri);
+    }
 
     this.domHelper = opt_domHelper || new goog.dom.DomHelper ();
 
@@ -160,7 +162,7 @@ atb.resource.ResourceSummary.prototype.render = function (opt_div) {
  * @param opt_params {Object}
  */
 atb.resource.ResourceSummary.prototype.callClickHandler = function (opt_event, opt_params) {
-    this.clickHandler.call(this.viewer, this.resourceId, this, opt_event, opt_params);
+    this.clickHandler.call(this.viewer, this.uri, this, opt_event, opt_params);
 };
 
 /**
@@ -284,7 +286,7 @@ atb.resource.ResourceSummary.prototype.equals = function (other) {
     if (!other)
         return false;
     
-    return other.resourceId == this.resourceId;
+    return other.uri == this.uri;
 };
 
 /**
@@ -371,10 +373,10 @@ atb.resource.ResourceSummary.prototype.setDeletableResources = function (resourc
 /**
  * Adds a resource id to the list of resources to be deleted upon the
  * deletion of this resource
- * @param resourceId {string}
+ * @param uri {string}
  */
-atb.resource.ResourceSummary.prototype.addDeletableResource = function (resourceId) {
-    this.deletableResources.push(resourceId);
+atb.resource.ResourceSummary.prototype.addDeletableResource = function (uri) {
+    this.deletableResources.push(uri);
 };
 
 /**
