@@ -315,18 +315,9 @@ sc.RepoBrowser.prototype.loadAllRepositories = function() {
 
         item.render(repositoriesDiv);
 
-        var url = repo.url;
-
-        if (url && !repo.uri) {
-            item.bind('click', {url: url, name: name}, function(event) {
-                this.loadRepositoryByUrl(event.data.url);
-            }.bind(this));
-        }
-        else {
-            item.bind('click', {uri: repo.uri}, function(event) {
-                this.loadRepositoryByUrl(event.data.uri);
-            }.bind(this));
-        }
+        item.bind('click', {uri: repo.uri}, function(event) {
+            this.loadRepositoryByUri(event.data.uri);
+        }.bind(this));
     }
 };
 
@@ -408,31 +399,24 @@ sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, 
  * Loads all collections in a given repository given the url of the repository rdf file
  * @param url {string}
  */
-sc.RepoBrowser.prototype.loadRepositoryByUrl = function(url) {
+sc.RepoBrowser.prototype.loadRepositoryByUri = function(uri) {
     var collectionsDiv = this.sectionDivs.collections;
 
     this.slideToCollections();
 
-    this.repositoryUrl = url;
-    this.currentRepository = sc.RepoBrowser.parseRepoTitleFromURI(url);
+    this.repositoryUrl = uri;
+    this.currentRepository = sc.RepoBrowser.parseRepoTitleFromURI(uri);
 
     jQuery(collectionsDiv).empty();
 
     this.showLoadingIndicator();
 
-    this.databroker.getDeferredResource(url).done(function(resource) {
-        var uri = this.databroker.getResourcesDescribedByUrl(url)[0];
-        if (uri == null) {
-            uri = url;
-        }
-
-        var uri = sc.util.Namespaces.stripAngleBrackets(uri);
-
-        this.pushTitleToBreadCrumbs(uri, this.loadRepositoryByUrl.bind(this, url));
+    this.databroker.getDeferredResource(uri).done(function(resource) {
+        this.pushTitleToBreadCrumbs(uri, this.loadRepositoryByUri.bind(this, uri));
 
         this.addManifestItems(
             uri, 
-            this.loadCollectionByUri.bind(this, uri), 
+            this.loadCollectionByUri.bind(this), 
             collectionsDiv
         );
     }.bind(this));
@@ -495,14 +479,18 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
             item.setTitle(manuscript.getOneProperty('dc:title'));
         }
 
-        var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
-        var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(uri)[0];
+        this.setManuscriptThumb(uri, item);
 
-        if (sequenceUri && imageAnnoUri && item.getNumFolia() == 0) {
-            window.setTimeout(jQuery.proxy(function() {
-                this.generateManuscriptFolia(uri, item);
-            }, this), 1);
-        }
+        item.bind('click', function(event) {
+            var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
+            var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(uri)[0];
+
+            if (sequenceUri && imageAnnoUri && item.getNumFolia() == 0) {
+                window.setTimeout(jQuery.proxy(function() {
+                    this.generateManuscriptFolia(uri, item);
+                }, this), 1);
+            }
+        }.bind(this));
     }, this);
     deferredManuscript.progress(withManuscript).done(withManuscript);
 
@@ -520,10 +508,9 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
     var sequenceUri = this.databroker.getManuscriptSequenceUris(manuscriptUri)[0];
     var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(manuscriptUri)[0];
 
-//    var deferredSequence = this.databroker.getDeferredResource(sequenceUri);
-//    var deferredImageAnno = this.databroker.getDeferredResource(imageAnnoUri);
+    var urisInOrder = this.databroker.getListUrisInOrder(sequenceUri);
 
-//    deferredSequence.done(jQuery.proxy(function(sequence) {
+    var renderSequence = function() {
         if (manuscriptItem.getNumFolia() > 0) {
             return;
         }
@@ -594,42 +581,72 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
             manuscriptItem.showFoliaMessage('Badly formed data - unable to determine page order');
         }
 
-//        deferredImageAnno.done(jQuery.proxy(function(imageAnnos) {
-            for (var uri in thumbsByUri) {
-                var thumb = thumbsByUri[uri];
-                var canvasResource = this.databroker.getResource(uri);
+        return thumbsByUri;
+    }.bind(this);
 
-                var title = canvasResource.getOneProperty('dc:title');
-                if (title) {
-                    thumb.setTitle(title);
-                }
+    var renderImages = function(thumbsByUri) {
+        for (var uri in thumbsByUri) {
+            var thumb = thumbsByUri[uri];
+            var canvasResource = this.databroker.getResource(uri);
+
+            var title = canvasResource.getOneProperty('dc:title');
+            if (title) {
+                thumb.setTitle(title);
             }
+        }
 
-            if (urisInOrder.length > 0) {
-                var firstThumbSrc = this.databroker.getCanvasImageUris(urisInOrder[0])[0];
-                if (firstThumbSrc) {
-                    var image = this.databroker.getResource(firstThumbSrc);
+        this.setManuscriptThumb(manuscriptUri, manuscriptItem);
+    }.bind(this);
 
-                    var size = new goog.math.Size(
-                        image.getOneProperty('exif:width'),
-                        image.getOneProperty('exif:height')
-                    ).scaleToFit(sc.RepoBrowserManuscript.THUMB_SIZE);
+    if (urisInOrder.length == 0) {
+        // Fetch the sequence and image anno, then render
 
-                    manuscriptItem.setThumb(
-                        this.options.imageSourceGenerator(firstThumbSrc, size.width, size.height),
-                        size.width,
-                        size.height
-                    );
-                }
-            }
-//        }, this));
-//    }, this));
+        var deferredSequence = this.databroker.getDeferredResource(sequenceUri);
+        var deferredImageAnno = this.databroker.getDeferredResource(imageAnnoUri);
 
-/*
-    deferredSequence.fail(jQuery.proxy(function() {
-        manuscriptItem.showFoliaMessage('Unable to load folia information');
-    }, this));
-*/
+        deferredSequence.done(function() {
+            var thumbsByUri = renderSequence();
+            deferredImageAnno.done(function() {
+                renderImages(thumbsByUri);
+            }.bind(this));
+        }.bind(this));
+        deferredSequence.fail(jQuery.proxy(function() {
+            manuscriptItem.showFoliaMessage('Unable to load folia information');
+        }, this));
+    }
+    else {
+        // Render immediately
+        
+        renderImages(renderSequence());
+    }
+};
+
+sc.RepoBrowser.prototype.setManuscriptThumb = function(manuscriptUri, manuscriptItem) {
+    var sequenceUri = this.databroker.getManuscriptSequenceUris(manuscriptUri)[0];
+
+    if (! sequenceUri) {
+        return;
+    }
+
+    var urisInOrder = this.databroker.getListUrisInOrder(sequenceUri);
+
+    if (urisInOrder.length > 0) {
+        var firstThumbSrc = this.databroker.getCanvasImageUris(urisInOrder[0])[0];
+        if (firstThumbSrc) {
+            var image = this.databroker.getResource(firstThumbSrc);
+
+            var size = new goog.math.Size(
+                Number(image.getOneProperty('exif:width')),
+                Number(image.getOneProperty('exif:height'))
+            ).scaleToFit(sc.RepoBrowserManuscript.THUMB_SIZE);
+
+            manuscriptItem.setThumb(
+                this.options.imageSourceGenerator(firstThumbSrc, size.width, size.height),
+                size.width,
+                size.height
+            );
+        }
+    }
 };
 
 /**
