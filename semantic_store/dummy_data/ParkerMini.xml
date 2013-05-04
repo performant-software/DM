@@ -1,0 +1,25 @@
+<rdf:RDF xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:tei="http://www.tei-c.org/ns/1.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:ore="http://www.openarchives.org/ore/terms/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <rdf:Description rdf:about="http://dms-data.stanford.edu/Parker/Collection.xml">
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+    <dc:format>application/rdf+xml</dc:format>
+    <ore:describes rdf:resource="http://dms-data.stanford.edu/Parker/Collection"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dms-data.stanford.edu/Parker/Collection">
+    <rdf:type rdf:resource="http://dms.stanford.edu/ns/Manifest"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+    <dc:title>
+      Manuscripts hosted by Stanford University Libraries for the Parker Library, Corpus Christi College, Cambridge
+    </dc:title>
+    <tei:country>United Kingdom</tei:country>
+    <tei:settlement>Cambridge</tei:settlement>
+    <tei:institution>Corpus Christi College</tei:institution>
+    <tei:repository>Parker Library</tei:repository>
+    <ore:aggregates rdf:resource="http://dms-data.stanford.edu/Parker/fc249qf5364/Manifest"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dms-data.stanford.edu/Parker/fc249qf5364/Manifest">
+    <ore:isDescribedBy rdf:resource="http://dms-data.stanford.edu/Parker/fc249qf5364/Manifest.xml"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+    <rdf:type rdf:resource="http://dms.stanford.edu/ns/Manifest"/>
+    <rdfs:label>CCCC 006</rdfs:label>
+  </rdf:Description>
+</rdf:RDF>
