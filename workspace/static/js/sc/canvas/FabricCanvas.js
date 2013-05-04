@@ -64,21 +64,9 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
     /**
      * @type {sc.canvas.FabricCanvasViewport}
      */
-    this.viewport = null; 
+    this.viewport = null;
 
     this.segmentUris = new goog.structs.Set();
-
-    var textCanvasElement = document.createElement('canvas');
-    this.textCanvas = new fabric.StaticCanvas(textCanvasElement, {
-        renderOnAddition: false
-    });
-    /*
-      setDimensions() was adding about 25 MB to the memory footprint in Firefox. 
-      I downloaded the latest version of Fabric (the all.js file from the 
-      Github /dist subdir.) I renamed all.js to fabric.js and placed it in our repo.
-      -SGB
-    */
-    this.textCanvas.setDimensions(this.size);
 };
 goog.inherits(sc.canvas.FabricCanvas, goog.events.EventTarget);
 
@@ -133,7 +121,7 @@ sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES = {
 
 sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    textBackgroundColor: 'rgba(3, 75, 158, 1.0)',
+    textBackgroundColor: 'rgba(3, 75, 158, 0.6)',
     fontFamily: 'Helvetica, Arial, Sans-Sefif',
     opacity: 1
 };
@@ -151,46 +139,7 @@ sc.canvas.FabricCanvas.prototype.getUri = function() {
     return this.uri;
 };
 
-sc.canvas.FabricCanvas.prototype.addTextAnnotation = function(annoResource, constraintAttrs) {
-    var addedTextUris = [];
-    var databroker = annoResource.getDatabroker();
-
-    var bodyUris = annoResource.getProperties(sc.canvas.FabricCanvas.RDF_ENUM.hasBody);
-    for (var k = 0, lenk = bodyUris.length; k < lenk; k++) {
-        var bodyUri = bodyUris[k];
-        var bodyResource = databroker.getResource(bodyUri);
-
-        var text = "";
-        if (bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cntChars)) {
-            text = bodyResource.getOneProperty(
-                sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
-        } else if (
-            bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars)
-        ){
-            text = bodyResource.getOneProperty(
-                sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars);
-        }
-
-        var textBox = this.addTextBox(
-            Number(constraintAttrs.x),
-            Number(constraintAttrs.y),
-            Number(constraintAttrs.width),
-            Number(constraintAttrs.height),
-            text,
-            bodyUri
-        );
-
-        addedTextUris.push(bodyUri);
-    }
-
-    return addedTextUris;
-};
-
 /**
- * Adds a text box to the canvas by drawing text with a rectangle behind it, and
- * then expanding the font size until the text fills the box on one line.
- *
- * Note: The font-size expansion to fill the box is a dom intensive operation.
  *
  * @param {Number} x The top left x coordinate of the text box.
  * @param {Number} y The top left y coordinate of the text box.
@@ -198,72 +147,35 @@ sc.canvas.FabricCanvas.prototype.addTextAnnotation = function(annoResource, cons
  * @param {Number} height The height of the text box.
  * @param {string} text The contents of the text box.
  * @param {string} uri The uri of the resource.
- *
- * @return {Raphael.set} A Raphael set containing the text and rectangle
- * elements.
  */
 sc.canvas.FabricCanvas.prototype.addTextBox = function(x, y, width, height, text, uri) {
-    return this.addTextBoxes([{
-        x: x,
-        y: y,
-        width: width,
-        height: height,
-        text: text,
-        uri: uri
-    }])[0];
-};
+    var t = new fabric.Text(text, sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
+    t.set(sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE);
 
-sc.canvas.FabricCanvas.prototype.addTextBoxes = function(options_list) {;
-    var texts = [];
+    var currentSize = new goog.math.Size(t.get('width'), t.get('height'));
+    var desiredSize = new goog.math.Size(width, height);
+    var renderedSize = currentSize.clone().scaleToFit(desiredSize);
+    t.scale(renderedSize.width / currentSize.width);
 
-    for (var i=0, len=options_list.length; i<len; i++) {
-        var options = options_list[i];
+    t.set({
+        left: x + desiredSize.width / 2,
+        top: y + desiredSize.height / 2
+    });
 
-        if (options.uri == null) {
-            options.uri = this.databroker.createUuid();
-        }
+    this._scaleAndPositionNewFeature(t);
 
-        var t = new fabric.Text(options.text, sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE);
-        t.set({
-            left: options.x,
-            top: options.y
-        });
-        this.textCanvas.add(t)
-        texts.push(t);
-        this.textsByUri.set(options.uri, t);
-    }
+    if (! uri) uri = this.databroker.createUuid();
+    this.textsByUri.set(uri, t);
+    this.addFabricObject(t, uri);
 
-    this.textCanvas.renderAll();
-
-    for (var i=0, len=texts.length; i<len; i++) {
-        var t = texts[i];
-        var options = options_list[i];
-
-        var currentSize = new goog.math.Size(t.get('width'), t.get('height'));
-        var desiredSize = new goog.math.Size(options.width, options.height);
-
-        var renderedSize = currentSize.clone().scaleToFit(desiredSize);
-        t.scaleToHeight(renderedSize.height);
-
-        t.set({
-            left: t.get('left') + renderedSize.width / 2,
-            top: t.get('top') + renderedSize.height / 2
-        });
-
-        this._scaleAndPositionNewFeature(t);
-
-        this.textCanvas.remove(t);
-        this.addFabricObject(t, options.uri);
-    }
-
-    return texts;
+    return t;
 };
 
 sc.canvas.FabricCanvas.prototype.showTextAnnos = function() {
     this.isShowingTextAnnos = true;
 
     goog.structs.forEach(this.textsByUri, function(text, uri) {
-        this.objects.push(text);
+        text.set('visible', true).set('opacity', 1);
     }, this);
 
     this.requestFrameRender();
@@ -273,7 +185,7 @@ sc.canvas.FabricCanvas.prototype.hideTextAnnos = function() {
     this.isShowingTextAnnos = false;
 
     goog.structs.forEach(this.textsByUri, function(text, uri) {
-        goog.array.remove(this.objects, text);
+        text.set('visible', false);
     }, this);
 
     this.requestFrameRender();
