@@ -49,14 +49,14 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
             {
                 title: 'Yale University',
                 // url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
-                url: '/store/resources/http://manifests.ydc2.yale.edu/MetaManifest',
-                uri: 'http://manifests.ydc2.yale.edu/MetaManifest'
+                url: '/store/resources/http://manifests.ydc2.yale.edu/Repository',
+                uri: 'http://manifests.ydc2.yale.edu/Repository'
                 // uri: 'http://manifests.ydc2.yale.edu/Repository'
             },
             {
                 title: 'Shared-canvas.org Demos',
-                url: '/store/resources/http://ada.drew.edu/tandres/repos/SharedCanvas/Main/Collection',
-                uri: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Main/Collection'
+                url: '/store/resources/http://shared-canvas.org/Repository',
+                uri: 'http://shared-canvas.org/Repository'
             }
         ],
         databroker: clientApp.getDatabroker()
