@@ -120,6 +120,12 @@ def get_annotations(request, graph_uri, anno_uris=[]):
         agg_bnode = BNode()
         for i in subjects:
             result_g.add((agg_bnode, NS.ore['aggregates'], URIRef(i)))
+            result_g.add((URIRef(i), NS.rdf['type'], NS.oa['Annotation']))
+            url = reverse('semantic_store_project_annotations', 
+                          kwargs={'project_uri': graph_uri, 'anno_uri': i})
+            url = "http://dm.drew.edu" + url
+            result_g.add((URIRef(i), NS.ore['isDescribedBy'], URIRef(url)))
+
     if len(result_g) > 0:
         return HttpResponse(result_g.serialize(), status=200, mimetype='text/xml')
     else:
