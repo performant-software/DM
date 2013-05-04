@@ -202,7 +202,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
     var errorHandler = atb.Util.scopeAsyncHandler(this.thisViewer.flashErrorIcon, this.thisViewer);
     
     var ws = this.thisViewer.webService;
-    ws.withSavedResource(highlightResource, function (response) {}, this, errorHandler);
+    // ws.withSavedResource(highlightResource, function (response) {}, this, errorHandler);
 	
 	var TypeElement = Node.ELEMENT_NODE;
 	var TypeText = Node.TEXT_NODE;
