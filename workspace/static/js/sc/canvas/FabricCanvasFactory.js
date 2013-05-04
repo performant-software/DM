@@ -167,7 +167,7 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
                 var optionUri = optionUris[j];
                 var optionResource = databroker.getResource(optionUri);
 
-                if (! canvas.imagesBySrc.containsKey(optionUri)) {
+                if (! canvas.hasFeature(optionUri)) {
                     canvas.addImageResource(optionResource);
 
                     canvas.imageOptionUris.push(optionUri);

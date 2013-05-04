@@ -464,6 +464,10 @@ sc.canvas.FabricCanvas.prototype.addImage = function(src, size, opt_coords, opt_
             top: image.getBoundingRectHeight() / 2 + y * this.displayToActualSizeRatio + this.offset.y
         });
 
+        if (this.hasFeature(src)) {
+            this.removeObjectByUri(src);
+        }
+
         this.addFabricObject(image, src);
         this.sendObjectToBack(image);
 
