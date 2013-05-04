@@ -198,7 +198,6 @@
     <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/CologneErzbischflicheDizesanundDombibliothek128Kb"/>
     <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/BeineckeMS758.5"/>
     <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/BodleianMSGoughLiturg.3"/>
-    <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/BodleianMSliturg.e.17"/>
     <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/Osbornfa1"/>
     <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/BodleianMSDouce18"/>
   </rdf:Description>
