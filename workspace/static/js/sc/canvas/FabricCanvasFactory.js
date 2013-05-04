@@ -272,9 +272,8 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
 
                 if (annoResource.hasAnyType(sc.canvas.FabricCanvas.RDF_ENUM.
                                             textAnno)) {
-                    console.log("found text annotation: ", annoUri);
                     addedTextUris = addedTextUris.concat(
-                        canvas.addTextAnnotation(annoResource, constraintAttrs)
+                        sc.canvas.FabricCanvasFactory.addTextAnnotation(canvas, annoResource, constraintAttrs)
                     );
                 }
                 else if (annoResource.hasAnyType(
@@ -284,6 +283,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.audioAnno)) {
                     // canvas.addAudioAnno(annoResource, constraintAttrs);
+                    console.log('found audio anno', annoUri)
                 }
                 else {
                     console.log(
@@ -296,4 +296,43 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
         }
     }
     canvas.showTextAnnos();
+};
+
+sc.canvas.FabricCanvasFactory.addTextAnnotation = function(canvas, annoResource, constraintAttrs) {
+    var addedTextUris = [];
+    var databroker = annoResource.getDatabroker();
+
+    var bodyUris = annoResource.getProperties(sc.canvas.FabricCanvas.RDF_ENUM.hasBody);
+    for (var k = 0, lenk = bodyUris.length; k < lenk; k++) {
+        var bodyUri = bodyUris[k];
+        var bodyResource = databroker.getResource(bodyUri);
+
+        if (canvas.hasFeature(bodyUri)) {
+            continue;
+        }
+
+        var text = "";
+        if (bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cntChars)) {
+            text = bodyResource.getOneProperty(
+                sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
+        } else if (
+            bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars)
+        ){
+            text = bodyResource.getOneProperty(
+                sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars);
+        }
+
+        var textBox = canvas.addTextBox(
+            Number(constraintAttrs.x),
+            Number(constraintAttrs.y),
+            Number(constraintAttrs.width),
+            Number(constraintAttrs.height),
+            text,
+            bodyUri
+        );
+
+        addedTextUris.push(bodyUri);
+    }
+
+    return addedTextUris;
 };
