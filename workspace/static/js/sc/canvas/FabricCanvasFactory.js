@@ -279,6 +279,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.imageAnno)) {
                     // canvas.addImageAnnoSegment(annoResource, constraintAttrs);
+                    console.log('found image segment with anno uri', annoResource.getUri());
                 }
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.audioAnno)) {
@@ -311,7 +312,7 @@ sc.canvas.FabricCanvasFactory.addTextAnnotation = function(canvas, annoResource,
             continue;
         }
 
-        var text = "";
+        var text = null;
         if (bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cntChars)) {
             text = bodyResource.getOneProperty(
                 sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
@@ -322,16 +323,18 @@ sc.canvas.FabricCanvasFactory.addTextAnnotation = function(canvas, annoResource,
                 sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars);
         }
 
-        var textBox = canvas.addTextBox(
-            Number(constraintAttrs.x),
-            Number(constraintAttrs.y),
-            Number(constraintAttrs.width),
-            Number(constraintAttrs.height),
-            text,
-            bodyUri
-        );
+        if (text) {
+            var textBox = canvas.addTextBox(
+                Number(constraintAttrs.x),
+                Number(constraintAttrs.y),
+                Number(constraintAttrs.width),
+                Number(constraintAttrs.height),
+                text,
+                bodyUri
+            );
 
-        addedTextUris.push(bodyUri);
+            addedTextUris.push(bodyUri);
+        }
     }
 
     return addedTextUris;
