@@ -130,9 +130,9 @@ var resizeViewerGrid = function() {
 //          tenure of their panelcontainer's tag...
 //			maybe wrap them in another child tag that they "keep" owning and stops being a child when it moves...??
 
-function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot)
-{
-	//Q: should these dm package methods just take a clientApp...?
+function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
+    goog.global.staticUrl = staticUrl;
+
     var markerEditor;
     var textEditor;
 	goog.global.clientApp = new atb.ClientApp(

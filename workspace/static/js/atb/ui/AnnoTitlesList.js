@@ -83,7 +83,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (uri, summary, ev
     var event = new atb.events.ResourceClicked(resource.getUri(), resource, this);
     eventDispatcher.dispatchEvent(event);
 
-    var viewerGrid = this.clientApp.viewerGrid; console.log(this.viewer, viewerGrid.indexOf(this.viewer.container));
+    var viewerGrid = this.clientApp.viewerGrid;
     var container = new atb.viewer.ViewerContainer(this.domHelper);
     viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
     var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);

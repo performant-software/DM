@@ -139,7 +139,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     var id = this.webService.resourceUriToId(uri);
     var self = this;
-    var specificResourceUri = this.databroker.getSvgSelectorSpecificResourceUri(uri);
+    var specificResourceUri = this.databroker.getSvgSelectorSpecificResourceUri(uri) || uri;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {

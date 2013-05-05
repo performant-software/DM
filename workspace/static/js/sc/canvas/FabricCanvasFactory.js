@@ -283,8 +283,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
                 }
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.audioAnno)) {
-                    // canvas.addAudioAnno(annoResource, constraintAttrs);
-                    console.log('found audio anno', annoUri)
+                    sc.canvas.FabricCanvasFactory.addAudioAnno(canvas, annoResource, constraintAttrs);
                 }
                 else {
                     console.log(
@@ -338,4 +337,21 @@ sc.canvas.FabricCanvasFactory.addTextAnnotation = function(canvas, annoResource,
     }
 
     return addedTextUris;
+};
+
+sc.canvas.FabricCanvasFactory.addAudioAnno = function(canvas, annoResource, constraintAttrs) {
+    var databroker = annoResource.getDatabroker();
+
+    var x = Number(constraintAttrs.x);
+    var y = Number(constraintAttrs.y);
+    var width = Number(constraintAttrs.width);
+    var height = Number(constraintAttrs.height);
+
+    // var bodyUri = annoResource.getOneProperty('oa:hasBody');
+    var targetUri = annoResource.getOneProperty('oa:hasTarget');
+    // var bodyResource = databroker.getResource(bodyUri);
+
+    // var audioAttrs = sc.data.Databroker.getConstraintAttrsFromUri(bodyUri);
+
+    var rect = canvas.addRect(x, y, width, height, targetUri);
 };
