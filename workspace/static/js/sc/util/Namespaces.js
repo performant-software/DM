@@ -198,7 +198,7 @@ sc.util.Namespaces.unescapeFromXml = function(str) {
     }
 };
 
-sc.util.Namespaces.fullUriRegex = /^<?\w+:\/\/(?:[^\/\.]+\.\w+)*.*>?$/;
+sc.util.Namespaces.fullUriRegex = /^<?[a-zA-Z]+:\/\/(?:[^\/\.]+\.\w+)*.*>?$/;
 
 sc.util.Namespaces.isUri = function(str) {
     if (sc.util.Namespaces.isAngleBracketWrapped(str)) {

@@ -11,6 +11,7 @@ goog.require('atb.ui.AnnoTitlesList');
 goog.require('jquery.jQuery');
 
 goog.require('goog.math.Coordinate');
+goog.require('goog.math.Size');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
@@ -92,6 +93,9 @@ atb.viewer.Viewer.prototype.getResourceId = function () {
  * @return {atb.viewer.Viwer} this.
  */
 atb.viewer.Viewer.prototype.resize = function(width, height) {
+    this.size = new goog.math.Size(width, height);
+
+    jQuery(this.rootDiv).width(width).height(height);
     this.repositionLoadingSpinner();
 
     return this;

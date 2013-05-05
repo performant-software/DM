@@ -5,20 +5,16 @@ goog.require('atb.resource.TextHighlightSummary');
 goog.require('atb.resource.CanvasSummary');
 goog.require('atb.resource.MarkerSummary');
 goog.require('atb.resource.ManuscriptSummary');
+goog.require('atb.resource.AudioSummary');
 
 atb.resource.ResourceSummaryFactory.createFromUri = function(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
     var result;
+    var databroker = clientApp.databroker;
 
-    var type = ''; //TODO: Remove
-
-    var resource = clientApp.getDatabroker().getResource(uri);
+    var resource = databroker.getResource(uri);
     
     if (resource.hasAnyType('dctypes:Text')) {
         result = new atb.resource.TextSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
-    }
-    
-    else if (type == 'textHighlight') {
-        result = new atb.resource.TextHighlightSummary (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else if (resource.hasAnyType('oac:SpecificResource')) {
@@ -28,9 +24,9 @@ atb.resource.ResourceSummaryFactory.createFromUri = function(uri, clickHandler, 
     else if (resource.hasAnyType('dms:Canvas')) {
         result = new atb.resource.CanvasSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
-    
-    else if (type == 'manuscript') {
-        result = new atb.resource.ManuscriptSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+
+    else if (resource.hasAnyType('dms:AudioSegment', 'dctypes:Sound')) {
+        result = new atb.resource.AudioSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else {

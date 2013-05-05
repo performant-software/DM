@@ -1162,13 +1162,15 @@ sc.data.Databroker.prototype.getManuscriptImageAnnoUris = function(manifestUri) 
     return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
 };
 
+sc.data.Databroker.XYWH_REGEX = /#xywh\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*$/;
+sc.data.Databroker.TIMECODE_REGEX = /#t\s*=\s*npt:\s*([\d:]+)\s*,\s*([\d:]+)\s*$/;
+
 sc.data.Databroker.getConstraintAttrsFromUri = function(constraintUri) {
     var baseEndIndex = constraintUri.indexOf('#');
     var baseUri = constraintUri.substring(0, baseEndIndex);
     var constraintString = constraintUri.substring(baseEndIndex, constraintUri.length);
 
-    var xywhRegex = /#xywh\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*$/;
-    var xywhMatch = xywhRegex.exec(constraintUri);
+    var xywhMatch = sc.data.Databroker.XYWH_REGEX.exec(constraintUri);
     if (xywhMatch) {
         return {
             type: 'box',
@@ -1182,8 +1184,7 @@ sc.data.Databroker.getConstraintAttrsFromUri = function(constraintUri) {
         };
     }
 
-    var timecodeRegex = /#t\s*=\s*npt:\s*([\d:]+)\s*,\s*([\d:]+)\s*$/;
-    var timecodeMatch = timecodeRegex.exec(constraintUri);
+    var timecodeMatch = sc.data.Databroker.TIMECODE_REGEX.exec(constraintUri);
     if (timecodeMatch) {
         var startTimecode = timecodeMatch[1];
         var endTimecode = timecodeMatch[2];
@@ -1217,7 +1218,7 @@ sc.data.Databroker.timecodeToSeconds = function(timecode) {
     var minutes = Number(match[3]);
     var seconds = Number(match[4]);
 
-    var time = seconds + minutes * 60 + hours * 3600 + days * 86400;
+    var time = seconds + (minutes * 60) + (hours * 3600) + (days * 86400);
 
     return time;
 };

@@ -2,6 +2,7 @@ goog.provide('atb.viewer.ViewerFactory');
 
 //goog.require('atb.viewer.Editor');
 //goog.require('atb.viewer.CanvasViewer');
+goog.require('atb.viewer.AudioViewer');
 
 atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
     var databroker = clientApp.databroker;
@@ -14,6 +15,9 @@ atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
     }
     else if (resource.hasAnyType(['dms:Canvas', 'oa:SpecificResource'])) {
         viewer = new atb.viewer.CanvasViewer(clientApp);
+    }
+    else if (resource.hasAnyType(['dctypes:Audio', 'dms:AudioSegment'])) {
+        viewer = new atb.viewer.AudioViewer(clientApp);
     }
 
     return viewer;
