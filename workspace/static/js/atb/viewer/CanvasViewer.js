@@ -118,13 +118,25 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
 };
 
 atb.viewer.CanvasViewer.prototype.onCanvasAdded = function(event) {
+    this.setTitle(this.getCompleteTitle());
+};
+
+atb.viewer.CanvasViewer.prototype.getCompleteTitle = function() {
     var canvas = this.viewer.mainViewport.canvas;
-    
-    var resource = this.databroker.getResource(canvas.getUri());
-    
-    var title = resource.getOneProperty('dc:title') || 'Untitled canvas';
-    
-    this.setTitle(title);
+    var canvasResource = this.databroker.getResource(canvas.getUri());
+    var title = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
+
+    var parentResourceUri = this.databroker.getManifestsContainingCanvas(canvasResource.uri)[0]; console.log(parentResourceUri)
+    if (parentResourceUri) {
+        var parentResource = this.databroker.getResource(parentResourceUri);
+        var parentTitle = parentResource.getOneProperty('dc:title');
+
+        if (title.indexOf(parentTitle) == -1) {
+            title = parentTitle + ', ' + title;
+        }
+    }
+
+    return title;
 };
 
 atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
