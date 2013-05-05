@@ -1,6 +1,7 @@
 goog.provide('sc.data.Resource');
 
 goog.require('goog.structs.Set');
+goog.require('goog.array');
 goog.require('jquery.jQuery');
 goog.require('sc.data.Quad');
 goog.require('sc.util.Namespaces');
@@ -301,4 +302,11 @@ sc.data.Resource.prototype.getEquivalentUris = function() {
 
 sc.data.Resource.prototype.dump = function() {
     return this.databroker.dumpResource(this.bracketedUri);
+};
+
+sc.data.Resource.compareByTitle = function(a, b) {
+    var titleA = a.getOneProperty('dc:title');
+    var titleB = b.getOneProperty('dc:title');
+
+    return goog.array.defaultCompare(titleA, titleB);
 };

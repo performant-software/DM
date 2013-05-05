@@ -447,7 +447,8 @@ sc.RepoBrowser.prototype.generateManuscriptItems = function(manifestUri) {
     var self = this;
     var manuscriptsDiv = this.sectionDivs.manuscripts;
 
-    var aggregatedUris = self.databroker.getAggregationContentsUris(manifestUri);
+    var aggregatedUris = this.databroker.getAggregationContentsUris(manifestUri);
+    this.databroker.sortUrisByTitle(aggregatedUris);
 
     var fragment = this.options.doc.createDocumentFragment();
 

@@ -1515,6 +1515,14 @@ sc.data.Databroker.prototype.getSvgSelectorSpecificResourceUri = function(select
     }
 };
 
+sc.data.Databroker.prototype.compareUrisByTitle = function(a, b) {
+    return sc.data.Resource.compareByTitle(this.getResource(a), this.getResource(b));
+};
+
+sc.data.Databroker.prototype.sortUrisByTitle = function(uris) {
+    goog.array.sort(uris, this.compareUrisByTitle.bind(this));
+};
+
 /* Setter & getter methods for current project
  * * (variable already existed)
  * Also created ability to add projects to "allProjects"
