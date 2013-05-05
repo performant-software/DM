@@ -47,6 +47,13 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
     repoBrowser = new sc.RepoBrowser({
         repositories: [
             {
+                title: 'Stanford University',
+                // url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
+                url: '/store/resources/http://dms-data.stanford.edu/Repository3',
+                uri: 'http://dms-data.stanford.edu/Repository3'
+                // uri: 'http://manifests.ydc2.yale.edu/Repository'
+            },
+            {
                 title: 'Yale University',
                 // url: '/store/manifests/http://manifests.ydc2.yale.edu/Repository',
                 url: '/store/resources/http://manifests.ydc2.yale.edu/Repository',
