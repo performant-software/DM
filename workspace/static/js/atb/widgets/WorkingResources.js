@@ -68,7 +68,7 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
             var resourceUris = aggregateUrisInOrder;
         }
         else {
-            var resourceUris = aggregateUris;
+            var resourceUris = this.databroker.sortUrisByTitle(aggregateUris);
         }
 
         for (var i = 0, len = resourceUris.length; i < len; i++) {
