@@ -3,11 +3,12 @@ workspace/static/js/closure-library/*
 static/js/closure-library/*
 settings_local.py
 runserver
+collectstatic
 
 static/*
 static/*/
-!static/admin
-!static/admin/
+#!static/admin
+#!static/admin/
 
 #python specific
 *.pyc

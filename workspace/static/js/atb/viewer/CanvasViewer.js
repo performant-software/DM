@@ -95,12 +95,14 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     viewport.addEventListener('canvasAdded', this.onCanvasAdded, false, this);
 
     var panZoomControl = this.viewer.toolbar.controls.panZoom;
-    panZoomControl.addEventListener('activated', function(event) {
-                                    this.enableHoverMenus();
-                                    }, false, this);
-    panZoomControl.addEventListener('deactivated', function(event) {
-                                    this.disableHoverMenus();
-                                    }, false, this);
+    panZoomControl.addEventListener(
+        'activated', function(event) {
+            this.enableHoverMenus();
+        }, false, this);
+    panZoomControl.addEventListener(
+        'deactivated', function(event) {
+            this.disableHoverMenus();
+        }, false, this);
 /* SGB    
 */
     goog.events.listen(eventDispatcher, 'resource deleted', function (e) {
@@ -126,7 +128,7 @@ atb.viewer.CanvasViewer.prototype.getCompleteTitle = function() {
     var canvasResource = this.databroker.getResource(canvas.getUri());
     var title = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
 
-    var parentResourceUri = this.databroker.getManifestsContainingCanvas(canvasResource.uri)[0]; console.log(parentResourceUri)
+    var parentResourceUri = this.databroker.dataModel.findManifestsContainingCanvas(canvasResource.uri)[0];
     if (parentResourceUri) {
         var parentResource = this.databroker.getResource(parentResourceUri);
         var parentTitle = parentResource.getOneProperty('dc:title');
@@ -151,7 +153,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     var id = this.webService.resourceUriToId(uri);
     var self = this;
-    var specificResourceUri = this.databroker.getSvgSelectorSpecificResourceUri(uri) || uri;
+    var specificResourceUri = this.databroker.dataModel.findSvgSelectorSpecificResourceUri(uri) || uri;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
@@ -231,7 +233,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
 atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var uri = event.uri;
     var feature = event.getFeature();
-    var specificResourceUri = this.databroker.getSvgSelectorSpecificResourceUri(uri);
+    var specificResourceUri = this.databroker.dataModel.findSvgSelectorSpecificResourceUri(uri);
 
     console.log('resource click', event, uri, feature)
     
@@ -259,7 +261,7 @@ atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
         this.setCanvasByUri(resource.getOneProperty('oa:hasSource'));
     }
     else if (resource.hasAnyType('oa:SvgSelector')) {
-        var specificResource = this.databroker.getResource(this.databroker.getSvgSelectorSpecificResourceUri(uri));
+        var specificResource = this.databroker.getResource(this.databroker.dataModel.findSvgSelectorSpecificResourceUri(uri));
         this.setCanvasByUri(specificResource.getOneProperty('oa:hasSource'));
     }
 };
@@ -360,7 +362,7 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var newTextResource = this.databroker.createText(textTitle, "");
     var newTextId = newTextResource.uri;
        
-    var newAnno = this.databroker.createAnno(newTextId, uri);
+    var newAnno = this.databroker.dataModel.createAnno(newTextId, uri);
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;

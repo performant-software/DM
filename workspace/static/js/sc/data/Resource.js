@@ -263,7 +263,7 @@ sc.data.Resource.prototype.getOneTitle = function() {
 };
 
 sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
-    return this.databroker.getResourceAnnoIds(this.bracketedUri, opt_annoType);
+    return this.databroker.dataModel.findAnnosReferencingResource(this.bracketedUri, opt_annoType);
 };
 
 /**

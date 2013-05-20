@@ -160,7 +160,7 @@ sc.CommentViewer.prototype.setUri = function(uri) {
             return;
         }
         
-        var targetAnnoUris = this.databroker.getResourceTargetAnnoIds(uri);
+        var targetAnnoUris = this.databroker.dataModel.findAnnosReferencingResourceAsTarget(uri);
         
         for (var i=0, len=targetAnnoUris.length; i<len; i++) {
             var annoResource = this.databroker.getResource(targetAnnoUris[i]);

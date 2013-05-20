@@ -110,7 +110,7 @@
             };
             
             databroker.getDeferredResourceCollection(
-                [uri].concat(databroker.getManuscriptAggregationUris(manifestUri))).
+                [uri].concat(databroker.dataModel.findManuscriptAggregationUris(manifestUri))).
                     allComplete(withCollection).singleFail(function () {
                         console.error(arguments);
                     }
@@ -147,7 +147,7 @@
     var canvasUri = 'http://ada.drew.edu:8005/resource/2';
     
 //    databroker.fetchRdf(manifestUrl, function () {
-//        databroker.getDeferredResourceCollection([manuscriptUri].concat(databroker.getManuscriptAggregationUris(manuscriptUri))).allComplete(function (deferreds) {
+//        databroker.getDeferredResourceCollection([manuscriptUri].concat(databroker.dataModel.findManuscriptAggregationUris(manuscriptUri))).allComplete(function (deferreds) {
 //            
 //            var deferredCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(canvasUri, databroker, {width: 600, height: 600});
 //            viewport.addDeferredCanvas(deferredCanvas);

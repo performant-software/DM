@@ -9,7 +9,7 @@ atb.resource.AudioSummary = function(uri, clickHandler, viewer, clientApp, opt_d
         this.parentResource = this.databroker.getResource(this.resource.getOneProperty('dcterms:isPartOf'));
     }
 
-    this.audioAttrs = sc.data.Databroker.getConstraintAttrsFromUri(this.resource.uri);
+    this.audioAttrs = sc.data.DataModel.getConstraintAttrsFromUri(this.resource.uri);
 
     this.title = this.findTitle();
 

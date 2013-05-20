@@ -132,7 +132,7 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
 sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
     var databroker = canvas.databroker;
 
-    var imageAnnoUris = databroker.getResourceTargetAnnoIds(
+    var imageAnnoUris = databroker.dataModel.findAnnosReferencingResourceAsTarget(
         canvas.uri,
         sc.canvas.FabricCanvas.RDF_ENUM.imageAnno
     );
@@ -183,7 +183,7 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
 sc.canvas.FabricCanvasFactory.findAndAddComments = function(canvas) {
     var databroker = canvas.databroker;
 
-    var annoUris = databroker.getResourceBodyAnnoIds(
+    var annoUris = databroker.dataModel.findAnnosReferencingResourceAsBody(
         canvas.uri,
         sc.canvas.FabricCanvas.RDF_ENUM.commentAnno
     );
@@ -260,9 +260,9 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
         var partUri = partUris[i];
 
         if (! canvas.segmentUris.contains(partUri)) {
-            var constraintAttrs = sc.data.Databroker.getConstraintAttrsFromUri(
+            var constraintAttrs = sc.data.DataModel.getConstraintAttrsFromUri(
                                                                        partUri);
-            var annoUris = databroker.getResourceAnnoIds(partUri);
+            var annoUris = databroker.dataModel.findAnnosReferencingResource(partUri);
 
             canvas.segmentUris.add(partUri);
 
@@ -340,18 +340,12 @@ sc.canvas.FabricCanvasFactory.addTextAnnotation = function(canvas, annoResource,
 };
 
 sc.canvas.FabricCanvasFactory.addAudioAnno = function(canvas, annoResource, constraintAttrs) {
-    var databroker = annoResource.getDatabroker();
+    var x = constraintAttrs.x;
+    var y = constraintAttrs.y;
+    var width = constraintAttrs.width;
+    var height = constraintAttrs.height;
 
-    var x = Number(constraintAttrs.x);
-    var y = Number(constraintAttrs.y);
-    var width = Number(constraintAttrs.width);
-    var height = Number(constraintAttrs.height);
-
-    // var bodyUri = annoResource.getOneProperty('oa:hasBody');
     var targetUri = annoResource.getOneProperty('oa:hasTarget');
-    // var bodyResource = databroker.getResource(bodyUri);
-
-    // var audioAttrs = sc.data.Databroker.getConstraintAttrsFromUri(bodyUri);
 
     var rect = canvas.addRect(x, y, width, height, targetUri);
 };

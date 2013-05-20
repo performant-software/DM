@@ -379,7 +379,7 @@ sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, 
     this.showLoadingIndicator();
 
     this.databroker.getDeferredResource(manifestUri).done(function(resource) {
-        var aggregatedUris = this.databroker.getAggregationContentsUris(manifestUri);
+        var aggregatedUris = this.databroker.dataModel.findAggregationContentsUris(manifestUri);
 
         var fragment = this.options.doc.createDocumentFragment();
 
@@ -447,7 +447,7 @@ sc.RepoBrowser.prototype.generateManuscriptItems = function(manifestUri) {
     var self = this;
     var manuscriptsDiv = this.sectionDivs.manuscripts;
 
-    var aggregatedUris = this.databroker.getAggregationContentsUris(manifestUri);
+    var aggregatedUris = this.databroker.dataModel.findAggregationContentsUris(manifestUri);
     this.databroker.sortUrisByTitle(aggregatedUris);
 
     var fragment = this.options.doc.createDocumentFragment();
@@ -483,8 +483,8 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
         this.setManuscriptThumb(uri, item);
 
         item.bind('click', function(event) {
-            var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
-            var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(uri)[0];
+            var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
+            var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(uri)[0];
 
             if (sequenceUri && imageAnnoUri && item.getNumFolia() == 0) {
                 window.setTimeout(jQuery.proxy(function() {
@@ -506,8 +506,8 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
 sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manuscriptItem) {
     console.log("generateManuscriptFolia(manuscriptUri, manuscriptItem): ", 
                 manuscriptUri, manuscriptItem);
-    var sequenceUri = this.databroker.getManuscriptSequenceUris(manuscriptUri)[0];
-    var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(manuscriptUri)[0];
+    var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(manuscriptUri)[0];
+    var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(manuscriptUri)[0];
 
     var urisInOrder = this.databroker.getListUrisInOrder(sequenceUri);
 
@@ -623,7 +623,7 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
 };
 
 sc.RepoBrowser.prototype.setManuscriptThumb = function(manuscriptUri, manuscriptItem) {
-    var sequenceUri = this.databroker.getManuscriptSequenceUris(manuscriptUri)[0];
+    var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(manuscriptUri)[0];
 
     if (! sequenceUri) {
         return;
@@ -632,7 +632,7 @@ sc.RepoBrowser.prototype.setManuscriptThumb = function(manuscriptUri, manuscript
     var urisInOrder = this.databroker.getListUrisInOrder(sequenceUri);
 
     if (urisInOrder.length > 0) {
-        var firstThumbSrc = this.databroker.getCanvasImageUris(urisInOrder[0])[0];
+        var firstThumbSrc = this.databroker.dataModel.findCanvasImageUris(urisInOrder[0])[0];
         if (firstThumbSrc) {
             var image = this.databroker.getResource(firstThumbSrc);
 
