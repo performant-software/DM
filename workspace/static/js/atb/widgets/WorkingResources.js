@@ -61,7 +61,7 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
     var withManifest = function(manifest) {
         this.clear();
 
-        var aggregateUris = this.databroker.getAggregationContentsUris(uri);
+        var aggregateUris = this.databroker.dataModel.findAggregationContentsUris(uri);
         var aggregateUrisInOrder = this.databroker.getListUrisInOrder(uri);
 
         if (aggregateUrisInOrder.length > 0) {
@@ -203,11 +203,11 @@ atb.widgets.WorkingResources.prototype.updateManuscript = function(item) {
     item.setTooltip('Show the folia in ' +
                     item.getTitle() || 'this manuscript');
 
-    var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
+    var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
     if (sequenceUri) {
         var foliaUris = this.databroker.getListUrisInOrder(sequenceUri);
 
-        var thumbSrc = this.databroker.getCanvasImageUris(foliaUris[0])[0];
+        var thumbSrc = this.databroker.dataModel.findCanvasImageUris(foliaUris[0])[0];
         if (thumbSrc) {
             var image = this.databroker.getResource(thumbSrc);
             var size = new goog.math.Size(
@@ -247,7 +247,7 @@ atb.widgets.WorkingResources.prototype.updateManuscript = function(item) {
 atb.widgets.WorkingResources.prototype.updateCanvas = function(item) {
     var uri = item.getUri();
 
-    var imageSrc = this.databroker.getCanvasImageUris(uri)[0];
+    var imageSrc = this.databroker.dataModel.findCanvasImageUris(uri)[0];
 
     if (imageSrc) {
         var image = this.databroker.getResource(imageSrc);
@@ -289,15 +289,15 @@ atb.widgets.WorkingResources.prototype.refreshItem = function(item) {
             };
             withSequence = jQuery.proxy(withSequence, this);
             
-            var aggregatedUris = this.databroker.getManuscriptAggregationUris(uri);
+            var aggregatedUris = this.databroker.dataModel.findManuscriptAggregationUris(uri);
             for (var i=0; i<aggregatedUris.length; i++) {
                 this.databroker.getDeferredResource(aggregatedUris[i]).
                     progress(withSequence).done(withSequence);
             }
              
             /*
-            var sequenceUri = this.databroker.getManuscriptSequenceUris(uri)[0];
-            var imageAnnoUri = this.databroker.getManuscriptImageAnnoUris(uri)[0];
+            var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
+            var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(uri)[0];
             if (sequenceUri) {
                 this.databroker.getDeferredResource(sequenceUri).
                     progress(withSequence).done(withSequence);

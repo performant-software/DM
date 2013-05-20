@@ -138,6 +138,25 @@ sc.data.QuadStore.prototype.forEachQuadMatchingQuery = function(subject, predica
     );
 };
 
+sc.data.QuadStore.prototype.forEachQuad = function(fn, opt_obj) {
+    if (opt_obj) {
+        fn = fn.bind(opt_obj);
+    }
+
+    goog.structs.every(
+        this.quads,
+        function(quad) {
+            if (fn(quad, this) === false) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        },
+        this
+    );
+};
+
 /**
  * Returns a set of the subjects of all quads matching the specified pattern.
  * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
@@ -410,6 +429,17 @@ sc.data.QuadStore.prototype.clone = function(opt_shallow) {
     }
 
     return store;
+};
+
+/**
+ * Removes all quads from the store.
+ * @return {sc.data.QuadStore} this.
+ */
+sc.data.QuadStore.prototype.clear = function() {
+    this.quads.clear();
+    this.indexedQuads.clear();
+
+    return this;
 };
 
 /**

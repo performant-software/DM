@@ -658,7 +658,7 @@ atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
     var databroker = this.clientApp.getDatabroker();
     var bodyUri = databroker.createUuid();
 
-    var anno = databroker.createAnno(bodyUri, targetUri);
+    var anno = databroker.dataModel.createAnno(bodyUri, targetUri);
 	
     var annoBodyEditor = new atb.viewer.Editor(
 		this.clientApp,

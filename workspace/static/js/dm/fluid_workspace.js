@@ -110,7 +110,7 @@ var setupCurrentProject = function(clientApp, username) {
     var url = db.restUrl(null, db.RESTYPE.user, username, null);
     var uri = db.restUri(null, db.RESTYPE.user, username, null);
     db.fetchRdf(url, function() {
-        var uris = db.getAggregationContentsUris(uri);
+        var uris = db.dataModel.findAggregationContentsUris(uri);
         for (var i=0; i<uris.length; i++) {
             db.allProjects.push(uris[i]);
         }

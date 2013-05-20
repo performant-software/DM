@@ -290,7 +290,7 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
         var bodyId = this.annoLinkCreationBodyId;
         this.annoLinkCreationBodyId = null;
 
-        this.databroker.createAnno(bodyId, id);
+        this.databroker.dataModel.createAnno(bodyId, id);
         
         var bezel = new atb.ui.Bezel('atb-bezel-linked');
         bezel.show();

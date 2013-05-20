@@ -59,7 +59,7 @@ atb.viewer.AudioViewer.prototype.buildJPlayerDom = function() {
                     '<div class="jp-volume-bar-value"></div>' +
                 '</div>' +
                 '<div class="jp-current-time"></div>' +
-                '<div class="jp-duration"></div>                   ' +
+                '<div class="jp-duration"></div>' +
             '</div>' +
             '<div class="jp-no-solution">' +
                 '<span>Update Required</span>' +
@@ -95,10 +95,9 @@ atb.viewer.AudioViewer.prototype.loadResourceByUri = function(uri) {
 
         this.setTitle(this.parentResource.getOneProperty('dc:title') || atb.resource.AudioSummary.findTitleFromUri(this.parentResource.uri));
 
-        var audioAttrs = sc.data.Databroker.getConstraintAttrsFromUri(this.resource.uri);
+        var audioAttrs = sc.data.DataModel.getConstraintAttrsFromUri(this.resource.uri);
 
         var setMedia = function() {
-            console.log('audio segment', this.resource.uri)
             this.player.jPlayer('setMedia', {
                 mp3: this.parentResource.uri
             }).jPlayer('pause', audioAttrs.startSeconds);

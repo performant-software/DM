@@ -819,7 +819,7 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
     
     this.thisViewer.setAnnotationBody(newTextId);
 
-    this.databroker.createAnno(newTextId, myResourceId);
+    this.databroker.dataModel.createAnno(newTextId, myResourceId);
 
     this.thisViewer.toggleAnnotationMode(true);
 

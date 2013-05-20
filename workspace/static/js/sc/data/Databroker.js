@@ -9,6 +9,7 @@ goog.require('sc.data.Resource');
 
 goog.require('sc.data.Quad');
 goog.require('sc.data.QuadStore');
+goog.require('sc.data.DataModel');
 
 goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
@@ -43,7 +44,7 @@ sc.data.Databroker = function(options) {
 
     this.rdfByUrl = new goog.structs.Map();
     
-    this.newQuads = [];
+    this.newQuadStore = new sc.data.QuadStore();
     this.deletedQuadsStore = new sc.data.QuadStore();
 
     this.currentProject = null;
@@ -56,6 +57,8 @@ sc.data.Databroker = function(options) {
     this.newResourceUris = new goog.structs.Set();
 
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
+
+    this.dataModel = new sc.data.DataModel(this);
 };
 
 sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
@@ -147,20 +150,6 @@ sc.data.Databroker.prototype.shouldProxy = function(url) {
 
         return !(uri.getDomain() == hostname && uri.getPort() == port);
     }
-};
-
-/**
- * @enum
- * Annotation predicates and types
- */
-sc.data.Databroker.ANNO_NS = {
-    hasTarget: '<http://www.openannotation.org/ns/hasTarget>',
-    hasBody: '<http://www.openannotation.org/ns/hasBody>',
-    imageAnno: '<http://dms.stanford.edu/ns/ImageAnnotation>',
-    constrains: '<http://www.openannotation.org/ns/constrains>',
-    constrainedBy: '<http://www.openannotation.org/ns/constrainedBy>',
-    constraint: '<http://www.openannotation.org/ns/ConstrainedBody>',
-    isPartOf: '<http://purl.org/dc/terms/isPartOf>'
 };
 
 /**
@@ -262,14 +251,15 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr) {
     rdf = null;
 };
 
+sc.data.Databroker.CONTENT_TYPE_REGEX = /^Content-Type:\s*([^;\s]*)$/m;
+
 /**
  * Returns the Content-Type value from a response headers string
  * @param {string} responseHeaders
  * @return {string}
  */
 sc.data.Databroker.parseContentType = function(responseHeaders) {
-    var contentTypeRegex = /^Content-Type:\s*([^;\s]*)$/m;
-    var match = contentTypeRegex.exec(responseHeaders);
+    var match = sc.data.Databroker.CONTENT_TYPE_REGEX.exec(responseHeaders);
 
     if (match) {
         var type = goog.string.trim(match[1]);
@@ -319,16 +309,13 @@ sc.data.Databroker.prototype.processJQueryRdf = function(rdf, url, context) {
  */
 sc.data.Databroker.prototype.addNewQuad = function(quad) {
     this.quadStore.addQuad(quad);
-
-    this.newQuads.push(quad);
+    this.newQuadStore.addQuad(quad);
 
     return this;
 };
 
 sc.data.Databroker.prototype.addNewQuads = function(quads) {
-    goog.structs.forEach(quads, function(quad) {
-        this.addNewQuad(quad);
-    }, this);
+    goog.structs.forEach(quads, this.addNewQuad, this);
 
     return this;
 };
@@ -341,9 +328,7 @@ sc.data.Databroker.prototype.deleteQuad = function(quad) {
 };
 
 sc.data.Databroker.prototype.deleteQuads = function(quads) {
-    goog.structs.forEach(quads, function(quad) {
-        this.deleteQuad(quad);
-    }, this);
+    goog.structs.forEach(quads, this.deleteQuad, this);
 
     return this;
 };
@@ -374,7 +359,7 @@ sc.data.Databroker.prototype.dumpQuads = function(quads, opt_outputType) {
 };
 
 sc.data.Databroker.prototype.dumpNewQuads = function(opt_outputType) {
-    return this.dumpQuads(this.newQuads, opt_outputType);
+    return this.dumpQuads(this.newQuadStore.getQuads(), opt_outputType);
 };
 
 sc.data.Databroker.prototype.postQuads = function(url, quads, opt_handler, opt_format) {
@@ -411,9 +396,9 @@ sc.data.Databroker.prototype.postQuads = function(url, quads, opt_handler, opt_f
 sc.data.Databroker.prototype.saveNewQuads = function(url, opt_handler, opt_format) {
     this.postQuads(
         url,
-        this.getAllQuadsForSave(this.newQuads),
+        this.getAllQuadsForSave(this.newQuadStore.getQuads()),
         function() {
-            this.newQuads = [];
+            this.newQuadStore.clear();
 
             if (jQuery.isFunction(opt_handler)) {
                 opt_handler.apply(this, arguments);
@@ -451,32 +436,6 @@ sc.data.Databroker.prototype.getAllQuadsForSave = function(quads) {
     return additionalQuads;
 };
 
-sc.data.Databroker.prototype.getManifestsContainingCanvas = function(canvasUri) {
-    canvasUri = sc.util.Namespaces.wrapWithAngleBrackets(canvasUri);
-
-    var manifestUris = new goog.structs.Set();
-
-    this.quadStore.forEachQuadMatchingQuery(
-        null, this.namespaces.autoExpand('ore:aggregates'), canvasUri, null,
-        function(quad) {
-            var sequence = this.getResource(quad.subject);
-
-            if (sequence.hasType('dms:Sequence')) {
-                this.quadStore.forEachQuadMatchingQuery(
-                    null, this.namespaces.autoExpand('ore:aggregates'), quad.subject, null,
-                    function(quad) {
-                        var manifest = this.getResource(quad.subject);
-
-                        if (manifest.hasType('dms:Manifest')) {
-                            manifestUris.add(manifest.uri);
-                        }
-                    }.bind(this));
-            }
-        }.bind(this));
-
-    return manifestUris.getValues();
-};
-
 /**
  * Returns a set of urls to request for resources, including guesses if no data is known about the resources
  * @param {Array.<string>} uris
@@ -484,7 +443,6 @@ sc.data.Databroker.prototype.getManifestsContainingCanvas = function(canvasUri) 
  */
 sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_forceReload) {
     var urlsToRequest = new goog.structs.Set();
-
     var allUris = new goog.structs.Set();
 
     for (var i = 0, len = uris.length; i < len; i++) {
@@ -501,9 +459,9 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
 
         var resource = this.getResource(uri);
         if (resource.hasType('dms:Canvas')) {
-            var manifestUris = this.getManifestsContainingCanvas(uri);
+            var manifestUris = this.dataModel.findManifestsContainingCanvas(uri);
             goog.structs.forEach(manifestUris, function(manifestUri) {
-                allUris.addAll(this.getManuscriptAggregationUris(manifestUri));
+                allUris.addAll(this.dataModel.findManuscriptAggregationUris(manifestUri));
             }, this);
         }
     }
@@ -565,8 +523,6 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
     var deferredResource = jQuery.Deferred();
 
     window.setTimeout(function() {
-        var resourceTypes = this.getResourceTypesSet(uri);
-
         var urlsToRequest = this.getUrlsToRequestForResource(uri);
         if (urlsToRequest.getCount() == 0) {
             deferredResource.resolveWith(this, [this.getResource(uri), this]);
@@ -803,7 +759,6 @@ sc.data.Databroker.prototype.getPropertiesForResource = function(uri, predicate)
 };
 
 sc.data.Databroker.FILE_EXTENSION_RE = /^(.*)\.(\w+)$/;
-
 /**
  * When a resource does not specify its describer, this method guesses the url by trying
  * common extensions. Will not return known bad urls, and checks to see if the correct url
@@ -856,126 +811,6 @@ sc.data.Databroker.prototype.guessResourceUrls = function(uri) {
     return filteredGuesses;
 };
 
-/**
- * Returns a list of the uris of resources that list the given resource uri as a target or a body
- * @param {string} resourceUri
- * @param {?string} opt_annoType the specific type of anno for which to return uris.
- * @return {Array.<string>}
- */
-sc.data.Databroker.prototype.getResourceAnnoIds = function(resourceUri, opt_annoType) {
-    var set = new goog.structs.Set();
-    set.addAll(this.getResourceBodyAnnoIds(resourceUri, opt_annoType));
-    set.addAll(this.getResourceTargetAnnoIds(resourceUri, opt_annoType));
-
-    return set.getValues();
-};
-
-/**
- * Returns a list of the uris of resources that list the given resource uri as a target
- * @param {string} resourceUri
- * @param {?string} opt_annoType the specific type of anno for which to return uris.
- * @return {Array.<string>}
- */
-sc.data.Databroker.prototype.getResourceTargetAnnoIds = function(resourceUri, opt_annoType) {
-    resourceUri = sc.util.Namespaces.wrapWithAngleBrackets(resourceUri);
-    
-    var annoIds = this.getUrisSetWithProperty(sc.data.Databroker.ANNO_NS.hasTarget, resourceUri);
-
-    if (! opt_annoType) {
-        return sc.util.Namespaces.stripAngleBrackets(annoIds.getValues());
-    }
-    else {
-        var type = this.namespaces.autoExpand(opt_annoType);
-
-        var typedAnnoIds = this.getUrisSetWithProperty('rdf:type', type);
-        
-        var intersection = typedAnnoIds.intersection(annoIds);
-        return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
-        // Because of google's set implementation, this particular way
-        // of finding the intersection is quite efficient
-    }
-};
-
-/**
- * Returns a list of the uris of resources that list the given resource uri as a body
- * @param {string} resourceUri
- * @param {?string} opt_annoType the specific type of anno for which to return uris.
- * @return {Array.<string>}
- */
-sc.data.Databroker.prototype.getResourceBodyAnnoIds = function(resourceUri, opt_annoType) {
-    resourceUri = sc.util.Namespaces.wrapWithAngleBrackets(resourceUri);
-    
-    var annoIds = this.getUrisSetWithProperty(sc.data.Databroker.ANNO_NS.hasBody, resourceUri);
-
-    if (! opt_annoType) {
-        return annoIds.getValues();
-    }
-    else {
-        var type = this.namespaces.autoExpand(opt_annoType);
-
-        var typedAnnoIds = this.getUrisSetWithProperty('rdf:type', type);
-
-        var intersection = typedAnnoIds.intersection(annoIds);
-        return sc.util.Namespaces.stripAngleBrackets(intersection.getValues()); // Because of google's set implementation, this particular way
-        // of finding the intersection is quite efficient
-    }
-};
-
-/**
- * Returns a list of the uris of the images for a given canvas (which are given by image annotations on that canvas)
- * @param {string} canvasUri
- * @return {Array.<string>}
- */
-sc.data.Databroker.prototype.getCanvasImageUris = function(canvasUri) {
-    var annoIds = this.getResourceTargetAnnoIds(canvasUri, sc.data.Databroker.ANNO_NS.imageAnno);
-
-    var imageUris = new goog.structs.Set();
-
-    for (var i = 0, len = annoIds.length; i < len; i++) {
-        var annoId = annoIds[i];
-        annoId = sc.util.Namespaces.wrapWithAngleBrackets(annoId);
-
-        var bodyUris = this.getPropertiesForResource(annoId, sc.data.Databroker.ANNO_NS.hasBody);
-        for (var j = 0, lenj = bodyUris.length; j < lenj; j++) {
-            var bodyUri = bodyUris[j];
-            var bodyResource = this.getResource(bodyUri);
-
-            if (bodyResource.hasAnyType('dms:Image', 'dms:ImageBody', '<http://purl.org/dc/dcmitype/Image>')) {
-                imageUris.add(bodyUri);
-            }
-            else if (bodyResource.hasType('dms:ImageChoice')) {
-                var optionUris = bodyResource.getProperties('dms:option');
-                imageUris.addAll(optionUris);
-            }
-            else {
-                imageUris.add(bodyUri);
-            }
-        }
-
-        imageUris.addAll(bodyUris);
-    }
-
-    return sc.util.Namespaces.stripAngleBrackets(imageUris.getValues());
-};
-
-/**
- * Returns a set of the rdf:type values for a given resource uri
- * @param uri {string}
- * @return {goog.structs.Set.<string>}
- */
-sc.data.Databroker.prototype.getResourceTypesSet = function(uri) {
-    return this.getPropertiesSetForResource(uri, 'rdf:type');
-};
-
-/**
- * Returns a list of the rdf:type values for a given resource uri
- * @param uri {string}
- * @return {Array.<string>}
- */
-sc.data.Databroker.prototype.getResourceTypes = function(uri) {
-    return this.getResourceTypesSet(uri).getValues();
-};
-
 sc.data.Databroker.prototype.getResourceDescribers = function(uri) {
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
@@ -991,55 +826,8 @@ sc.data.Databroker.prototype.getResourcePartUris = function(uri) {
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
     return sc.util.Namespaces.stripAngleBrackets(
-        this.getUrisWithProperty(sc.data.Databroker.ANNO_NS.isPartOf, uri)
+        this.getUrisWithProperty(sc.data.DataModel.URIS.isPartOf, uri)
     );
-};
-
-sc.data.Databroker.prototype.getConstraintUrisOnResource = function(uri) {
-    var resourceParts = this.getResourcePartUris(uri);
-
-    var urisToCheck = resourceParts.concat([uri]);
-    var annoUrisSet = new goog.structs.Set();
-
-    for (var i = 0, len = urisToCheck.length; i < len; i++) {
-        var partUri = urisToCheck[i];
-
-        var annoIds = this.getResourceTargetAnnoIds(partUri);
-        annoUrisSet.addAll(annoIds);
-    }
-
-    var annoUris = annoUrisSet.getValues();
-    var bodyUris = [];
-    for (var i = 0, len = annoUris.length; i < len; i++) {
-        var annoUri = annoUris[i];
-
-        var bodies = this.getPropertiesForResource(annoUri, sc.data.Databroker.ANNO_NS.hasBody);
-        bodyUris = bodyUris.concat(bodies);
-    }
-
-    var typedConstraintIds = this.getUrisSetWithProperty(sc.data.Databroker.ANNO_NS.constraint);
-
-    var constraintIds = typedConstraintIds.intersection(bodyUris);
-    return sc.util.Namespaces.stripAngleBrackets(constraintIds.getValues());
-};
-
-sc.data.Databroker.prototype.getConstraintValuesOnResource = function(uri) {
-    var constraintIds = this.getConstraintUrisOnResource(uri);
-
-    var values = new goog.structs.Set();
-    for (var i = 0, len = constraintIds.length; i < len; i++) {
-        var constraintId = constraintIds[i];
-
-        var constraintNodeIds = this.getPropertiesForResource(constraintId, sc.data.Databroker.ANNO_NS.constrainedBy);
-        for (var j = 0, lenj = constraintNodeIds.length; j < lenj; j++) {
-            var constraintNodeId = constraintNodeIds[j];
-            var constraintValues = this.getPropertiesForResource(constraintNodeId, 'cnt:chars');
-
-            values.addAll(constraintValues);
-        }
-    }
-
-    return sc.util.Namespaces.stripWrappingQuotes(values.getValues());
 };
 
 sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
@@ -1058,38 +846,6 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
         null,
         null));
     
-    return sc.util.Namespaces.stripAngleBrackets(uris.getValues());
-};
-
-/**
- * Returns every uri which an aggregation aggregates (in effect, the contents of an aggregation)
- * @param {string} aggregationUri
- * @return {Array.<string>}
- */
-sc.data.Databroker.prototype.getAggregationContentsUris = function(aggregationUri) {
-    aggregationUri = sc.util.Namespaces.wrapWithAngleBrackets(aggregationUri);
-    
-    return sc.util.Namespaces.stripAngleBrackets(this.getPropertiesForResource(aggregationUri, 'ore:aggregates'));
-};
-
-/**
- * Returns the uris of resources aggregated into a manuscript, but does not include those which are labeled as being for
- * a specific canvas
- */
-sc.data.Databroker.prototype.getManuscriptAggregationUris = function(manifestUri) {
-    var aggregationUris = this.getAggregationContentsUris(manifestUri);
-
-    var uris = new goog.structs.Set();
-
-    for (var i = 0, len = aggregationUris.length; i < len; i++) {
-        var aggregationUri = aggregationUris[i];
-
-        var aggregationResource = this.getResource(aggregationUri);
-        if (! aggregationResource.hasPredicate('dms:forCanvas')) {
-            uris.add(aggregationUri);
-        }
-    }
-
     return sc.util.Namespaces.stripAngleBrackets(uris.getValues());
 };
 
@@ -1130,97 +886,6 @@ sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
     }
 
     return sc.util.Namespaces.stripAngleBrackets(uris);
-};
-
-sc.data.Databroker.prototype.getManuscriptSequenceUris = function(manifestUri) {
-    manifestUri = sc.util.Namespaces.wrapWithAngleBrackets(manifestUri);
-    
-    var aggregateUris = this.getPropertiesForResource(manifestUri, 'ore:aggregates');
-
-    var allSequences = this.quadStore.subjectsSetMatchingQuery(
-        null,
-        this.namespaces.expand('rdf', 'type'),
-        this.namespaces.expand('dms', 'Sequence'),
-        null);
-
-    var intersection = allSequences.intersection(aggregateUris);
-    return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
-};
-
-sc.data.Databroker.prototype.getManuscriptImageAnnoUris = function(manifestUri) {
-     manifestUri = sc.util.Namespaces.wrapWithAngleBrackets(manifestUri);
-    
-    var aggregateUris = this.getPropertiesForResource(manifestUri, 'ore:aggregates');
-
-    var allImageAnnos = this.quadStore.subjectsSetMatchingQuery(
-        null,
-        this.namespaces.expand('rdf', 'type'),
-        this.namespaces.expand('dms', 'ImageAnnotationList'),
-        null);
-
-    var intersection = allImageAnnos.intersection(aggregateUris);
-    return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
-};
-
-sc.data.Databroker.XYWH_REGEX = /#xywh\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*$/;
-sc.data.Databroker.TIMECODE_REGEX = /#t\s*=\s*npt:\s*([\d:]+)\s*,\s*([\d:]+)\s*$/;
-
-sc.data.Databroker.getConstraintAttrsFromUri = function(constraintUri) {
-    var baseEndIndex = constraintUri.indexOf('#');
-    var baseUri = constraintUri.substring(0, baseEndIndex);
-    var constraintString = constraintUri.substring(baseEndIndex, constraintUri.length);
-
-    var xywhMatch = sc.data.Databroker.XYWH_REGEX.exec(constraintUri);
-    if (xywhMatch) {
-        return {
-            type: 'box',
-            width: xywhMatch[3],
-            height: xywhMatch[4],
-            x: xywhMatch[1],
-            y: xywhMatch[2],
-            baseUri: baseUri,
-            originalUri: constraintUri,
-            constraintString: constraintString
-        };
-    }
-
-    var timecodeMatch = sc.data.Databroker.TIMECODE_REGEX.exec(constraintUri);
-    if (timecodeMatch) {
-        var startTimecode = timecodeMatch[1];
-        var endTimecode = timecodeMatch[2];
-        var startSeconds = sc.data.Databroker.timecodeToSeconds(startTimecode);
-        var endSeconds = sc.data.Databroker.timecodeToSeconds(endTimecode);
-        return {
-            type: 'timecode',
-            startTimecode: startTimecode,
-            endTimecode: endTimecode,
-            startSeconds: startSeconds,
-            endSeconds: endSeconds,
-            baseUri: baseUri,
-            originalUri: constraintUri,
-            constraintString: constraintString
-        };
-    }
-};
-
-sc.data.Databroker.timecodeToSeconds = function(timecode) {
-    var numColons = goog.string.countOf(timecode, ':');
-    var numColonsToAdd = 3 - numColons;
-    for (var i = 0; i < numColonsToAdd; i++) {
-        timecode = '00:' + timecode;
-    }
-
-    var timecodeRegex = /(\d+):(\d+):(\d+):(\d+)/;
-    var match = timecodeRegex.exec(timecode);
-
-    var days = Number(match[1]);
-    var hours = Number(match[2]);
-    var minutes = Number(match[3]);
-    var seconds = Number(match[4]);
-
-    var time = seconds + (minutes * 60) + (hours * 3600) + (days * 86400);
-
-    return time;
 };
 
 sc.data.Databroker.prototype.getImageSrc = function(uri, opt_width, opt_height) {
@@ -1316,12 +981,7 @@ sc.data.Databroker.prototype.restUri = function(
 };
 
 sc.data.Databroker.prototype.getModifiedResourceUris = function() {
-    var subjectsOfNewQuads = new goog.structs.Set();
-    for (var i=0, len=this.newQuads.length; i<len; i++) {
-        var quad = this.newQuads[i];
-
-        subjectsOfNewQuads.add(quad.subject);
-    }
+    var subjectsOfNewQuads = this.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
 
     return this.newResourceUris.difference(subjectsOfNewQuads);
 };
@@ -1433,7 +1093,7 @@ sc.data.Databroker.prototype.syncResources = function() {
     this.putModifiedResources();
 
     this.newResourceUris.clear();
-    this.newQuads = [];
+    this.newQuadStore.clear();
 };
 
 
@@ -1458,63 +1118,6 @@ sc.data.Databroker.prototype.createText = function(title, content) {
     return text;
 };
 
-
-sc.data.Databroker.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
-    var quads = this.quadStore.query(
-        null,
-        this.namespaces.expand('oa', 'hasBody'),
-        sc.util.Namespaces.wrapWithAngleBrackets(bodyUri),
-        null
-    );
-    if (quads.length > 0) {
-        var anno = this.getResource(quads[0].subject);
-    }
-    else {
-        var anno = this.createResource(this.createUuid(), 'oac:Annotation');
-    }
-
-    if (opt_annoType) {
-        anno.addProperty(
-            this.namespaces.autoExpand('rdf:type'),
-            this.namespaces.autoExpand(opt_annoType)
-        );
-    }
-
-    if (bodyUri) {
-        anno.addProperty(
-            sc.data.Databroker.ANNO_NS.hasBody,
-            sc.util.Namespaces.wrapWithAngleBrackets(bodyUri)
-        );
-    }
-
-    if (targetUri) {
-        anno.addProperty(
-            sc.data.Databroker.ANNO_NS.hasTarget,
-            sc.util.Namespaces.wrapWithAngleBrackets(targetUri)
-        );
-    }
-
-    return anno;
-};
-
-sc.data.Databroker.prototype.getSvgSelectorSpecificResourceUri = function(selectorUri) {
-    var specificTargets = [];
-    this.quadStore.forEachQuadMatchingQuery(
-        null, this.namespaces.expand('oa', 'hasSelector'), sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null,
-        function(quad) {
-            specificTargets.push(quad.subject);
-        },
-        this
-    );
-
-    if (specificTargets.length > 0) {
-        return sc.util.Namespaces.stripAngleBrackets(specificTargets[0]);
-    }
-    else {
-        return null;
-    }
-};
-
 sc.data.Databroker.prototype.compareUrisByTitle = function(a, b) {
     return sc.data.Resource.compareByTitle(this.getResource(a), this.getResource(b));
 };
@@ -1522,6 +1125,18 @@ sc.data.Databroker.prototype.compareUrisByTitle = function(a, b) {
 sc.data.Databroker.prototype.sortUrisByTitle = function(uris) {
     goog.array.sort(uris, this.compareUrisByTitle.bind(this));
 };
+
+sc.data.Databroker.getUri = function(obj) {
+    if (obj == null) {
+        return null;
+    }
+    else if (goog.isString(obj)) {
+        return sc.util.Namespaces.stripAngleBrackets(obj);
+    }
+    else if (goog.isFunction(obj.getUri)) {
+        return obj.getUri();
+    }
+}
 
 /* Setter & getter methods for current project
  * * (variable already existed)

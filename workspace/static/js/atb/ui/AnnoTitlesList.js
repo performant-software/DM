@@ -147,7 +147,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
     var deferredResource = this.databroker.getDeferredResource(uri);
 
     var withResource = function(resource) {
-        var annoUris = this.databroker.getResourceAnnoIds(resource.getUri());
+        var annoUris = this.databroker.dataModel.findAnnosReferencingResource(resource.getUri());
 
         var bodyUris = [];
         var targetUris = [];
