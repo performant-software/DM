@@ -1,17 +1,14 @@
 goog.require("atb.ClientApp");
-goog.require("atb.WebService");
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
 goog.require('atb.viewer.Editor');
 goog.require('atb.viewer.AudioViewer');
-goog.require('atb.widgets.MenuUtil');
 goog.require('atb.ClientApp');
 goog.require('goog.events');
 goog.require('goog.dom');
 goog.require('atb.viewer.RepoBrowser');
 goog.require('atb.widgets.WorkingResources');
 goog.require('goog.ui.Dialog');
-goog.require('sc.canvas.FabricCanvas');
 
 goog.require('atb.viewer.ViewerGrid');
 goog.require('atb.viewer.ViewerContainer');
