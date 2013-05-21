@@ -508,7 +508,7 @@ atb.PassThroughLoginWebService.prototype.withSavedResource = function (resource,
     
     if (this.clientApp) {
         var eventDispatcher = this.clientApp.getEventDispatcher();
-        var event = new atb.events.ResourceModified(resource.getRemoteId(), resource, opt_handlerScope);
+        var event = new atb.events.ResourceModified(resource.getRemoteId(), eventDispatcher, opt_handlerScope);
         eventDispatcher.dispatchEvent(event);
     }
     
@@ -525,7 +525,7 @@ atb.PassThroughLoginWebService.prototype.withSavedResource = function (resource,
     var internalHandler = function () {
         if (self.clientApp) {
             var eventDispatcher = self.clientApp.getEventDispatcher();
-            var event = new atb.events.ResourceModified(resource.getRemoteId(), resource, opt_handlerScope);
+            var event = new atb.events.ResourceModified(resource.getRemoteId(), eventDispatcher, opt_handlerScope);
             eventDispatcher.dispatchEvent(event);
         }
         

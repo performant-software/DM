@@ -11,7 +11,7 @@ goog.require('atb.resource.MarkerAnnotationSummary');
 goog.require('atb.resource.MarkerCollection');
 goog.require('atb.ui.PopupWindow');
 goog.require('atb.widgets.DialogWidget');
-goog.require('atb.events.ResourceClicked');
+goog.require('atb.events.ResourceClick');
 
 goog.require('goog.array');
 goog.require('goog.events.KeyCodes');
@@ -724,7 +724,7 @@ atb.viewer.Finder.prototype.handleResourceSummaryClick = function (id, summary, 
     
     var fireClickEvent = function () {
         var eventDispatcher = this.clientApp.getEventDispatcher();
-        var event = new atb.events.ResourceClicked(resource.getId(), resource, this);
+        var event = new atb.events.ResourceClick(resource.getId(), eventDispatcher, this);
         eventDispatcher.dispatchEvent(event);
     };
     fireClickEvent = atb.Util.scopeAsyncHandler(fireClickEvent, this);

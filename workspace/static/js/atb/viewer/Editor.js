@@ -49,7 +49,7 @@ goog.require('atb.util.Set');
 goog.require('atb.widgets.GlassPane');
 goog.require('atb.widgets.ForegroundMenuDisplayer');
 
-goog.require('atb.events.ResourceClicked');
+goog.require('atb.events.ResourceClick');
 goog.require('atb.events.ResourceModified');
 
 goog.require('atb.viewer.TextThumbnail');
@@ -489,7 +489,7 @@ atb.viewer.Editor.prototype.handleDocumentIconClick_ = function (e) {
     e.stopPropagation();
     
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClicked(this.resourceId, null, this);
+    var event = new atb.events.ResourceClick(this.resourceId, eventDispatcher, this);
     eventDispatcher.dispatchEvent(event);
 };
 
@@ -499,7 +499,7 @@ atb.viewer.Editor.prototype.addGlobalEventListeners = function () {
     this.unsavedChanges = false;
     goog.events.listen(this.field, goog.editor.Field.EventType.DELAYEDCHANGE, this.onChange, false, this);
     
-//    goog.events.listen(eventDispatcher, 'resource modified', function (e) {
+//    goog.events.listen(eventDispatcher, 'resource-modified', function (e) {
 //                           if (e.getViewer() != this && e.getResourceId() == this.resourceId) {
 //                                this.loadResource(e.getResource());
 //                           }
@@ -1297,27 +1297,23 @@ atb.viewer.Editor.prototype.viewerHasEnteredBackground = function (event) {
 
 atb.viewer.Editor.prototype.handleLinkingModeExited = function (event) {
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
-    var anno = event.getResource();
+    var anno = this.databroker.getResource(event.uri);
     
-    if (! anno) {
-        highlightPlugin.unselectAnnotationSpan();
-        this.unHighlightDocumentIcon();
-        return;
-    }
+    highlightPlugin.unselectAnnotationSpan();
+    this.unHighlightDocumentIcon();
     
-    var bodiesAndTargets = anno.getChildIds();
-    
-    goog.array.forEach(bodiesAndTargets, function (id) {
-                           try {
-                               var tag = highlightPlugin.getAnnotationTagByResourceId(id);
-                               if (tag) {
-                                   highlightPlugin.flashSpanHighlight(tag);
-                               }
-                           } catch (error) {}
-                           if (id == this.resourceId) {
-                               this.flashDocumentIconHighlight();
-                           }
-                       }, this);
+    var targetsAndBodies = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
+    goog.array.forEach(bodiesAndTargets, function (uri) {
+       try {
+           var tag = highlightPlugin.getAnnotationTagByResourceId(uri);
+           if (tag) {
+               highlightPlugin.flashSpanHighlight(tag);
+           }
+       } catch (error) {}
+       if (uri == this.resourceId) {
+           this.flashDocumentIconHighlight();
+       }
+   }, this);
 };
 
 atb.viewer.Editor.prototype.generateViewerThumbnail = function () {

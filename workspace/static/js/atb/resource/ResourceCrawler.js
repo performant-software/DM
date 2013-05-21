@@ -30,7 +30,7 @@ atb.resource.ResourceCrawler.prototype.canCrawlAgain = function () {
 
 atb.resource.ResourceCrawler.prototype.resourceModifiedHandler = function (event) {
     var resource = event.getResource();
-    var id = event.getResourceId();
+    var id = event.uri;
     
     if (resource) {
         this.addToCache(resource);

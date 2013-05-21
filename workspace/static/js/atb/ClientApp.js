@@ -39,7 +39,6 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     });
     
     this.eventDispatcher = new goog.events.EventTarget();
-    goog.events.listen(this.getEventDispatcher(), 'resource clicked', this.resourceClickHandler, false, this);
     
     this.username = username;
     
@@ -163,7 +162,7 @@ atb.ClientApp.prototype.getUsername = function () {
 
 /**
  * Starts the process of creating a link between two resources, taking a body id and optional annoId,
- * and listening for the next 'resource clicked' event for the target id
+ * and listening for the next 'resource-click' event for the target id
  */
 atb.ClientApp.prototype.createAnnoLink = function (bodyId, opt_annoId) {
     this.linkingInProgress = true;
@@ -171,7 +170,7 @@ atb.ClientApp.prototype.createAnnoLink = function (bodyId, opt_annoId) {
     this.annoLinkCreationBodyId = bodyId;
     this.annoLinkCreationAnnoId = opt_annoId;
     
-    var modeEnteredEvent = new atb.events.LinkingModeEntered(this.annoLinkCreationAnnoId);
+    var modeEnteredEvent = new atb.events.LinkingModeEntered(this.annoLinkCreationAnnoId, this.eventDispatcher);
     this.eventDispatcher.dispatchEvent(modeEnteredEvent);
     
     this.createAnnoLinkAddListeners_();
@@ -267,12 +266,12 @@ atb.ClientApp.prototype.hideUndoLinkCreationUI = function () {
 };
 
 atb.ClientApp.prototype.createAnnoLinkAddListeners_ = function () {
-    goog.events.listen(this.getEventDispatcher(), 'resource clicked', this.annoLinkCreationHandler_, false, this);
+    goog.events.listen(this.getEventDispatcher(), 'resource-click', this.annoLinkCreationHandler_, false, this);
     goog.events.listen(window, 'keyup', this.annoLinkCreationKeyHandler_, false, this);
 };
 
 atb.ClientApp.prototype.createAnnoLinkRemoveListeners_ = function () {
-    goog.events.unlisten(this.getEventDispatcher(), 'resource clicked', this.annoLinkCreationHandler_, false, this);
+    goog.events.unlisten(this.getEventDispatcher(), 'resource-click', this.annoLinkCreationHandler_, false, this);
     goog.events.unlisten(window, 'keyup', this.annoLinkCreationKeyHandler_, false, this);
 };
 
@@ -284,13 +283,13 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     
     this.linkingInProgress = false;
     
-    var id = e.target;
+    var annoUri = e.uri;
     
     if (this.annoLinkCreationBodyId) {
         var bodyId = this.annoLinkCreationBodyId;
         this.annoLinkCreationBodyId = null;
 
-        this.databroker.dataModel.createAnno(bodyId, id);
+        this.databroker.dataModel.createAnno(bodyId, annoUri);
         
         var bezel = new atb.ui.Bezel('atb-bezel-linked');
         bezel.show();
@@ -327,10 +326,6 @@ atb.ClientApp.prototype.undoLastAnnoLinkCreation = function () {
     }
     
     this.hideUndoLinkCreationUI();
-};
-
-atb.ClientApp.prototype.resourceClickHandler = function (e) {
-    var id = e.target;
 };
 
 /**
