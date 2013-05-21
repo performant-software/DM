@@ -94,7 +94,6 @@ goog.addDependency('../../../jquery/jquery.jplayer.min.js', ['jquery.jPlayer'], 
 goog.addDependency('../../../jquery/jquery.mousewheel.js', ['jquery.mousewheel'], []);
 goog.addDependency('../../../jquery/jquery.rdfquery.core-1.0.js', ['jquery.rdfquery'], ['jquery.jQuery']);
 goog.addDependency('../../../jquery/plugins/jQuery.popout.js', ['jquery.popout'], ['jquery.hoverIntent']);
-goog.addDependency('../../../jquery/plugins/jQuery.radmenu.js', ['jquery.plugins.radmenu'], []);
 goog.addDependency('../../../raphael/raphael-min.js', ['Raphael'], []);
 goog.addDependency('../../../raphael/raphael.export.js', ['Raphael.export'], []);
 goog.addDependency('../../../sc/BreadCrumbs.js', ['sc.BreadCrumbs'], ['jquery.jQuery']);
