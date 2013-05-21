@@ -7,7 +7,6 @@
     <script src="../js/atb-deps.js" type="text/javascript"></script>
     <script>
     	goog.require('atb.viewer.Finder');
-    	goog.require('atb.widgets.Filter');
     	goog.require('atb.DMWebService');
     </script>
     <style>
@@ -29,14 +28,6 @@
     	var dmWebService = new atb.DMWebService(webServiceURI);
     
         var finder = new atb.viewer.Finder(dmWebService, 'myDiv', 'tandres');
-        
-        var filter = new atb.widgets.Filter('filter', [
-        	atb.widgets.Filter.FILTERPARAMS.USERS,
-        	atb.widgets.Filter.FILTERPARAMS.CREATEDRANGE,
-        	atb.widgets.Filter.FILTERPARAMS.MODIFIEDRANGE,
-        	atb.widgets.Filter.FILTERPARAMS.TERMS,
-                atb.widgets.Filter.FILTERPARAMS.TYPE
-        ]);
     </script>
   </body>
 </html>

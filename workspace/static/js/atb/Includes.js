@@ -13,5 +13,4 @@ goog.require('goog.events');
 goog.require('goog.dom');
 goog.require('atb.ui.WindowScaler');
 
-goog.require('atb.ui.Preferences');
 goog.require('atb.viewer.CanvasViewer');

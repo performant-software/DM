@@ -1,7 +1,5 @@
 goog.provide('atb.start');
 
-goog.require('atb.DMWebService');
-
 goog.require("goog.math.Size");
 
 goog.require("atb.viewer.Editor");

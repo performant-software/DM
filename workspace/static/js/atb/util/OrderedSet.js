@@ -4,7 +4,10 @@ goog.require('goog.structs.Set');
 goog.require('goog.array');
 
 /**
+ * @class
  * Implements an Ordered Set data structure, using goog.structs.Set as its base
+ *
+ * @author  tandres@drew.edu (Tim Andres)
  */
 atb.util.OrderedSet = function (opt_values, opt_uidFunction) {
     goog.structs.Set.call(this, opt_values);
