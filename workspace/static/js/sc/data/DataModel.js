@@ -380,3 +380,33 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
 
     return anno;
 };
+
+sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
+    var anno = this.databroker.getResource(uri);
+
+    var quadsToPost = this.databroker.quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
+
+    var targetUris = anno.getProperties('oac:hasTarget');
+    var bodyUris = anno.getProperties('oac:hasBody');
+
+    for (var i=0, len=targetUris.length; i<len; i++) {
+        var target = this.databroker.getResource(targetUris[i]);
+
+        quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(target.bracketedUri, null, null, null));
+
+        if (target.hasType('oac:SpecificResource')) {
+            goog.structs.forEach(target.getProperties('oac:hasSelector'), function(selectorUri) {
+                quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(
+                    sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null, null, null));
+            }, this);
+        }
+    }
+
+    for (var i=0, len=bodyUris.length; i<len; i++) {
+        var body = this.databroker.getResource(bodyUris[i]);
+
+        quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(body.bracketedUri, null, null, null));
+    }
+
+    return quadsToPost.getValues();
+};
