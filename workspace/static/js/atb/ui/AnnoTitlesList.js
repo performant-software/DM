@@ -80,7 +80,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (uri, summary, ev
     var resource = summary.resource;
 
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClicked(resource.getUri(), resource, this);
+    var event = new atb.events.ResourceClick(resource.getUri(), eventDispatcher, this);
     eventDispatcher.dispatchEvent(event);
 
     var viewerGrid = this.clientApp.viewerGrid;

@@ -241,11 +241,11 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     if (! feature) return;
     if (feature.type == 'image') return;
     
-    var event = new atb.events.ResourceClicked(specificResourceUri, null, this);
+    var eventDispatcher = this.clientApp.getEventDispatcher();
+    var event = new atb.events.ResourceClick(specificResourceUri, eventDispatcher, this);
 
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-    
-    var eventDispatcher = this.clientApp.getEventDispatcher();
+
     if (eventDispatcher.dispatchEvent(event)) {
         
     }
@@ -420,24 +420,19 @@ atb.viewer.CanvasViewer.prototype.flashFeatureHighlight = function(uri) {
 };
 
 atb.viewer.CanvasViewer.prototype.handleLinkingModeExited = function(event) {
-    var anno = event.getResource();
+    var anno = this.databroker.getResource(event.uri);
     
-    if (! anno) {
-        if (this.lastHighlightedFeatureUri) {
-            this.unhighlightFeature(this.lastHighlightedFeatureUri);
-        }
-        
-        return;
+    if (this.lastHighlightedFeatureUri) {
+        this.unhighlightFeature(this.lastHighlightedFeatureUri);
     }
     
-    var targetsAndBodies = new goog.structs.Set(anno.getChildIds());
+    var targetsAndBodies = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
     
-    goog.structs.forEach(targetsAndBodies, function (id) {
-        var uri = this.webService.resourceIdToUri(id);
-        /*if (uri) {
+    goog.structs.forEach(targetsAndBodies, function (uri) {
+        if (uri) {
             this.flashFeatureHighlight(uri);
         }
-        else */if (this.getResourceId() == id) {
+        else if (this.getUri() == uri) {
             this.flashDocumentIconHighlight();
         }
     }, this);

@@ -5,7 +5,7 @@ goog.require('goog.dom.TagName');
 goog.require('goog.editor.Plugin');
 goog.require('atb.viewer.ResourceListViewer');
 goog.require('atb.ui.Bezel');
-goog.require('atb.events.ResourceClicked');
+goog.require('atb.events.ResourceClick');
 
 goog.require("atb.widgets.ForegroundMenuDisplayer");
 goog.require("atb.util.DomTraverser");//lolhack!
@@ -670,7 +670,7 @@ atb.viewer.TextEditorAnnotate.prototype.flashSpanHighlight = function (tag) {
 
 atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
     var eventDispatcher = this.thisViewer.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClicked(atb.viewer.TextEditorAnnotate.getAnnotationId(tag));
+    var event = new atb.events.ResourceClick(atb.viewer.TextEditorAnnotate.getAnnotationId(tag), eventDispatcher, this.thisViewer);
     
     eventDispatcher.dispatchEvent(event);
 };
