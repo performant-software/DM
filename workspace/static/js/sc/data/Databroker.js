@@ -50,10 +50,6 @@ sc.data.Databroker = function(options) {
     this.currentProject = null;
     this.allProjects = [];
 
-    this.textResources = {};
-    this.modifiedResources = {};
-    this.deletedResources = {};
-
     this.newResourceUris = new goog.structs.Set();
 
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
@@ -986,36 +982,6 @@ sc.data.Databroker.prototype.getModifiedResourceUris = function() {
     return this.newResourceUris.difference(subjectsOfNewQuads);
 };
 
-sc.data.Databroker.prototype.getQuadsToSyncForAnno = function(uri) {
-    var anno = this.getResource(uri);
-
-    var quadsToPost = this.quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
-
-    var targetUris = anno.getProperties('oac:hasTarget');
-    var bodyUris = anno.getProperties('oac:hasBody');
-
-    for (var i=0, len=targetUris.length; i<len; i++) {
-        var target = this.getResource(targetUris[i]);
-
-        quadsToPost.addAll(this.quadStore.queryReturningSet(target.bracketedUri, null, null, null));
-
-        if (target.hasType('oac:SpecificResource')) {
-            goog.structs.forEach(target.getProperties('oac:hasSelector'), function(selectorUri) {
-                quadsToPost.addAll(this.quadStore.queryReturningSet(
-                    sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null, null, null));
-            }, this);
-        }
-    }
-
-    for (var i=0, len=bodyUris.length; i<len; i++) {
-        var body = this.getResource(bodyUris[i]);
-
-        quadsToPost.addAll(this.quadStore.queryReturningSet(body.bracketedUri, null, null, null));
-    }
-
-    return quadsToPost.getValues();
-};
-
 sc.data.Databroker.prototype.postNewResources = function() {
     var xhrs = [];
 
@@ -1046,15 +1012,14 @@ sc.data.Databroker.prototype.sendResource = function(uri, method) {
     else if (resource.hasType('oac:Annotation')) {
         resType = this.RESTYPE.annotation;
 
-        quadsToPost = this.getQuadsToSyncForAnno(resource.bracketedUri);
+        quadsToPost = this.dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
 
         url = this.restUrl(this.currentProject, resType, null, {});
     }
 
-    // console.log("resource.getTypes():", resource.getTypes());
-    // console.log("url:", url);
+    var dataDump = this.dumpQuads(quadsToPost, 'application/rdf+xml');
 
-    var dataDump = this.dumpQuads(quadsToPost);
+    console.log('about to send resource', uri, dataDump);
 
     var xhr = jQuery.ajax({
         type: method,
@@ -1103,18 +1068,8 @@ sc.data.Databroker.prototype.sync = function() {
 };
 
 
-sc.data.Databroker.prototype.updateTextResource = function(uri, content, attr) {
-    this.textResources[uri] = {
-        'content': content,
-        'attr': attr
-    };
-    this.modifiedResources[uri] = this.RESTYPE.text;
-};
-
-
 sc.data.Databroker.prototype.createText = function(title, content) {
     var text = this.createResource(this.createUuid(), 'dctypes:Text');
-    this.updateTextResource(text.uri, title, content);
     return text;
 };
 
@@ -1144,8 +1099,6 @@ sc.data.Databroker.getUri = function(obj) {
  * * (allows cross-check that project is valid in setCurrentProject)
  * * Method should be added to newProject modal's project creation
 */
-
-
 sc.data.Databroker.prototype.getCurrentProject = function() {
     return this.currentProject;
 };
