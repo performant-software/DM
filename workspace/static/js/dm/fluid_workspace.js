@@ -3,14 +3,13 @@ goog.require("atb.WebService");
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
 goog.require('atb.viewer.Editor');
-goog.require('atb.ui.Preferences');
+goog.require('atb.viewer.AudioViewer');
 goog.require('atb.widgets.MenuUtil');
 goog.require('atb.ClientApp');
 goog.require('goog.events');
 goog.require('goog.dom');
 goog.require('atb.viewer.RepoBrowser');
 goog.require('atb.widgets.WorkingResources');
-goog.require('atb.widgets.RepoBrowser');
 goog.require('goog.ui.Dialog');
 goog.require('sc.canvas.FabricCanvas');
 
@@ -158,16 +157,6 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 
     resizeViewerGrid();
     jQuery(window).bind('resize', resizeViewerGrid);
-	
-    /*
-    var searchField = goog.dom.getElement("titleBarSearch");
-	goog.events.listen(searchField, goog.events.EventType.KEYUP, search);
-    var autoComplete = new atb.ui.search.AutoComplete(clientApp, searchField);
-    */
-    
-    var preferences = new atb.ui.Preferences(clientApp);
-    window.preferences = preferences; //TEMPORARY
-
 
     glasspane = goog.dom.createDom('div', {'class': 'frosted-glasspane'});
     jQuery(glasspane).hide();

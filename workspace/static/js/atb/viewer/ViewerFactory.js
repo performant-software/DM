@@ -2,7 +2,7 @@ goog.provide('atb.viewer.ViewerFactory');
 
 //goog.require('atb.viewer.Editor');
 //goog.require('atb.viewer.CanvasViewer');
-goog.require('atb.viewer.AudioViewer');
+// goog.require('atb.viewer.AudioViewer');
 
 atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
     var databroker = clientApp.databroker;
