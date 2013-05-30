@@ -119,14 +119,14 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
     var resource = this.databroker.getResource(uri);
     var item = null;
 
-    if (resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+    if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.manifestTypes)) {
         item = new atb.widgets.WorkingResourcesManuscript(
             this.databroker,
             uri,
             this.domHelper
         );
     }
-    else if (resource.hasAnyType(sc.data.DataModel.URIS.canvasTypes)) {
+    else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
         item = new atb.widgets.WorkingResourcesItem(
             this.databroker,
             uri,
@@ -191,10 +191,10 @@ atb.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLo
 
     this.updateItemAttrs(item);
 
-    if (resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+    if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.manifestTypes)) {
         this.updateManuscript(item, opt_isFullyLoaded);
     }
-    else if (resource.hasAnyType(sc.data.DataModel.URIS.canvasTypes)) {
+    else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
         this.updateCanvas(item, opt_isFullyLoaded);
     }
 
@@ -291,7 +291,7 @@ atb.widgets.WorkingResources.prototype.refreshItem = function(item) {
     }
 
     var withResource = function(resource) {
-        if (resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.manifestTypes)) {
             var onUpdate = function(sequence) {
                 this.updateItem(item);
             }.bind(this);
@@ -354,7 +354,7 @@ atb.widgets.WorkingResources.prototype.addListenersToItem = function(item) {
     goog.events.listen(item, 'action', this.handleItemAction,
                        false, this);
 
-    if (! resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+    if (! resource.hasAnyType(sc.data.DataModel.VOCABULARY.manifestTypes)) {
         goog.events.listen(item.getElement(), 'click', function(event) {
             this.fireOpenRequest(item);
         }, false, this);
