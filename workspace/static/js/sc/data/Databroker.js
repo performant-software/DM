@@ -243,7 +243,7 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr) {
         return;
     }
     
-    this.processJQueryRdf(rdf, url);
+    this.processJQueryRdf(rdf, url, null);
     rdf = null;
 };
 
@@ -445,16 +445,10 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
         var uri = uris[i];
         allUris.add(uri);
 
-        var resourcesForCanvas = sc.util.Namespaces.stripAngleBrackets(
-            this.getUrisWithProperty(
-                'dms:forCanvas',
-                 sc.util.Namespaces.wrapWithAngleBrackets(uri)
-            )
-        );
-        allUris.addAll(resourcesForCanvas);
+        allUris.addAll(this.dataModel.findResourcesForCanvas(uri));
 
         var resource = this.getResource(uri);
-        if (resource.hasType('dms:Canvas')) {
+        if (resource.hasAnyType(sc.data.DataModel.URIS.canvasTypes)) {
             var manifestUris = this.dataModel.findManifestsContainingCanvas(uri);
             goog.structs.forEach(manifestUris, function(manifestUri) {
                 allUris.addAll(this.dataModel.findManuscriptAggregationUris(manifestUri));
@@ -604,7 +598,7 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
         this.quadStore.forEachQuadMatchingQuery(
             equivalentUri, null, null, null,
             function(quad) {
-                ddict.get('__context__:' + quad.context).
+                ddict.get('__context__:' + (quad.context == null ? '__global__' : quad.context)).
                     get(this.namespaces.prefix(quad.predicate)).
                     add(this.namespaces.prefix(quad.object));
             }, this

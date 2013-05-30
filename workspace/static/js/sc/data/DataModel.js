@@ -24,7 +24,14 @@ sc.data.DataModel.URIS = {
     constrains: '<http://www.openannotation.org/ns/constrains>',
     constrainedBy: '<http://www.openannotation.org/ns/constrainedBy>',
     constraint: '<http://www.openannotation.org/ns/ConstrainedBody>',
-    isPartOf: '<http://purl.org/dc/terms/isPartOf>'
+    isPartOf: '<http://purl.org/dc/terms/isPartOf>',
+    forCanvasPredicates: ['<http://dms.stanford.edu/ns/forCanvas>', '<http://www.shared-canvas.org/ns/forCanvas>'],
+    manifestTypes: ['<http://www.shared-canvas.org/ns/Manifest>', '<http://dms.stanford.edu/ns/Manifest>'],
+    canvasTypes: ['<http://dms.stanford.edu/ns/Canvas>', '<http://www.shared-canvas.org/ns/Canvas>'],
+    sequenceTypes: ['<http://dms.stanford.edu/ns/Sequence>', '<http://www.shared-canvas.org/ns/Sequence>'],
+    imageTypes: ['<http://dms.stanford.edu/ns/Image>', '<http://dms.stanford.edu/ns/ImageBody>', '<http://purl.org/dc/dcmitype/Image>'],
+    imageChoiceTypes: ['<http://dms.stanford.edu/ns/ImageChoice>'],
+    option: '<http://dms.stanford.edu/ns/option>'
 };
 
 /**
@@ -111,11 +118,11 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
             var bodyUri = bodyUris[j];
             var bodyResource = this.databroker.getResource(bodyUri);
 
-            if (bodyResource.hasAnyType('dms:Image', 'dms:ImageBody', '<http://purl.org/dc/dcmitype/Image>')) {
+            if (bodyResource.hasAnyType(sc.data.DataModel.URIS.imageTypes)) {
                 imageUris.add(bodyUri);
             }
-            else if (bodyResource.hasType('dms:ImageChoice')) {
-                var optionUris = bodyResource.getProperties('dms:option');
+            else if (bodyResource.hasAnyType(sc.data.DataModel.URIS.imageChoiceTypes)) {
+                var optionUris = bodyResource.getProperties(sc.data.DataModel.URIS.option);
                 imageUris.addAll(optionUris);
             }
             else {
@@ -201,7 +208,7 @@ sc.data.DataModel.prototype.findManuscriptAggregationUris = function(manifestUri
         var aggregationUri = aggregationUris[i];
 
         var aggregationResource = this.databroker.getResource(aggregationUri);
-        if (! aggregationResource.hasPredicate('dms:forCanvas')) {
+        if (! aggregationResource.hasAnyPredicate(sc.data.DataModel.URIS.forCanvasPredicates)) {
             uris.add(aggregationUri);
         }
     }
@@ -214,11 +221,16 @@ sc.data.DataModel.prototype.findManuscriptSequenceUris = function(manifestUri) {
     
     var aggregateUris = this.databroker.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
-    var allSequences = this.databroker.quadStore.subjectsSetMatchingQuery(
-        null,
-        this.databroker.namespaces.expand('rdf', 'type'),
-        this.databroker.namespaces.expand('dms', 'Sequence'),
-        null);
+    var allSequences = new goog.structs.Set();
+    goog.structs.forEach(sc.data.DataModel.URIS.sequenceTypes, function(sequenceType) {
+        allSequences.addAll(
+            this.databroker.quadStore.subjectsSetMatchingQuery(
+                null,
+                this.databroker.namespaces.expand('rdf', 'type'),
+                sequenceType,
+                null)
+        );
+    }, this);
 
     var intersection = allSequences.intersection(aggregateUris);
     return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
@@ -249,13 +261,13 @@ sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) 
         function(quad) {
             var sequence = this.databroker.getResource(quad.subject);
 
-            if (sequence.hasType('dms:Sequence')) {
+            if (sequence.hasAnyType(sc.data.DataModel.URIS.sequenceTypes)) {
                 this.databroker.quadStore.forEachQuadMatchingQuery(
                     null, this.databroker.namespaces.autoExpand('ore:aggregates'), quad.subject, null,
                     function(quad) {
                         var manifest = this.databroker.getResource(quad.subject);
 
-                        if (manifest.hasType('dms:Manifest')) {
+                        if (manifest.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
                             manifestUris.add(manifest.uri);
                         }
                     }.bind(this));
@@ -354,7 +366,7 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
         var anno = this.databroker.getResource(quads[0].subject);
     }
     else {
-        var anno = this.databroker.createResource(this.databroker.createUuid(), 'oac:Annotation');
+        var anno = this.databroker.createResource(this.databroker.createUuid(), 'oa:Annotation');
     }
 
     if (opt_annoType) {
@@ -386,16 +398,16 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
 
     var quadsToPost = this.databroker.quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
 
-    var targetUris = anno.getProperties('oac:hasTarget');
-    var bodyUris = anno.getProperties('oac:hasBody');
+    var targetUris = anno.getProperties('oa:hasTarget');
+    var bodyUris = anno.getProperties('oa:hasBody');
 
     for (var i=0, len=targetUris.length; i<len; i++) {
         var target = this.databroker.getResource(targetUris[i]);
 
         quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(target.bracketedUri, null, null, null));
 
-        if (target.hasType('oac:SpecificResource')) {
-            goog.structs.forEach(target.getProperties('oac:hasSelector'), function(selectorUri) {
+        if (target.hasType('oa:SpecificResource')) {
+            goog.structs.forEach(target.getProperties('oa:hasSelector'), function(selectorUri) {
                 quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(
                     sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null, null, null));
             }, this);
@@ -409,4 +421,17 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
     }
 
     return quadsToPost.getValues();
+};
+
+sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
+    var resources = new goog.structs.Set();
+    canvasUri = sc.util.Namespaces.wrapWithAngleBrackets(canvasUri);
+
+    goog.structs.forEach(sc.data.DataModel.URIS.forCanvasPredicates, function(forCanvasPredicate) {
+        resources.addAll(sc.util.Namespaces.stripAngleBrackets(
+            this.databroker.getUrisWithProperty(forCanvasPredicate, canvasUri)
+        ));
+    }, this);
+
+    return resources.getValues();
 };

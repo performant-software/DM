@@ -68,7 +68,8 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
             var resourceUris = aggregateUrisInOrder;
         }
         else {
-            var resourceUris = this.databroker.sortUrisByTitle(aggregateUris);
+            this.databroker.sortUrisByTitle(aggregateUris);
+            var resourceUris = aggregateUris;
         }
 
         for (var i = 0, len = resourceUris.length; i < len; i++) {
@@ -76,9 +77,9 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
 
             var item = this.createItem(resourceUri);
 
-            this.updateItem(item);
-
-            this.addItem(item);
+            if (item) {
+                this.addItem(item);
+            }
         }
     };
     withManifest = jQuery.proxy(withManifest, this);
@@ -114,28 +115,31 @@ atb.widgets.WorkingResources.prototype.getDomHelper = function() {
     return this.domHelper;
 };
 
-atb.widgets.WorkingResources.MANUSRCIPT_TYPES = ['dms:Manifest'];
-atb.widgets.WorkingResources.CANVAS_TYPES = ['dms:Canvas'];
-
 atb.widgets.WorkingResources.prototype.createItem = function(uri) {
     var resource = this.databroker.getResource(uri);
+    var item = null;
 
-    if (resource.hasAnyType(atb.widgets.WorkingResources.MANUSRCIPT_TYPES)) {
-        var item = new atb.widgets.WorkingResourcesManuscript(
+    if (resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+        item = new atb.widgets.WorkingResourcesManuscript(
             this.databroker,
             uri,
             this.domHelper
         );
     }
-    else if (resource.hasAnyType(atb.widgets.WorkingResources.CANVAS_TYPES)) {
-        var item = new atb.widgets.WorkingResourcesItem(
+    else if (resource.hasAnyType(sc.data.DataModel.URIS.canvasTypes)) {
+        item = new atb.widgets.WorkingResourcesItem(
             this.databroker,
             uri,
             this.domHelper
         );
     }
 
-    this.updateItem(item);
+    if (item) {
+        this.updateItem(item);
+    }
+    else {
+        console.warn('Working resources item', uri, 'not created, has types', resource.getProperties('rdf:type'));
+    }
 
     return item;
 };
@@ -177,7 +181,7 @@ atb.widgets.WorkingResources.prototype.updateItemAttrs = function(item) {
 
 atb.widgets.WorkingResources.THUMB_SIZE = new goog.math.Size(75, 75);
 
-atb.widgets.WorkingResources.prototype.updateItem = function(item) {
+atb.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLoaded) {
     var uri = item.getUri();
     var resource = this.databroker.getResource(uri);
 
@@ -187,17 +191,17 @@ atb.widgets.WorkingResources.prototype.updateItem = function(item) {
 
     this.updateItemAttrs(item);
 
-    if (resource.hasAnyType(atb.widgets.WorkingResources.MANUSRCIPT_TYPES)) {
-        this.updateManuscript(item);
+    if (resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+        this.updateManuscript(item, opt_isFullyLoaded);
     }
-    else if (resource.hasAnyType(atb.widgets.WorkingResources.CANVAS_TYPES)) {
-        this.updateCanvas(item);
+    else if (resource.hasAnyType(sc.data.DataModel.URIS.canvasTypes)) {
+        this.updateCanvas(item, opt_isFullyLoaded);
     }
 
     return item;
 };
 
-atb.widgets.WorkingResources.prototype.updateManuscript = function(item) {
+atb.widgets.WorkingResources.prototype.updateManuscript = function(item, opt_isFullyLoaded) {
     var uri = item.getUri();
 
     item.setTooltip('Show the folia in ' +
@@ -206,45 +210,49 @@ atb.widgets.WorkingResources.prototype.updateManuscript = function(item) {
     var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
     if (sequenceUri) {
         var foliaUris = this.databroker.getListUrisInOrder(sequenceUri);
+        if (foliaUris.length > 0) {
+            var thumbSrc = this.databroker.dataModel.findCanvasImageUris(foliaUris[0])[0];
+            if (thumbSrc) {
+                var image = this.databroker.getResource(thumbSrc);
+                var size = new goog.math.Size(
+                    image.getOneProperty('exif:width'),
+                    image.getOneProperty('exif:height')
+                ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
 
-        var thumbSrc = this.databroker.dataModel.findCanvasImageUris(foliaUris[0])[0];
-        if (thumbSrc) {
-            var image = this.databroker.getResource(thumbSrc);
-            var size = new goog.math.Size(
-                image.getOneProperty('exif:width'),
-                image.getOneProperty('exif:height')
-            ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
+                var src = thumbSrc + '?w=' + Math.round(size.width) + '&h=' + 
+                    Math.round(size.height);
 
-            var src = thumbSrc + '?w=' + Math.round(size.width) + '&h=' + 
-                Math.round(size.height);
+                item.setThumb(src, size.width, size.height);
+            }
 
-            item.setThumb(src, size.width, size.height);
+            for (var i = 0, len = foliaUris.length; i < len; i++) {
+                var folioUri = foliaUris[i];
+
+                if (! item.containsFolio(folioUri)) {
+                    var folioItem = new atb.widgets.WorkingResourcesFolio(
+                        this.databroker,
+                        folioUri,
+                        this.domHelper
+                    );
+                    this.addListenersToItem(folioItem);
+                    item.addFolio(folioItem);
+                }
+                else {
+                    var folioItem = item.getFolio(folioUri);
+                }
+
+                this.updateFolio(folioItem);
+                folioItem.manuscriptUrisInOrder = foliaUris;
+                folioItem.manuscriptIndex = i;
+            }
         }
-
-        for (var i = 0, len = foliaUris.length; i < len; i++) {
-            var folioUri = foliaUris[i];
-
-            if (! item.containsFolio(folioUri)) {
-                var folioItem = new atb.widgets.WorkingResourcesFolio(
-                    this.databroker,
-                    folioUri,
-                    this.domHelper
-                );
-                this.addListenersToItem(folioItem);
-                item.addFolio(folioItem);
-            }
-            else {
-                var folioItem = item.getFolio(folioUri);
-            }
-
-            this.updateFolio(folioItem);
-            folioItem.manuscriptUrisInOrder = foliaUris;
-            folioItem.manuscriptIndex = i;
+        else if (opt_isFullyLoaded) {
+            item.showFoliaMessage('empty manuscript');
         }
     }
 };
 
-atb.widgets.WorkingResources.prototype.updateCanvas = function(item) {
+atb.widgets.WorkingResources.prototype.updateCanvas = function(item, opt_isFullyLoaded) {
     var uri = item.getUri();
 
     var imageSrc = this.databroker.dataModel.findCanvasImageUris(uri)[0];
@@ -278,21 +286,24 @@ atb.widgets.WorkingResources.prototype.refreshItem = function(item) {
 
     if (goog.isFunction(item.isEmpty) && item.isEmpty()) {
         window.setTimeout(function () {
-            item.showFoliaMessage('Loading folia...');
+            item.showFoliaMessage('loading folia...');
         }, 0)
     }
 
     var withResource = function(resource) {
-        if (resource.hasAnyType(atb.widgets.WorkingResources.MANUSRCIPT_TYPES)) {
-            var withSequence = function(sequence) {
+        if (resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+            var onUpdate = function(sequence) {
                 this.updateItem(item);
-            };
-            withSequence = jQuery.proxy(withSequence, this);
+            }.bind(this);
+
+            var onLoaded = function(sequence) {
+                this.updateItem(item, true);
+            }.bind(this);
             
             var aggregatedUris = this.databroker.dataModel.findManuscriptAggregationUris(uri);
             for (var i=0; i<aggregatedUris.length; i++) {
                 this.databroker.getDeferredResource(aggregatedUris[i]).
-                    progress(withSequence).done(withSequence);
+                    progress(onUpdate).done(onLoaded);
             }
              
             /*
@@ -343,7 +354,7 @@ atb.widgets.WorkingResources.prototype.addListenersToItem = function(item) {
     goog.events.listen(item, 'action', this.handleItemAction,
                        false, this);
 
-    if (! resource.hasAnyType(atb.widgets.WorkingResources.MANUSRCIPT_TYPES)) {
+    if (! resource.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
         goog.events.listen(item.getElement(), 'click', function(event) {
             this.fireOpenRequest(item);
         }, false, this);

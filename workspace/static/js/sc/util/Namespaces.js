@@ -19,6 +19,7 @@ sc.util.Namespaces.DEFAULT_NAMESPACES = {
     'oac': 'http://www.openannotation.org/ns/',
     'oa': 'http://www.openannotation.org/ns/',
     'dms': 'http://dms.stanford.edu/ns/',
+    'sc': 'http://www.shared-canvas.org/ns/',
     'cnt': 'http://www.w3.org/2011/content#',
     'cnt08': 'http://www.w3.org/2008/content#',
     'owl': 'http://www.w3.org/2002/07/owl#',
