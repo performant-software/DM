@@ -15,14 +15,12 @@ goog.addDependency('../../../atb/resource/AnnotationSummary.js', ['atb.resource.
 goog.addDependency('../../../atb/resource/AudioSummary.js', ['atb.resource.AudioSummary'], ['atb.resource.ResourceSummary']);
 goog.addDependency('../../../atb/resource/CanvasResource.js', ['atb.resource.CanvasResource'], ['atb.resource.Resource', 'goog.math.Size', 'goog.structs.Map']);
 goog.addDependency('../../../atb/resource/CanvasSummary.js', ['atb.resource.CanvasSummary'], ['atb.resource.ResourceSummary', 'goog.math.Size', 'sc.canvas.FabricCanvasFactory', 'sc.canvas.FabricCanvasViewport']);
-goog.addDependency('../../../atb/resource/Image.js', ['atb.resource.Image'], []);
 goog.addDependency('../../../atb/resource/ManuscriptResource.js', ['atb.resource.ManuscriptResource'], ['atb.resource.Resource']);
 goog.addDependency('../../../atb/resource/ManuscriptSummary.js', ['atb.resource.ManuscriptSummary', 'atb.resource.ManuscriptSummary.PageNumberSummary'], ['atb.resource.ResourceSummary', 'goog.structs.Map']);
 goog.addDependency('../../../atb/resource/MarkerAnnotationSummary.js', ['atb.resource.MarkerAnnotationSummary'], ['atb.resource.AnnotationSummary']);
 goog.addDependency('../../../atb/resource/MarkerCollection.js', ['atb.resource.MarkerCollection'], ['atb.resource.ResourceCollection', 'jquery.jQuery']);
 goog.addDependency('../../../atb/resource/MarkerResource.js', ['atb.resource.MarkerResource', 'atb.resource.MarkerResource.shapes'], ['atb.resource.Resource']);
 goog.addDependency('../../../atb/resource/MarkerSummary.js', ['atb.resource.MarkerSummary'], ['atb.resource.ResourceSummary', 'goog.math.Size', 'sc.canvas.FabricCanvasFactory', 'sc.canvas.FabricCanvasViewport']);
-goog.addDependency('../../../atb/resource/MetaData.js', ['atb.resource.MetaData'], []);
 goog.addDependency('../../../atb/resource/Resource.js', ['atb.resource.Resource'], []);
 goog.addDependency('../../../atb/resource/ResourceCollection.js', ['atb.resource.ResourceCollection'], ['atb.resource.ResourceSummary', 'atb.widgets.TwirlDown', 'goog.dom']);
 goog.addDependency('../../../atb/resource/ResourceCrawler.js', ['atb.resource.ResourceCrawler'], ['atb.Util', 'goog.structs.Map', 'goog.structs.Set']);
