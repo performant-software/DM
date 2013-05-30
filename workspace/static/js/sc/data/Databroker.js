@@ -448,7 +448,7 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
         allUris.addAll(this.dataModel.findResourcesForCanvas(uri));
 
         var resource = this.getResource(uri);
-        if (resource.hasAnyType(sc.data.DataModel.URIS.canvasTypes)) {
+        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
             var manifestUris = this.dataModel.findManifestsContainingCanvas(uri);
             goog.structs.forEach(manifestUris, function(manifestUri) {
                 allUris.addAll(this.dataModel.findManuscriptAggregationUris(manifestUri));
@@ -816,7 +816,7 @@ sc.data.Databroker.prototype.getResourcePartUris = function(uri) {
     uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
     
     return sc.util.Namespaces.stripAngleBrackets(
-        this.getUrisWithProperty(sc.data.DataModel.URIS.isPartOf, uri)
+        this.getUrisWithProperty(sc.data.DataModel.VOCABULARY.isPartOf, uri)
     );
 };
 

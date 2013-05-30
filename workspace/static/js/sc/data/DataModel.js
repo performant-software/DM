@@ -17,7 +17,7 @@ sc.data.DataModel = function (databroker) {
  * @enum
  * Annotation predicates and types
  */
-sc.data.DataModel.URIS = {
+sc.data.DataModel.VOCABULARY = {
     hasTarget: '<http://www.openannotation.org/ns/hasTarget>',
     hasBody: '<http://www.openannotation.org/ns/hasBody>',
     imageAnno: '<http://dms.stanford.edu/ns/ImageAnnotation>',
@@ -57,7 +57,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResource = function(resourceUri,
 sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(resourceUri, opt_annoType) {
     resourceUri = sc.util.Namespaces.wrapWithAngleBrackets(resourceUri);
     
-    var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.URIS.hasTarget, resourceUri);
+    var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.hasTarget, resourceUri);
 
     if (! opt_annoType) {
         return sc.util.Namespaces.stripAngleBrackets(annoIds.getValues());
@@ -83,7 +83,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(reso
 sc.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resourceUri, opt_annoType) {
     resourceUri = sc.util.Namespaces.wrapWithAngleBrackets(resourceUri);
     
-    var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.URIS.hasBody, resourceUri);
+    var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.hasBody, resourceUri);
 
     if (! opt_annoType) {
         return annoIds.getValues();
@@ -105,7 +105,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resour
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
-    var annoIds = this.findAnnosReferencingResourceAsTarget(canvasUri, sc.data.DataModel.URIS.imageAnno);
+    var annoIds = this.findAnnosReferencingResourceAsTarget(canvasUri, sc.data.DataModel.VOCABULARY.imageAnno);
 
     var imageUris = new goog.structs.Set();
 
@@ -113,16 +113,16 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
         var annoId = annoIds[i];
         annoId = sc.util.Namespaces.wrapWithAngleBrackets(annoId);
 
-        var bodyUris = this.databroker.getPropertiesForResource(annoId, sc.data.DataModel.URIS.hasBody);
+        var bodyUris = this.databroker.getPropertiesForResource(annoId, sc.data.DataModel.VOCABULARY.hasBody);
         for (var j = 0, lenj = bodyUris.length; j < lenj; j++) {
             var bodyUri = bodyUris[j];
             var bodyResource = this.databroker.getResource(bodyUri);
 
-            if (bodyResource.hasAnyType(sc.data.DataModel.URIS.imageTypes)) {
+            if (bodyResource.hasAnyType(sc.data.DataModel.VOCABULARY.imageTypes)) {
                 imageUris.add(bodyUri);
             }
-            else if (bodyResource.hasAnyType(sc.data.DataModel.URIS.imageChoiceTypes)) {
-                var optionUris = bodyResource.getProperties(sc.data.DataModel.URIS.option);
+            else if (bodyResource.hasAnyType(sc.data.DataModel.VOCABULARY.imageChoiceTypes)) {
+                var optionUris = bodyResource.getProperties(sc.data.DataModel.VOCABULARY.option);
                 imageUris.addAll(optionUris);
             }
             else {
@@ -154,11 +154,11 @@ sc.data.DataModel.prototype.findConstraintUrisOnResource = function(uri) {
     for (var i = 0, len = annoUris.length; i < len; i++) {
         var annoUri = annoUris[i];
 
-        var bodies = this.databroker.getPropertiesForResource(annoUri, sc.data.DataModel.URIS.hasBody);
+        var bodies = this.databroker.getPropertiesForResource(annoUri, sc.data.DataModel.VOCABULARY.hasBody);
         bodyUris = bodyUris.concat(bodies);
     }
 
-    var typedConstraintIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.URIS.constraint);
+    var typedConstraintIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.constraint);
 
     var constraintIds = typedConstraintIds.intersection(bodyUris);
     return sc.util.Namespaces.stripAngleBrackets(constraintIds.getValues());
@@ -172,7 +172,7 @@ sc.data.DataModel.prototype.findConstraintValuesOnResource = function(uri) {
     for (var i = 0, len = constraintIds.length; i < len; i++) {
         var constraintId = constraintIds[i];
 
-        var constraintNodeIds = this.databroker.getPropertiesForResource(constraintId, sc.data.DataModel.URIS.constrainedBy);
+        var constraintNodeIds = this.databroker.getPropertiesForResource(constraintId, sc.data.DataModel.VOCABULARY.constrainedBy);
         for (var j = 0, lenj = constraintNodeIds.length; j < lenj; j++) {
             var constraintNodeId = constraintNodeIds[j];
             var constraintValues = this.databroker.getPropertiesForResource(constraintNodeId, 'cnt:chars');
@@ -208,7 +208,7 @@ sc.data.DataModel.prototype.findManuscriptAggregationUris = function(manifestUri
         var aggregationUri = aggregationUris[i];
 
         var aggregationResource = this.databroker.getResource(aggregationUri);
-        if (! aggregationResource.hasAnyPredicate(sc.data.DataModel.URIS.forCanvasPredicates)) {
+        if (! aggregationResource.hasAnyPredicate(sc.data.DataModel.VOCABULARY.forCanvasPredicates)) {
             uris.add(aggregationUri);
         }
     }
@@ -222,7 +222,7 @@ sc.data.DataModel.prototype.findManuscriptSequenceUris = function(manifestUri) {
     var aggregateUris = this.databroker.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
     var allSequences = new goog.structs.Set();
-    goog.structs.forEach(sc.data.DataModel.URIS.sequenceTypes, function(sequenceType) {
+    goog.structs.forEach(sc.data.DataModel.VOCABULARY.sequenceTypes, function(sequenceType) {
         allSequences.addAll(
             this.databroker.quadStore.subjectsSetMatchingQuery(
                 null,
@@ -261,13 +261,13 @@ sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) 
         function(quad) {
             var sequence = this.databroker.getResource(quad.subject);
 
-            if (sequence.hasAnyType(sc.data.DataModel.URIS.sequenceTypes)) {
+            if (sequence.hasAnyType(sc.data.DataModel.VOCABULARY.sequenceTypes)) {
                 this.databroker.quadStore.forEachQuadMatchingQuery(
                     null, this.databroker.namespaces.autoExpand('ore:aggregates'), quad.subject, null,
                     function(quad) {
                         var manifest = this.databroker.getResource(quad.subject);
 
-                        if (manifest.hasAnyType(sc.data.DataModel.URIS.manifestTypes)) {
+                        if (manifest.hasAnyType(sc.data.DataModel.VOCABULARY.manifestTypes)) {
                             manifestUris.add(manifest.uri);
                         }
                     }.bind(this));
@@ -378,14 +378,14 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
 
     if (bodyUri) {
         anno.addProperty(
-            sc.data.DataModel.URIS.hasBody,
+            sc.data.DataModel.VOCABULARY.hasBody,
             sc.util.Namespaces.wrapWithAngleBrackets(bodyUri)
         );
     }
 
     if (targetUri) {
         anno.addProperty(
-            sc.data.DataModel.URIS.hasTarget,
+            sc.data.DataModel.VOCABULARY.hasTarget,
             sc.util.Namespaces.wrapWithAngleBrackets(targetUri)
         );
     }
@@ -427,7 +427,7 @@ sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
     canvasUri = sc.util.Namespaces.wrapWithAngleBrackets(canvasUri);
 
-    goog.structs.forEach(sc.data.DataModel.URIS.forCanvasPredicates, function(forCanvasPredicate) {
+    goog.structs.forEach(sc.data.DataModel.VOCABULARY.forCanvasPredicates, function(forCanvasPredicate) {
         resources.addAll(sc.util.Namespaces.stripAngleBrackets(
             this.databroker.getUrisWithProperty(forCanvasPredicate, canvasUri)
         ));
