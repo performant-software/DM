@@ -134,12 +134,12 @@ def image_annotations(manifest_uri, g):
 def aggregated_seq_uris_urls(uri, g):
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
-                   ?resource_uri rdf:type dms:Sequence .
+                   ?uri ore:aggregates ?resource_uri .
+                   {?resource_uri a dms:Sequence} UNION {?resource_uri a sc:Sequence} .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
-               }""" % uri
-    qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'uri': uri})
     return list(qres)
 
 def fetch_and_parse(url, g, manifest_file=None, fmt="xml", cache=None):
@@ -244,21 +244,12 @@ def pagination(g, collection_uri=None, pred=None, obj=None,
 
     query = """SELECT DISTINCT ?first ?rest ?sequence_uri
                WHERE {
-                   <%s> ore:aggregates ?sequence_uri .
+                   ?res_uri ore:aggregates ?sequence_uri .
                    ?sequence_uri rdf:first ?first .
-                   ?first rdf:type dms:Canvas .
+                   {?first a dms:Canvas} UNION {?first a sc:Canavas} .
                    ?sequence_uri rdf:rest ?rest
-               }""" % res_uri
-    qres = g.query(query, initNs=ns)
-    if len(qres) == 0:
-        query = """SELECT DISTINCT ?first ?rest ?sequence_uri
-           WHERE {
-               <%s> ore:aggregates ?sequence_uri .
-               ?sequence_uri rdf:first ?first .
-               ?first rdf:type sc:Canvas .
-               ?sequence_uri rdf:rest ?rest
-           }""" % res_uri
-        qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'res_uri': res_uri})
 
     (first, rest, seq_uri) = list(qres)[0]
     seq_num = 1
