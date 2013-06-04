@@ -360,7 +360,7 @@ sc.data.QuadStore.prototype.removeQuadsMatchingQuery = function(subject, predica
     var ret = false;
 
     this.forEachQuadMatchingQuery(subject, predicate, object, context, function(quad) {
-        ret = this.removeQuad(quad);
+        ret = this._removeQuad(quad);
     }, this);
 
     return ret;
