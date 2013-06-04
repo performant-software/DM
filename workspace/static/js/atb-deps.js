@@ -82,7 +82,8 @@ goog.addDependency('../../../atb/widgets/WorkingResourcesFolio.js', ['atb.widget
 goog.addDependency('../../../atb/widgets/WorkingResourcesItem.js', ['atb.widgets.WorkingResourcesItem'], ['goog.dom.DomHelper', 'goog.events', 'goog.events.ActionEvent', 'goog.events.EventTarget', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesManuscript.js', ['atb.widgets.WorkingResourcesManuscript'], ['atb.widgets.WorkingResourcesItem', 'goog.structs.Map', 'goog.ui.AnimatedZippy']);
 goog.addDependency('../../../fabric/fabric.js', ['fabric'], []);
-goog.addDependency('../../../jquery/jquery-1.8.3.js', ['jquery.jQuery'], []);
+goog.addDependency('../../../jquery/jquery-1.10.1.js', ['jquery.jQuery'], ['jquery.migrate']);
+goog.addDependency('../../../jquery/jquery-migrate-1.2.1.js', ['jquery.migrate'], []);
 goog.addDependency('../../../jquery/jquery-ui-1.8.22.custom.min.js', ['jquery.jQueryUI'], []);
 goog.addDependency('../../../jquery/jquery.animate-enhanced.js', ['jquery.animate_enhanced'], []);
 goog.addDependency('../../../jquery/jquery.event.drag-2.2.js', ['jquery.event.drag'], []);
