@@ -58,7 +58,7 @@ goog.addDependency('../../../atb/viewer/EditorPropertiesPane.js', ['atb.viewer.E
 goog.addDependency('../../../atb/viewer/Finder.js', ['atb.viewer.Finder', 'atb.viewer.Finder.ContextTypes'], ['atb.events.ResourceClick', 'atb.resource.AnnotationSummary', 'atb.resource.MarkerAnnotationSummary', 'atb.resource.MarkerCollection', 'atb.resource.ResourceCollection', 'atb.resource.ResourceSummaryFactory', 'atb.ui.PopupWindow', 'atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.viewer.ResourceListViewer', 'atb.widgets.DialogWidget', 'goog.array', 'goog.events.Event', 'goog.events.KeyCodes', 'goog.ui.ToolbarToggleButton']);
 goog.addDependency('../../../atb/viewer/RepoBrowser.js', ['atb.viewer.RepoBrowser'], ['atb.viewer.CanvasViewer', 'atb.viewer.Viewer', 'sc.RepoBrowser']);
 goog.addDependency('../../../atb/viewer/ResourceListViewer.js', ['atb.viewer.ResourceListViewer'], ['atb.ClientApp', 'atb.WebService', 'atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.viewer.Viewer', 'goog.array', 'goog.dom', 'goog.events', 'goog.ui.ToolbarButton', 'jquery.jQuery']);
-goog.addDependency('../../../atb/viewer/TextEditorAnnotate.js', ['atb.viewer.TextEditorAnnotate'], ['atb.events.ResourceClick', 'atb.ui.Bezel', 'atb.util.DomTraverser', 'atb.viewer.ResourceListViewer', 'atb.widgets.ForegroundMenuDisplayer', 'goog.dom', 'goog.dom.TagName', 'goog.editor.Plugin']);
+goog.addDependency('../../../atb/viewer/TextEditorAnnotate.js', ['atb.viewer.TextEditorAnnotate'], ['atb.events.ResourceClick', 'atb.ui.Bezel', 'atb.util.DomTraverser', 'atb.viewer.ResourceListViewer', 'atb.widgets.ForegroundMenuDisplayer', 'goog.dom', 'goog.dom.TagName', 'goog.editor.Plugin', 'goog.userAgent.product']);
 goog.addDependency('../../../atb/viewer/TextThumbnail.js', ['atb.viewer.TextThumbnail'], ['atb.viewer.ViewerThumbnail']);
 goog.addDependency('../../../atb/viewer/Viewer.js', ['atb.viewer.Viewer'], ['atb.Util', 'atb.ui.AnnoTitlesList', 'atb.util.StyleUtil', 'atb.widgets.Toolbar', 'goog.events', 'goog.events.EventTarget', 'goog.events.EventType', 'goog.events.KeyCodes', 'goog.math.Coordinate', 'goog.math.Size', 'goog.ui.Popup', 'jquery.jQuery']);
 goog.addDependency('../../../atb/viewer/ViewerContainer.js', ['atb.viewer.ViewerContainer'], ['goog.dom.DomHelper', 'goog.events.EventTarget', 'jquery.jQuery']);
@@ -131,7 +131,7 @@ goog.addDependency('../../../sc/data/TripleStore.js', ['sc.data.TripleStore'], [
 goog.addDependency('../../../sc/util/Array.js', ['sc.Array'], []);
 goog.addDependency('../../../sc/util/DefaultDict.js', ['sc.util.DefaultDict'], ['goog.structs.Map', 'goog.structs.Set', 'jquery.jQuery']);
 goog.addDependency('../../../sc/util/DeferredCollection.js', ['sc.util.DeferredCollection'], []);
-goog.addDependency('../../../sc/util/Namespaces.js', ['sc.util.Namespaces'], ['goog.string', 'goog.structs.Map']);
+goog.addDependency('../../../sc/util/Namespaces.js', ['sc.util.Namespaces'], ['goog.string', 'goog.structs.Map', 'jquery.jQuery']);
 goog.addDependency('../../../sc/util/Size.js', ['sc.util.Size'], []);
 goog.addDependency('../../../sc/util/Svg.js', ['sc.util.svg'], ['sc.util.Namespaces']);
 goog.addDependency('../../../sc/util/stats.js', ['sc.util.stats'], ['goog.array']);
