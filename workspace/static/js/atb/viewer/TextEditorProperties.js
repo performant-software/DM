@@ -1,4 +1,4 @@
-goog.provide('atb.viewer.EditorPropertiesPane');
+goog.provide('atb.viewer.TextEditorProperties');
 
 goog.require('goog.dom');
 goog.require('goog.ui.ComboBox');
@@ -6,9 +6,9 @@ goog.require('goog.ui.ComboBoxItem');
 goog.require('goog.ui.CustomButton');
 
 /**
- * @param editor {atb.viewer.Editor}
+ * @param editor {atb.viewer.TextEditor}
  */
-atb.viewer.EditorPropertiesPane = function (editor) {
+atb.viewer.TextEditorProperties = function (editor) {
     this.editor = editor;
     this.clientApp = editor.clientApp;
     this.domHelper = editor.domHelper;
@@ -23,11 +23,11 @@ atb.viewer.EditorPropertiesPane = function (editor) {
     this.renderInternal();
 };
 
-atb.viewer.EditorPropertiesPane.prototype.render = function (div) {
+atb.viewer.TextEditorProperties.prototype.render = function (div) {
     div.appendChild(this.div);
 };
 
-atb.viewer.EditorPropertiesPane.prototype.renderInternal = function () {
+atb.viewer.TextEditorProperties.prototype.renderInternal = function () {
     this.titleDiv = goog.dom.createDom(
         'div',
         {
@@ -43,7 +43,7 @@ atb.viewer.EditorPropertiesPane.prototype.renderInternal = function () {
     this.renderDoneButton();
 };
 
-atb.viewer.EditorPropertiesPane.prototype.renderPurpose = function () {
+atb.viewer.TextEditorProperties.prototype.renderPurpose = function () {
     this.purposeDiv = goog.dom.createDom(
         'div',
         {
@@ -65,7 +65,7 @@ atb.viewer.EditorPropertiesPane.prototype.renderPurpose = function () {
     this.div.appendChild(this.purposeDiv);
 };
 
-atb.viewer.EditorPropertiesPane.prototype.renderDoneButton = function () {
+atb.viewer.TextEditorProperties.prototype.renderDoneButton = function () {
     var doneButtonDiv = goog.dom.createDom(
         'div',
         {
@@ -86,28 +86,28 @@ atb.viewer.EditorPropertiesPane.prototype.renderDoneButton = function () {
     this.div.appendChild(doneButtonDiv);
 };
 
-atb.viewer.EditorPropertiesPane.prototype.purposeValuesByText = 
+atb.viewer.TextEditorProperties.prototype.purposeValuesByText = 
 {
     'Annotation': 'anno',
     'Transcription': 'trans',
     'Other': 'other'
 };
 
-atb.viewer.EditorPropertiesPane.prototype.purposeTextsByValue = {
+atb.viewer.TextEditorProperties.prototype.purposeTextsByValue = {
     'anno': 'Annotation',
     'trans': 'Transcription',
     'other': 'Other'
 };
 
-atb.viewer.EditorPropertiesPane.prototype.purposeTextToValue = function (text) {
+atb.viewer.TextEditorProperties.prototype.purposeTextToValue = function (text) {
     return this.purposeValuesByText[text];
 };
 
-atb.viewer.EditorPropertiesPane.prototype.purposeValueToText = function (value) {
+atb.viewer.TextEditorProperties.prototype.purposeValueToText = function (value) {
     return this.purposeTextsByValue[value];
 };
 
-atb.viewer.EditorPropertiesPane.prototype.getUnescapedProperties = function () {
+atb.viewer.TextEditorProperties.prototype.getUnescapedProperties = function () {
     var properties = {};
     
     var purpose = this.purposeOptions.getValue();
@@ -119,7 +119,7 @@ atb.viewer.EditorPropertiesPane.prototype.getUnescapedProperties = function () {
     return properties;
 };
 
-atb.viewer.EditorPropertiesPane.prototype.setProperties = function (properties) {
+atb.viewer.TextEditorProperties.prototype.setProperties = function (properties) {
     if (properties.purpose) {
         this.purposeOptions.setValue(this.purposeValueToText(properties.purpose));
     }

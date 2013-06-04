@@ -7,7 +7,7 @@ goog.require('atb.ClientApp');
 goog.require('atb.WebService');
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
-goog.require('atb.viewer.Editor');
+goog.require('atb.viewer.TextEditor');
 goog.require('atb.widgets.MenuUtil');
 goog.require('goog.events');
 goog.require('goog.dom');

@@ -1,6 +1,6 @@
 goog.provide('atb.viewer.ViewerFactory');
 
-//goog.require('atb.viewer.Editor');
+//goog.require('atb.viewer.TextEditor');
 //goog.require('atb.viewer.CanvasViewer');
 // goog.require('atb.viewer.AudioViewer');
 
@@ -11,7 +11,7 @@ atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
     var viewer = null;
 
     if (resource.hasAnyType('dctypes:Text')) {
-        viewer = new atb.viewer.Editor(clientApp);
+        viewer = new atb.viewer.TextEditor(clientApp);
     }
     else if (resource.hasAnyType(['dms:Canvas', 'oa:SpecificResource'])) {
         viewer = new atb.viewer.CanvasViewer(clientApp);

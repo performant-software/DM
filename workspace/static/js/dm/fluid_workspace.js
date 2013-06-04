@@ -1,7 +1,7 @@
 goog.require("atb.ClientApp");
 goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
-goog.require('atb.viewer.Editor');
+goog.require('atb.viewer.TextEditor');
 goog.require('atb.viewer.AudioViewer');
 goog.require('atb.ClientApp');
 goog.require('goog.events');

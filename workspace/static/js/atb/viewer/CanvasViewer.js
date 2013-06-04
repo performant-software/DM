@@ -356,7 +356,7 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     
     var textTitle = 'New annotation on ' + canvasTitle;
     
-    var textEditor = new atb.viewer.Editor(this.clientApp);
+    var textEditor = new atb.viewer.TextEditor(this.clientApp);
     textEditor.setPurpose('anno');
 
     var newTextResource = this.databroker.createResource(this.databroker.createUuid(), 'dctypes:Text');
