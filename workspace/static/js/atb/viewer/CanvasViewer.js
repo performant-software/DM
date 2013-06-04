@@ -359,13 +359,15 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var textEditor = new atb.viewer.Editor(this.clientApp);
     textEditor.setPurpose('anno');
 
-    var newTextResource = this.databroker.createText(textTitle, "");
+    var newTextResource = this.databroker.createResource(this.databroker.createUuid(), 'dctypes:Text');
+    newTextResource.addProperty('dc:title', sc.util.Namespaces.wrapWithQuotes(textTitle));
     var newTextId = newTextResource.uri;
        
     var newAnno = this.databroker.dataModel.createAnno(newTextId, uri);
     var annoId = newAnno.uri;
 
     textEditor.resourceId = newTextId;
+    textEditor.uri = newTextId;
     textEditor.annotationUid = annoId;
     textEditor.toggleIsAnnoText(true);
 

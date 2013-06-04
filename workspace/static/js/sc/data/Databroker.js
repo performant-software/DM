@@ -618,6 +618,8 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.getResource = function(uri) {
+    goog.asserts.assert(uri != null, 'uri passed to sc.data.Databroker#getResource is null or undefined');
+
     uri = sc.util.Namespaces.stripAngleBrackets(uri);
     return new sc.data.Resource(this, uri);
 };

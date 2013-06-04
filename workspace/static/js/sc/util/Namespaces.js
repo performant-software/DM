@@ -2,6 +2,7 @@ goog.provide('sc.util.Namespaces');
 
 goog.require('goog.structs.Map');
 goog.require('goog.string');
+goog.require('jquery.jQuery');
 
 sc.util.Namespaces = function (opt_namespacesDict) {
     this.uriByPrefix = new goog.structs.Map(sc.util.Namespaces.DEFAULT_NAMESPACES);
@@ -69,6 +70,11 @@ sc.util.Namespaces.wrapWithAngleBrackets = function(str) {
     }
 };
 
+sc.util.Namespaces.wrapWithQuotes = function(str) {
+    str = str.replace('"', '\"');
+    return ['"', str, '"'].join('');
+};
+
 sc.util.Namespaces.isQuoteWrapped = function(str) {
     if ((str.charAt(0) == '"') && (str.charAt(str.length - 1) == '"')) {
         return true;
@@ -82,7 +88,7 @@ sc.util.Namespaces.isQuoteWrapped = function(str) {
 sc.util.Namespaces.stripWrappingQuotes = function(str) {
     var remover = function(str) {
         if (sc.util.Namespaces.isQuoteWrapped(str)) {
-            return str.substring(1, str.length - 1);
+            return str.substring(1, str.length - 1).replace('\\"', '"');
         }
         else {
             return str;
@@ -310,4 +316,17 @@ sc.util.Namespaces.prototype.setupRdfQueryPrefixes = function (rdfquery) {
     }
     
     return rdfquery;
+};
+
+sc.util.Namespaces.prototype.bindNamespacesToHtmlElement = function(html) {
+    goog.structs.forEach(this.uriByPrefix, function(uri, prefix) {
+        var xmlns = 'xmlns:' + prefix;
+
+        var original = jQuery(html).attr(xmlns);
+        if (original) {
+            console.warn('Overwriting original ' + xmlns + '=' + original);
+        }
+
+        jQuery(html).attr(xmlns, uri);
+    }, this);
 };

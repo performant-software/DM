@@ -190,6 +190,7 @@ atb.viewer.Editor.prototype.saveContents = function (
 ) {
     if (this.resourceId == null) {
         this.resourceId = this.databroker.createUuid();
+        this.uri = this.resourceId;
     }
     this.updateAllPropertiesFromPane();
     
@@ -228,7 +229,7 @@ atb.viewer.Editor.prototype.scrollIntoView = function (tag) {//console.log(tag);
 };
 
 atb.viewer.Editor.prototype.scrollIntoViewByResourceId = function (resourceId) {
-    var tag = this.field.getPluginByClassId('Annotation').getAnnotationTagByResourceId(resourceId);
+    var tag = this.field.getPluginByClassId('Annotation').getHighlightElementByUri(resourceId);
 
     this.scrollIntoView(tag);
 };
@@ -290,8 +291,11 @@ atb.viewer.Editor.prototype.render = function(div) {
     this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
 
     this._renderToolbar();
-    
+
     this.field.makeEditable();
+
+    var editorHtmlElement = this.field.getEditableDomHelper().getDocument().getElementsByTagName('html')[0];
+    this.databroker.namespaces.bindNamespacesToHtmlElement(editorHtmlElement);
     
     this.pasteHandler = new goog.events.PasteHandler(this.field);
     this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e) {
@@ -520,7 +524,7 @@ atb.viewer.Editor.prototype.addGlobalEventListeners = function () {
 };
 
 atb.viewer.Editor.prototype.dismissContextMenu = function(menu) {
-	this.unselectAnnotationSpan();
+	this.unselectAllHighlights();
 	menu.hide();//lol!
 };
 
@@ -577,33 +581,12 @@ atb.viewer.Editor.prototype.loadResourceById = function (resourceId, opt_doAfter
     );
 };
 
-/**
- * @param resource {atb.resource.TextResource}
- */
-atb.viewer.Editor.prototype.loadResource = function (resource) {
-    this.textResource = resource;
-    
-    this.setHtml(resource.getContents());
-    
-    this.setTitle(resource.getTitle());
-    this.resourceId = resource.getId();
-    this.setPurpose(resource.getPurpose());
-    
-    if (resource.getAnnoIdsAsBody().length > 0) {
-        this.annotationUid = resource.getAnnoIdsAsBody()[0];
-    }
-    
-    var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
-    textEditorAnnotate.addListenersToAllHighlights();
-    
-    this.registerThumbnailToPanel();
-};
-
 atb.viewer.Editor.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
     if (resource.hasType('dctypes:Text')) {
         this.resourceId = resource.getUri();
+        this.uri = resource.getUri();
         this.setTitle(resource.getOneProperty('dc:title').replace('\\"', '"'));
         this.setHtml(resource.getOneProperty('cnt:chars').replace('\\"', '"'));
 
@@ -611,7 +594,10 @@ atb.viewer.Editor.prototype.loadResourceByUri = function(uri) {
         textEditorAnnotate.addListenersToAllHighlights();
     }
     else {
-        throw "atb.viewer.Editor cannot load this resource type";
+        throw {
+            message: "atb.viewer.Editor cannot load this resource type",
+            uri: uri
+        };
     }
 
     return this;
@@ -665,6 +651,7 @@ atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
         ''
     );
     annoBodyEditor.resourceId = bodyUri;
+    annoBodyEditor.uri = bodyUri;
     annoBodyEditor.annotationUid = anno.getUri();
 
     this.annotationUid = anno.getUri();
@@ -1299,13 +1286,13 @@ atb.viewer.Editor.prototype.handleLinkingModeExited = function (event) {
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     var anno = this.databroker.getResource(event.uri);
     
-    highlightPlugin.unselectAnnotationSpan();
+    highlightPlugin.unselectAllHighlights();
     this.unHighlightDocumentIcon();
     
     var targetsAndBodies = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
     goog.array.forEach(bodiesAndTargets, function (uri) {
        try {
-           var tag = highlightPlugin.getAnnotationTagByResourceId(uri);
+           var tag = highlightPlugin.getHighlightElementByUri(uri);
            if (tag) {
                highlightPlugin.flashSpanHighlight(tag);
            }
