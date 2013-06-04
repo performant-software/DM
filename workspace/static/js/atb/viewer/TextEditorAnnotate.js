@@ -641,7 +641,7 @@ atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
-	var annoBodyEditor = new atb.viewer.Editor(this.viewer.clientApp);
+	var annoBodyEditor = new atb.viewer.TextEditor(this.viewer.clientApp);
     annoBodyEditor.setPurpose('anno');
     
     var targetTextTitle = this.viewer.getTitle();

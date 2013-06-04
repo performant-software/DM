@@ -5,7 +5,7 @@ goog.require('atb.DMWebService');
 goog.require("atb.viewer.StandardSimpleMarkerEditor");
 goog.require("goog.math.Size");
 
-goog.require("atb.viewer.Editor");
+goog.require("atb.viewer.TextEditor");
 goog.require("atb.widgets.MenuUtil");
 goog.require('atb.viewer.ResourceListViewer');
 goog.require("atb.ClientApp");
@@ -60,7 +60,7 @@ function initPanelManagerTestApp()
                 alert("only one panel container!");
                 return;
             }
-            var viewer = new atb.viewer.Editor(clientApp);
+            var viewer = new atb.viewer.TextEditor(clientApp);
 			/*
                 webService,
                 styleRoot,

@@ -1,4 +1,4 @@
-goog.provide('atb.viewer.Editor');
+goog.provide('atb.viewer.TextEditor');
 
 goog.require('goog.dom');
 goog.require('goog.dom.DomHelper');
@@ -41,7 +41,7 @@ goog.require('atb.util.ReferenceUtil');
 goog.require('atb.widgets.DialogWidget');
 
 goog.require('atb.viewer.TextEditorAnnotate');
-goog.require('atb.viewer.EditorPropertiesPane');
+goog.require('atb.viewer.TextEditorProperties');
 
 goog.require('goog.events.PasteHandler');
 goog.require('atb.util.Set');
@@ -55,7 +55,7 @@ goog.require('atb.events.ResourceModified');
 goog.require('atb.viewer.TextThumbnail');
 
 /**
- * atb.viewer.Editor
+ * atb.viewer.TextEditor
  * Creates a Text Editor
  *
  * @constructor
@@ -66,7 +66,7 @@ goog.require('atb.viewer.TextThumbnail');
  * @param opt_initialTextContent {string=}
  * @param opt_annoBodyId {string=}
  **/
-atb.viewer.Editor = function(clientApp, opt_initialTextContent, opt_annoBodyId) {
+atb.viewer.TextEditor = function(clientApp, opt_initialTextContent, opt_annoBodyId) {
 	atb.viewer.Viewer.call(this, clientApp);
     
     this.viewerType = 'text editor';
@@ -99,17 +99,17 @@ atb.viewer.Editor = function(clientApp, opt_initialTextContent, opt_annoBodyId) 
     var db = this.clientApp.databroker;
 
 };
-goog.inherits(atb.viewer.Editor, atb.viewer.Viewer);
+goog.inherits(atb.viewer.TextEditor, atb.viewer.Viewer);
 
-atb.viewer.Editor.VIEWER_TYPE = 'text editor';
+atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
 
-atb.viewer.Editor.prototype.autoSaveInterval = 10 * 1000;
+atb.viewer.TextEditor.prototype.autoSaveInterval = 10 * 1000;
 
 /**
  * getSanitizedHtml()
  * @return {string} the html contents of the editor with unwanted tags (such as <script>) removed
  **/
-atb.viewer.Editor.prototype.getSanitizedHtml = function () {
+atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
 	return this.field.getCleanContents();
 };
 
@@ -118,7 +118,7 @@ atb.viewer.Editor.prototype.getSanitizedHtml = function () {
  * sets the contents of the editor to the specified string
  * @param {!string} htmlString the html to be written to the editor
  **/
-atb.viewer.Editor.prototype.setHtml = function (htmlString, opt_fireDelayedChange) {
+atb.viewer.TextEditor.prototype.setHtml = function (htmlString, opt_fireDelayedChange) {
     if (this.field) {
 	    this.field.setHtml(false, htmlString, !opt_fireDelayedChange);
     }
@@ -126,12 +126,12 @@ atb.viewer.Editor.prototype.setHtml = function (htmlString, opt_fireDelayedChang
 
 /*
 //partially implemented, but hopeless probably:
-atb.viewer.Editor.prototype.fixPastedSpans = function()
+atb.viewer.TextEditor.prototype.fixPastedSpans = function()
 {
 	var tag = this.field.field;//hack
 	fixPastedSpans_visitRecursively_(tag);
 };
-atb.viewer.Editor.prototype.fixPastedSpans_visitRecursively_ = function(tag)
+atb.viewer.TextEditor.prototype.fixPastedSpans_visitRecursively_ = function(tag)
 {
 	if (this.isAnnotationSpan(tag))
 	{
@@ -147,7 +147,7 @@ atb.viewer.Editor.prototype.fixPastedSpans_visitRecursively_ = function(tag)
 	
 };
 */
-atb.viewer.Editor.prototype.onTextPasted = function()
+atb.viewer.TextEditor.prototype.onTextPasted = function()
 {
 	//this.fixPastedSpans();
 	
@@ -159,7 +159,7 @@ atb.viewer.Editor.prototype.onTextPasted = function()
  * sets the contents of the editor to the specified string using goog's auto paragraph formatting
  * @param {!string} htmlString the html to be written to the editor
  **/
-atb.viewer.Editor.prototype.setHtmlWithAutoParagraphs = function (htmlString) {
+atb.viewer.TextEditor.prototype.setHtmlWithAutoParagraphs = function (htmlString) {
 	this.field.setHtml(true, htmlString);
 	this.onSetHTML();
 };
@@ -169,7 +169,7 @@ atb.viewer.Editor.prototype.setHtmlWithAutoParagraphs = function (htmlString) {
  * adds the specified stylesheet to the editor iframe
  * @param stylesheetURI {!string} the URI of the stylesheet *relative to the html document*
  **/
-atb.viewer.Editor.prototype.addStylesheetToEditor = function (stylesheetURI) 
+atb.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI) 
 {
     var linkElement = this.editorIframe.document.createElement('link');
     linkElement.setAttribute('rel', 'stylesheet');
@@ -185,7 +185,7 @@ atb.viewer.Editor.prototype.addStylesheetToEditor = function (stylesheetURI)
  * @param opt_doAfter {function=}
  * @param opt_doAfterScope {object=}
  **/
-atb.viewer.Editor.prototype.saveContents = function (
+atb.viewer.TextEditor.prototype.saveContents = function (
     opt_doAfter, opt_doAfterScope, opt_synchronously
 ) {
     if (this.resourceId == null) {
@@ -206,7 +206,7 @@ atb.viewer.Editor.prototype.saveContents = function (
  * centers the editor view scroll with the tag roughly in the center
  * @param tag {Element} highlight span
  **/
-atb.viewer.Editor.prototype.scrollIntoView = function (tag) {//console.log(tag);
+atb.viewer.TextEditor.prototype.scrollIntoView = function (tag) {//console.log(tag);
     if(tag) {
 
         // position scrollbar to the position of the tag in the editor
@@ -228,24 +228,24 @@ atb.viewer.Editor.prototype.scrollIntoView = function (tag) {//console.log(tag);
     }
 };
 
-atb.viewer.Editor.prototype.scrollIntoViewByResourceId = function (resourceId) {
+atb.viewer.TextEditor.prototype.scrollIntoViewByResourceId = function (resourceId) {
     var tag = this.field.getPluginByClassId('Annotation').getHighlightElementByUri(resourceId);
 
     this.scrollIntoView(tag);
 };
 
-atb.viewer.Editor.prototype.toggleAnnotationMode = function(inAnnoMode) {
+atb.viewer.TextEditor.prototype.toggleAnnotationMode = function(inAnnoMode) {
     this.inAnnoMode = inAnnoMode;
 };
 
-atb.viewer.Editor.prototype.resize = function(width, height) {
+atb.viewer.TextEditor.prototype.resize = function(width, height) {
     atb.viewer.Viewer.prototype.resize(width, height);
 	
 	jQuery('#' + this.useID).width(width)
     .height(height - jQuery(this.toolbarDiv).outerHeight(true));
 };
 
-atb.viewer.Editor.prototype.render = function(div) {
+atb.viewer.TextEditor.prototype.render = function(div) {
 	if (this.rootDiv != null) {
 		return;
 	}
@@ -317,7 +317,7 @@ atb.viewer.Editor.prototype.render = function(div) {
     }
 };
 
-atb.viewer.Editor.prototype._renderDocumentIcon = function() {
+atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
     this.documentIcon = this.domHelper.createDom('div', {'class': 'atb-viewer-documentIcon'});
     goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
     
@@ -359,7 +359,7 @@ atb.viewer.Editor.prototype._renderDocumentIcon = function() {
     this.rootDiv.appendChild(this.documentIcon);
 };
 
-atb.viewer.Editor.prototype._renderToolbar = function() {
+atb.viewer.TextEditor.prototype._renderToolbar = function() {
     // Specify the buttons to add to the toolbar, using built in default buttons.
     var buttons = [
         goog.editor.Command.BOLD,
@@ -417,26 +417,26 @@ atb.viewer.Editor.prototype._renderToolbar = function() {
     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
 };
 
-atb.viewer.Editor.prototype.renderPropertiesPane = function () {
+atb.viewer.TextEditor.prototype.renderPropertiesPane = function () {
     this.propertiesPaneDiv = this.domHelper.createDom('div');
     jQuery(this.propertiesPaneDiv).hide();
     
     this.rootDiv.appendChild(this.propertiesPaneDiv);
     
-    this.propertiesPane = new atb.viewer.EditorPropertiesPane(this);
+    this.propertiesPane = new atb.viewer.TextEditorProperties(this);
 };
 
-atb.viewer.Editor.prototype.finishRenderPropertiesPane = function () {
+atb.viewer.TextEditor.prototype.finishRenderPropertiesPane = function () {
     this.propertiesPane.render(this.propertiesPaneDiv);
 };
 
-atb.viewer.Editor.prototype.updateAllPropertiesFromPane = function () {
+atb.viewer.TextEditor.prototype.updateAllPropertiesFromPane = function () {
     var properties = this.propertiesPane.getUnescapedProperties();
     
     this.setProperties(properties);
 };
 
-atb.viewer.Editor.prototype.updatePropertiesPaneContents = function () {
+atb.viewer.TextEditor.prototype.updatePropertiesPaneContents = function () {
     var properties = {
         'purpose': this.purpose
     };
@@ -444,13 +444,13 @@ atb.viewer.Editor.prototype.updatePropertiesPaneContents = function () {
     this.propertiesPane.setProperties(properties);
 };
 
-atb.viewer.Editor.prototype.setProperties = function (properties) {
+atb.viewer.TextEditor.prototype.setProperties = function (properties) {
     if (properties.purpose) {
         this.setPurpose(properties.purpose);
     }
 };
 
-atb.viewer.Editor.prototype.showPropertiesPane = function () {
+atb.viewer.TextEditor.prototype.showPropertiesPane = function () {
     this.updatePropertiesPaneContents();
     
     var self = this;
@@ -463,7 +463,7 @@ atb.viewer.Editor.prototype.showPropertiesPane = function () {
     this.propertiesButton.setChecked(true);
 };
 
-atb.viewer.Editor.prototype.hidePropertiesPane = function () {
+atb.viewer.TextEditor.prototype.hidePropertiesPane = function () {
     var self = this;
     jQuery(this.propertiesPaneDiv).fadeOut(300);
     jQuery(this.field.getElement()).fadeIn(300);
@@ -476,7 +476,7 @@ atb.viewer.Editor.prototype.hidePropertiesPane = function () {
     this.propertiesButton.setChecked(false);
 };
 
-atb.viewer.Editor.prototype.handlePropertiesButtonClick_ = function (e) {
+atb.viewer.TextEditor.prototype.handlePropertiesButtonClick_ = function (e) {
     if (this.propertiesPanelVisible) {
         this.hidePropertiesPane();
     }
@@ -485,11 +485,11 @@ atb.viewer.Editor.prototype.handlePropertiesButtonClick_ = function (e) {
     }
 };
 
-atb.viewer.Editor.prototype.setPurpose = function (purpose) {
+atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
     this.purpose = purpose;
 };
 
-atb.viewer.Editor.prototype.handleDocumentIconClick_ = function (e) {
+atb.viewer.TextEditor.prototype.handleDocumentIconClick_ = function (e) {
     e.stopPropagation();
     
     var eventDispatcher = this.clientApp.getEventDispatcher();
@@ -497,7 +497,7 @@ atb.viewer.Editor.prototype.handleDocumentIconClick_ = function (e) {
     eventDispatcher.dispatchEvent(event);
 };
 
-atb.viewer.Editor.prototype.addGlobalEventListeners = function () {
+atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
     var eventDispatcher = this.clientApp.getEventDispatcher();
     
     this.unsavedChanges = false;
@@ -523,12 +523,12 @@ atb.viewer.Editor.prototype.addGlobalEventListeners = function () {
                        }, false, this);
 };
 
-atb.viewer.Editor.prototype.dismissContextMenu = function(menu) {
+atb.viewer.TextEditor.prototype.dismissContextMenu = function(menu) {
 	this.unselectAllHighlights();
 	menu.hide();//lol!
 };
 
-atb.viewer.Editor.prototype.getTitle = function () {
+atb.viewer.TextEditor.prototype.getTitle = function () {
     if (this._title == null) {
         return this.DEFAULT_DOCUMENT_TITLE;//'Untitled text document';
     }
@@ -537,23 +537,23 @@ atb.viewer.Editor.prototype.getTitle = function () {
     }
 };
 
-atb.viewer.Editor.prototype.setTitle = function(title) {
+atb.viewer.TextEditor.prototype.setTitle = function(title) {
     this._title = title;
 	this.syncTitle();
 };
 
-atb.viewer.Editor.prototype.isTitleEditable = function() {
+atb.viewer.TextEditor.prototype.isTitleEditable = function() {
 	return true;
 };
 
-atb.viewer.Editor.prototype.syncTitle = function() {
+atb.viewer.TextEditor.prototype.syncTitle = function() {
     if (this.container) {
         this.container.setTitle(this.getTitle());
         this.container.setTitleEditable(this.isTitleEditable());
     }
 };
 
-atb.viewer.Editor.prototype.loadResourceById = function (resourceId, opt_doAfter, opt_doAfterScope) {
+atb.viewer.TextEditor.prototype.loadResourceById = function (resourceId, opt_doAfter, opt_doAfterScope) {
     this.showLoadingSpinner();
     
     this.webService.withResource(
@@ -581,7 +581,7 @@ atb.viewer.Editor.prototype.loadResourceById = function (resourceId, opt_doAfter
     );
 };
 
-atb.viewer.Editor.prototype.loadResourceByUri = function(uri) {
+atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
     if (resource.hasType('dctypes:Text')) {
@@ -595,7 +595,7 @@ atb.viewer.Editor.prototype.loadResourceByUri = function(uri) {
     }
     else {
         throw {
-            message: "atb.viewer.Editor cannot load this resource type",
+            message: "atb.viewer.TextEditor cannot load this resource type",
             uri: uri
         };
     }
@@ -603,11 +603,11 @@ atb.viewer.Editor.prototype.loadResourceByUri = function(uri) {
     return this;
 };
 
-atb.viewer.Editor.prototype.setAnnotationBody = function (bodyResourceId) {
+atb.viewer.TextEditor.prototype.setAnnotationBody = function (bodyResourceId) {
     this.bodyResourceId = bodyResourceId;
 };
 
-atb.viewer.Editor.prototype.showErrorMessage = function (msg) {
+atb.viewer.TextEditor.prototype.showErrorMessage = function (msg) {
 	var dialog = new atb.widgets.DialogWidget(
 		{
 			bModal: true,
@@ -622,22 +622,22 @@ atb.viewer.Editor.prototype.showErrorMessage = function (msg) {
 	dialog.show();
 };
 
-atb.viewer.Editor.prototype.onPaneLoaded = function () {
+atb.viewer.TextEditor.prototype.onPaneLoaded = function () {
 	this.syncTitle();
     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
     textEditorAnnotate.addListenersToAllHighlights();
 };
 
-atb.viewer.Editor.prototype.onTitleChanged = function (newTitle) {
+atb.viewer.TextEditor.prototype.onTitleChanged = function (newTitle) {
     this._title = newTitle;
     this.onChange();
 };
 
-atb.viewer.Editor.prototype.onTitleChange = atb.viewer.Editor.prototype.onTitleChanged;
+atb.viewer.TextEditor.prototype.onTitleChange = atb.viewer.TextEditor.prototype.onTitleChanged;
 
-atb.viewer.Editor.prototype.DEFAULT_DOCUMENT_TITLE = 'Untitled text document';
+atb.viewer.TextEditor.prototype.DEFAULT_DOCUMENT_TITLE = 'Untitled text document';
 
-atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
+atb.viewer.TextEditor.prototype.createNewTextBody = function (opt_myResourceId) {
 	var myResourceId = opt_myResourceId || this.resourceId;
     var targetUri = this.webService.resourceIdToUri(myResourceId);
 
@@ -646,7 +646,7 @@ atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
 
     var anno = databroker.dataModel.createAnno(bodyUri, targetUri);
 	
-    var annoBodyEditor = new atb.viewer.Editor(
+    var annoBodyEditor = new atb.viewer.TextEditor(
 		this.clientApp,
         ''
     );
@@ -666,7 +666,7 @@ atb.viewer.Editor.prototype.createNewTextBody = function (opt_myResourceId) {
     this.openRelatedViewer(annoBodyEditor);
 };
 
-atb.viewer.Editor.prototype.showAnnos = function (opt_myResourceId) {
+atb.viewer.TextEditor.prototype.showAnnos = function (opt_myResourceId) {
 	var id = opt_myResourceId || this.resourceId;
 
     var otherContainer = this.getOtherPanelHelper();
@@ -677,7 +677,7 @@ atb.viewer.Editor.prototype.showAnnos = function (opt_myResourceId) {
 	otherContainer.setViewer(finder);
 };
 
-atb.viewer.Editor.prototype.linkAnnotation = function (opt_myResourceId, opt_myAnnoId) {
+atb.viewer.TextEditor.prototype.linkAnnotation = function (opt_myResourceId, opt_myAnnoId) {
 	var myResourceId = opt_myResourceId || this.resourceId;
 	var myAnnoId = opt_myAnnoId || this.annotationUid;
     
@@ -686,16 +686,16 @@ atb.viewer.Editor.prototype.linkAnnotation = function (opt_myResourceId, opt_myA
 	this.clientApp.createAnnoLink(this.resourceId, myAnnoId);
 };
 
-atb.viewer.Editor.prototype.toggleIsAnnoText = function (set_isAnnoText) {
+atb.viewer.TextEditor.prototype.toggleIsAnnoText = function (set_isAnnoText) {
 	this.isAnnoText = set_isAnnoText;
 };
 
-atb.viewer.Editor.prototype.getIsAnnoText = function () {
+atb.viewer.TextEditor.prototype.getIsAnnoText = function () {
 	return this.isAnnoText;
 };
 
 /////////////////////////Filter Code:
-atb.viewer.Editor.prototype.dumpTagSet_=function(toTag)//;
+atb.viewer.TextEditor.prototype.dumpTagSet_=function(toTag)//;
 {
 	//dumps a list of tags. possibly best done BEFORE the tag formatting rules, for the most info...
 	var seenTags = new atb.util.Set();
@@ -715,7 +715,7 @@ atb.viewer.Editor.prototype.dumpTagSet_=function(toTag)//;
 	visitor(toTag);
 };
 
-atb.viewer.Editor.prototype.applyFormattingRules = function()
+atb.viewer.TextEditor.prototype.applyFormattingRules = function()
 {
     
     //DISABLE----------------------
@@ -732,7 +732,7 @@ atb.viewer.Editor.prototype.applyFormattingRules = function()
 //	}
 };
 
-atb.viewer.Editor.prototype.replaceTagKeepingContentsHelper_ = function(tag, withTag)
+atb.viewer.TextEditor.prototype.replaceTagKeepingContentsHelper_ = function(tag, withTag)
 {
 	//TODO: maybe check that withTag isn't related to tag meaningfully..?/badly...??
 	jQuery(tag).contents().each(function()
@@ -747,7 +747,7 @@ atb.viewer.Editor.prototype.replaceTagKeepingContentsHelper_ = function(tag, wit
 
 };
 
-atb.viewer.Editor.prototype._readStylePropsHelper_ = function(tag)
+atb.viewer.TextEditor.prototype._readStylePropsHelper_ = function(tag)
 {
 	var jqTag = jQuery(tag);
 	var fontWeight = jqTag.css("font-weight");
@@ -785,7 +785,7 @@ fontStyle: italic
 	};
 };
 
-atb.viewer.Editor.prototype.applyFormattingRulesRecursively_ = function(toTag)
+atb.viewer.TextEditor.prototype.applyFormattingRulesRecursively_ = function(toTag)
 {
 	//alert("!!!");
 	//_readStylePropsHelper_(toTag);//lol!
@@ -1231,7 +1231,7 @@ atb.viewer.Editor.prototype.applyFormattingRulesRecursively_ = function(toTag)
 	});
 };
 
-atb.viewer.Editor.prototype.getPositionOfFieldChildElement = function (element) {
+atb.viewer.TextEditor.prototype.getPositionOfFieldChildElement = function (element) {
 	var elementPosition = jQuery(element).offset();
 	var xCoord = elementPosition.left;
 	var yCoord = elementPosition.top;
@@ -1250,23 +1250,23 @@ atb.viewer.Editor.prototype.getPositionOfFieldChildElement = function (element) 
 	};
 };
 
-atb.viewer.Editor.prototype.hasUnsavedChanges = function () {
+atb.viewer.TextEditor.prototype.hasUnsavedChanges = function () {
     return !! this.unsavedChanges;
 };
 
-atb.viewer.Editor.prototype.onChange = function (event) {
+atb.viewer.TextEditor.prototype.onChange = function (event) {
     this.unsavedChanges = true;
     
     this.timeOfLastChange = goog.now();
 };
 
-atb.viewer.Editor.prototype.onKeyDown = function (event) {
+atb.viewer.TextEditor.prototype.onKeyDown = function (event) {
     console.log(event);
 };
 
-atb.viewer.Editor.prototype.saveDelayAfterLastChange = 2.5 * 1000;
+atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 2.5 * 1000;
 
-atb.viewer.Editor.prototype.saveIfModified = function (opt_synchronously) {
+atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
     var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
         (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
     
@@ -1275,14 +1275,14 @@ atb.viewer.Editor.prototype.saveIfModified = function (opt_synchronously) {
     }
 };
 
-atb.viewer.Editor.prototype.viewerHasEnteredBackground = function (event) {
+atb.viewer.TextEditor.prototype.viewerHasEnteredBackground = function (event) {
     atb.viewer.Viewer.prototype.viewerHasEnteredBackground.apply(this, arguments);
     if (this.field != null && !this.field.isUneditable()) {
 		this.field.makeUneditable();
 	}
 };
 
-atb.viewer.Editor.prototype.handleLinkingModeExited = function (event) {
+atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     var anno = this.databroker.getResource(event.uri);
     
@@ -1303,10 +1303,10 @@ atb.viewer.Editor.prototype.handleLinkingModeExited = function (event) {
    }, this);
 };
 
-atb.viewer.Editor.prototype.generateViewerThumbnail = function () {
+atb.viewer.TextEditor.prototype.generateViewerThumbnail = function () {
     return new atb.viewer.TextThumbnail(this);
 };
 
-atb.viewer.Editor.prototype.getResource = function () {
+atb.viewer.TextEditor.prototype.getResource = function () {
     return this.textResource;
 };

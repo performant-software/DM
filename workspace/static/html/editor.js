@@ -1,6 +1,6 @@
 //goog.require('goog.events');
 //goog.require('atb.DMWebService');
-goog.require('atb.viewer.Editor');
+goog.require('atb.viewer.TextEditor');
 goog.require("atb.viewer.FakePanelContainer");
 goog.require("atb.ClientApp");
 
@@ -13,11 +13,11 @@ initEditor = function()
 	
 	//var partenerDiv = null;
 	
-	//var e = new atb.viewer.Editor(ws, styleRoot, null, partenerDiv);
-	//var e = new atb.viewer.Editor(ws, styleRoot, partenerDiv);
-	//var e = new atb.viewer.Editor(ws, styleRoot, partenerDiv);
+	//var e = new atb.viewer.TextEditor(ws, styleRoot, null, partenerDiv);
+	//var e = new atb.viewer.TextEditor(ws, styleRoot, partenerDiv);
+	//var e = new atb.viewer.TextEditor(ws, styleRoot, partenerDiv);
 	var clientApp = new atb.ClientApp();
-	var e = new atb.viewer.Editor(clientApp);
+	var e = new atb.viewer.TextEditor(clientApp);
 	
 	var panel =new atb.viewer.FakePanelContainer(e, document.getElementById("testPane"));
 	

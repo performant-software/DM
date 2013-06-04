@@ -830,7 +830,7 @@ atb.viewer.Finder.prototype.loadText = function (id, title, panel) {
         return;
     }
     
-    var viewer = new atb.viewer.Editor(this.clientApp, null, null);
+    var viewer = new atb.viewer.TextEditor(this.clientApp, null, null);
 
     viewer.loadResourceById(id);
 
@@ -855,7 +855,7 @@ atb.viewer.Finder.prototype.loadTextHighlight = function (id, textId, title, pan
     }
     else {
         
-        var newViewer = new atb.viewer.Editor(this.clientApp, null, null);
+        var newViewer = new atb.viewer.TextEditor(this.clientApp, null, null);
 
         newViewer.loadResourceById(textId, function () {
             newViewer.scrollIntoViewByResourceId(id);
