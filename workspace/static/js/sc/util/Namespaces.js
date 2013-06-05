@@ -234,13 +234,13 @@ sc.util.Namespaces.isBNode = function(str) {
  * @throws {string}
  */
 sc.util.Namespaces.prototype.autoExpand = function (ns) {
-    if (sc.util.Namespaces.isQuoteWrapped(ns) ||
-        sc.util.Namespaces.isAngleBracketWrapped(ns) ||
-        sc.util.Namespaces.isBNode(ns)) {
-        return ns;
+    if (ns instanceof sc.data.Resource) {
+        return ns.bracketedUri;
     }
-    
-    if (sc.util.Namespaces.isUri(ns)) {
+    else if (sc.util.Namespaces.isQuoteWrapped(ns) ||
+        sc.util.Namespaces.isAngleBracketWrapped(ns) ||
+        sc.util.Namespaces.isBNode(ns) ||
+        sc.util.Namespaces.isUri(ns)) {
         return ns;
     }
     else {

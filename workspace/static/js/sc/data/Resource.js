@@ -25,6 +25,10 @@ sc.data.Resource = function(databroker, uri) {
     this.bracketedUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
 };
 
+sc.data.Resource.prototype.toString = function() {
+    return this.uri + ' : ' + JSON.stringify(this.databroker.dumpResource(this.uri), null, '  ');
+};
+
 /**
  * @return {sc.data.Databroker} A reference to the databroker which owns this
  * resource.
@@ -150,15 +154,35 @@ sc.data.Resource.prototype.addProperty = function(predicate, object) {
 };
 
 sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
-    this.databroker.quadStore.forEachQuadMatchingQuery(
-        this.bracketedUri,
-        sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(predicate)),
-        opt_object ? sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(opt_object)) : null,
-        null,
-        function(quad) {
-            this.databroker.deleteQuad(quad);
-        }.bind(this)
-    );
+    var safePredicate = sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(predicate));
+    var safeObject = opt_object ? sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(opt_object)) : null;
+
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        this.databroker.quadStore.forEachQuadMatchingQuery(
+            this.bracketedUri,
+            safePredicate,
+            safeObject,
+            null,
+            function(quad) {
+                this.databroker.deleteQuad(quad);
+            }.bind(this)
+        );
+    }, this);
+
+    return this;
+};
+
+/**
+ * Deletes all quads with this resource's uri as their subject. Note: This will not delete other references to this resource.
+ */
+sc.data.Resource.prototype.deleteAllProperties = function() {
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        this.databroker.quadStore.forEachQuadMatchingQuery(
+            uri, null, null, null, function(quad) {
+                this.databroker.deleteQuad(quad);
+            }.bind(this)
+        );
+    }, this);
 
     return this;
 };
@@ -264,6 +288,31 @@ sc.data.Resource.prototype.getOneTitle = function() {
 
 sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
     return this.databroker.dataModel.findAnnosReferencingResource(this.bracketedUri, opt_annoType);
+};
+
+/**
+ * Finds resources which reference this resource using a given predicate (i.e., relation)
+ * @param  {string} predicate The relation to use in the search.
+ * @return {Array.<sc.data.Resource>} A list of matching resources.
+ */
+sc.data.Resource.prototype.getReferencingResources = function(predicate) {
+    var uris = new goog.structs.Set();
+    var expandedPredicate = this.databroker.namespaces.autoExpand(predicate);
+
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        this.databroker.quadStore.forEachQuadMatchingQuery(
+            null, expandedPredicate, this.bracketedUri, null, function(quad) {
+                uris.add(quad.subject);
+            }.bind(this));
+    }, this);
+
+    var resources = [];
+    goog.structs.forEach(uris, function(uri) {
+        var resource = this.databroker.getResource(uri);
+        resources.push(resource);
+    }, this);
+
+    return resources;
 };
 
 /**
