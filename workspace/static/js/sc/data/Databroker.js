@@ -330,7 +330,7 @@ sc.data.Databroker.prototype.deleteQuads = function(quads) {
 };
 
 sc.data.Databroker.prototype.dumpQuadStore = function(opt_outputType) {
-    return this.dumpTriples(this.quadStore.getQuads(), opt_outputType);
+    return this.dumpQuads(this.quadStore.getQuads(), opt_outputType);
 };
 
 sc.data.Databroker.prototype.dumpQuads = function(quads, opt_outputType) {
@@ -338,15 +338,7 @@ sc.data.Databroker.prototype.dumpQuads = function(quads, opt_outputType) {
     this.namespaces.setupRdfQueryPrefixes(rdf);
     
     for (var i=0, len=quads.length; i<len; i++) {
-        var quad = quads[i];
-
-        var jQueryTriple = jQuery.rdf.triple(
-            quad.subject,
-            quad.predicate,
-            quad.object
-        );
-        
-        rdf.add(jQueryTriple);
+        rdf.add(quads[i].exportToRdfqueryTriple());
     }
     
     return rdf.databank.dump({
@@ -620,8 +612,13 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
 sc.data.Databroker.prototype.getResource = function(uri) {
     goog.asserts.assert(uri != null, 'uri passed to sc.data.Databroker#getResource is null or undefined');
 
-    uri = sc.util.Namespaces.stripAngleBrackets(uri);
-    return new sc.data.Resource(this, uri);
+    if (uri instanceof sc.data.Resource) {
+        return new sc.data.Resource(this, uri.uri);
+    }
+    else {
+        uri = sc.util.Namespaces.stripAngleBrackets(uri);
+        return new sc.data.Resource(this, uri);
+    }
 };
 
 sc.data.Databroker.prototype.createResource = function(uri, type) {

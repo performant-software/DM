@@ -1,4 +1,5 @@
 goog.provide('sc.data.Quad');
+goog.require('jquery.rdfquery');
 
 /**
  * @class
@@ -52,4 +53,12 @@ sc.data.Quad.createFromRdfqueryTriple = function(jqTriple, context) {
     var triple = new sc.data.Quad(subject, predicate, object, context);
     
     return triple;
+};
+
+sc.data.Quad.prototype.exportToRdfqueryTriple = function() {
+    return new jQuery.rdf.triple(
+        this.subject,
+        this.predicate,
+        this.object
+    );
 };
