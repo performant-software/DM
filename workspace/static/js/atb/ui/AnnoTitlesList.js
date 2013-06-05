@@ -154,8 +154,8 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
 
         goog.structs.forEach(annoUris, function(annoUri) {
             var annoResource = this.databroker.getResource(annoUri);
-            goog.array.extend(bodyUris, sc.util.Namespaces.stripAngleBrackets(annoResource.getProperties('oa:hasBody')));
-            goog.array.extend(targetUris, sc.util.Namespaces.stripAngleBrackets(annoResource.getProperties('oa:hasTarget')));
+            goog.array.extend(bodyUris, sc.util.Namespaces.angleBracketStrip(annoResource.getProperties('oa:hasBody')));
+            goog.array.extend(targetUris, sc.util.Namespaces.angleBracketStrip(annoResource.getProperties('oa:hasTarget')));
         }, this);
 
         console.log('annoUris', annoUris, 'bodies', bodyUris, 'targets', targetUris);

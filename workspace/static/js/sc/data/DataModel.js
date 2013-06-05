@@ -55,12 +55,12 @@ sc.data.DataModel.prototype.findAnnosReferencingResource = function(resourceUri,
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(resourceUri, opt_annoType) {
-    resourceUri = sc.util.Namespaces.wrapWithAngleBrackets(resourceUri);
+    resourceUri = sc.util.Namespaces.angleBracketWrap(resourceUri);
     
     var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.hasTarget, resourceUri);
 
     if (! opt_annoType) {
-        return sc.util.Namespaces.stripAngleBrackets(annoIds.getValues());
+        return sc.util.Namespaces.angleBracketStrip(annoIds.getValues());
     }
     else {
         var type = this.databroker.namespaces.autoExpand(opt_annoType);
@@ -68,7 +68,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(reso
         var typedAnnoIds = this.databroker.getUrisSetWithProperty('rdf:type', type);
         
         var intersection = typedAnnoIds.intersection(annoIds);
-        return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
+        return sc.util.Namespaces.angleBracketStrip(intersection.getValues());
         // Because of google's set implementation, this particular way
         // of finding the intersection is quite efficient
     }
@@ -81,7 +81,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(reso
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resourceUri, opt_annoType) {
-    resourceUri = sc.util.Namespaces.wrapWithAngleBrackets(resourceUri);
+    resourceUri = sc.util.Namespaces.angleBracketWrap(resourceUri);
     
     var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.hasBody, resourceUri);
 
@@ -94,7 +94,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resour
         var typedAnnoIds = this.databroker.getUrisSetWithProperty('rdf:type', type);
 
         var intersection = typedAnnoIds.intersection(annoIds);
-        return sc.util.Namespaces.stripAngleBrackets(intersection.getValues()); // Because of google's set implementation, this particular way
+        return sc.util.Namespaces.angleBracketStrip(intersection.getValues()); // Because of google's set implementation, this particular way
         // of finding the intersection is quite efficient
     }
 };
@@ -111,7 +111,7 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
 
     for (var i = 0, len = annoIds.length; i < len; i++) {
         var annoId = annoIds[i];
-        annoId = sc.util.Namespaces.wrapWithAngleBrackets(annoId);
+        annoId = sc.util.Namespaces.angleBracketWrap(annoId);
 
         var bodyUris = this.databroker.getPropertiesForResource(annoId, sc.data.DataModel.VOCABULARY.hasBody);
         for (var j = 0, lenj = bodyUris.length; j < lenj; j++) {
@@ -133,7 +133,7 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
         imageUris.addAll(bodyUris);
     }
 
-    return sc.util.Namespaces.stripAngleBrackets(imageUris.getValues());
+    return sc.util.Namespaces.angleBracketStrip(imageUris.getValues());
 };
 
 sc.data.DataModel.prototype.findConstraintUrisOnResource = function(uri) {
@@ -161,7 +161,7 @@ sc.data.DataModel.prototype.findConstraintUrisOnResource = function(uri) {
     var typedConstraintIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.constraint);
 
     var constraintIds = typedConstraintIds.intersection(bodyUris);
-    return sc.util.Namespaces.stripAngleBrackets(constraintIds.getValues());
+    return sc.util.Namespaces.angleBracketStrip(constraintIds.getValues());
 };
 
 //Note(tandres): I can't find this used anywhere, maybe should be deprecated
@@ -190,9 +190,9 @@ sc.data.DataModel.prototype.findConstraintValuesOnResource = function(uri) {
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findAggregationContentsUris = function(aggregationUri) {
-    aggregationUri = sc.util.Namespaces.wrapWithAngleBrackets(aggregationUri);
+    aggregationUri = sc.util.Namespaces.angleBracketWrap(aggregationUri);
     
-    return sc.util.Namespaces.stripAngleBrackets(this.databroker.getPropertiesForResource(aggregationUri, 'ore:aggregates'));
+    return sc.util.Namespaces.angleBracketStrip(this.databroker.getPropertiesForResource(aggregationUri, 'ore:aggregates'));
 };
 
 /**
@@ -213,11 +213,11 @@ sc.data.DataModel.prototype.findManuscriptAggregationUris = function(manifestUri
         }
     }
 
-    return sc.util.Namespaces.stripAngleBrackets(uris.getValues());
+    return sc.util.Namespaces.angleBracketStrip(uris.getValues());
 };
 
 sc.data.DataModel.prototype.findManuscriptSequenceUris = function(manifestUri) {
-    manifestUri = sc.util.Namespaces.wrapWithAngleBrackets(manifestUri);
+    manifestUri = sc.util.Namespaces.angleBracketWrap(manifestUri);
     
     var aggregateUris = this.databroker.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
@@ -233,11 +233,11 @@ sc.data.DataModel.prototype.findManuscriptSequenceUris = function(manifestUri) {
     }, this);
 
     var intersection = allSequences.intersection(aggregateUris);
-    return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
+    return sc.util.Namespaces.angleBracketStrip(intersection.getValues());
 };
 
 sc.data.DataModel.prototype.findManuscriptImageAnnoUris = function(manifestUri) {
-     manifestUri = sc.util.Namespaces.wrapWithAngleBrackets(manifestUri);
+     manifestUri = sc.util.Namespaces.angleBracketWrap(manifestUri);
     
     var aggregateUris = this.databroker.getPropertiesForResource(manifestUri, 'ore:aggregates');
 
@@ -248,11 +248,11 @@ sc.data.DataModel.prototype.findManuscriptImageAnnoUris = function(manifestUri) 
         null);
 
     var intersection = allImageAnnos.intersection(aggregateUris);
-    return sc.util.Namespaces.stripAngleBrackets(intersection.getValues());
+    return sc.util.Namespaces.angleBracketStrip(intersection.getValues());
 };
 
 sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) {
-    canvasUri = sc.util.Namespaces.wrapWithAngleBrackets(canvasUri);
+    canvasUri = sc.util.Namespaces.angleBracketWrap(canvasUri);
 
     var manifestUris = new goog.structs.Set();
 
@@ -280,7 +280,7 @@ sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) 
 sc.data.DataModel.prototype.findSelectorSpecificResourceUri = function(selectorUri) {
     var specificTargets = [];
     this.databroker.quadStore.forEachQuadMatchingQuery(
-        null, this.databroker.namespaces.expand('oa', 'hasSelector'), sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null,
+        null, this.databroker.namespaces.expand('oa', 'hasSelector'), sc.util.Namespaces.angleBracketWrap(selectorUri), null,
         function(quad) {
             specificTargets.push(quad.subject);
         },
@@ -288,7 +288,7 @@ sc.data.DataModel.prototype.findSelectorSpecificResourceUri = function(selectorU
     );
 
     if (specificTargets.length > 0) {
-        return sc.util.Namespaces.stripAngleBrackets(specificTargets[0]);
+        return sc.util.Namespaces.angleBracketStrip(specificTargets[0]);
     }
     else {
         return null;
@@ -359,7 +359,7 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
     var quads = this.databroker.quadStore.query(
         null,
         this.databroker.namespaces.expand('oa', 'hasBody'),
-        sc.util.Namespaces.wrapWithAngleBrackets(bodyUri),
+        sc.util.Namespaces.angleBracketWrap(bodyUri),
         null
     );
     if (quads.length > 0) {
@@ -379,14 +379,14 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
     if (bodyUri) {
         anno.addProperty(
             sc.data.DataModel.VOCABULARY.hasBody,
-            sc.util.Namespaces.wrapWithAngleBrackets(bodyUri)
+            sc.util.Namespaces.angleBracketWrap(bodyUri)
         );
     }
 
     if (targetUri) {
         anno.addProperty(
             sc.data.DataModel.VOCABULARY.hasTarget,
-            sc.util.Namespaces.wrapWithAngleBrackets(targetUri)
+            sc.util.Namespaces.angleBracketWrap(targetUri)
         );
     }
 
@@ -409,7 +409,7 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
         if (target.hasType('oa:SpecificResource')) {
             goog.structs.forEach(target.getProperties('oa:hasSelector'), function(selectorUri) {
                 quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(
-                    sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null, null, null));
+                    sc.util.Namespaces.angleBracketWrap(selectorUri), null, null, null));
             }, this);
         }
     }
@@ -425,10 +425,10 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
 
 sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
-    canvasUri = sc.util.Namespaces.wrapWithAngleBrackets(canvasUri);
+    canvasUri = sc.util.Namespaces.angleBracketWrap(canvasUri);
 
     goog.structs.forEach(sc.data.DataModel.VOCABULARY.forCanvasPredicates, function(forCanvasPredicate) {
-        resources.addAll(sc.util.Namespaces.stripAngleBrackets(
+        resources.addAll(sc.util.Namespaces.angleBracketStrip(
             this.databroker.getUrisWithProperty(forCanvasPredicate, canvasUri)
         ));
     }, this);

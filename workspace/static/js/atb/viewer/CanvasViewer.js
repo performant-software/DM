@@ -351,7 +351,7 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     console.log("createTextAnno uri:", uri);
-    var svgUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    var svgUri = sc.util.Namespaces.angleBracketWrap(uri);
     
     var canvasUri = this.viewer.mainViewport.canvas.getUri();
     var canvasResource = this.databroker.getResource(canvasUri);
@@ -364,7 +364,7 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     textEditor.setPurpose('anno');
 
     var newTextResource = this.databroker.createResource(this.databroker.createUuid(), 'dctypes:Text');
-    newTextResource.addProperty('dc:title', sc.util.Namespaces.wrapWithQuotes(textTitle));
+    newTextResource.addProperty('dc:title', sc.util.Namespaces.quoteWrap(textTitle));
     var newTextId = newTextResource.uri;
        
     var newAnno = this.databroker.dataModel.createAnno(newTextId, uri);

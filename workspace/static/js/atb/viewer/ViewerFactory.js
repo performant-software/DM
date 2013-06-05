@@ -10,14 +10,24 @@ atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
 
     var viewer = null;
 
-    if (resource.hasAnyType('dctypes:Text')) {
+    if (resource.hasType('dctypes:Text')) {
         viewer = new atb.viewer.TextEditor(clientApp);
     }
-    else if (resource.hasAnyType(['dms:Canvas', 'oa:SpecificResource'])) {
+    else if (resource.hasType('dms:Canvas')) {
         viewer = new atb.viewer.CanvasViewer(clientApp);
     }
     else if (resource.hasAnyType(['dctypes:Audio', 'dms:AudioSegment'])) {
         viewer = new atb.viewer.AudioViewer(clientApp);
+    }
+    else if (resource.hasAnyType('oa:SpecificResource')) {
+        var selector = resource.getOneResourceByProperty('oa:hasSelector');
+
+        if (selector.hasType('oa:TextQuoteSelector')) {
+            viewer = viewer = new atb.viewer.TextEditor(clientApp);
+        }
+        else if (selector.hasType('oa:SvgSelector')) {
+            viewer = new atb.viewer.CanvasViewer(clientApp);
+        }
     }
 
     return viewer;

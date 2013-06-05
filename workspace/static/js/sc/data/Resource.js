@@ -22,7 +22,7 @@ goog.require('sc.util.Namespaces');
 sc.data.Resource = function(databroker, uri) {
     this.databroker = databroker;
     this.uri = uri;
-    this.bracketedUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    this.bracketedUri = sc.util.Namespaces.angleBracketWrap(uri);
 };
 
 sc.data.Resource.prototype.toString = function() {
@@ -88,7 +88,7 @@ sc.data.Resource.prototype.getUnescapedProperties = function(predicate) {
 
 sc.data.Resource.prototype.escapeProperty = function(property) {
     property = sc.util.Namespaces.stripQuotesAndDatatype(property);
-    property = sc.util.Namespaces.stripAngleBrackets(property);
+    property = sc.util.Namespaces.angleBracketStrip(property);
     property = sc.util.Namespaces.unescapeFromXml(property);
     
     return property;
@@ -124,6 +124,28 @@ sc.data.Resource.prototype.getOneProperty = function(predicate) {
     }
 };
 
+sc.data.Resource.prototype.getResourcesByProperty = function(predicate) {
+    var properties = this.getUnescapedProperties(predicate);
+    var resources = [];
+
+    goog.structs.forEach(properties, function(property) {
+        resources.push(this.databroker.getResource(property));
+    }, this);
+
+    return resources;
+};
+
+sc.data.Resource.prototype.getOneResourceByProperty = function(predicate) {
+    var resources = this.getResourcesByProperty(predicate);
+
+    if (resources.length > 0) {
+        return resources[0];
+    }
+    else {
+        return null;
+    }
+};
+
 sc.data.Resource.prototype.hasPredicate = function(predicate) {
     return this.databroker.getPropertiesForResource(
                                     this.bracketedUri, predicate).length > 0;
@@ -153,9 +175,16 @@ sc.data.Resource.prototype.addProperty = function(predicate, object) {
     return this;
 };
 
+/**
+ * Ensures that a property has only one value by deleting any values for that predicate and adding that one property.
+ */
+sc.data.Resource.prototype.setProperty = function(predicate, object) {
+    return this.deleteProperty(predicate).addProperty(predicate, object);
+};
+
 sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
-    var safePredicate = sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(predicate));
-    var safeObject = opt_object ? sc.util.Namespaces.wrapWithAngleBrackets(this.databroker.namespaces.autoExpand(opt_object)) : null;
+    var safePredicate = sc.util.Namespaces.angleBracketWrap(this.databroker.namespaces.autoExpand(predicate));
+    var safeObject = opt_object ? sc.util.Namespaces.angleBracketWrap(this.databroker.namespaces.autoExpand(opt_object)) : null;
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
         this.databroker.quadStore.forEachQuadMatchingQuery(

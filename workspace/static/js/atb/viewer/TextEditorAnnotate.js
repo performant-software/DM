@@ -179,7 +179,7 @@ atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
 atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
 	var highlight = this.databroker.getResource(highlightUri);
     highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
-    highlight.addProperty('oa:exact', sc.util.Namespaces.wrapWithQuotes(range.getText()));
+    highlight.addProperty('oa:exact', sc.util.Namespaces.quoteWrap(range.getText()));
     // Need a solution for keeping this up to date
     // TODO
     // highlight.addProperty('oa:prefix')
@@ -206,6 +206,16 @@ atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highl
     }, this);
     highlight.deleteAllProperties();
     specificResource.deleteAllProperties();
+};
+
+atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {
+    var elements = this.getAllAnnotationTags();
+    goog.structs.forEach(elements, function(element) {
+    	var highlightUri = atb.viewer.TextEditorAnnotate.getAnnotationId(element);
+    	var highlightResource = this.databroker.getResource(highlightUri);
+
+    	highlightResource.setProperty('oa:exact', sc.util.Namespaces.quoteWrap(jQuery(element).text()));
+    }, this);
 };
 
 
@@ -462,25 +472,22 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
             'Link another resource to this highlight'
 		),
 		new atb.widgets.MenuItem(
-		        "showLinkedAnnos",
-		        createButtonGenerator("atb-radialmenu-button icon-search"),
-		        function(actionEvent)
-		        {
-		            self.showAnnos(object);
-		        }, 
-		        'Show resources linked to this highlight'
-		    ),
+	        "showLinkedAnnos",
+	        createButtonGenerator("atb-radialmenu-button icon-search"),
+	        function(actionEvent) {
+	            self.showAnnos(object);
+	        }, 
+	        'Show resources linked to this highlight'
+	    ),
 		new atb.widgets.MenuItem(
-				'delete_highlight_button',
-				createButtonGenerator('atb-radialmenu-button icon-remove'),
-				function(actionEvent)
-				{
-					self.viewer.hideHoverMenu()
-					self.deleteAnnotation(object);
-
-				},
-                'Delete this highlight'
-			)
+			'delete_highlight_button',
+			createButtonGenerator('atb-radialmenu-button icon-remove'),
+			function(actionEvent) {
+				self.viewer.hideHoverMenu()
+				self.deleteAnnotation(object);
+			},
+            'Delete this highlight'
+		)
 	];
     menuButtons.reverse();
     
@@ -577,7 +584,7 @@ atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function (opt_ra
 /**
  * selectAnnotationSpan()
  **/
-atb.viewer.TextEditorAnnotate.prototype.selectAnnotationSpan = function (tag, mouseEvent) {
+atb.viewer.TextEditorAnnotate.prototype.selectAnnotationSpan = function (tag) {
 	// Prevents firing of delayed change events
 	this.fieldObject.manipulateDom(function() {
 		this.deselectAllHighlights();
@@ -660,7 +667,8 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
     
     var targetTextTitle = this.viewer.getTitle();
     
-    var myResourceId = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
+    var highlightUri = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
+    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
 
     var newTextId = this.databroker.createUuid();
     var annoId = this.databroker.createUuid();
@@ -675,19 +683,20 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
     
     this.viewer.setAnnotationBody(newTextId);
 
-    this.databroker.dataModel.createAnno(newTextId, myResourceId);
+    this.databroker.dataModel.createAnno(newTextId, specificResourceUri);
 
     this.viewer.toggleAnnotationMode(true);
 
     this.viewer.openRelatedViewer(annoBodyEditor);
 };
 
-atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(tag) {
-	var myResourceId = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
+atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(spanElem) {
+	var highlightUri = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
     
-    this.viewer.clientApp.createAnnoLink(myResourceId);
+    this.viewer.clientApp.createAnnoLink(specificResourceUri);
     
-    this.selectAnnotationSpan(tag);
+    this.selectAnnotationSpan(spanElem);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.showAnnos = function(tag) {

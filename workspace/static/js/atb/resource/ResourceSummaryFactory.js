@@ -18,7 +18,14 @@ atb.resource.ResourceSummaryFactory.createFromUri = function(uri, clickHandler, 
     }
     
     else if (resource.hasAnyType('oac:SpecificResource')) {
-        result = new atb.resource.MarkerSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        var selector = resource.getOneResourceByProperty('oa:hasSelector');
+
+        if (selector.hasType('oa:TextQuoteSelector')) {
+            result = new atb.resource.TextHighlightSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        }
+        else if (selector.hasType('oa:SvgSelector')) {
+            result = new atb.resource.MarkerSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        }
     }
     
     else if (resource.hasAnyType('dms:Canvas')) {
@@ -31,7 +38,7 @@ atb.resource.ResourceSummaryFactory.createFromUri = function(uri, clickHandler, 
     
     else {
         if (console.log) {
-            console.error('Unrecognized resource type', resource);
+            console.error('Unrecognized resource type', resource.toString());
         }
         
         // throw 'Unrecognized resource type in ResourceSummaryFactory: ' + type;
