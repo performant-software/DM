@@ -176,7 +176,7 @@ atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
     return this.databroker.getResource(this.viewer.uri);
 };
 
-atb.viewer.TextEditorAnnotate.prototype.createRangeResource = function(highlightUri, range) {
+atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
 	var highlight = this.databroker.getResource(highlightUri);
     highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
     highlight.addProperty('oa:exact', sc.util.Namespaces.wrapWithQuotes(range.getText()));
@@ -192,10 +192,20 @@ atb.viewer.TextEditorAnnotate.prototype.createRangeResource = function(highlight
 
     var anno = this.databroker.getResource(this.databroker.createUuid());
     anno.addProperty('rdf:type', 'oa:Annotation');
-    anno.addProperty('oa:hasBody', highlight.bracketedUri);
     anno.addProperty('oa:hasTarget', this.getTextResource().bracketedUri);
 
     return highlight;
+};
+
+atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highlightUri) {
+    var highlight = this.databroker.getResource(highlightUri);
+    var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri));
+
+    goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
+    	anno.deleteProperty('oa:hasTarget', specificResource);
+    }, this);
+    highlight.deleteAllProperties();
+    specificResource.deleteAllProperties();
 };
 
 
@@ -380,7 +390,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
     }
 
 
-    var highlightResource = this.createRangeResource(highlightUri, range);
+    var highlightResource = this.createHighlightResource(highlightUri, range);
 };
 
 /**
@@ -388,11 +398,15 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
  * @param {node} annotation The annotation to delete
  */
 atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(element) {
-    if(annotation) {
-        jQuery(element).detach();
+	if (jQuery(element).children().length > 0) {
+		jQuery(element).unwrap();
+	}
+	else {
+		jQuery(element).replaceWith(jQuery(element).text());
+	}
 
-        //TODO: Databroker delete code
-    }
+    var uri = atb.viewer.TextEditorAnnotate.getAnnotationId(element);
+    this.deleteHighlightResource(uri);
 };
 
 /**
@@ -565,7 +579,7 @@ atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function (opt_ra
  **/
 atb.viewer.TextEditorAnnotate.prototype.selectAnnotationSpan = function (tag, mouseEvent) {
 	// Prevents firing of delayed change events
-	this.field.manipulateDom(function() {
+	this.fieldObject.manipulateDom(function() {
 		this.deselectAllHighlights();
 		jQuery(tag).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
 	}, true, this);
@@ -631,8 +645,8 @@ atb.viewer.TextEditorAnnotate.prototype.setHoverAnnotationHelper = function(hove
 
 atb.viewer.TextEditorAnnotate.prototype.deselectAllHighlights = function() {
 	// Prevents firing of delayed change events
-	this.field.manipulateDom(function() {
-		jQuery(this.getAllAnnotationTags()).removeClass(enforceForCssClass);
+	this.fieldObject.manipulateDom(function() {
+		jQuery(this.getAllAnnotationTags()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
 	}, true, this);
 };
 

@@ -139,19 +139,19 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     var canvasUri = this.viewport.canvas.getUri();
 
     var selector = this.databroker.createResource(
-        contentUri, 'oac:SvgSelector');
+        contentUri, 'oa:SvgSelector');
     selector.addType('cnt:ContentAsText');
     selector.addProperty('cnt:chars', '"' + svgString + '"');
     selector.addProperty('cnt:characterEncoding', '"UTF-8"');
     
     var specificResource = this.databroker.createResource(
-        this.databroker.createUuid(), 'oac:SpecificResource');
-    specificResource.addProperty('oac:hasSource', '<' + canvasUri + '>');
-    specificResource.addProperty('oac:hasSelector', selector.bracketedUri);
+        this.databroker.createUuid(), 'oa:SpecificResource');
+    specificResource.addProperty('oa:hasSource', '<' + canvasUri + '>');
+    specificResource.addProperty('oa:hasSelector', selector.bracketedUri);
 
     var annotation = this.databroker.createResource(
-        this.databroker.createUuid(), 'oac:Annotation');
-    annotation.addProperty('oac:hasTarget', specificResource.bracketedUri);
+        this.databroker.createUuid(), 'oa:Annotation');
+    annotation.addProperty('oa:hasTarget', specificResource.bracketedUri);
     this.databroker.scheduleForSync(annotation);
 
     this.resetFeature();

@@ -277,7 +277,7 @@ sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) 
     return manifestUris.getValues();
 };
 
-sc.data.DataModel.prototype.findSvgSelectorSpecificResourceUri = function(selectorUri) {
+sc.data.DataModel.prototype.findSelectorSpecificResourceUri = function(selectorUri) {
     var specificTargets = [];
     this.databroker.quadStore.forEachQuadMatchingQuery(
         null, this.databroker.namespaces.expand('oa', 'hasSelector'), sc.util.Namespaces.wrapWithAngleBrackets(selectorUri), null,

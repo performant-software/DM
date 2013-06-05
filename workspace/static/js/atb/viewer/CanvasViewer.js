@@ -6,6 +6,7 @@ goog.require('atb.ui.InfoPane');
 
 goog.require('sc.canvas.CanvasViewer');
 goog.require('sc.canvas.FabricCanvasFactory');
+goog.require('atb.viewer.TextEditor');
 
 
 atb.viewer.CanvasViewer = function(clientApp) {
@@ -153,7 +154,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     var id = this.webService.resourceUriToId(uri);
     var self = this;
-    var specificResourceUri = this.databroker.dataModel.findSvgSelectorSpecificResourceUri(uri) || uri;
+    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri) || uri;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
@@ -233,7 +234,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
 atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var uri = event.uri;
     var feature = event.getFeature();
-    var specificResourceUri = this.databroker.dataModel.findSvgSelectorSpecificResourceUri(uri);
+    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
 
     console.log('resource click', event, uri, feature)
     
@@ -261,7 +262,7 @@ atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
         this.setCanvasByUri(resource.getOneProperty('oa:hasSource'));
     }
     else if (resource.hasAnyType('oa:SvgSelector')) {
-        var specificResource = this.databroker.getResource(this.databroker.dataModel.findSvgSelectorSpecificResourceUri(uri));
+        var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(uri));
         this.setCanvasByUri(specificResource.getOneProperty('oa:hasSource'));
     }
 };
@@ -309,17 +310,20 @@ atb.viewer.CanvasViewer.prototype.resize = function(width, height) {
 
 atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
     var viewport = this.viewer.mainViewport;
-    
     viewport.canvas.removeObjectByUri(uri);
     viewport.requestFrameRender();
+
+    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
     
-    var id = this.webService.resourceUriToId(uri);
+    var selectorResource = this.databroker.getResource(uri);
+    var specificResource = this.databroker.getResource(specificResourceUri);
+    goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
+        anno.deleteProperty('oa:hasTarget', specificResource);
+    }, this);
+    selectorResource.deleteAllProperties();
+    specificResource.deleteAllProperties();
     
-    // var webService = this.clientApp.getWebService();
-    // webService.withDeletedResource(id, function (response) {}, this, jQuery.proxy(this.flashErrorIcon, this));
-    
-    var event = new goog.events.Event('resource deleted', id);
-    
+    var event = new goog.events.Event('resource-deleted', uri);
     var eventDispatcher = this.clientApp.getEventDispatcher();
     eventDispatcher.dispatchEvent(event);
 };
