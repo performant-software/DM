@@ -36,7 +36,7 @@ sc.util.Namespaces.isAngleBracketWrapped = function(str) {
     return str.charAt(0) == '<' && str.charAt(str.length - 1) == '>';
 };
 
-sc.util.Namespaces.stripAngleBrackets = function (str) {
+sc.util.Namespaces.angleBracketStrip = function (str) {
     var remover = function(str) {
         if (sc.util.Namespaces.isAngleBracketWrapped(str)) {
             return str.substring(1, str.length - 1);
@@ -60,7 +60,7 @@ sc.util.Namespaces.stripAngleBrackets = function (str) {
     }
 };
 
-sc.util.Namespaces.wrapWithAngleBrackets = function(str) {
+sc.util.Namespaces.angleBracketWrap = function(str) {
     if (sc.util.Namespaces.isAngleBracketWrapped(str) ||
         sc.util.Namespaces.isBNode(str)) {
         return str;
@@ -70,15 +70,15 @@ sc.util.Namespaces.wrapWithAngleBrackets = function(str) {
     }
 };
 
-sc.util.Namespaces.wrapWithQuotes = function(str) {
+sc.util.Namespaces.quoteWrap = function(str) {
     str = str.replace('"', '\"');
     return ['"', str, '"'].join('');
 };
 
 sc.util.Namespaces.isQuoteWrapped = function(str) {
-    if ((str.charAt(0) == '"') && (str.charAt(str.length - 1) == '"')) {
+    if ((str.charAt(0) == '"') && (str.charAt(str.length - 1) == '"') && (str.charAt(str.length - 2) != '\\')) {
         return true;
-    } else if ((str.charAt(0) == "'") && (str.charAt(str.length - 1) == "'")) {
+    } else if (sc.util.Namespaces.quotesAndDatatypeRegex.test(str)) {
         return true;
     } else {
         return false;
@@ -109,9 +109,11 @@ sc.util.Namespaces.stripWrappingQuotes = function(str) {
     }
 };
 
+sc.util.Namespaces.quotesAndDatatypeRegex = /^"(.*)"\^\^<(.*)>$/;
+
 sc.util.Namespaces.stripQuotesAndDatatype = function(str) {
     var remover = function(str) {
-        var match = /^"(.*)"\^\^<(.*)>$/.exec(str);
+        var match = sc.util.Namespaces.quotesAndDatatypeRegex.exec(str);
         
         if (match) {
             return match[1];
@@ -274,7 +276,7 @@ sc.util.Namespaces.prototype.expand = function(prefix, postfix) {
  * @return {string} The complete uri.
  */
 sc.util.Namespaces.prototype.prefix = function(uri) {
-    uri = sc.util.Namespaces.stripAngleBrackets(uri);
+    uri = sc.util.Namespaces.angleBracketStrip(uri);
     var matchedBaseUri = null;
     var matchedPrefix = null;
 
@@ -293,7 +295,7 @@ sc.util.Namespaces.prototype.prefix = function(uri) {
         return matchedPrefix + ':' + goog.string.removeAt(uri, 0, matchedBaseUri.length);
     }
     else if (!sc.util.Namespaces.isBNode(uri)) {
-        return sc.util.Namespaces.wrapWithAngleBrackets(uri);
+        return sc.util.Namespaces.angleBracketWrap(uri);
     }
     else {
         return uri;

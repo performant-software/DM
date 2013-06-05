@@ -412,7 +412,7 @@ sc.data.Databroker.prototype.getAllQuadsForSave = function(quads) {
     subjectsAndObjects = subjectsAndObjects.getValues();
     
     for (var i=0, len=subjectsAndObjects.length; i<len; i++) {
-        var uri = sc.util.Namespaces.wrapWithAngleBrackets(subjectsAndObjects[i]);
+        var uri = sc.util.Namespaces.angleBracketWrap(subjectsAndObjects[i]);
         
         var relatedQuads = this.quadStore.query(uri, null, null, null);
         additionalQuads = additionalQuads.concat(relatedQuads);
@@ -549,7 +549,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.knowsAboutResource = function(uri) {
-    uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    uri = sc.util.Namespaces.angleBracketWrap(uri);
 
     var numQuads = this.quadStore.numQuadsMatchingQuery(uri, null, null, null) +
                    this.quadStore.numQuadsMatchingQuery(null, uri, null, null) +
@@ -585,14 +585,14 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
     });
     
     for (var i=0, len=equivalentUris.length; i<len; i++) {
-        var equivalentUri = sc.util.Namespaces.wrapWithAngleBrackets(equivalentUris[i]);
+        var equivalentUri = sc.util.Namespaces.angleBracketWrap(equivalentUris[i]);
 
         this.quadStore.forEachQuadMatchingQuery(
             equivalentUri, null, null, null,
             function(quad) {
                 ddict.get('__context__:' + (quad.context == null ? '__global__' : quad.context)).
                     get(this.namespaces.prefix(quad.predicate)).
-                    add(this.namespaces.prefix(quad.object));
+                    add(sc.util.Namespaces.isUri(quad.object) ? this.namespaces.prefix(quad.object) : quad.object);
             }, this
         );
     }
@@ -616,7 +616,7 @@ sc.data.Databroker.prototype.getResource = function(uri) {
         return new sc.data.Resource(this, uri.uri);
     }
     else {
-        uri = sc.util.Namespaces.stripAngleBrackets(uri);
+        uri = sc.util.Namespaces.angleBracketStrip(uri);
         return new sc.data.Resource(this, uri);
     }
 };
@@ -626,7 +626,7 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
     if (uri == null) {
         uri = this.createUuid();
     }
-    uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    uri = sc.util.Namespaces.angleBracketWrap(uri);
 
     if (type) {
         var quad = new sc.data.Quad(
@@ -658,7 +658,7 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
     
     for (var i=0, len=uris.length; i<len; i++) {
         var uri = uris[i];
-        uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+        uri = sc.util.Namespaces.angleBracketWrap(uri);
         
         sameUris.add(uri);
         
@@ -676,13 +676,13 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
         return sameUris.getValues();
     }
     else {
-        return sc.util.Namespaces.stripAngleBrackets(sameUris.getValues());
+        return sc.util.Namespaces.angleBracketStrip(sameUris.getValues());
     }
 };
 
 sc.data.Databroker.prototype.areEquivalentUris = function(uriA, uriB) {
-    uriA = sc.util.Namespaces.wrapWithAngleBrackets(uriA);
-    uriB = sc.util.Namespaces.wrapWithAngleBrackets(uriB);
+    uriA = sc.util.Namespaces.angleBracketWrap(uriA);
+    uriB = sc.util.Namespaces.angleBracketWrap(uriB);
     
     if (uriA == uriB) {
         return true;
@@ -715,7 +715,7 @@ sc.data.Databroker.prototype.getUrisSetWithProperty = function(predicate, object
 sc.data.Databroker.prototype.getUrisWithProperty = function(predicate, object) {
     var uris = this.getUrisSetWithProperty(predicate, object);
     
-    return sc.util.Namespaces.stripAngleBrackets(uris.getValues());
+    return sc.util.Namespaces.angleBracketStrip(uris.getValues());
 };
 
 sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predicate) {
@@ -727,7 +727,7 @@ sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predica
         var equivalentUri = equivalentUris[i];
 
         properties.addAll(this.quadStore.objectsSetMatchingQuery(
-            sc.util.Namespaces.wrapWithAngleBrackets(equivalentUri),
+            sc.util.Namespaces.angleBracketWrap(equivalentUri),
             this.namespaces.autoExpand(predicate),
             null,
             null));
@@ -743,7 +743,7 @@ sc.data.Databroker.prototype.getPropertiesForResource = function(uri, predicate)
         return properties.getValues();
     }
     else {
-        return sc.util.Namespaces.stripAngleBrackets(properties.getValues());
+        return sc.util.Namespaces.angleBracketStrip(properties.getValues());
     }
 };
 
@@ -801,26 +801,26 @@ sc.data.Databroker.prototype.guessResourceUrls = function(uri) {
 };
 
 sc.data.Databroker.prototype.getResourceDescribers = function(uri) {
-    uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    uri = sc.util.Namespaces.angleBracketWrap(uri);
     
     var describerUrls = this.getPropertiesSetForResource(uri, 'ore:isDescribedBy');
     if (describerUrls.getCount() == 0) {
         describerUrls.addAll(this.getUrisSetWithProperty('ore:describes', uri));
     }
     
-    return sc.util.Namespaces.stripAngleBrackets(describerUrls.getValues());
+    return sc.util.Namespaces.angleBracketStrip(describerUrls.getValues());
 };
 
 sc.data.Databroker.prototype.getResourcePartUris = function(uri) {
-    uri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    uri = sc.util.Namespaces.angleBracketWrap(uri);
     
-    return sc.util.Namespaces.stripAngleBrackets(
+    return sc.util.Namespaces.angleBracketStrip(
         this.getUrisWithProperty(sc.data.DataModel.VOCABULARY.isPartOf, uri)
     );
 };
 
 sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
-    url = sc.util.Namespaces.wrapWithAngleBrackets(url);
+    url = sc.util.Namespaces.angleBracketWrap(url);
 
     var uris = new goog.structs.Set();
 
@@ -835,7 +835,7 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
         null,
         null));
     
-    return sc.util.Namespaces.stripAngleBrackets(uris.getValues());
+    return sc.util.Namespaces.angleBracketStrip(uris.getValues());
 };
 
 /**
@@ -844,7 +844,7 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
  * @return {Array.<string>}
  */
 sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
-    var bracketedListUri = sc.util.Namespaces.wrapWithAngleBrackets(listUri);
+    var bracketedListUri = sc.util.Namespaces.angleBracketWrap(listUri);
     
     var uris = [];
 
@@ -861,7 +861,7 @@ sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
     var nil = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
 
     while (rest && rest != nil &&
-           rest != sc.util.Namespaces.wrapWithAngleBrackets(nil)) {
+           rest != sc.util.Namespaces.angleBracketWrap(nil)) {
         first = this.getPropertiesForResource(rest, 'rdf:first')[0];
 
         if (first) {
@@ -874,7 +874,7 @@ sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
         rest = this.getPropertiesForResource(rest, 'rdf:rest')[0];
     }
 
-    return sc.util.Namespaces.stripAngleBrackets(uris);
+    return sc.util.Namespaces.angleBracketStrip(uris);
 };
 
 sc.data.Databroker.prototype.getImageSrc = function(uri, opt_width, opt_height) {
@@ -1000,7 +1000,7 @@ sc.data.Databroker.prototype.sendResource = function(uri, method) {
         quadsToPost = this.quadStore.query(resource.bracketedUri, null, null, null);
 
         url = this.restUrl(this.currentProject, resType,
-                           sc.util.Namespaces.stripAngleBrackets(uri), {});
+                           sc.util.Namespaces.angleBracketStrip(uri), {});
     }
     else if (resource.hasType('oac:Annotation')) {
         resType = this.RESTYPE.annotation;
@@ -1079,7 +1079,7 @@ sc.data.Databroker.getUri = function(obj) {
         return null;
     }
     else if (goog.isString(obj)) {
-        return sc.util.Namespaces.stripAngleBrackets(obj);
+        return sc.util.Namespaces.angleBracketStrip(obj);
     }
     else if (goog.isFunction(obj.getUri)) {
         return obj.getUri();

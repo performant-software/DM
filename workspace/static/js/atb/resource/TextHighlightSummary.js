@@ -16,18 +16,17 @@ goog.require('atb.resource.ResourceSummary');
  * @param resource {atb.resource.TextHighlightResource}
  * @param div {HTML Element}
  */
-atb.resource.TextHighlightSummary = function (resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, resourceId, clickHandler, clickHandlerScope, resource, clientApp, opt_domHelper, opt_styleOptions);
-    
-    this.resourceType = 'Highlight';
-	
-    this.html = resource.getContents();
-    this.user = resource.getUser();
-    this.title = this.generateTitle();
+atb.resource.TextHighlightSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+
+    this.highlightResource = this.databroker.getResource(this.resource.getOneProperty('oa:hasSelector'));
+    this.parentResource = this.databroker.getResource(this.resource.getOneProperty('oa:hasSource'));
     
     this.decorate();
 };
 goog.inherits(atb.resource.TextHighlightSummary, atb.resource.ResourceSummary);
+
+atb.resource.TextHighlightSummary.prototype.type = 'Highlight';
 
 /**
  * decorate()
@@ -47,10 +46,12 @@ atb.resource.TextHighlightSummary.prototype.decorate = function (opt_label) {
     jQuery(this.titleDiv).text(this.title);
     jQuery(this.div).prepend(this.titleDiv);
     */
+   
+    var exactText = this.highlightResource.getOneProperty('oa:exact');
 
-    var cutoff = this.determineCutoff(this.html, 45);
-    var truncHtml = this.html.substring(0, cutoff);
-    if (cutoff != this.html.length) {
+    var cutoff = this.determineCutoff(exactText, 45);
+    var truncHtml = exactText.substring(0, cutoff);
+    if (cutoff != exactText.length) {
         truncHtml += '...';
     }
 
@@ -66,7 +67,7 @@ atb.resource.TextHighlightSummary.prototype.decorate = function (opt_label) {
     jQuery(this.textBodySpan).addClass('atb-resourcesummary-textbody');
     this.textBody.appendChild(this.textBodySpan);
     jQuery(this.textBodySpan).html(truncHtml)
-    var textTitleText = this.domHelper.createTextNode(" in " + this.resource.getTextTitle());
+    var textTitleText = this.domHelper.createTextNode(" in " + this.parentResource.getOneProperty('dc:title'));
     jQuery(this.textBody).append(textTitleText);
     jQuery(this.div).append(this.textBody);
 	
@@ -91,15 +92,21 @@ atb.resource.TextHighlightSummary.prototype.determineCutoff = function (text, li
 
 atb.resource.TextHighlightSummary.prototype.generateTitle = function () {
     var result = '';
+
+    var exactText = this.highlightResource.getOneProperty('oa:exact');
     
-    var cutoff = this.determineCutoff(this.html, 45);
+    var cutoff = this.determineCutoff(exactText, 45);
     
-    result += '"' + this.html.substring(0, cutoff);
+    result += '"' + exactText.substring(0, cutoff);
     
-    if (cutoff != this.html.length)
+    if (cutoff != exactText.length)
         result += '...';
     
-    result += '" in ' + this.resource.getTextTitle();
+    result += '" in ' + this.parentResource.getOneProperty('dc:title');
     
     return result;
+};
+
+atb.resource.TextHighlightSummary.prototype.getSortTitle = function() {
+    return this.highlightResource.getOneProperty('oa:exact') + this.parentResource.getOneProperty('dc:title');
 };

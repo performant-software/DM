@@ -396,6 +396,10 @@ atb.resource.ResourceSummary.prototype.getResourceType = function () {
     return this.resourceType;
 }; 
 
+atb.resource.ResourceSummary.prototype.getSortTitle = function() {
+    return this.resource.getOneProperty('dc:title') || '';
+};
+
 
 
 // Static methods:
@@ -417,8 +421,8 @@ atb.resource.ResourceSummary.sortByTitle = function (summaryA, summaryB) {
         }
     }
     
-    var aTitle = getTitle(summaryA);
-    var bTitle = getTitle(summaryB);
+    var aTitle = summaryA.getSortTitle();
+    var bTitle = summaryB.getSortTitle();
     
     if (aTitle > bTitle)
         return 1;

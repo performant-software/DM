@@ -103,7 +103,7 @@ goog.inherits(atb.viewer.TextEditor, atb.viewer.Viewer);
 
 atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
 
-atb.viewer.TextEditor.prototype.autoSaveInterval = 10 * 1000;
+atb.viewer.TextEditor.prototype.autoSaveInterval = 5 * 1000;
 
 /**
  * getSanitizedHtml()
@@ -197,8 +197,11 @@ atb.viewer.TextEditor.prototype.saveContents = function (
     this.unsavedChanges = false;
 
     var resource = this.databroker.getResource(this.resourceId);
-    resource.deleteProperty('dc:title').addProperty('dc:title', '"' + this.getTitle() + '"');
-    resource.deleteProperty('cnt:chars').addProperty('cnt:chars', '"' + this.getSanitizedHtml().replace('"', '\\"') + '"');
+    resource.setProperty('dc:title', '"' + this.getTitle() + '"');
+    resource.setProperty('cnt:chars', '"' + this.getSanitizedHtml().replace('"', '\\"') + '"');
+
+    var highlightPlugin = this.field.getPluginByClassId('Annotation');
+    highlightPlugin.updateAllHighlightResources();
 };
 
 /**
@@ -220,7 +223,7 @@ atb.viewer.TextEditor.prototype.scrollIntoView = function (tag) {//console.log(t
             
             var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
             var hoverAnnotationId = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
-            textEditorAnnotate.setSelectedAnnotationHelper(hoverAnnotationId, tag);
+            textEditorAnnotate.selectAnnotationSpan(tag);
         }, this);
         
     	var t = setTimeout(scrollFunction, 100);
@@ -228,7 +231,7 @@ atb.viewer.TextEditor.prototype.scrollIntoView = function (tag) {//console.log(t
     }
 };
 
-atb.viewer.TextEditor.prototype.scrollIntoViewByResourceId = function (resourceId) {
+atb.viewer.TextEditor.prototype.scrollIntoViewByHighlightUri = function (resourceId) {
     var tag = this.field.getPluginByClassId('Annotation').getHighlightElementByUri(resourceId);
 
     this.scrollIntoView(tag);
@@ -553,45 +556,27 @@ atb.viewer.TextEditor.prototype.syncTitle = function() {
     }
 };
 
-atb.viewer.TextEditor.prototype.loadResourceById = function (resourceId, opt_doAfter, opt_doAfterScope) {
-    this.showLoadingSpinner();
-    
-    this.webService.withResource(
-        resourceId,
-        function (text) {
-            this.hideLoadingSpinner();
-            
-            this.loadResource(text);
-            
-            this.unsavedChanges = false;
-            
-            if (opt_doAfter) {
-            	if (opt_doAfterScope) {
-            		opt_doAfter.call(opt_doAfterScope);
-            	}
-            	else {
-            		opt_doAfter.call(this);
-            	}
-            }
-            this.crawler.crawl([resourceId], '', function () {}, this, null,
-                               this.flashErrorIcon);
-        },
-        this,
-        atb.Util.scopeAsyncHandler(this.flashErrorIcon, this)
-    );
-};
-
 atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
     if (resource.hasType('dctypes:Text')) {
         this.resourceId = resource.getUri();
         this.uri = resource.getUri();
-        this.setTitle(resource.getOneProperty('dc:title').replace('\\"', '"'));
-        this.setHtml(resource.getOneProperty('cnt:chars').replace('\\"', '"'));
+        this.setTitle(resource.getOneProperty('dc:title') || '');
+        this.setHtml(resource.getOneProperty('cnt:chars') || '');
 
         var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
         textEditorAnnotate.addListenersToAllHighlights();
+    }
+    else if (resource.hasType('oa:SpecificResource')) {
+        var selector = resource.getOneResourceByProperty('oa:hasSelector');
+
+        if (selector.hasAnyType(['oa:TextQuoteSelector', 'oa:TextPositionSelector'])) {
+            var textResource = resource.getOneResourceByProperty('oa:hasSource');
+
+            this.loadResourceByUri(textResource.bracketedUri);
+            this.scrollIntoViewByHighlightUri(selector.uri);
+        }
     }
     else {
         throw {
@@ -1289,8 +1274,8 @@ atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
     highlightPlugin.unselectAllHighlights();
     this.unHighlightDocumentIcon();
     
-    var targetsAndBodies = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
-    goog.array.forEach(bodiesAndTargets, function (uri) {
+    var bodiesAndTargets = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
+    goog.structs.forEach(bodiesAndTargets, function (uri) {
        try {
            var tag = highlightPlugin.getHighlightElementByUri(uri);
            if (tag) {

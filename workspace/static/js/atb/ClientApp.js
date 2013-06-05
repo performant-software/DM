@@ -168,7 +168,7 @@ atb.ClientApp.prototype.createAnnoLink = function (bodyId, opt_annoId) {
     this.linkingInProgress = true;
     
     this.annoLinkCreationBodyId = bodyId;
-    this.annoLinkCreationAnnoId = opt_annoId;
+    this.annoLinkCreationAnnoId = opt_annoId || this.databroker.createUuid();
     
     var modeEnteredEvent = new atb.events.LinkingModeEntered(this.annoLinkCreationAnnoId, this.eventDispatcher);
     this.eventDispatcher.dispatchEvent(modeEnteredEvent);
