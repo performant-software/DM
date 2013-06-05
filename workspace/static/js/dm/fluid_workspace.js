@@ -101,6 +101,19 @@ var openCanvas = function(uri, urisInOrder, index) {
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
+var openBlankTextDocument = function() {
+    var textResource = databroker.createResource(null, 'dctypes:Text');
+    textResource.setProperty('dc:title', '"Untitled text document"');
+
+    databroker.addResourceToCurrentProject(textResource);
+
+    var viewerContainer = new atb.viewer.ViewerContainer();
+    var viewer = new atb.viewer.TextEditor(clientApp);
+    viewerGrid.addViewerContainer(viewerContainer);
+    viewerContainer.setViewer(viewer);
+    viewer.loadResourceByUri(textResource.uri);
+};
+
 var setupCurrentProject = function(clientApp, username) {
     var db = clientApp.databroker;
     var url = db.restUrl(null, db.RESTYPE.user, username, null);
