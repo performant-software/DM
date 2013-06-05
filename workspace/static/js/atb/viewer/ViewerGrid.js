@@ -150,4 +150,5 @@ atb.viewer.ViewerGrid.prototype.resizeAllContainers = function() {
 
 atb.viewer.ViewerGrid.prototype._onWindowResize = function(event) {
     this.resizeAllContainers();
+    window.setTimeout(this.resizeAllContainers.bind(this), 20);
 };
