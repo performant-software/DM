@@ -622,24 +622,13 @@ sc.data.Databroker.prototype.getResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.createResource = function(uri, type) {
-    console.log("createResource(uri, type): ", uri, type); 
-    if (uri == null) {
-        uri = this.createUuid();
-    }
-    uri = sc.util.Namespaces.angleBracketWrap(uri);
+    var resource = this.getResource(uri || this.createUuid());
 
     if (type) {
-        var quad = new sc.data.Quad(
-            uri,
-            this.namespaces.expand('rdf', 'type'),
-            this.namespaces.autoExpand(type),
-            null
-        );
-        
-        this.addNewQuad(quad);
+        resource.addProperty('rdf:type', type);
     }
     
-    return this.getResource(uri);
+    return resource;
 };
 
 sc.data.Databroker.prototype.scheduleForSync = function(resource) {
@@ -1123,6 +1112,11 @@ sc.data.Databroker.prototype.addNewProject = function(uri) {
     if (isNewProject) this.allProjects.push(uri);
 
     return isNewProject;
+};
+
+sc.data.Databroker.prototype.addResourceToCurrentProject = function(resource) {
+    var project = this.getResource(this.currentProject);
+    project.addProperty('ore:aggregates', resource);
 };
 
 

@@ -35,6 +35,7 @@
 
 {% block header_buttons %}
   <li id="new_project_buton"><a href="#newProjectModal" role="button" data-toggle="modal">new project</a></li>
+  <li id="new_text_button"><a href="#" role="button">new text document</a></li>
   <li id="my_resources_button"><a href="#workingResourcesModal" role="button" data-toggle="modal">my resources</a></li>
   <li id="repositories_button"><a href="#repoBrowserModal" role="button" data-toggle="modal">repositories</a></li>
   <li class="dropdown">
@@ -159,6 +160,10 @@
 
   initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", 
                 styleRoot, staticUrl);
+
+  $("#new_text_button").click(function(e) {
+    openBlankTextDocument();
+  });
 
 
   // Begin script for layout selection
