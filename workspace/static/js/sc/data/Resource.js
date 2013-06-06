@@ -184,7 +184,7 @@ sc.data.Resource.prototype.setProperty = function(predicate, object) {
 
 sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
     var safePredicate = sc.util.Namespaces.angleBracketWrap(this.databroker.namespaces.autoExpand(predicate));
-    var safeObject = opt_object ? sc.util.Namespaces.angleBracketWrap(this.databroker.namespaces.autoExpand(opt_object)) : null;
+    var safeObject = opt_object ? this.databroker.namespaces.autoExpand(opt_object) : null;
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
         this.databroker.quadStore.forEachQuadMatchingQuery(
