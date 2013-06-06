@@ -292,7 +292,9 @@ sc.data.Databroker.prototype.processJQueryRdf = function(rdf, url, context) {
         var jqTriple = jqTriples[i];
 
         var quad = sc.data.Quad.createFromRdfqueryTriple(jqTriple, context);
-        this.quadStore.addQuad(quad);
+        if (! this.quadStore.containsQuad(quad)) {
+            this.quadStore.addQuad(quad);
+        }
     }
 };
 
