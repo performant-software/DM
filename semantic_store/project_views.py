@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 
 from rdflib.graph import Graph, ConjunctiveGraph
 import rdflib
@@ -10,14 +10,16 @@ from .namespaces import ns
 
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, bind_namespaces
-from semantic_store.projects import create_project_graph
+from semantic_store.projects import create_project_graph, create_project_user_graph
 from semantic_store.permissions import Permission
+
+from semantic_store import uris
 
 from settings_local import SITE_ATTRIBUTES
 
 from django.contrib.auth.models import User
 
-from rdflib import BNode, Literal
+from rdflib import BNode, Literal, URIRef
 
 
 def create_project_from_request(request):
@@ -48,12 +50,13 @@ def create_project_from_request(request):
                     }""", initNs = ns)
 
     # Description needs to be referenced inside the try-except and outside
-    # Declared as None type because create_project knows not to do anything
+    # # declared as None type because create_project knows not to do anything
     # # if no description is found    
     description = None
 
     # Query for description wrapped in try-except statement
-    # Description is an optional field, so 
+    # Description is an optional field, so it should not break things if it
+    # # does not exist
     try:
         query2 = g.query("""SELECT ?description
                          WHERE{
@@ -78,11 +81,12 @@ def create_project_from_request(request):
         for n in t[1].split("/"):
             name = n
         user = User.objects.get(username = name)
-
+        
         title = t[2]
 
         create_project(user, identifier, host, title = title, description = description)
-        # If you want to see/manipulated the new data, uncomment the following
+        create_project_user_graph(host, name, identifier)
+        # If you want to see/manipulate the new data, uncomment the following
         #main_graph = ConjunctiveGraph(store=rdfstore(), identifier=identifier)
 
 
@@ -96,14 +100,25 @@ def create_project(user, project_identifier, host, title = Literal("Default proj
     if (description):
         g.add((project, NS.dcterm['description'], Literal(description)))
 
-    create_project_graph(g, project, project_identifier, host, user.email)
+    create_project_graph(g, project, project_identifier, host, title, user.email)
 
     ProjectPermission.objects.create(identifier=project_identifier,
                                      user=user,
                                      permission=Permission.read_write)
 
+
+# Restructured read_project
+# Previously, when hitting multiple project urls in quick succession, a 500 
+# # error occurred occassionally since the graph with the information about
+# # all projects wasn't closed before the next url was hit
 def read_project(request, uri):
-    pass
+    uri = uris.uri('semantic_store_projects', uri=uri)
+    project_g = Graph(store=rdfstore(), identifier=uri)
+    
+    if len(project_g) >0:
+        return HttpResponse(project_g.serialize(), mimetype='text/xml')
+    else:
+        return HttpResponseNotFound()
 
 
 def update_project(request, uri):

@@ -19,6 +19,7 @@ from .validators import AnnotationValidator
 from .annotation_views import create_or_update_annotations, get_annotations, \
     search_annotations
 from .project_views import create_project_from_request, read_project, update_project, delete_project
+from semantic_store import uris
 
 
 def repositories(request, uri=None):
@@ -158,3 +159,18 @@ def add_working_resource(request, uri):
         return HttpResponseNotAllowed(['POST', 'GET'])
     else:
         return HttpResponseNotAllowed(['POST', 'GET'])
+
+def display_graph(request, identifier):
+    print identifier
+    g = Graph(store=rdfstore(), identifier = identifier)
+    print g #, g.serialize()
+    #output =allprojects_g.serialize()
+    print "serialized"
+    for t in g:
+        print t
+    #output = g.serialize()
+    #print output
+
+    return HttpResponse(output, mimetype="application/xhtml+xml")
+
+

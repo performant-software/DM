@@ -47,7 +47,7 @@ sc.data.Databroker = function(options) {
     this.newQuadStore = new sc.data.QuadStore();
     this.deletedQuadsStore = new sc.data.QuadStore();
 
-    this.currentProject = null;
+    this.currentProject = null
     this.allProjects = [];
 
     this.newResourceUris = new goog.structs.Set();
@@ -97,7 +97,7 @@ sc.data.Databroker.prototype.options = {
     restProjectPath: 'projects',
     restResourcePath: 'resources',
     restAnnotationPath: 'annotations',
-    restUserPath: 'users'
+    restUserPath: 'users',
 };
 
 
@@ -1085,6 +1085,9 @@ sc.data.Databroker.prototype.getCurrentProject = function() {
     return this.currentProject;
 };
 
+/* Sets the current project to the supplied uri
+ * Returns "false" if invalid project uri
+*/
 sc.data.Databroker.prototype.setCurrentProject = function(uri) {
     var isValid = false
     for (var i = 0; i < this.allProjects.length; i++) {
@@ -1093,9 +1096,6 @@ sc.data.Databroker.prototype.setCurrentProject = function(uri) {
     
     if (isValid) this.currentProject = uri;
     
-    /* Returning "false" when invalid project allows for error to be manipulated
-     * and/or otherwise formatted when the function is used
-    */
     return isValid;
 };
 

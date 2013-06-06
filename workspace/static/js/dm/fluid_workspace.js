@@ -266,18 +266,16 @@ function removeUser(e){
 /* Collects data from new project modal
  * Clears the data so that another project can be created without refresh
  * Serializes data and sends POST request /workspace/project_forward/
- * * POST CURRENTLY RETURNS 500 ERROR
- * * (final create_project method is unfinished)
 */
-function sendData(){
+function sendData(e){
+    //Add the current user to the project
     addedUsers.push(clientApp.username);
+
+    //Easier reference to databroker
+    var db = clientApp.databroker;
+
     //Collect data
     var t = $(".title"), d = $("#description");
-    /*
-    console.log("Title:", t.val());
-    console.log("Description:", d.val());
-    console.log("Users:", addedUsers);
-    */
 
     var data = $.rdf.databank([], { namespaces: {
                                     ore: "http://www.openarchives.org/ore/terms/", 
@@ -289,13 +287,14 @@ function sendData(){
                                   });
 
     //Create UUID for new project
-    var p = goog.global.databroker.createUuid();
+    var p = db.createUuid();
 
     if(t.val() != ""){
         //Link user(s) and project
-        var db = clientApp.databroker;
         for (var i = 0; i < addedUsers.length; i++) {
+            
             var u = db.restUri(null, db.RESTYPE.user, addedUsers[i], null);
+
             data.add("<" + u + "> ore:aggregates <" + p + ">");
         };
 
@@ -309,10 +308,9 @@ function sendData(){
         data.add('<' + p + '> rdf:type dcmitype:Collection');
         data.add('<' + p + '> rdf:type ore:Aggregation');
 
-        //$.post('<url>', data [string])
         var postdata = data.dump({format: 'application/rdf+xml', 
                                   serialize:true});
-        //console.log("data:", postdata);
+        console.log("data:", postdata);
 
         /* Part of csrf-token setup
          * Copied from Django documentation
@@ -328,26 +326,24 @@ function sendData(){
             }
         });
         
-        /* For some reason the following line doesn't send request properly
-         * * Yields 500 error with "global request not defined" as cause
-         * * Abstracting it one level fixes that problem                   
-         * 'project_forward/' links to a method that calls projects (/store/projects/)
-        */
-        //$.post('/store/projects/', postdata);
         $.post('project_forward/', postdata);
-        console.log(postdata);
+        //console.log(postdata);
+
+        //Clear data from create project form
+        t.val("");
+        d.val("");
+        addedUsers = [];
+        $(".users").text("");
     }
 
     else{
-        console.log("Your project needs a title.")
+        alert("Your project needs a title.")
+
     }
 
-
-    //Clear data
-    t.val("");
-    d.val("");
-    addedUsers = [];
-    $(".users").text("");
+    db.addNewProject(p);
+    //setupCurrentProject(clientApp, clientApp.username)
+    //showProjectTitles(clientApp.username);
 }
 
 /* The following two methods are copied from Django documentation
@@ -373,4 +369,35 @@ function getCookie(name) {
 function csrfSafeMethod(method) {
     // these HTTP methods do not require CSRF protection
     return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+/* Add project titles to "project" dropdown
+ * Projects gathered by username
+ * * At /store/users/<username> is rdf with all the projects belonging to a user,
+ * * * and the url for more info ('ore:isDescribedBy')
+*/
+function showProjectTitles(username){
+    var db = clientApp.databroker;
+    var wrap = sc.util.Namespaces.wrapWithAngleBrackets;
+    var userUri = db.restUri(null, db.RESTYPE.user, username, null);
+    var userProjects = db.quadStore.query(wrap(userUri), null, null, null);
+
+    for (var i = 0; i < userProjects.length; i++) {
+        var project = userProjects[i]
+
+        showProjectTitle(project.object)
+    };
+}
+
+function showProjectTitle(uri){
+    var db = clientApp.databroker;
+    var wrap = sc.util.Namespaces.wrapWithAngleBrackets;
+
+    if (db.quadStore.numQuadsMatchingQuery(wrap(uri)) <= 1){
+        db.getDeferredResource(uri).done(function(resource){
+            console.log(resource.hasPredicate('dc:title'));
+            var title = resource.getOneProperty('dc:title');
+            $("#projects").append('<li><a>' + title + '</a></li>');
+        })
+    }
 }
