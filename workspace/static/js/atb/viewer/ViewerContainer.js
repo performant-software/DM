@@ -19,7 +19,7 @@ atb.viewer.ViewerContainer.prototype._setupDom = function() {
     this.element = this.domHelper.createDom('div', {'class': 'atb-ViewerContainer'});
 
     this.titleWrapper = this.domHelper.createDom('div', {'class': 'atb-ViewerContainer-titleWrapper'});
-    this.titleEl = this.domHelper.createDom('h3', {'class': 'atb-ViewerContainer-title'});
+    this.titleEl = this.domHelper.createDom('h3', {'class': 'atb-ViewerContainer-title atb-ViewerContainer-title-not-editing'});
     this.closeButton = this.domHelper.createDom('div', {'class': 'icon-remove-sign atb-ViewerContainer-close'});
 
     goog.events.listen(this.closeButton, 'click', this.close, false, this);
@@ -59,7 +59,8 @@ atb.viewer.ViewerContainer.prototype.getDomHelper = function() {
 atb.viewer.ViewerContainer.prototype.setTitle = function(title) {
     this.title = title;
 
-    jQuery(this.titleEl).text(title);
+    jQuery(this.titleEl).text(title)
+    jQuery(this.titleEl).attr('title', title);
 };
 
 atb.viewer.ViewerContainer.prototype.getTitle = function() {
@@ -72,19 +73,15 @@ atb.viewer.ViewerContainer.prototype.setTitleEditable = function(editable) {
     if (editable) {
         jQuery(this.titleEl).attr('contentEditable', true);
         goog.events.listen(this.titleEl, 'keyup', this._titleKeyHandler, false, this);
-        goog.events.listenOnce(this.titleEl, 'blur', this._titleBlurHandler, false, this);
+        goog.events.listen(this.titleEl, 'focus', this._titleFocusHandler, false, this);
+        goog.events.listen(this.titleEl, 'blur', this._titleBlurHandler, false, this);
     }
     else {
         jQuery(this.titleEl).attr('contentEditable', false);
         goog.events.unlisten(this.titleEl, 'keyup', this._titleKeyHandler, false, this);
+        goog.events.unlisten(this.titleEl, 'focus', this._titleFocusHandler, false, this);
         goog.events.unlisten(this.titleEl, 'blur', this._titleBlurHandler, false, this);
     }
-};
-
-atb.viewer.ViewerContainer.prototype._finishTitleEditing = function() {
-    this.setTitleEditable(false);
-    this.setTitle(jQuery(this.titleEl).text());
-    this._notifyViewerTitleChanged(this.title);
 };
 
 atb.viewer.ViewerContainer.prototype._titleKeyHandler = function(event) {
@@ -95,8 +92,18 @@ atb.viewer.ViewerContainer.prototype._titleKeyHandler = function(event) {
     }
 };
 
+atb.viewer.ViewerContainer.prototype._titleFocusHandler = function(event) {
+    jQuery(this.titleEl).addClass('atb-ViewerContainer-title-editing');
+    jQuery(this.titleEl).removeClass('atb-ViewerContainer-title-not-editing')
+};
+
 atb.viewer.ViewerContainer.prototype._titleBlurHandler = function(event) {
-    this.title = jQuery(this.titleEl).text();
+    jQuery(this.titleEl).removeClass('atb-ViewerContainer-title-editing');
+    jQuery(this.titleEl).addClass('atb-ViewerContainer-title-not-editing');
+
+    jQuery(this.titleEl).scrollLeft(0).scrollTop(0);
+
+    this.setTitle(jQuery(this.titleEl).text().replace('\n', ' '));
     this._notifyViewerTitleChanged();
 };
 
