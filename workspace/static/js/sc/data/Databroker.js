@@ -97,7 +97,7 @@ sc.data.Databroker.prototype.options = {
     restProjectPath: 'projects',
     restResourcePath: 'resources',
     restAnnotationPath: 'annotations',
-    restUserPath: 'users',
+    restUserPath: 'users'
 };
 
 
@@ -202,7 +202,7 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
         self.failedUrls.add(url);
     };
 
-    if (this.jqXhrsByUrl.containsKey(url)) {
+    if (this.jqXhrsByUrl.containsKey(url) && !opt_forceReload) {
         var jqXhr = this.jqXhrsByUrl.get(url);
         jqXhr.done(successHandler).fail(errorHandler);
     }
@@ -524,7 +524,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
 
                 var jqXhr = this.fetchRdf(url, function(rdf, data) {
                     deferredResource.notifyWith(this, [self.getResource(uri), self]);
-                });
+                }, true);
                 deferredCollection.add(jqXhr);
             }
 
