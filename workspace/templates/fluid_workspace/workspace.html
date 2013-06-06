@@ -169,6 +169,9 @@
 
   initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", 
                 styleRoot, staticUrl);
+  
+  // Add project titles to project dropdown
+  setupProjects();
 
   $("#new_text_button").click(function(e) {
     openBlankTextDocument();
