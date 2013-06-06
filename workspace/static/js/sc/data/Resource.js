@@ -308,11 +308,11 @@ sc.data.Resource.prototype.hasAllTypes = function(possibleTypes) {
 };
 
 sc.data.Resource.prototype.getTitles = function() {
-    return sc.util.Namespaces.stripWrappingQuotes(this.getProperties('dc:title'));
+    return this.getProperties('dc:title');
 };
 
 sc.data.Resource.prototype.getOneTitle = function() {
-    return sc.util.Namespaces.stripWrappingQuotes(this.getOneProperty('dc:title'));
+    return this.getOneProperty('dc:title');
 };
 
 sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
@@ -368,9 +368,13 @@ sc.data.Resource.prototype.equals = sc.data.Resource.prototype.isSameAs;
 
 /**
  * Returns the uris of all resources which are marked as owl:sameAs this
- * this resource. Note: all querying methods already query these equivalent
+ * this resource.
+ * 
+ * Note: all querying methods already query these equivalent
  * resources, so manually repeating queries on these other resources is
  * unnecessary.
+ *
+ * Note: This uri will also be included in the list.
  *
  * @return {Array.<string>} The equivalent uris.
  */
