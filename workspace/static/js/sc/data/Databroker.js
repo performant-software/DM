@@ -504,6 +504,10 @@ sc.data.Databroker.prototype.getUrlsToRequestForResource = function(uri, opt_for
 sc.data.Databroker.prototype.getDeferredResource = function(uri) {
     var self = this;
 
+    if (uri instanceof sc.data.Resource) {
+        uri = uri.uri;
+    }
+
     var deferredResource = jQuery.Deferred();
 
     window.setTimeout(function() {
@@ -1049,12 +1053,6 @@ sc.data.Databroker.prototype.syncResources = function() {
 sc.data.Databroker.prototype.sync = function() {
     // console.log("sc.data.Databroker.sync called.");
     this.syncResources();
-};
-
-
-sc.data.Databroker.prototype.createText = function(title, content) {
-    var text = this.createResource(this.createUuid(), 'dctypes:Text');
-    return text;
 };
 
 sc.data.Databroker.prototype.compareUrisByTitle = function(a, b) {

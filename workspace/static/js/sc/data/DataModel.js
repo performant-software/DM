@@ -278,17 +278,15 @@ sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) 
 };
 
 sc.data.DataModel.prototype.findSelectorSpecificResourceUri = function(selectorUri) {
-    var specificTargets = [];
-    this.databroker.quadStore.forEachQuadMatchingQuery(
-        null, this.databroker.namespaces.expand('oa', 'hasSelector'), sc.util.Namespaces.angleBracketWrap(selectorUri), null,
-        function(quad) {
-            specificTargets.push(quad.subject);
-        },
-        this
-    );
+    var selectorResource = this.databroker.getResource(selectorUri);
 
-    if (specificTargets.length > 0) {
-        return sc.util.Namespaces.angleBracketStrip(specificTargets[0]);
+    var specificResources = selectorResource.getReferencingResources('oa:hasSelector');
+
+    if (specificResources.length > 0) {
+        if (specificResources.length > 1) {
+            console.warn(selectorUri, 'has more than one specific resource', specificResources);
+        }
+        return specificResources[0];
     }
     else {
         return null;
@@ -356,37 +354,33 @@ sc.data.DataModel.timecodeToSeconds = function(timecode) {
 };
 
 sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoType) {
-    var quads = this.databroker.quadStore.query(
-        null,
-        this.databroker.namespaces.expand('oa', 'hasBody'),
-        sc.util.Namespaces.angleBracketWrap(bodyUri),
-        null
-    );
-    if (quads.length > 0) {
-        var anno = this.databroker.getResource(quads[0].subject);
+    var body = this.databroker.getResource(bodyUri);
+    var target = this.databroker.getResource(targetUri);
+
+    var currentBodyAnnos = body.getReferencingResources('oa:hasBody');
+
+    if (currentBodyAnnos.length > 0) {
+        var anno = currentBodyAnnos[0];
     }
     else {
         var anno = this.databroker.createResource(this.databroker.createUuid(), 'oa:Annotation');
     }
 
     if (opt_annoType) {
-        anno.addProperty(
-            this.databroker.namespaces.autoExpand('rdf:type'),
-            this.databroker.namespaces.autoExpand(opt_annoType)
-        );
+        anno.addProperty('rdf:type', opt_annoType);
     }
 
     if (bodyUri) {
         anno.addProperty(
             sc.data.DataModel.VOCABULARY.hasBody,
-            sc.util.Namespaces.angleBracketWrap(bodyUri)
+            body
         );
     }
 
     if (targetUri) {
         anno.addProperty(
             sc.data.DataModel.VOCABULARY.hasTarget,
-            sc.util.Namespaces.angleBracketWrap(targetUri)
+            target
         );
     }
 
@@ -434,4 +428,19 @@ sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     }, this);
 
     return resources.getValues();
+};
+
+sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
+    var text = this.databroker.createResource(this.databroker.createUuid(), 'dctypes:Text');
+    text.addProperty('rdf:type', 'cnt:ContentAsText');
+
+    if (opt_title) {
+        text.addProperty('dc:title', sc.util.Namespaces.quoteWrap(opt_title));
+    }
+
+    if (opt_content) {
+        text.addProperty('cnt:chars', sc.util.Namespaces.quoteWrap(opt_content));
+    }
+
+    return text;
 };

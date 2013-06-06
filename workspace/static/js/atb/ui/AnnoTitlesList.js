@@ -147,25 +147,25 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
     var deferredResource = this.databroker.getDeferredResource(uri);
 
     var withResource = function(resource) {
-        var annoUris = this.databroker.dataModel.findAnnosReferencingResource(resource.getUri());
+        var bodyAnnoResources = resource.getReferencingResources('oa:hasTarget');
+        var targetAnnoResources = resource.getReferencingResources('oa:hasBody');
 
-        var bodyUris = [];
-        var targetUris = [];
+        var bodyUris = new goog.structs.Set();
+        var targetUris = new goog.structs.Set();
 
-        goog.structs.forEach(annoUris, function(annoUri) {
-            var annoResource = this.databroker.getResource(annoUri);
-            goog.array.extend(bodyUris, sc.util.Namespaces.angleBracketStrip(annoResource.getProperties('oa:hasBody')));
-            goog.array.extend(targetUris, sc.util.Namespaces.angleBracketStrip(annoResource.getProperties('oa:hasTarget')));
+        goog.structs.forEach(bodyAnnoResources, function(anno) {
+            bodyUris.addAll(anno.getProperties('oa:hasBody'));
+        }, this);
+        goog.structs.forEach(targetAnnoResources, function(anno) {
+            targetUris.addAll(anno.getProperties('oa:hasTarget'));
         }, this);
 
-        console.log('annoUris', annoUris, 'bodies', bodyUris, 'targets', targetUris);
-
-        if (bodyUris.length + targetUris.length == 0 && deferredResource.state() == 'resolved') {
+        if (bodyUris.getCount() + targetUris.getCount() == 0 && deferredResource.state() == 'resolved') {
             jQuery(this.noAnnosDiv).show();
         }
-        else if (bodyUris.length + targetUris.length > 0) {
-            if (bodyUris.length > 0) {
-                this._renderSummaries(bodyUris, this.bodySummaries, this.bodyTitlesDiv);
+        else if (bodyUris.getCount() + targetUris.getCount() > 0) {
+            if (bodyUris.getCount() > 0) {
+                this._renderSummaries(bodyUris.getValues(), this.bodySummaries, this.bodyTitlesDiv);
 
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'
@@ -181,8 +181,8 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
                 jQuery(this.bodyTitlesDiv).prepend(headerDiv);
             }
 
-            if (targetUris.length > 0) {
-                this._renderSummaries(targetUris, this.targetSummaries, this.targetTitlesDiv);
+            if (targetUris.getCount() > 0) {
+                this._renderSummaries(targetUris.getValues(), this.targetSummaries, this.targetTitlesDiv);
 
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'

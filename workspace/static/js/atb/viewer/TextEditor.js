@@ -219,7 +219,7 @@ atb.viewer.TextEditor.prototype.scrollIntoView = function (tag) {//console.log(t
             jQuery(this.editorIframe).scrollTop(tagVerticalOffset - editorHalf);
             
             var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
-            var hoverAnnotationId = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
+            var hoverAnnotationId = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag);
             textEditorAnnotate.selectAnnotationSpan(tag);
         }, this);
         
@@ -601,33 +601,16 @@ atb.viewer.TextEditor.prototype.showErrorMessage = function (msg) {
 
 atb.viewer.TextEditor.prototype.DEFAULT_DOCUMENT_TITLE = 'Untitled text document';
 
-atb.viewer.TextEditor.prototype.createNewTextBody = function (opt_myResourceId) {
-	var myResourceId = opt_myResourceId || this.resourceId;
-    var targetUri = this.webService.resourceIdToUri(myResourceId);
+atb.viewer.TextEditor.prototype.createNewTextBody = function () {
+	var databroker = this.databroker;
+    var body = databroker.dataModel.createText('New annotation on ' + this.getTitle());
 
-    var databroker = this.clientApp.getDatabroker();
-    var bodyUri = databroker.createUuid();
-
-    var anno = databroker.dataModel.createAnno(bodyUri, targetUri);
+    var anno = databroker.dataModel.createAnno(body, this.resource);
 	
-    var annoBodyEditor = new atb.viewer.TextEditor(
-		this.clientApp,
-        ''
-    );
-    annoBodyEditor.resourceId = bodyUri;
-    annoBodyEditor.uri = bodyUri;
-    annoBodyEditor.annotationUid = anno.getUri();
-
-    this.annotationUid = anno.getUri();
-
-    annoBodyEditor.setTitle('New Annotation on ' + this.getTitle());
+    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
     annoBodyEditor.toggleIsAnnoText(true);
-
-    this.setAnnotationBody(bodyUri);
-
-    this.toggleAnnotationMode(true);
-
     this.openRelatedViewer(annoBodyEditor);
+    annoBodyEditor.loadResourceByUri(body.uri);
 };
 
 atb.viewer.TextEditor.prototype.showAnnos = function (opt_myResourceId) {
