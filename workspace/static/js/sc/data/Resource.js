@@ -386,6 +386,10 @@ sc.data.Resource.prototype.dump = function() {
     return this.databroker.dumpResource(this.bracketedUri);
 };
 
+sc.data.Resource.prototype.getDeferred = function() {
+    return this.databroker.getDeferredResource(this);
+};
+
 sc.data.Resource.compareByTitle = function(a, b) {
     var titleA = a.getOneProperty('dc:title');
     var titleB = b.getOneProperty('dc:title');

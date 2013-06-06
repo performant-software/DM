@@ -211,7 +211,7 @@ atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highl
 atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {
     var elements = this.getAllAnnotationTags();
     goog.structs.forEach(elements, function(element) {
-    	var highlightUri = atb.viewer.TextEditorAnnotate.getAnnotationId(element);
+    	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element);
     	var highlightResource = this.databroker.getResource(highlightUri);
 
     	highlightResource.setProperty('oa:exact', sc.util.Namespaces.quoteWrap(jQuery(element).text()));
@@ -229,6 +229,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	}
 
 	var highlightUri = this.databroker.createUuid();
+	var highlightResource = this.createHighlightResource(highlightUri, range);
 	
 	var TypeElement = Node.ELEMENT_NODE;
 	var TypeText = Node.TEXT_NODE;
@@ -398,9 +399,6 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 		
 		console.log("# new parents: "+newParents.length);
     }
-
-
-    var highlightResource = this.createHighlightResource(highlightUri, range);
 };
 
 /**
@@ -415,7 +413,7 @@ atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(element) {
 		jQuery(element).replaceWith(jQuery(element).text());
 	}
 
-    var uri = atb.viewer.TextEditorAnnotate.getAnnotationId(element);
+    var uri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element);
     this.deleteHighlightResource(uri);
 };
 
@@ -427,6 +425,9 @@ atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(element) {
  */
 atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	goog.asserts.assert(this.isHighlightElement(object), 'attempting to add highlight event listeners to an element which is not a highlight', object);
+
+	var selector = this.getElementSelectorResource(object);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(selector);
 
 	var self = this;
 	
@@ -491,7 +492,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	];
     menuButtons.reverse();
     
-    this.viewer.addHoverMenuListenersToElement(object, menuButtons, atb.viewer.TextEditorAnnotate.getAnnotationId(object));
+    this.viewer.addHoverMenuListenersToElement(object, menuButtons, specificResourceUri);
 	
 	return true;
 };
@@ -532,12 +533,16 @@ atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(elemen
  * @param annotation is the annontation to look at
  * @return annotationId, 1 or higher
  **/
-atb.viewer.TextEditorAnnotate.getAnnotationId = function (element) {
+atb.viewer.TextEditorAnnotate.getHighlightSelectorUri = function (element) {
     return jQuery(element).attr('about');
 };
 
+atb.viewer.TextEditorAnnotate.prototype.getElementSelectorResource = function(element) {
+    return this.databroker.getResource(atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element));
+};
+
 atb.viewer.TextEditorAnnotate.prototype.isHighlightElement = function(element) {
-    return jQuery(element).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS) && atb.viewer.TextEditorAnnotate.getAnnotationId(element) != null;
+    return jQuery(element).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS) && atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element) != null;
 };
 
 atb.viewer.TextEditorAnnotate.prototype.getAllAnnotationTags = function () {
@@ -609,7 +614,7 @@ atb.viewer.TextEditorAnnotate.prototype.flashSpanHighlight = function (tag) {
 
 atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
     var eventDispatcher = this.viewer.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClick(atb.viewer.TextEditorAnnotate.getAnnotationId(tag), eventDispatcher, this.viewer);
+    var event = new atb.events.ResourceClick(atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag), eventDispatcher, this.viewer);
     
     eventDispatcher.dispatchEvent(event);
 };
@@ -626,7 +631,7 @@ atb.viewer.TextEditorAnnotate.prototype.unselectAllHighlights = function() {
  **/
 atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function (forSpan) {
     var domHelper = goog.dom.getDomHelper(forSpan);
-    var annotationId = atb.viewer.TextEditorAnnotate.getAnnotationId(forSpan);
+    var annotationId = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(forSpan);
     this.setHoverAnnotationHelper(annotationId,forSpan);
 };
 
@@ -662,36 +667,22 @@ atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
-	var annoBodyEditor = new atb.viewer.TextEditor(this.viewer.clientApp);
-    annoBodyEditor.setPurpose('anno');
-    
-    var targetTextTitle = this.viewer.getTitle();
-    
-    var highlightUri = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
-    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
+	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
 
-    var newTextId = this.databroker.createUuid();
-    var annoId = this.databroker.createUuid();
-        	
-    annoBodyEditor.resourceId = newTextId;
-    annoBodyEditor.uri = newTextId;
-    annoBodyEditor.annotationUid = annoId;
-    this.viewer.annotationUid = annoId;
-    
-    annoBodyEditor.setTitle('New Annotation on ' + targetTextTitle);
+	var databroker = this.databroker;
+    var body = databroker.dataModel.createText('New annotation on ' + this.viewer.getTitle());
+
+    var anno = databroker.dataModel.createAnno(body, specificResourceUri);
+	
+    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
     annoBodyEditor.toggleIsAnnoText(true);
-    
-    this.viewer.setAnnotationBody(newTextId);
-
-    this.databroker.dataModel.createAnno(newTextId, specificResourceUri);
-
-    this.viewer.toggleAnnotationMode(true);
-
     this.viewer.openRelatedViewer(annoBodyEditor);
+    annoBodyEditor.loadResourceByUri(body.uri);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(spanElem) {
-	var highlightUri = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
+	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
 	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
     
     this.viewer.clientApp.createAnnoLink(specificResourceUri);
@@ -700,7 +691,7 @@ atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(spanElem) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.showAnnos = function(tag) {
-	var id = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
+	var id = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag);
 	
 	var finder = new atb.viewer.Finder(this.viewer.clientApp, id);
     finder.setContextType(atb.viewer.Finder.ContextTypes.RESOURCE);

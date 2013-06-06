@@ -283,13 +283,13 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     
     this.linkingInProgress = false;
     
-    var annoUri = e.uri;
+    var targetUri = e.uri;
     
     if (this.annoLinkCreationBodyId) {
         var bodyId = this.annoLinkCreationBodyId;
         this.annoLinkCreationBodyId = null;
 
-        this.databroker.dataModel.createAnno(bodyId, annoUri);
+        var anno = this.databroker.dataModel.createAnno(bodyId, targetUri);
         
         var bezel = new atb.ui.Bezel('atb-bezel-linked');
         bezel.show();
