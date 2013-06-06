@@ -78,9 +78,6 @@ atb.viewer.TextEditor = function(clientApp, opt_initialTextContent, opt_annoBody
 	this.isAnnoText = false;
 	
 	this.useID = 'atb_ui_editor_' + goog.string.getRandomString();
-
-    this._title = null;
-    this.resourceId = null;
 	
 	opt_initialTextContent = atb.util.ReferenceUtil.applyDefaultValue(opt_initialTextContent, null);
 	this._initialTextContent_ =opt_initialTextContent;//lolhack!//HACK
@@ -264,8 +261,6 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.rootDiv.appendChild(this.editorDiv);
     
     this._renderDocumentIcon();
-
-    this.syncTitle();//hack
     
     this.autoSaveIntervalObject = window.setInterval(
         atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
@@ -317,6 +312,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
 
     if (this.container) {
         this.container.autoResize();
+        this.container.setTitleEditable(true);
     }
 };
 
@@ -532,28 +528,22 @@ atb.viewer.TextEditor.prototype.dismissContextMenu = function(menu) {
 };
 
 atb.viewer.TextEditor.prototype.getTitle = function () {
-    if (this._title == null) {
-        return this.DEFAULT_DOCUMENT_TITLE;//'Untitled text document';
-    }
-    else {
-        return this._title;
-    }
+    return this.resource.getOneProperty('dc:title');
 };
 
 atb.viewer.TextEditor.prototype.setTitle = function(title) {
-    this._title = title;
-	this.syncTitle();
+    this.resource.setProperty('dc:title', sc.util.Namespaces.quoteWrap(title));
+    this.setDisplayTitle(title);
+};
+
+atb.viewer.TextEditor.prototype.setDisplayTitle = function(title) {
+    if (this.container) {
+        this.container.setTitle(title);
+    }
 };
 
 atb.viewer.TextEditor.prototype.isTitleEditable = function() {
 	return true;
-};
-
-atb.viewer.TextEditor.prototype.syncTitle = function() {
-    if (this.container) {
-        this.container.setTitle(this.getTitle());
-        this.container.setTitleEditable(this.isTitleEditable());
-    }
 };
 
 atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
@@ -562,7 +552,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
     if (resource.hasType('dctypes:Text')) {
         this.resourceId = resource.getUri();
         this.uri = resource.getUri();
-        this.setTitle(resource.getOneProperty('dc:title') || '');
+        this.setDisplayTitle(resource.getOneProperty('dc:title') || '');
         this.setHtml(resource.getOneProperty('cnt:chars') || '');
 
         var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
@@ -585,6 +575,8 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
         };
     }
 
+    this.resource = resource;
+
     return this;
 };
 
@@ -606,19 +598,6 @@ atb.viewer.TextEditor.prototype.showErrorMessage = function (msg) {
 	);
 	dialog.show();
 };
-
-atb.viewer.TextEditor.prototype.onPaneLoaded = function () {
-	this.syncTitle();
-    var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
-    textEditorAnnotate.addListenersToAllHighlights();
-};
-
-atb.viewer.TextEditor.prototype.onTitleChanged = function (newTitle) {
-    this._title = newTitle;
-    this.onChange();
-};
-
-atb.viewer.TextEditor.prototype.onTitleChange = atb.viewer.TextEditor.prototype.onTitleChanged;
 
 atb.viewer.TextEditor.prototype.DEFAULT_DOCUMENT_TITLE = 'Untitled text document';
 

@@ -68,6 +68,42 @@ atb.viewer.ViewerContainer.prototype.getTitle = function() {
 
 atb.viewer.ViewerContainer.prototype.setTitleEditable = function(editable) {
     this.isTitleEditable = editable;
+
+    if (editable) {
+        jQuery(this.titleEl).attr('contentEditable', true);
+        goog.events.listen(this.titleEl, 'keyup', this._titleKeyHandler, false, this);
+        goog.events.listenOnce(this.titleEl, 'blur', this._titleBlurHandler, false, this);
+    }
+    else {
+        jQuery(this.titleEl).attr('contentEditable', false);
+        goog.events.unlisten(this.titleEl, 'keyup', this._titleKeyHandler, false, this);
+        goog.events.unlisten(this.titleEl, 'blur', this._titleBlurHandler, false, this);
+    }
+};
+
+atb.viewer.ViewerContainer.prototype._finishTitleEditing = function() {
+    this.setTitleEditable(false);
+    this.setTitle(jQuery(this.titleEl).text());
+    this._notifyViewerTitleChanged(this.title);
+};
+
+atb.viewer.ViewerContainer.prototype._titleKeyHandler = function(event) {
+    if (event.keyCode == goog.events.KeyCodes.ENTER || event.keyCode == goog.events.KeyCodes.MAC_ENTER) {
+        jQuery(this.titleEl).blur();
+        event.preventDefault();
+        event.stopPropagation();
+    }
+};
+
+atb.viewer.ViewerContainer.prototype._titleBlurHandler = function(event) {
+    this.title = jQuery(this.titleEl).text();
+    this._notifyViewerTitleChanged();
+};
+
+atb.viewer.ViewerContainer.prototype._notifyViewerTitleChanged = function(title) {
+    if (this.viewer && goog.isFunction(this.viewer.setTitle)) {
+        this.viewer.setTitle(jQuery(this.titleEl).text());
+    }
 };
 
 atb.viewer.ViewerContainer.prototype.getElement = function() {
