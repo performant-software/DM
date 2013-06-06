@@ -146,10 +146,10 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     var feature = event.feature;
     var uri = event.uri;
     
-    if (uri == null) return;
+    if (uri == null || feature.type == 'image') return;
     
-    if (feature.type == 'image') return;
-    
+    this.viewer.mainViewport.setCursor('pointer');
+
     this.mouseIsOverFloatingMenuParent = true;
     
     var id = this.webService.resourceUriToId(uri);
@@ -227,6 +227,8 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
 };
 
 atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
+    this.viewer.mainViewport.setCursor(null);
+
     this.mouseIsOverFloatingMenuParent = false;
     this.maybeHideHoverMenu();
 };
