@@ -585,6 +585,10 @@ sc.canvas.FabricCanvasViewport.prototype._maybeShowProgressCursor = function() {
     }
 };
 
+sc.canvas.FabricCanvasViewport.prototype.setCursor = function(cursorName) {
+    this.baseDiv.style.cursor = cursorName;
+};
+
 sc.canvas.FabricCanvasViewport.prototype.showProgressCursor = function() {
     if (! this.isShowingProgressCursor) {
         this.isShowingProgressCursor = true;
@@ -886,16 +890,7 @@ sc.canvas.FabricCanvasViewport.prototype.getFeatureForEvent = function(event) {
     var feature = null;
 
     if (this.canvas) {
-        var candidates = this.canvas.objects;
-
-        for (var i=candidates.length - 1; i>=0; i--) {
-            var obj = this.canvas.objects[i];
-
-            if (this.fabricCanvas.containsPoint(event, obj)) {
-                feature = obj;
-                break;
-            }
-        }
+        feature = this.fabricCanvas.findTarget(event);
     }
 
     return feature;
