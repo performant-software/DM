@@ -37,6 +37,17 @@
         line-height: 16px;
         margin: 0;
         margin-right: 14px;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    /**
+     * This styling kludge is necessary because the browser doesn't recognize :focus on contenteditable elements,
+     * and the text-overflow property has no 'off' value
+     */
+    .atb-ViewerContainer-title-editing {
+        
+    }
+    .atb-ViewerContainer-title-not-editing {
         text-overflow: ellipsis;
     }
 
