@@ -115,7 +115,7 @@ var openBlankTextDocument = function() {
 };
 
 var setupCurrentProject = function(clientApp, username) {
-    var db = clientApp.databroker;
+    var db = goog.global.databroker;
     var url = db.restUrl(null, db.RESTYPE.user, username, null);
     var uri = db.restUri(null, db.RESTYPE.user, username, null);
     db.fetchRdf(url, function() {
@@ -205,7 +205,7 @@ var shift = false;
 function userTagSystem(usr, usernames){
 
     /* Ensures shift is down
-    * Shift+Return combo needed because the typeahead system uses Return
+     * Shift+Return combo needed because the typeahead system uses Return
     */
     usr.keydown(function(e){
         // Watches the shift key
@@ -272,7 +272,7 @@ function sendData(e){
     addedUsers.push(clientApp.username);
 
     //Easier reference to databroker
-    var db = clientApp.databroker;
+    var db = goog.global.databroker;
 
     //Collect data
     var t = $(".title"), d = $("#description");
@@ -292,9 +292,7 @@ function sendData(e){
     if(t.val() != ""){
         //Link user(s) and project
         for (var i = 0; i < addedUsers.length; i++) {
-            
             var u = db.restUri(null, db.RESTYPE.user, addedUsers[i], null);
-
             data.add("<" + u + "> ore:aggregates <" + p + ">");
         };
 
@@ -327,7 +325,6 @@ function sendData(e){
         });
         
         $.post('project_forward/', postdata);
-        //console.log(postdata);
 
         //Clear data from create project form
         t.val("");
@@ -341,9 +338,12 @@ function sendData(e){
 
     }
 
-    db.addNewProject(p);
-    //setupCurrentProject(clientApp, clientApp.username)
-    //showProjectTitles(clientApp.username);
+    // Add the new project's title to project dropdown
+    // Wrapped in timeout to avoid server errors from hitting database too quickly
+    setTimeout(function(){
+        var url = db.restUrl(null, db.RESTYPE.user, clientApp.username, null)
+        db.getDeferredResource(url).done(showProjectTitle(p));
+    },3000)
 }
 
 /* The following two methods are copied from Django documentation
@@ -374,14 +374,19 @@ function csrfSafeMethod(method) {
 /* Add project titles to "project" dropdown
  * Projects gathered by username
  * * At /store/users/<username> is rdf with all the projects belonging to a user,
- * * * and the url for more info ('ore:isDescribedBy')
+ * *  and the url for more info ('ore:isDescribedBy')
 */
 function showProjectTitles(username){
-    var db = clientApp.databroker;
-    var wrap = sc.util.Namespaces.wrapWithAngleBrackets;
+    // Variables used to shorten some references
+    var db = goog.global.databroker;
+    var wrap = sc.util.Namespaces.angleBracketWrap;
+
+    // Get array of quads where subject is user's uri
+    // (object will be uri of all projects owned by user)
     var userUri = db.restUri(null, db.RESTYPE.user, username, null);
     var userProjects = db.quadStore.query(wrap(userUri), null, null, null);
 
+    // Cycle through this array and add each project's title to dropdown
     for (var i = 0; i < userProjects.length; i++) {
         var project = userProjects[i]
 
@@ -389,15 +394,67 @@ function showProjectTitles(username){
     };
 }
 
+/* Add the title of a single project (with uri supplied) to the title dropdown
+ * Abstracted from showProjectTitles in 
+*/
 function showProjectTitle(uri){
-    var db = clientApp.databroker;
-    var wrap = sc.util.Namespaces.wrapWithAngleBrackets;
+    var db = goog.global.databroker;
+    var wrap = sc.util.Namespaces.angleBracketWrap;
 
     if (db.quadStore.numQuadsMatchingQuery(wrap(uri)) <= 1){
-        db.getDeferredResource(uri).done(function(resource){
-            console.log(resource.hasPredicate('dc:title'));
-            var title = resource.getOneProperty('dc:title');
-            $("#projects").append('<li><a>' + title + '</a></li>');
-        })
+        setTimeout(function(){
+            db.getDeferredResource(uri).done(function(resource){
+                var title = resource.getOneProperty('dc:title')
+                var projects = $("#projects");
+                projects.append('<li><a>' + title + '</a></li>');
+                sortChildrenAlphabetically(projects);
+            })
+        }, 1000)
     }
+}
+
+/* Sorts the children of a jQuery object in alphabetical order and replaces them
+ *  in the original object
+ * Can be used on any object but designed & tested for projects drop-down
+ * Breaks if an object without children is passed
+*/
+function sortChildrenAlphabetically(parent){
+    var childs = parent.children();
+    var sortedChilds = []
+
+    /* Our drop-downs are currently structured to have text wrapped in <a> tags,
+     *  so in order to get the actual text, we must call .firstChild.text instead
+     *  of simply .text (no text is returned if we simply use .text)
+    */
+    for (var i = 0; i < childs.length; i++) {
+        sortedChilds.push(childs[i].firstChild.text)
+    };
+
+    // Sorts the array of strings and then removes all children from the parent
+    sortedChilds.sort()
+    parent.empty()
+
+    // Adds children back to parent in alphabetical order
+    for(var i = 0; i < sortedChilds.length; i++){
+        parent.append("<li><a>" + sortedChilds[i] + "</a></li>")
+    }
+
+}
+
+/* Adds all projects belonging to the current user to the projects dropdown menu
+*/
+function setupProjects(){
+    // Variables used to shorten some references
+    var db = goog.global.databroker;
+    var username = clientApp.username
+
+    // Get address of information about current user
+    var url = db.restUrl(null, db.RESTYPE.user, username, null)
+
+    // Ensure databroker is up-to-date on projects and then add all titles
+    // Wrapped in timeout to avoid server errors from querying data too quickly
+    setTimeout(function(){
+        db.getDeferredResource(url).done(showProjectTitles(username))
+    }, 3000)
+    
 }
