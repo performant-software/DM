@@ -24,13 +24,16 @@ atb.ui.AnnoTitlesList = function (clientApp, viewer, opt_uri, opt_domHelper) {
     this.domHelper = opt_domHelper || new goog.dom.DomHelper();
 
     this.summaryStyleOptions = {
-        showControls: false,
+        showControls: true,
         titleOnly: true
     };
 
-    this.summariesByUri = new goog.structs.Map ();
+    this.summariesByUri = new goog.structs.Map();
     this.targetSummaries = [];
     this.bodySummaries = [];
+
+    this.bodyAnnoResourcesByUri = new sc.util.DefaultDict(function(){return [];});
+    this.targetAnnoResourcesByUri = new sc.util.DefaultDict(function(){return [];});
 };
 
 atb.ui.AnnoTitlesList.prototype.decorate = function (div) {
@@ -73,6 +76,20 @@ atb.ui.AnnoTitlesList.prototype.render = function (div) {
     return newDiv;
 };
 
+atb.ui.AnnoTitlesList.prototype.clear = function() {
+    this.uri = null;
+
+    this.summariesByUri = new goog.structs.Map();
+    this.targetSummaries = [];
+    this.bodySummaries = [];
+
+    this.bodyAnnoResourcesByUri = new sc.util.DefaultDict(function(){return [];});
+    this.targetAnnoResourcesByUri = new sc.util.DefaultDict(function(){return [];});
+
+    jQuery(this.bodyTitlesDiv).empty();
+    jQuery(this.targetTitlesDiv).empty();
+};
+
 atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     var uri = event.resource.uri;
     var summary = event.currentTarget;
@@ -93,7 +110,32 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     }
 };
 
-atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv) {
+atb.ui.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
+    var resource = event.resource;
+    var uri = event.resource.uri;
+    var summary = event.currentTarget;
+
+    if (summary.relationType == 'body') {
+        var annos = this.bodyAnnoResourcesByUri.get(uri);
+
+        goog.structs.forEach(annos, function(anno) {
+            this.databroker.dataModel.unlinkTargetFromAnno(anno, this.uri, true);
+        }, this);
+
+        this.removeSummary(summary, this.bodySummaries);
+    }
+    else if (summary.relationType == 'target') {
+        var annos = this.targetAnnoResourcesByUri.get(uri);
+
+        goog.structs.forEach(annos, function(anno) {
+            this.databroker.dataModel.unlinkBodyFromAnno(anno, this.uri, true);
+        }, this);
+
+        this.removeSummary(summary, this.targetSummaries);
+    }
+};
+
+atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv, relationType) {
     for (var i = 0; i < uris.length; i++) {
         var uri = uris[i];
 
@@ -104,7 +146,10 @@ atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderD
             var summary = atb.resource.ResourceSummaryFactory.createFromUri(uri, this, this.clientApp, this.domHelper, this.summaryStyleOptions);
             this.summariesByUri.set(uri, summary);
 
+            summary.relationType = relationType;
+
             goog.events.listen(summary, 'click', this.summaryClickHandler, false, this);
+            goog.events.listen(summary, 'delete-click', this.deleteClickHandler, false, this);
 
             var render = function (list, div) {
                 var insert = function (list) {
@@ -136,12 +181,29 @@ atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderD
 
             if (summary) {
                 render(list, renderDiv);
+                summary.enableDelete();
             }
         }
     }
 };
 
+atb.ui.AnnoTitlesList.prototype.removeSummary = function(summary, list) {
+    jQuery(summary.getElement()).animate({
+        left: '100%',
+        opacity: 0.0,
+        height: 0
+    }, 300, function() {
+        jQuery(this).detach();
+    });
+
+    goog.array.remove(list, summary);
+};
+
 atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
+    this.clear();
+
+    if (uri instanceof sc.data.Resource) uri = uri.uri;
+
     console.log('uri', uri);
     this.uri = uri;
     
@@ -157,10 +219,16 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
         var targetUris = new goog.structs.Set();
 
         goog.structs.forEach(bodyAnnoResources, function(anno) {
-            bodyUris.addAll(anno.getProperties('oa:hasBody'));
+            goog.structs.forEach(anno.getProperties('oa:hasBody'), function(bodyUri) {
+                bodyUris.add(bodyUri);
+                this.bodyAnnoResourcesByUri.get(bodyUri).push(anno);
+            }, this);
         }, this);
         goog.structs.forEach(targetAnnoResources, function(anno) {
-            targetUris.addAll(anno.getProperties('oa:hasTarget'));
+            goog.structs.forEach(anno.getProperties('oa:hasTarget'), function(targetUri) {
+                targetUris.add(targetUri);
+                this.targetAnnoResourcesByUri.get(targetUri).push(anno);
+            }, this);
         }, this);
 
         if (bodyUris.getCount() + targetUris.getCount() == 0 && deferredResource.state() == 'resolved') {
@@ -168,7 +236,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
         }
         else if (bodyUris.getCount() + targetUris.getCount() > 0) {
             if (bodyUris.getCount() > 0) {
-                this._renderSummaries(bodyUris.getValues(), this.bodySummaries, this.bodyTitlesDiv);
+                this._renderSummaries(bodyUris.getValues(), this.bodySummaries, this.bodyTitlesDiv, 'body');
 
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'
@@ -185,7 +253,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
             }
 
             if (targetUris.getCount() > 0) {
-                this._renderSummaries(targetUris.getValues(), this.targetSummaries, this.targetTitlesDiv);
+                this._renderSummaries(targetUris.getValues(), this.targetSummaries, this.targetTitlesDiv, 'target');
 
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'

@@ -191,22 +191,26 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                     },
                     'Temporarily hide this marker'
                 ),
-                new atb.widgets.MenuItem(
-                    "showLinkedAnnos",
-                    createButtonGenerator("atb-radialmenu-button icon-search"),
-                    function(actionEvent) {
-                        self.showAnnos(specificResourceUri);
+                // new atb.widgets.MenuItem(
+                //     "showLinkedAnnos",
+                //     createButtonGenerator("atb-radialmenu-button icon-search"),
+                //     function(actionEvent) {
+                //         self.showAnnos(specificResourceUri);
                         
-                        self.hideHoverMenu();
-                    },
-                    'Show other resources which are linked to this marker'
-                ),
+                //         self.hideHoverMenu();
+                //     },
+                //     'Show other resources which are linked to this marker'
+                // ),
                 new atb.widgets.MenuItem(
                     "linkAway",
                     createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
                     function(actionEvent) {
                         self.clientApp.createAnnoLink(specificResourceUri);
                         self.highlightFeature(uri);
+
+                        if (self.annoTitlesList) {
+                            self.annoTitlesList.loadForResource(specificResourceUri);
+                        }
                     },
                     'Link another resource to this marker'
                 ),
@@ -215,6 +219,10 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                     createButtonGenerator("atb-radialmenu-button icon-pencil"),
                     function(actionEvent) {
                         self.createTextAnno(specificResourceUri);
+
+                        if (self.annoTitlesList) {
+                            self.annoTitlesList.loadForResource(specificResourceUri);
+                        }
                     },
                     'Annotate this marker'
                 )

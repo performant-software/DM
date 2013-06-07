@@ -460,6 +460,10 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 			createButtonGenerator("atb-radialmenu-button icon-pencil"),
 			function(actionEvent) {
 	            self.createNewAnnoBody(object);
+
+	            if (self.annoTitlesList) {
+	                self.annoTitlesList.loadForResource(specificResourceUri);
+	            }
 	        },
             'Annotate this highlight'
 		),
@@ -469,17 +473,21 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 			createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
 			function(actionEvent) {
 	            self.linkAnnotation(object);
+
+	            if (self.annoTitlesList) {
+	                self.annoTitlesList.loadForResource(specificResourceUri);
+	            }
 			},
             'Link another resource to this highlight'
 		),
-		new atb.widgets.MenuItem(
-	        "showLinkedAnnos",
-	        createButtonGenerator("atb-radialmenu-button icon-search"),
-	        function(actionEvent) {
-	            self.showAnnos(object);
-	        }, 
-	        'Show resources linked to this highlight'
-	    ),
+		// new atb.widgets.MenuItem(
+	 //        "showLinkedAnnos",
+	 //        createButtonGenerator("atb-radialmenu-button icon-search"),
+	 //        function(actionEvent) {
+	 //            self.showAnnos(object);
+	 //        }, 
+	 //        'Show resources linked to this highlight'
+	 //    ),
 		new atb.widgets.MenuItem(
 			'delete_highlight_button',
 			createButtonGenerator('atb-radialmenu-button icon-remove'),
