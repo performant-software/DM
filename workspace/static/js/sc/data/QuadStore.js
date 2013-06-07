@@ -314,7 +314,7 @@ sc.data.QuadStore.prototype.addQuads = function(quads) {
 
 /**
  * Removes a quad (by reference) from the store.
- * If you don't have a reference to the quad, use sc.data.QuadStore#removeQuadsMatchingQuery.
+ * If you don't have a reference to the quad, use sc.data.QuadStore#removeQuadsMatchingQuery or #removeQuad.
  * @param  {sc.data.Quad} quad A reference to the quad to remove.
  * @return {boolean}      Whether the quad was found and removed.
  */
