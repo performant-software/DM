@@ -286,7 +286,7 @@ sc.data.DataModel.prototype.findSelectorSpecificResourceUri = function(selectorU
         if (specificResources.length > 1) {
             console.warn(selectorUri, 'has more than one specific resource', specificResources);
         }
-        return specificResources[0];
+        return specificResources[0].uri;
     }
     else {
         return null;

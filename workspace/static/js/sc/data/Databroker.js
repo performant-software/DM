@@ -582,6 +582,8 @@ sc.data.Databroker.prototype.getDeferredResourceCollection = function(uris) {
 };
 
 sc.data.Databroker.prototype.dumpResource = function(uri) {
+    if (uri instanceof sc.data.Resource) uri = uri.uri;
+
     var equivalentUris = this.getEquivalentUris(uri);
     
     var ddict = new sc.util.DefaultDict(function() {
@@ -613,6 +615,44 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
     }, this);
     
     return dump;
+};
+
+sc.data.Databroker.prototype.dumpResourceToTurtleString = function(uri) {
+    var arr = [sc.util.Namespaces.angleBracketWrap(uri)];
+
+    var numUniquePredicates = 0;
+
+    var dump = this.dumpResource(uri);
+    
+    goog.structs.forEach(dump, function(predicates, context) {
+        goog.structs.forEach(predicates, function(objects, predicate) {
+            if (numUniquePredicates != 0) {
+                arr.push(' ;');
+            }
+
+            arr.push('\n\t', predicate, ' ');
+            if (objects.length > 1) {
+                arr.push('[');
+
+                goog.structs.forEach(objects, function(object, i) {
+                    arr.push('\n\t\t', object);
+                    if (i != objects.length - 1) {
+                        arr.push(' ;');
+                    }
+                }, this);
+
+                arr.push('\n\t]');
+            } 
+            else {
+                arr.push(objects[0]);
+            }
+
+            numUniquePredicates ++;
+        }, this);
+    }, this);
+
+    arr.push(' .');
+    return arr.join('');
 };
 
 sc.data.Databroker.prototype.getResource = function(uri) {
