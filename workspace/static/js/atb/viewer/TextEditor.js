@@ -322,19 +322,23 @@ atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
     
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     var menuItems = [
-        new atb.widgets.MenuItem(
-                "showLinkedAnnos",
-                createButtonGenerator("atb-radialmenu-button icon-search"),
-                function(actionEvent) {
-                    this.showAnnos(this.resourceId);
-                }.bind(this), 
-                'Show resources linked to this document'
-        ),
+        // new atb.widgets.MenuItem(
+        //         "showLinkedAnnos",
+        //         createButtonGenerator("atb-radialmenu-button icon-search"),
+        //         function(actionEvent) {
+        //             this.showAnnos(this.resourceId);
+        //         }.bind(this), 
+        //         'Show resources linked to this document'
+        // ),
         new atb.widgets.MenuItem(
             "createLink",
             createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
             function(actionEvent) {
                 this.linkAnnotation();
+
+                if (this.annoTitlesList) {
+                    this.annoTitlesList.loadForResource(this.uri);
+                }
             }.bind(this),
             'Link another resource to this document'
         ),
@@ -343,6 +347,10 @@ atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
             createButtonGenerator("atb-radialmenu-button icon-pencil"),
             function(actionEvent) {
                 this.createNewTextBody(this.resourceId);
+
+                if (this.annoTitlesList) {
+                    this.annoTitlesList.loadForResource(this.uri);
+                }
             }.bind(this),
             'Annotate this document'
         )

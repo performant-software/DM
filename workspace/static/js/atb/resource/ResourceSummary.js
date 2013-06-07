@@ -137,6 +137,10 @@ atb.resource.ResourceSummary.prototype.render = function (opt_div) {
     return this.outerDiv;
 };
 
+atb.resource.ResourceSummary.prototype.getElement = function() {
+    return this.outerDiv;
+};
+
 /**
  * Click handler for the base div
  * @param e {goog.events.Event}
@@ -153,17 +157,20 @@ atb.resource.ResourceSummary.prototype.handleClick = function (e) {
     this.dispatchEvent(customEvent);
 };
 
+atb.resource.ResourceSummary.prototype.deleteClickHandler = function(event) {
+    event.stopPropagation();
+
+    var customEvent = new goog.events.BrowserEvent(event, this);
+    customEvent.resource = this.resource;
+    customEvent.type = 'delete-click';
+
+    this.dispatchEvent(customEvent);
+};
+
 /**
  * Enables deletion of the summary by showing the delete button on hover
- * @param deleteClickHandler {Function(atb.resource.ResourceSummary, goog.events.Event)}
- * the function to be called when the delete button is clicked
  */
-atb.resource.ResourceSummary.prototype.enableDelete = function (deleteClickHandler) {
-    this.deleteClickHandler = function (e) {
-        e.stopPropagation();
-        deleteClickHandler(this, e);
-    };
-    
+atb.resource.ResourceSummary.prototype.enableDelete = function () {
     goog.events.listen(this.deleteButton, goog.events.EventType.CLICK, this.deleteClickHandler, false, this);
     jQuery(this.panelCtrls).append(this.deleteButton);
     

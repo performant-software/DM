@@ -387,25 +387,27 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
     return anno;
 };
 
-sc.data.DataModel.prototype.unlinkTargetFromAnno = function(anno, target, opt_deleteIfOnlyTarget) {
+sc.data.DataModel.prototype.unlinkTargetFromAnno = function(anno, target, opt_deleteIfEmpty) {
     anno = this.databroker.getResource(anno);
+    target = this.databroker.getResource(target);
 
-    anno.removeProperty('oa:hasTarget', target);
+    anno.deleteProperty('oa:hasTarget', target);
 
-    if (opt_deleteIfOnlyTarget) {
-        if (anno.getProperties('oa:hasTarget').length == 0) {
+    if (opt_deleteIfEmpty) {
+        if (anno.getProperties('oa:hasTarget').length == 0 && anno.getProperties('oa:hasBody').length <= 1) {
             anno.deleteAllProperties();
         }
     }
 };
 
-sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_deleteIfOnlyBody) {
+sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_deleteIfEmpty) {
     anno = this.databroker.getResource(anno);
+    body = this.databroker.getResource(body);
 
-    anno.removeProperty('oa:hasBody', target);
+    anno.deleteProperty('oa:hasBody', target);
 
-    if (opt_deleteIfOnlyTarget) {
-        if (anno.getProperties('oa:hasBody').length == 0) {
+    if (opt_deleteIfEmpty) {
+        if (anno.getProperties('oa:hasBody').length == 0 && anno.getProperties('oa:hasTarget').length <= 1) {
             anno.deleteAllProperties();
         }
     }

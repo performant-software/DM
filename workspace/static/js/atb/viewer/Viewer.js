@@ -401,6 +401,7 @@ function(menuButtons, resourceId, opt_position) {
     var annoTitlesList = new atb.ui.AnnoTitlesList(this.clientApp, this,
                                                    resourceId, this.domHelper);
     annoTitlesList.render(menuDiv);
+    this.annoTitlesList = annoTitlesList;
     
     var closeButton = this.domHelper.createDom('div', {
         'class': 'atb-hoverMenu-closeButton',
@@ -472,6 +473,8 @@ atb.viewer.Viewer.prototype.hideHoverMenu = function () {
     this.hoverMenuPopup.setVisible(false);
     
     this.cancelMaybeHideHoverMenuCommand();
+
+    this.annoTitlesList = null;
 };
 
 /**
