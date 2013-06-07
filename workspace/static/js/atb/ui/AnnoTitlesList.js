@@ -73,23 +73,24 @@ atb.ui.AnnoTitlesList.prototype.render = function (div) {
     return newDiv;
 };
 
-atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (uri, summary, event, opt_params) {
-    if (!opt_params)
-        opt_params = {};
+atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
+    var uri = event.resource.uri;
+    var summary = event.currentTarget;
 
-    var resource = summary.resource;
+    var resource = event.resource;
 
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClick(resource.getUri(), eventDispatcher, this);
-    eventDispatcher.dispatchEvent(event);
+    var resourceClickEvent = new atb.events.ResourceClick(resource.getUri(), eventDispatcher, this);
+    if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
 
-    var viewerGrid = this.clientApp.viewerGrid;
-    var container = new atb.viewer.ViewerContainer(this.domHelper);
-    viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
-    var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
-    container.setViewer(viewer);
-    viewer.loadResourceByUri(uri);
-    container.autoResize();
+        var viewerGrid = this.clientApp.viewerGrid;
+        var container = new atb.viewer.ViewerContainer(this.domHelper);
+        viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
+        var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
+        container.setViewer(viewer);
+        viewer.loadResourceByUri(uri);
+        container.autoResize();
+    }
 };
 
 atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv) {
@@ -100,8 +101,10 @@ atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderD
             continue;
         }
         else {
-            var summary = atb.resource.ResourceSummaryFactory.createFromUri(uri, this.summaryClickHandler, this, this.clientApp, this.domHelper, this.summaryStyleOptions);
+            var summary = atb.resource.ResourceSummaryFactory.createFromUri(uri, this, this.clientApp, this.domHelper, this.summaryStyleOptions);
             this.summariesByUri.set(uri, summary);
+
+            goog.events.listen(summary, 'click', this.summaryClickHandler, false, this);
 
             var render = function (list, div) {
                 var insert = function (list) {

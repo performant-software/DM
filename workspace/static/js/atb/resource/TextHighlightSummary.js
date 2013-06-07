@@ -16,8 +16,8 @@ goog.require('atb.resource.ResourceSummary');
  * @param resource {atb.resource.TextHighlightResource}
  * @param div {HTML Element}
  */
-atb.resource.TextHighlightSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+atb.resource.TextHighlightSummary = function (uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
 
     this.highlightResource = this.databroker.getResource(this.resource.getOneProperty('oa:hasSelector'));
     this.parentResource = this.databroker.getResource(this.resource.getOneProperty('oa:hasSource'));

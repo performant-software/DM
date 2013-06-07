@@ -2,8 +2,8 @@ goog.provide('atb.resource.AudioSummary');
 
 goog.require('atb.resource.ResourceSummary');
 
-atb.resource.AudioSummary = function(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+atb.resource.AudioSummary = function(uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
 
     if (this.resource.hasType('dms:AudioSegment')) {
         this.parentResource = this.databroker.getResource(this.resource.getOneProperty('dcterms:isPartOf'));

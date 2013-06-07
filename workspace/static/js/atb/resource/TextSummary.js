@@ -10,13 +10,9 @@ goog.require('atb.resource.ResourceSummary');
  * @author tandres@drew.edu (Tim Andres)
  * @constructor
  * @extends atb.resource.ResourceSummary
- * @param resourceId {string} id of resource to be summarized
- * @param clickHandler {function}
- * @param clickHandlerScope {object}
- * @param resource {atb.resource.TextResource}
  */
-atb.resource.TextSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+atb.resource.TextSummary = function (uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
 	
     this.text = this.resource.getOneProperty('cnt:chars') || 'no contents';
     this.title = this.resource.getOneProperty('dc:title') || 'Untitled text';

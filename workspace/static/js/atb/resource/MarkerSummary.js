@@ -14,8 +14,8 @@ goog.require('sc.canvas.FabricCanvasFactory');
  * @param resource
  * @param webService
  */
-atb.resource.MarkerSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+atb.resource.MarkerSummary = function (uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
 
     this.selected = false;
 
