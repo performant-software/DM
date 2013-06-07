@@ -7,33 +7,33 @@ goog.require('atb.resource.MarkerSummary');
 goog.require('atb.resource.ManuscriptSummary');
 goog.require('atb.resource.AudioSummary');
 
-atb.resource.ResourceSummaryFactory.createFromUri = function(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+atb.resource.ResourceSummaryFactory.createFromUri = function(uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
     var result;
     var databroker = clientApp.databroker;
 
     var resource = databroker.getResource(uri);
     
     if (resource.hasAnyType('dctypes:Text')) {
-        result = new atb.resource.TextSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        result = new atb.resource.TextSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else if (resource.hasAnyType('oac:SpecificResource')) {
         var selector = resource.getOneResourceByProperty('oa:hasSelector');
 
         if (selector.hasType('oa:TextQuoteSelector')) {
-            result = new atb.resource.TextHighlightSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+            result = new atb.resource.TextHighlightSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
         }
         else if (selector.hasType('oa:SvgSelector')) {
-            result = new atb.resource.MarkerSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+            result = new atb.resource.MarkerSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
         }
     }
     
     else if (resource.hasAnyType('dms:Canvas')) {
-        result = new atb.resource.CanvasSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        result = new atb.resource.CanvasSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
 
     else if (resource.hasAnyType('dms:AudioSegment', 'dctypes:Sound')) {
-        result = new atb.resource.AudioSummary(uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        result = new atb.resource.AudioSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else {

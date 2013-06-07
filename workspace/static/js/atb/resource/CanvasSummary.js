@@ -14,8 +14,8 @@ goog.require('sc.canvas.FabricCanvasFactory');
  * @constructor
  * @extends atb.resource.ResourceSummary
  */
-atb.resource.CanvasSummary = function (uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, uri, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions);
+atb.resource.CanvasSummary = function (uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+    atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     
     this.size = new goog.math.Size(75, 75);
     this.title = this.resource.getOneProperty('dc:title');

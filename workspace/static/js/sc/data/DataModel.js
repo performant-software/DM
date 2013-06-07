@@ -387,6 +387,30 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
     return anno;
 };
 
+sc.data.DataModel.prototype.unlinkTargetFromAnno = function(anno, target, opt_deleteIfOnlyTarget) {
+    anno = this.databroker.getResource(anno);
+
+    anno.removeProperty('oa:hasTarget', target);
+
+    if (opt_deleteIfOnlyTarget) {
+        if (anno.getProperties('oa:hasTarget').length == 0) {
+            anno.deleteAllProperties();
+        }
+    }
+};
+
+sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_deleteIfOnlyBody) {
+    anno = this.databroker.getResource(anno);
+
+    anno.removeProperty('oa:hasBody', target);
+
+    if (opt_deleteIfOnlyTarget) {
+        if (anno.getProperties('oa:hasBody').length == 0) {
+            anno.deleteAllProperties();
+        }
+    }
+};
+
 sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
     var anno = this.databroker.getResource(uri);
 
