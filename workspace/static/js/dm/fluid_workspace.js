@@ -216,12 +216,12 @@ function userTagSystem(usr, usernames){
     })
 
     /* Script which adds users
-    * Usernames assigned to project are stored in addedUsers
-    * 'keyup' call ensures that the user has finished typing the username
-    * Looks for Shift+Return combination ONLY
-    * Checks for users already added
-    * Rejects invalid usernames
-    * ((Next Up: suggests usernames using typeahead))
+     * Usernames assigned to project are stored in addedUsers
+     * 'keyup' call ensures that the user has finished typing the username
+     * Looks for Shift+Return combination ONLY
+     * Checks for users already added
+     * Rejects invalid usernames
+     * ((Next Up: suggests usernames using typeahead))
     */
     usr.keyup(function(e){
         if (e.which == 13&&shift){
@@ -234,7 +234,7 @@ function userTagSystem(usr, usernames){
                 if (usernames.indexOf(val) != -1){
                     if (addedUsers.indexOf(val) == -1){
                         // "&nbsp" text allows 3 character widths between usernames
-                        $(".users").append('<a href="#" onClick="removeUser(this)">' + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
+                        $(".users").append('<a onClick="removeUser(this)">' + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
                         addedUsers.push(val);
 
                         usr.val("");
@@ -344,6 +344,9 @@ function sendData(e){
         var url = db.restUrl(null, db.RESTYPE.user, clientApp.username, null)
         db.getDeferredResource(url).done(showProjectTitle(p));
     },3000)
+
+    // Add the new project to the databroker as a valid project
+    goog.global.databroker.addNewProject(p)
 }
 
 /* The following two methods are copied from Django documentation
@@ -395,7 +398,7 @@ function showProjectTitles(username){
 }
 
 /* Add the title of a single project (with uri supplied) to the title dropdown
- * Abstracted from showProjectTitles in 
+ * Abstracted from showProjectTitles so it can be called for just one new project
 */
 function showProjectTitle(uri){
     var db = goog.global.databroker;
@@ -404,9 +407,10 @@ function showProjectTitle(uri){
     if (db.quadStore.numQuadsMatchingQuery(wrap(uri)) <= 1){
         setTimeout(function(){
             db.getDeferredResource(uri).done(function(resource){
+                uri = sc.util.Namespaces.angleBracketStrip(uri)
                 var title = resource.getOneProperty('dc:title')
                 var projects = $("#projects");
-                projects.append('<li><a>' + title + '</a></li>');
+                projects.append('<li><a onClick="selectProject(this)" id="' + uri + '">' + title + '</a></li>');
                 sortChildrenAlphabetically(projects);
             })
         }, 1000)
@@ -417,31 +421,37 @@ function showProjectTitle(uri){
  *  in the original object
  * Can be used on any object but designed & tested for projects drop-down
  * Breaks if an object without children is passed
+ * Uses custom sort method so as not to destroy the child & recreate when sorting
 */
 function sortChildrenAlphabetically(parent){
     var childs = parent.children();
-    var sortedChilds = []
-
+    
     /* Our drop-downs are currently structured to have text wrapped in <a> tags,
      *  so in order to get the actual text, we must call .firstChild.text instead
      *  of simply .text (no text is returned if we simply use .text)
+     * This sorts the children in ascending alphabetical order based on the text
     */
-    for (var i = 0; i < childs.length; i++) {
-        sortedChilds.push(childs[i].firstChild.text)
-    };
+    childs.sort(function(a,b){
+        var str1=a.firstChild.text, str2=b.firstChild.text;
 
-    // Sorts the array of strings and then removes all children from the parent
-    sortedChilds.sort()
+        return ((str1 == str2) ? 0 : ((str1 > str2) ? 1 : -1));
+    })
+
+    /* Remove all children (unordered) from parent and then adds them back in
+     *  alphabetical order
+     * This is inefficient, but only a small amount of data is being passed around
+     *  at any given time, so it's not too bad
+    */
     parent.empty()
 
-    // Adds children back to parent in alphabetical order
-    for(var i = 0; i < sortedChilds.length; i++){
-        parent.append("<li><a>" + sortedChilds[i] + "</a></li>")
+    for(var i = 0; i < childs.length; i++){
+        parent.append(childs[i])
     }
 
 }
 
-/* Adds all projects belonging to the current user to the projects dropdown menu
+/* Ensures databroker has all information about the user's projects, and then adds
+ *  each title to the projects dropdown menu in alphabetical order
 */
 function setupProjects(){
     // Variables used to shorten some references
@@ -455,6 +465,11 @@ function setupProjects(){
     // Wrapped in timeout to avoid server errors from querying data too quickly
     setTimeout(function(){
         db.getDeferredResource(url).done(showProjectTitles(username))
-    }, 3000)
-    
+    }, 3000)    
+}
+
+function selectProject(e){
+    var uri = e.id;
+    goog.global.databroker.setCurrentProject(uri);
+    workingResourcesViewer.loadManifest(uri);
 }
