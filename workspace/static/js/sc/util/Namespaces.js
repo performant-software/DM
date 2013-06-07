@@ -32,6 +32,20 @@ sc.util.Namespaces.prototype.addNamespace = function (prefix, uri) {
     this.prefixByUri.set(uri, prefix);
 };
 
+sc.util.Namespaces.prototype.toTurtleString = function() {
+    var arr = [];
+
+    goog.structs.forEach(this.uriByPrefix, function(uri, prefix) {
+        arr.push('@prefix ' + prefix + ': ' + sc.util.Namespaces.angleBracketWrap(uri) + ' .');
+    }, this);
+
+    return arr.join('\n');
+};
+
+sc.util.Namespaces.prototype.toString = function() {
+    return this.toTurtleString();
+};
+
 sc.util.Namespaces.isAngleBracketWrapped = function(str) {
     return str.charAt(0) == '<' && str.charAt(str.length - 1) == '>';
 };
@@ -61,7 +75,10 @@ sc.util.Namespaces.angleBracketStrip = function (str) {
 };
 
 sc.util.Namespaces.angleBracketWrap = function(str) {
-    if (sc.util.Namespaces.isAngleBracketWrapped(str) ||
+    if (str instanceof sc.data.Resource) {
+        return str.bracketedUri;
+    }
+    else if (sc.util.Namespaces.isAngleBracketWrapped(str) ||
         sc.util.Namespaces.isBNode(str)) {
         return str;
     }

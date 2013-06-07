@@ -26,7 +26,7 @@ sc.data.Resource = function(databroker, uri) {
 };
 
 sc.data.Resource.prototype.toString = function() {
-    return this.uri + ' : ' + JSON.stringify(this.databroker.dumpResource(this.uri), null, '  ');
+    return this.databroker.dumpResourceToTurtleString(this);
 };
 
 /**
