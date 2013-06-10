@@ -7,6 +7,10 @@ goog.require('jquery.jQuery');
 sc.util.Namespaces = function (opt_namespacesDict) {
     this.uriByPrefix = new goog.structs.Map(sc.util.Namespaces.DEFAULT_NAMESPACES);
     this.prefixByUri = this.uriByPrefix.transpose();
+
+    if (opt_namespacesDict) {
+        this.addNamespaces(opt_namespacesDict);
+    }
 };
 
 sc.util.Namespaces.DEFAULT_NAMESPACES = {
@@ -31,6 +35,12 @@ sc.util.Namespaces.DEFAULT_NAMESPACES = {
 sc.util.Namespaces.prototype.addNamespace = function (prefix, uri) {
     this.uriByPrefix.set(prefix, uri);
     this.prefixByUri.set(uri, prefix);
+};
+
+sc.util.Namespaces.prototype.addNamespaces = function(dict) {
+    goog.structs.forEach(dict, function(value, key) {
+        this.addNamespace(key, value);
+    }, this);
 };
 
 sc.util.Namespaces.prototype.toTurtleString = function() {
