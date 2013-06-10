@@ -490,6 +490,9 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
     if (uri instanceof sc.data.Resource) {
         uri = uri.uri;
     }
+    else {
+        uri = sc.util.Namespaces.angleBracketStrip(uri);
+    }
 
     var deferredResource = jQuery.Deferred();
 
