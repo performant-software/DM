@@ -121,12 +121,12 @@ goog.addDependency('../../../sc/canvas/KeyboardShortcutsControl.js', ['sc.canvas
 goog.addDependency('../../../sc/canvas/PageChooser.js', ['sc.canvas.PageChooser'], ['goog.events.EventTarget', 'jquery.jQuery']);
 goog.addDependency('../../../sc/canvas/PanZoomGesturesControl.js', ['sc.canvas.PanZoomGesturesControl'], ['goog.events', 'jquery.event.drag', 'jquery.jQuery', 'jquery.mousewheel', 'sc.canvas.Control']);
 goog.addDependency('../../../sc/canvas/ZoomSliderControl.js', ['sc.canvas.ZoomSliderControl'], ['jquery.jQuery', 'jquery.jQueryUI', 'sc.canvas.Control']);
-goog.addDependency('../../../sc/data/DataModel.js', ['sc.data.DataModel'], ['goog.structs.Set']);
+goog.addDependency('../../../sc/data/DataModel.js', ['sc.data.DataModel'], ['goog.storage.Storage', 'goog.storage.mechanism.mechanismfactory', 'goog.structs.Map', 'goog.structs.Set']);
 goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'jquery.rdfquery', 'sc.data.DataModel', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.Resource', 'sc.data.SyncService', 'sc.util.DefaultDict', 'sc.util.DeferredCollection', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], ['jquery.rdfquery']);
 goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.array', 'goog.string', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'jquery.jQuery', 'sc.data.Quad', 'sc.util.Namespaces']);
-goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], []);
+goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], ['goog.net.Cookies']);
 goog.addDependency('../../../sc/data/Triple.js', ['sc.data.Triple'], []);
 goog.addDependency('../../../sc/data/TripleStore.js', ['sc.data.TripleStore'], ['goog.array', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/util/Array.js', ['sc.Array'], []);

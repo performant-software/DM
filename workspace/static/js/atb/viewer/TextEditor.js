@@ -195,7 +195,7 @@ atb.viewer.TextEditor.prototype.saveContents = function (
 
     var resource = this.databroker.getResource(this.resourceId);
     resource.setProperty('dc:title', '"' + this.getTitle() + '"');
-    resource.setProperty('cnt:chars', '"' + this.getSanitizedHtml().replace('"', '\\"') + '"');
+    this.databroker.dataModel.setTextContent(resource, this.getSanitizedHtml());
 
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     highlightPlugin.updateAllHighlightResources();
@@ -561,7 +561,15 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
         this.resourceId = resource.getUri();
         this.uri = resource.getUri();
         this.setDisplayTitle(resource.getOneProperty('dc:title') || '');
-        this.setHtml(resource.getOneProperty('cnt:chars') || '');
+
+        this.databroker.dataModel.textContents(resource, function(contents, error) {
+            if (contents) {
+                this.setHtml(contents);
+            }
+            else {
+                console.error(error);
+            }
+        }.bind(this));
 
         var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
         textEditorAnnotate.addListenersToAllHighlights();
