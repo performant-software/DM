@@ -135,14 +135,14 @@ sc.data.Databroker.prototype.proxyUrl = function(url) {
  * @return {boolean} Whether proxying is required.
  */
 sc.data.Databroker.prototype.shouldProxy = function(url) {
-    var hostname = window.location.hostname;
-    var port = window.location.port;
+    var uri = new goog.Uri(url);
 
-    if (this.corsEnabledDomains.contains(hostname)) {
+    if (this.corsEnabledDomains.contains(uri.getDomain())) {
         return false;
     }
     else {
-        var uri = new goog.Uri(url);
+        var hostname = window.location.hostname;
+        var port = window.location.port;
 
         return !(uri.getDomain() == hostname && uri.getPort() == port);
     }
@@ -160,7 +160,7 @@ sc.data.Databroker.prototype.registerNamespace = function(prefix, fullUri) {
 /**
  * @return {sc.util.namespaces} The namespace utility object associated with the data store.
  */
-sc.data.Databroker.prototype.getnamespaces = function() {
+sc.data.Databroker.prototype.getNamespaces = function() {
     return this.namespaces;
 };
 
@@ -897,37 +897,34 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
  * @return {Array.<string>}
  */
 sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
-    var bracketedListUri = sc.util.Namespaces.angleBracketWrap(listUri);
-    
+    var list = this.getResource(listUri);
     var uris = [];
 
-    var first = this.getPropertiesForResource(bracketedListUri, 'rdf:first')[0];
-
-    if (!first) {
+    var firstUri = list.getOneProperty('rdf:first');
+    if (!firstUri) {
         return [];
     }
+    uris.push(firstUri);
 
-    uris.push(first);
-
-    var rest = this.getPropertiesForResource(bracketedListUri, 'rdf:rest')[0];
+    var restUri = list.getOneProperty('rdf:rest');
     
-    var nil = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
+    var nilUri = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
 
-    while (rest && rest != nil &&
-           rest != sc.util.Namespaces.angleBracketWrap(nil)) {
-        first = this.getPropertiesForResource(rest, 'rdf:first')[0];
+    while (restUri && restUri != nilUri) {
+        var rest = this.getResource(restUri);
+        firstUri = rest.getOneProperty('rdf:first');
 
-        if (first) {
-            uris.push(first);
+        if (firstUri) {
+            uris.push(firstUri);
         }
         else {
-            console.warn('Malformed sequence:', listUri);
+            console.warn('Malformed sequence:', list.uri);
         }
 
-        rest = this.getPropertiesForResource(rest, 'rdf:rest')[0];
+        restUri = rest.getOneProperty('rdf:rest');
     }
 
-    return sc.util.Namespaces.angleBracketStrip(uris);
+    return uris;
 };
 
 sc.data.Databroker.prototype.getImageSrc = function(uri, opt_width, opt_height) {
@@ -1109,7 +1106,6 @@ sc.data.Databroker.prototype.syncResources = function() {
 
 
 sc.data.Databroker.prototype.sync = function() {
-    // console.log("sc.data.Databroker.sync called.");
     this.syncResources();
 };
 
