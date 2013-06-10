@@ -363,7 +363,7 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
         var anno = currentBodyAnnos[0];
     }
     else {
-        var anno = this.databroker.createResource(this.databroker.createUuid(), 'oa:Annotation');
+        var anno = this.databroker.createResource(null, 'oa:Annotation');
     }
 
     if (opt_annoType) {
@@ -457,7 +457,7 @@ sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
 };
 
 sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
-    var text = this.databroker.createResource(this.databroker.createUuid(), 'dctypes:Text');
+    var text = this.databroker.createResource(null, 'dctypes:Text');
     text.addProperty('rdf:type', 'cnt:ContentAsText');
 
     if (opt_title) {
