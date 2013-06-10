@@ -555,12 +555,28 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
 };
 
 sc.data.Databroker.prototype.knowsAboutResource = function(uri) {
-    uri = sc.util.Namespaces.angleBracketWrap(uri);
+    var resource = this.getResource(uri);
 
-    var numQuads = this.quadStore.numQuadsMatchingQuery(uri, null, null, null) +
-                   this.quadStore.numQuadsMatchingQuery(null, uri, null, null) +
-                   this.quadStore.numQuadsMatchingQuery(null, null, uri, null) +
-                   this.quadStore.numQuadsMatchingQuery(null, null, null, uri);
+    var numQuads = 0;
+
+    goog.structs.forEach(this.getEquivalentUris(resource.bracketedUri), function(uri) {
+        numQuads += this.quadStore.numQuadsMatchingQuery(uri, null, null, null) +
+                    this.quadStore.numQuadsMatchingQuery(null, uri, null, null) +
+                    this.quadStore.numQuadsMatchingQuery(null, null, uri, null) +
+                    this.quadStore.numQuadsMatchingQuery(null, null, null, uri);
+    }, this);
+    
+    return numQuads > 0;
+};
+
+sc.data.Databroker.prototype.hasResourceData = function(uri) {
+    var resource = this.getResource(uri);
+
+    var numQuads = 0;
+
+    goog.structs.forEach(this.getEquivalentUris(resource.bracketedUri), function(uri) {
+        numQuads += this.quadStore.numQuadsMatchingQuery(uri, null, null, null);
+    }, this);
     
     return numQuads > 0;
 };
@@ -670,15 +686,17 @@ sc.data.Databroker.prototype.getResource = function(uri) {
 sc.data.Databroker.prototype.createResource = function(uri, type) {
     var resource = this.getResource(uri || this.createUuid());
 
+    if (this.hasResourceData(resource)) {
+        throw "Resource " + resource.uri + " already exists";
+    }
+
     if (type) {
         resource.addProperty('rdf:type', type);
     }
+
+    this.newResourceUris.add(resource.bracketedUri);
     
     return resource;
-};
-
-sc.data.Databroker.prototype.scheduleForSync = function(resource) {
-    this.newResourceUris.add(resource.bracketedUri);
 };
 
 sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
