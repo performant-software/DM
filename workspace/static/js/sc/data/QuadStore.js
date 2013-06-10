@@ -547,9 +547,15 @@ sc.data.QuadStore.generateIndexKeys = function(quad) {
             null
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
+            null,
+            null,
+            null,
+            quad.context
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
-            quad.predicate,
-            quad.object,
+            null,
+            null,
             null
         )
     ];
