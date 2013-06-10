@@ -291,14 +291,16 @@ sc.data.QuadStore.prototype.contextsMatchingQuery = function(subject, predicate,
  * @param {sc.data.Quad} quad Quad to add.
  */
 sc.data.QuadStore.prototype.addQuad = function(quad) {
-    this.quads.add(quad);
+    if (! this.containsQuad(quad)) {
+        this.quads.add(quad);
 
-    var keys = sc.data.QuadStore.generateIndexKeys(quad);
+        var keys = sc.data.QuadStore.generateIndexKeys(quad);
 
-    for (var i=0, len=keys.length; i<len; i++) {
-        var key = keys[i];
+        for (var i=0, len=keys.length; i<len; i++) {
+            var key = keys[i];
 
-        this.indexedQuads.get(key).add(quad);
+            this.indexedQuads.get(key).add(quad);
+        }
     }
 
     return this;
