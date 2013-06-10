@@ -95,7 +95,8 @@
               <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
-              <li><a href="#">my projects</a></li>
+              <li><a href="#newProjectModal" role="button" data-toggle="modal">new project</a></li>
+              <li><a href="#editProjectModal" role="button" data-toggle="modal" onclick="prepareForEdit()">current project</a></li>
               <li><a href="#">my account</a></li>
               <li class="divider"></li>
               <li><a href="{% url accounts.views.sign_out %}">logout</a></li>
