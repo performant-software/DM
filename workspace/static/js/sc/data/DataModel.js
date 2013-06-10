@@ -1,6 +1,9 @@
 goog.provide('sc.data.DataModel');
 
 goog.require('goog.structs.Set');
+goog.require('goog.structs.Map');
+goog.require('goog.storage.Storage');
+goog.require('goog.storage.mechanism.mechanismfactory');
 
 /**
  * @author  tandres@drew.edu (Tim Andres)
@@ -11,6 +14,16 @@ goog.require('goog.structs.Set');
 
 sc.data.DataModel = function (databroker) {
     this.databroker = databroker;
+
+    // Try to use local storage to store text contents, but if it's not available, use Javascript Memory
+    // var storageMechanism = goog.storage.mechanism.mechanismfactory.create('sc.data.DataModel-' + goog.string.getRandomString() + '-');
+    // if (storageMechanism) {
+    //     this.textContentByUri = new goog.storage.Storage(storageMechanism);
+    // }
+    // else {
+        this.textContentByUri = new goog.structs.Map();
+    // }
+    this.modifiedTextUris = new goog.structs.Set();
 };
 
 /**
@@ -459,6 +472,7 @@ sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
 sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
     var text = this.databroker.createResource(null, 'dctypes:Text');
     text.addProperty('rdf:type', 'cnt:ContentAsText');
+    text.addProperty('dc:format', '"text/html"');
 
     if (opt_title) {
         text.addProperty('dc:title', sc.util.Namespaces.quoteWrap(opt_title));
@@ -469,4 +483,51 @@ sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
     }
 
     return text;
+};
+
+sc.data.DataModel.prototype.textContents = function(text, handler, opt_forceReload) {
+    window.setTimeout(function() {
+        text = this.databroker.getResource(text);
+
+        var chars = text.getOneUnescapedProperty('cnt:chars');
+        if (chars) {
+            var content = sc.util.Namespaces.stripQuotesAndDatatype(chars);
+            handler(content);
+        }
+        else {
+            var localContent = this.textContentByUri.get(text.uri);
+            if (!opt_forceReload && localContent) {
+                handler(localContent);
+            }
+            else {
+                jQuery.ajax(text.uri, {
+                    type: 'GET',
+                    success: this._handleTextContentLoad.bind(this, handler, text),
+                    error: this._handleTextContentError.bind(this, handler, text)
+                });
+            }
+        }
+    }.bind(this), 1);
+};
+
+sc.data.DataModel.prototype._handleTextContentLoad = function(handler, textResource, data, textStatus, jqXhr) {
+    handler(data);
+
+    this.textContentByUri.set(textResource.uri, data);
+};
+
+sc.data.DataModel.prototype._handleTextContentError = function(handler, textResource, jqXhr, textStatus, errorThrown) {
+    handler(null, jqXhr, textStatus, errorThrown);
+};
+
+sc.data.DataModel.prototype.setTextContent = function(text, content) {
+    text = this.databroker.getResource(text);
+
+    if (text.hasPredicate('cnt:chars')) {
+        text.setProperty('cnt:chars', '"' + content.replace('"', '\\"') + '"');
+    }
+    else {
+        this.textContentByUri.set(text.uri, content);
+        this.modifiedTextUris.add(text.uri);
+    }
 };
