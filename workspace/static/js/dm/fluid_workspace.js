@@ -189,20 +189,19 @@ var createCanvasViewer = function(uri) {
 }
 
 /* Instantiate two variables with scope outside userTagSystem
- * Need to be accesibly by removeUser as well
+ * Need to be accesibly by newRemoveUser as well
  * Instatiated here because they belong with the "tag system"
 */
-var addedUsers = [];
+var newAddedUsers = [];
 var shift = false;
 
-/* Appends username from input field into corresponding paragraph
+/* Appends username from input field into corresponding paragraph (creation modal)
  * Multiple elements; each has a description preceding
  * usr: Username input field
  * usernames: List of usernames in the database
  * * usernames is passed with an json dump in render_to_response
- * * ((Is there a better way to send things from python to js?))
 */
-function userTagSystem(usr, usernames){
+function newUserTagSystem(usr, usernames){
 
     /* Ensures shift is down
      * Shift+Return combo needed because the typeahead system uses Return
@@ -212,11 +211,11 @@ function userTagSystem(usr, usernames){
         if (e.which == 16) shift = true;
 
         //Toggles off the "incorrect user" help text
-        $("#help").text("");
+        $("#newHelp").text("");
     })
 
     /* Script which adds users
-     * Usernames assigned to project are stored in addedUsers
+     * Usernames assigned to project are stored in newAddedUsers
      * 'keyup' call ensures that the user has finished typing the username
      * Looks for Shift+Return combination ONLY
      * Checks for users already added
@@ -228,23 +227,23 @@ function userTagSystem(usr, usernames){
             var val = usr.val();
             
             if(val == clientApp.username){
-                $("#help").text("Your username is automatically added to the project.");
+                $("#newHelp").text("Your username is automatically added to the project.");
             }
             else{
                 if (usernames.indexOf(val) != -1){
-                    if (addedUsers.indexOf(val) == -1){
+                    if (newAddedUsers.indexOf(val) == -1){
                         // "&nbsp" text allows 3 character widths between usernames
-                        $(".users").append('<a onClick="removeUser(this)">' + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
-                        addedUsers.push(val);
+                        $("#newAddedUsers").append('<a onClick="newRemoveUser(this) id="' + usr.val() + '">'  + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
+                        newAddedUsers.push(val);
 
                         usr.val("");
                     }
                     else{
-                        $("#help").text("You already added this user.");
+                        $("#newHelp").text("You already added this user.");
                     }
                 }
                 else{
-                    $("#help").text("This is not a valid user.");
+                    $("#newHelp").text("This is not a valid user.");
                 }
             }
         }
@@ -252,14 +251,14 @@ function userTagSystem(usr, usernames){
     })
 }
 
-/* Removes the user from the array of users
+/* Removes the user from the array of users in new project modal
  * Removes the "tag" displaying the username
  * e: html object - link with username as text
  * The user may be added again by re-typing the username
 */
-function removeUser(e){
-    var u = $(e).attr("text");
-    addedUsers.splice(addedUsers.indexOf(u) - 1, 1);
+function newRemoveUser(e){
+    var u = e.id
+    newAddedUsers.splice(newAddedUsers.indexOf(u) - 1, 1);
     e.remove();
 }
 
@@ -267,15 +266,15 @@ function removeUser(e){
  * Clears the data so that another project can be created without refresh
  * Serializes data and sends POST request /workspace/project_forward/
 */
-function sendData(e){
+function sendNewData(){
     //Add the current user to the project
-    addedUsers.push(clientApp.username);
+    newAddedUsers.push(clientApp.username);
 
     //Easier reference to databroker
     var db = goog.global.databroker;
 
     //Collect data
-    var t = $(".title"), d = $("#description");
+    var t = $("#newTitle"), d = $("#newDescription");
 
     var data = $.rdf.databank([], { namespaces: {
                                     ore: "http://www.openarchives.org/ore/terms/", 
@@ -291,8 +290,8 @@ function sendData(e){
 
     if(t.val() != ""){
         //Link user(s) and project
-        for (var i = 0; i < addedUsers.length; i++) {
-            var u = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, addedUsers[i], null);
+        for (var i = 0; i < newAddedUsers.length; i++) {
+            var u = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, newAddedUsers[i], null);
             data.add("<" + u + "> ore:aggregates <" + p + ">");
         };
 
@@ -330,7 +329,7 @@ function sendData(e){
         t.val("");
         d.val("");
         addedUsers = [];
-        $(".users").text("");
+        $("#newAddedUsers").text("");
     }
 
     else{
@@ -468,8 +467,185 @@ function setupProjects(){
     }, 3000)    
 }
 
+/* Switches between projects, which are labeled with the title
+ * Confirms that switching projects will close all resources
+ * When current project is selected, prompts to reload the current project
+*/
 function selectProject(e){
-    var uri = e.id;
-    goog.global.databroker.setCurrentProject(uri);
-    workingResourcesViewer.loadManifest(uri);
+    // Simplify reference
+    var db = goog.global.databroker
+
+    // Skips checking on initial load (when there is no current project)
+    if (db.currentProject){
+
+        // Prompts to reload current project when it is selected
+        if (db.currentProject == e.id){
+            if(confirm("You have selected the current project!\nWould you like to reload it? Doing so will close all resources.")){
+                db.setCurrentProject(e.id)
+                workingResourcesViewer.loadManifest(e.id);
+            }
+        } 
+
+        // Warns that changing projects closes all resources
+        else if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
+            db.setCurrentProject(e.id);
+            workingResourcesViewer.loadManifest(e.id);
+        }
+    }
+
+    // Does not need to warn about closing resources when no resources are open!
+    else{
+        db.setCurrentProject(e.id);
+        workingResourcesViewer.loadManifest(e.id);
+    }
+}
+
+var editAddedUsers = [];
+
+/* Appends username from input field into corresponding paragraph (edit modal)
+ * Multiple elements; each has a description preceding
+ * usr: Username input field
+ * usernames: List of usernames in the database
+ * * usernames is passed with an json dump in render_to_response
+*/
+function editUserTagSystem(usr, usernames){
+
+    /* Ensures shift is down
+     * Shift+Return combo needed because the typeahead system uses Return
+    */
+    usr.keydown(function(e){
+        // Watches the shift key
+        if (e.which == 16) shift = true;
+
+        //Toggles off the "incorrect user" help text
+        $("#editHelp").text("");
+    })
+
+    /* Script which adds users to current project
+     * Usernames assigned to project are stored in addedUsers
+     * 'keyup' call ensures that the user has finished typing the username
+     * Looks for Shift+Return combination ONLY
+     * Checks for users already added
+     * Rejects invalid usernames
+     * ((Next Up: suggests usernames using typeahead))
+    */
+    usr.keyup(function(e){
+        if (e.which == 13&&shift){
+            var val = usr.val();
+
+            if (usernames.indexOf(val) != -1){
+                if (editAddedUsers.indexOf(val) == -1){
+                    // "&nbsp" text allows 3 character widths between usernames
+                    $("#editAddedUsers").append('<a onClick="editRemoveUser(this)" id="' + usr.val() + '">' + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
+                    editAddedUsers.push(val);
+
+                    usr.val("");
+                }
+                else{
+                    $("#editHelp").text("You already added this user.");
+                }
+            }
+            else{
+                $("#editHelp").text("This is not a valid user.");
+            }
+        }
+        else if (e.which == 16) shift = false;
+    })
+}
+
+function editRemoveUser(e){
+    var u = e.id;
+    if (u==clientApp.username){
+        $("#editHelp").text("You can't remove yourself from the project.")
+    }
+    else{
+        editAddedUsers.splice(editAddedUsers.indexOf(u) - 1, 1);
+        e.remove();
+    }
+}
+
+function updateEditedData(){
+    //Add the current user to the project
+    newAddedUsers.push(clientApp.username);
+
+    //Easier reference to databroker
+    var db = goog.global.databroker;
+
+    //Collect data
+    var t = $("#editTitle"), d = $("#editDescription");
+
+    var data = $.rdf.databank([], { namespaces: {
+                                    ore: "http://www.openarchives.org/ore/terms/", 
+                                    dc: "http://purl.org/dc/elements/1.1/", 
+                                    dcterms: "http://purl.org/dc/terms/",
+                                    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
+                                    dcmitype: "http://purl.org/dc/dcmitype/",
+                                    }
+                                  });
+
+    //Get UUID of current project
+    var p = db.currentProject;
+
+    if(t.val() != ""){
+        //Link user(s) and project
+        for (var i = 0; i < editAddedUsers.length; i++) {
+            var u = db.restUri(null, db.RESTYPE.user, editAddedUsers[i], null);
+            data.add("<" + u + "> ore:aggregates <" + p + ">");
+        };
+
+        //Give project title
+        data.add('<' + p + '> dc:title "' + t.val() + '"');
+
+        //Give project description
+        data.add('<' + p + '> dcterms:description "' + d.val() + '"');
+
+        //Set types on project
+        data.add('<' + p + '> rdf:type dcmitype:Collection');
+        data.add('<' + p + '> rdf:type ore:Aggregation');
+
+        var postdata = data.dump({format: 'application/rdf+xml', 
+                                  serialize:true});
+        console.log("data:", postdata);
+
+        /* Part of csrf-token setup
+         * Copied from Django documentation
+         * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+        */
+        $.ajaxSetup({
+            crossDomain: false,
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type)) {
+                    xhr.setRequestHeader("X-CSRFToken", 
+                                         getCookie("csrftoken"));
+                }
+            }
+        });
+        
+        $.post('update_project/', postdata);
+
+        //Clear data from create project form
+        t.val("");
+        d.val("");
+        addedUsers = [];
+        $("#editAddedUsers").text("");
+    }
+
+    else{
+        alert("Your project needs a title.")
+
+    }
+}
+
+function prepareForEdit(){
+    var db = goog.global.databroker
+    var project = db.currentProject;
+    var wrap = sc.util.Namespaces.angleBracketWrap;
+
+    db.getDeferredResource(project).done(function(resource){
+        var resources = db.quadStore.query(wrap(project))
+
+        $("#editTitle").val(resource.getOneProperty('dc:title'))
+        
+        $("#editDescription").val(resource.getOneProperty('dcterms:description'))
+    })
 }
