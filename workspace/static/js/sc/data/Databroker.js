@@ -2,6 +2,7 @@ goog.provide('sc.data.Databroker');
 
 goog.require('goog.Uri');
 goog.require('goog.string');
+goog.require('goog.object');
 goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
 goog.require('jquery.rdfquery');
@@ -10,6 +11,7 @@ goog.require('sc.data.Resource');
 goog.require('sc.data.Quad');
 goog.require('sc.data.QuadStore');
 goog.require('sc.data.DataModel');
+goog.require('sc.data.SyncService');
 
 goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
@@ -24,16 +26,14 @@ goog.require('sc.util.Namespaces');
  * @author tandres@drew.edu (Tim Andres)
  */
 sc.data.Databroker = function(options) {
-    if (!options) {
-        options = {};
-    }
-    jQuery.extend(true, this.options, options);
+    this.options = {};
+    goog.object.extend(this.options, sc.data.Databroker.DEFAULT_OPTIONS, options || {});
 
     this.corsEnabledDomains = new goog.structs.Set(this.options.corsEnabledDomains);
 
-    this.namespaces = new sc.util.Namespaces();
-
-    this.quadStore = new sc.data.QuadStore();
+    this.namespaces = this.options.namespaces || new sc.util.Namespaces();
+    this.quadStore = this.options.quadStore || new sc.data.QuadStore();
+    this.syncService = this.options.syncService || new sc.data.SyncService(this);
 
     this.requestedUrls = new goog.structs.Set();
     this.receivedUrls = new goog.structs.Set();
@@ -59,15 +59,7 @@ sc.data.Databroker = function(options) {
 
 sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
 
-sc.data.Databroker.prototype.RESTYPE = {
-    'text': 0, 
-    'project': 1, 
-    'annotation': 2, 
-    'user': 3, 
-    'resource': 4
-};
-
-sc.data.Databroker.prototype.options = {
+sc.data.Databroker.DEFAULT_OPTIONS = {
     proxiedUrlGenerator: function(url) {
         return url;
     },
@@ -88,16 +80,7 @@ sc.data.Databroker.prototype.options = {
 
         return url;
     },
-    corsEnabledDomains: [],
-    dmBaseUri: "http://dm.drew.edu/store/",
-    restHost: location.host,
-    restBasePath: 'store',
-    restProtocol: 'http',
-    restTextPath: 'texts',
-    restProjectPath: 'projects',
-    restResourcePath: 'resources',
-    restAnnotationPath: 'annotations',
-    restUserPath: 'users'
+    corsEnabledDomains: []
 };
 
 
@@ -943,170 +926,8 @@ sc.data.Databroker.prototype.createUuid = function() {
     }
 };
 
-
-sc.data.Databroker.prototype.createTextHttpUri = function() {
-    var uuid = this.createUuid().replace("/urn\:uuid\:/", "");
-    var uri = this.textBaseUri.replace(/\/+$/, "")
-        + "/"
-        + uuid;
-    return uri;
-};
-
-
-sc.data.Databroker.prototype._restUri = function(
-    baseUri,
-    projectUri,
-    resType, 
-    resUri, 
-    params
-) {
-    var url = baseUri.replace(/\/+$/, "");
-    url += "/";
-
-    if (projectUri != null) {
-        url += this.options.restProjectPath.replace(/^\/+|\/+$/g, "");
-        url += "/";
-        url += projectUri;
-        url += "/";
-    }
-
-    if (resType == this.RESTYPE.text) {
-        url += this.options.restTextPath.replace(/^\/+|\/+$/g, "");
-        url += "/";
-    } else if (resType == this.RESTYPE.resource) {
-        url += this.options.restResourcePath.replace(/^\/+|\/+$/g, "");
-        url += "/";
-    } else if (resType == this.RESTYPE.annotation) {
-        url += this.options.restAnnotationPath.replace(/^\/+|\/+$/g, "");
-        url += "/";
-    } else if (resType == this.RESTYPE.user) {
-        url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
-        url += "/";
-    }
-    if (resUri != null) {
-        url += resUri;
-    } 
-    if (params != null) {
-        url += "?" + jQuery.param(params);
-    }
-
-    return url;
-};
-
-
-sc.data.Databroker.prototype.restUrl = function(
-    projectUri,
-    resType, 
-    resUri, 
-    params 
-) {
-    var baseUrl = this.options.restProtocol
-        + "://"
-        + this.options.restHost.replace(/\/+$/, "")
-        + "/"
-        + this.options.restBasePath.replace(/^\/+|\/+$/g, "")
-        + "/";
-    return this._restUri(baseUrl, projectUri, resType, resUri, params);
-};
-
-
-sc.data.Databroker.prototype.restUri = function(
-    projectUri,
-    resType, 
-    resUri, 
-    params 
-) {
-    return this._restUri(this.options.dmBaseUri, projectUri, resType, resUri, params);
-};
-
-sc.data.Databroker.prototype.getModifiedResourceUris = function() {
-    var subjectsOfNewQuads = this.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
-
-    return this.newResourceUris.difference(subjectsOfNewQuads);
-};
-
-sc.data.Databroker.prototype.postNewResources = function() {
-    var xhrs = [];
-
-    goog.structs.forEach(this.newResourceUris, function(uri) {
-        var xhr = this.sendResource(uri, 'POST');
-
-        xhrs.push(xhr);
-    }, this);
-
-    return xhrs;
-};
-
-sc.data.Databroker.prototype.sendResource = function(uri, method) {
-    var resource = this.getResource(uri);
-
-    var resType;
-    var quadsToPost = [];
-    var url;
-
-    if (resource.hasType('dcterms:Text')) {
-        resType = this.RESTYPE.text;
-
-        quadsToPost = this.quadStore.query(resource.bracketedUri, null, null, null);
-
-        url = this.restUrl(this.currentProject, resType,
-                           sc.util.Namespaces.angleBracketStrip(uri), {});
-    }
-    else if (resource.hasType('oac:Annotation')) {
-        resType = this.RESTYPE.annotation;
-
-        quadsToPost = this.dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
-
-        url = this.restUrl(this.currentProject, resType, null, {});
-    }
-
-    var dataDump = this.dumpQuads(quadsToPost, 'application/rdf+xml');
-
-    console.log('about to send resource', uri, dataDump);
-
-    var xhr = jQuery.ajax({
-        type: method,
-        url: url,
-        success: function() {
-            console.log('successful sync', arguments);
-        },
-        error: function() {
-            console.error('unsuccessful sync', arguments);
-        },
-        data: dataDump,
-        processData: !jQuery.isXMLDoc(dataDump)
-    });
-
-    return xhr;
-};
-
-sc.data.Databroker.prototype.putModifiedResources = function() {
-    var modifiedUris = this.getModifiedResourceUris();
-
-    var xhrs = [];
-
-    goog.structs.forEach(modifiedUris, function(uri) {
-        var xhr = this.sendResource(uri, 'PUT');
-
-        xhrs.push(xhr);
-    }, this);
-
-    return xhrs;
-};
-
-
-sc.data.Databroker.prototype.syncResources = function() {
-    this.postNewResources();
-
-    this.putModifiedResources();
-
-    this.newResourceUris.clear();
-    this.newQuadStore.clear();
-};
-
-
 sc.data.Databroker.prototype.sync = function() {
-    this.syncResources();
+    return this.syncService.requestSync();
 };
 
 sc.data.Databroker.prototype.compareUrisByTitle = function(a, b) {

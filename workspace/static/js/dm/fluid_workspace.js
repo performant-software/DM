@@ -116,8 +116,8 @@ var openBlankTextDocument = function() {
 
 var setupCurrentProject = function(clientApp, username) {
     var db = goog.global.databroker;
-    var url = db.restUrl(null, db.RESTYPE.user, username, null);
-    var uri = db.restUri(null, db.RESTYPE.user, username, null);
+    var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
+    var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     db.fetchRdf(url, function() {
         var uris = db.dataModel.findAggregationContentsUris(uri);
         for (var i=0; i<uris.length; i++) {
@@ -292,7 +292,7 @@ function sendData(e){
     if(t.val() != ""){
         //Link user(s) and project
         for (var i = 0; i < addedUsers.length; i++) {
-            var u = db.restUri(null, db.RESTYPE.user, addedUsers[i], null);
+            var u = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, addedUsers[i], null);
             data.add("<" + u + "> ore:aggregates <" + p + ">");
         };
 
@@ -341,7 +341,7 @@ function sendData(e){
     // Add the new project's title to project dropdown
     // Wrapped in timeout to avoid server errors from hitting database too quickly
     setTimeout(function(){
-        var url = db.restUrl(null, db.RESTYPE.user, clientApp.username, null)
+        var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, clientApp.username, null)
         db.getDeferredResource(url).done(showProjectTitle(p));
     },3000)
 
@@ -386,7 +386,7 @@ function showProjectTitles(username){
 
     // Get array of quads where subject is user's uri
     // (object will be uri of all projects owned by user)
-    var userUri = db.restUri(null, db.RESTYPE.user, username, null);
+    var userUri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     var userProjects = db.quadStore.query(wrap(userUri), null, null, null);
 
     // Cycle through this array and add each project's title to dropdown
@@ -459,7 +459,7 @@ function setupProjects(){
     var username = clientApp.username
 
     // Get address of information about current user
-    var url = db.restUrl(null, db.RESTYPE.user, username, null)
+    var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null)
 
     // Ensure databroker is up-to-date on projects and then add all titles
     // Wrapped in timeout to avoid server errors from querying data too quickly
