@@ -498,12 +498,14 @@ sc.data.QuadStore.prototype.difference = function(other) {
  */
 sc.data.QuadStore.generateIndexKeys = function(quad) {
     var keys = [
+        // Base case
         sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
             quad.predicate,
             quad.object,
             quad.context
         ),
+        // One wildcard
         sc.data.QuadStore.getIndexKeyForQuery(
             null,
             quad.predicate,
@@ -528,6 +530,7 @@ sc.data.QuadStore.generateIndexKeys = function(quad) {
             quad.object,
             null
         ),
+        // Two wildcards
         sc.data.QuadStore.getIndexKeyForQuery(
             null,
             null,
@@ -546,6 +549,25 @@ sc.data.QuadStore.generateIndexKeys = function(quad) {
             null,
             null
         ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            null,
+            quad.predicate,
+            quad.object,
+            null
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            null,
+            quad.predicate,
+            null,
+            quad.context
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            quad.subject,
+            null,
+            quad.object,
+            null
+        ),
+        // Three wildcards
         sc.data.QuadStore.getIndexKeyForQuery(
             null,
             null,
