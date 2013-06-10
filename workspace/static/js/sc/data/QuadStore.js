@@ -42,9 +42,14 @@ sc.data.QuadStore = function(opt_quads) {
  * @return {goog.structs.Set.<sc.data.Quad>}  The set of quads matching the query.
  */
 sc.data.QuadStore.prototype._queryReturningSet = function(subject, predicate, object, context) {
-    var key = sc.data.QuadStore.getIndexKeyForQuery(subject, predicate, object, context);
+    if (subject == null && predicate == null && object == null && context == null) {
+        return this.quads;
+    }
+    else {
+        var key = sc.data.QuadStore.getIndexKeyForQuery(subject, predicate, object, context);
 
-    return this.indexedQuads.get(key, true);
+        return this.indexedQuads.get(key, true);
+    }
 };
 
 /**
@@ -588,10 +593,10 @@ sc.data.QuadStore._hashCodeOrWildcard = function(str) {
 sc.data.QuadStore.getIndexKeyForQuery = function(subject, predicate, object, context) {
     var key = [];
 
-    key.push('_s:' + sc.data.QuadStore._hashCodeOrWildcard(subject));
-    key.push('_p:' + sc.data.QuadStore._hashCodeOrWildcard(predicate));
-    key.push('_o:' + sc.data.QuadStore._hashCodeOrWildcard(object));
-    key.push('_c:' + sc.data.QuadStore._hashCodeOrWildcard(context));
+    key.push(['_s:', sc.data.QuadStore._hashCodeOrWildcard(subject)].join(''));
+    key.push(['_p:', sc.data.QuadStore._hashCodeOrWildcard(predicate)].join(''));
+    key.push(['_o:', sc.data.QuadStore._hashCodeOrWildcard(object)].join(''));
+    key.push(['_c:', sc.data.QuadStore._hashCodeOrWildcard(context)].join(''));
 
     return key.join(';');
 };
