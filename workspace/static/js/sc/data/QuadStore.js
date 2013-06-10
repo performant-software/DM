@@ -617,7 +617,7 @@ sc.data.QuadStore._hashCodeOrWildcard = function(str) {
         return sc.data.QuadStore.WILDCARD;
     }
     else {
-        return goog.string.hashCode(str);
+        return str;
     }
 };
 
