@@ -25,7 +25,7 @@ goog.addDependency('../../../atb/resource/Resource.js', ['atb.resource.Resource'
 goog.addDependency('../../../atb/resource/ResourceCollection.js', ['atb.resource.ResourceCollection'], ['atb.resource.ResourceSummary', 'atb.widgets.TwirlDown', 'goog.dom']);
 goog.addDependency('../../../atb/resource/ResourceCrawler.js', ['atb.resource.ResourceCrawler'], ['atb.Util', 'goog.structs.Map', 'goog.structs.Set']);
 goog.addDependency('../../../atb/resource/ResourceFactory.js', ['atb.resource.ResourceFactory'], ['atb.resource.AnnotationResource', 'atb.resource.CanvasResource', 'atb.resource.ManuscriptResource', 'atb.resource.MarkerResource', 'atb.resource.TextHighlightResource', 'atb.resource.TextResource', 'atb.resource.UserResource']);
-goog.addDependency('../../../atb/resource/ResourceSummary.js', ['atb.resource.ResourceSummary', 'atb.resource.ResourceSummary.HANDLER_MSG'], ['goog.dom', 'goog.dom.DomHelper', 'goog.events', 'goog.object', 'jquery.jQuery']);
+goog.addDependency('../../../atb/resource/ResourceSummary.js', ['atb.resource.ResourceSummary'], ['goog.dom', 'goog.dom.DomHelper', 'goog.events', 'goog.events.EventTarget', 'goog.object', 'jquery.jQuery']);
 goog.addDependency('../../../atb/resource/ResourceSummaryFactory.js', ['atb.resource.ResourceSummaryFactory'], ['atb.resource.AudioSummary', 'atb.resource.CanvasSummary', 'atb.resource.ManuscriptSummary', 'atb.resource.MarkerSummary', 'atb.resource.TextHighlightSummary', 'atb.resource.TextSummary']);
 goog.addDependency('../../../atb/resource/TextHighlightResource.js', ['atb.resource.TextHighlightResource'], ['atb.resource.Resource']);
 goog.addDependency('../../../atb/resource/TextHighlightSummary.js', ['atb.resource.TextHighlightSummary'], ['atb.resource.ResourceSummary']);
@@ -122,10 +122,11 @@ goog.addDependency('../../../sc/canvas/PageChooser.js', ['sc.canvas.PageChooser'
 goog.addDependency('../../../sc/canvas/PanZoomGesturesControl.js', ['sc.canvas.PanZoomGesturesControl'], ['goog.events', 'jquery.event.drag', 'jquery.jQuery', 'jquery.mousewheel', 'sc.canvas.Control']);
 goog.addDependency('../../../sc/canvas/ZoomSliderControl.js', ['sc.canvas.ZoomSliderControl'], ['jquery.jQuery', 'jquery.jQueryUI', 'sc.canvas.Control']);
 goog.addDependency('../../../sc/data/DataModel.js', ['sc.data.DataModel'], ['goog.structs.Set']);
-goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'jquery.rdfquery', 'sc.data.DataModel', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.Resource', 'sc.util.DefaultDict', 'sc.util.DeferredCollection', 'sc.util.Namespaces']);
+goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'jquery.rdfquery', 'sc.data.DataModel', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.Resource', 'sc.data.SyncService', 'sc.util.DefaultDict', 'sc.util.DeferredCollection', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], ['jquery.rdfquery']);
 goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.array', 'goog.string', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'jquery.jQuery', 'sc.data.Quad', 'sc.util.Namespaces']);
+goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], []);
 goog.addDependency('../../../sc/data/Triple.js', ['sc.data.Triple'], []);
 goog.addDependency('../../../sc/data/TripleStore.js', ['sc.data.TripleStore'], ['goog.array', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/util/Array.js', ['sc.Array'], []);
