@@ -6,6 +6,9 @@ goog.require('atb.viewer.AudioViewer');
 goog.require('atb.ClientApp');
 goog.require('goog.events');
 goog.require('goog.dom');
+goog.require('goog.Uri');
+goog.require('goog.net.Cookies');
+goog.require('goog.Uri');
 goog.require('atb.viewer.RepoBrowser');
 goog.require('atb.widgets.WorkingResources');
 goog.require('goog.ui.Dialog');
@@ -19,6 +22,9 @@ var glasspane = null;
 var workingResourcesViewer = null;
 var repoBrowser = null;
 var viewerGrid = null;
+var cookies = null;
+
+
 
 var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var databroker = clientApp.getDatabroker();
@@ -149,8 +155,28 @@ var resizeViewerGrid = function() {
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
     goog.global.staticUrl = staticUrl;
 
-    var markerEditor;
-    var textEditor;
+    cookies = new goog.net.Cookies(window.document);
+    /* The following method is copied from Django documentation
+     * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+     * Necessary to avoid 403 error when posting data
+    */
+    var csrfSafeMethod = function(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    /* Part of csrf-token setup
+     * Copied from Django documentation
+     * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+    */
+    jQuery.ajaxSetup({
+        crossDomain: false,
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && goog.Uri.haveSameDomain(window.location.href, settings.url)) {
+                xhr.setRequestHeader("X-CSRFToken", cookies.get("csrftoken"));
+            }
+        }
+    });
+
 	goog.global.clientApp = new atb.ClientApp(
 		new atb.PassThroughLoginWebService(wsURI, mediawsURI, wsSameOriginURI, username), 
         username,
@@ -308,20 +334,6 @@ function sendNewData(){
         var postdata = data.dump({format: 'application/rdf+xml', 
                                   serialize:true});
         console.log("data:", postdata);
-
-        /* Part of csrf-token setup
-         * Copied from Django documentation
-         * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-        */
-        $.ajaxSetup({
-            crossDomain: false,
-            beforeSend: function(xhr, settings) {
-                if (!csrfSafeMethod(settings.type)) {
-                    xhr.setRequestHeader("X-CSRFToken", 
-                                         getCookie("csrftoken"));
-                }
-            }
-        });
         
         $.post('project_forward/', postdata);
 
@@ -346,31 +358,6 @@ function sendNewData(){
 
     // Add the new project to the databroker as a valid project
     goog.global.databroker.addNewProject(p)
-}
-
-/* The following two methods are copied from Django documentation
- * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
- * Necessary to avoid 403 error when posting data
-*/
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-};
-
-function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
 /* Add project titles to "project" dropdown
@@ -606,20 +593,6 @@ function updateEditedData(){
         var postdata = data.dump({format: 'application/rdf+xml', 
                                   serialize:true});
         console.log("data:", postdata);
-
-        /* Part of csrf-token setup
-         * Copied from Django documentation
-         * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-        */
-        $.ajaxSetup({
-            crossDomain: false,
-            beforeSend: function(xhr, settings) {
-                if (!csrfSafeMethod(settings.type)) {
-                    xhr.setRequestHeader("X-CSRFToken", 
-                                         getCookie("csrftoken"));
-                }
-            }
-        });
         
         $.post('update_project/', postdata);
 

@@ -1,10 +1,14 @@
 goog.provide('sc.data.SyncService');
 
+goog.require('goog.net.Cookies');
+
 sc.data.SyncService = function(databroker, options) {
     this.databroker = databroker;
 
     this.options = {};
     goog.object.extend(this.options, sc.data.SyncService.DEFAULT_OPTIONS, options || {});
+
+    this.cookies = new goog.net.Cookies(window.document);
 };
 
 sc.data.SyncService.DEFAULT_OPTIONS = {
@@ -122,7 +126,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
     var quadsToPost = [];
     var url;
 
-    if (resource.hasType('dcterms:Text')) {
+    if (resource.hasType('dctypes:Text')) {
         resType = sc.data.SyncService.RESTYPE.text;
 
         quadsToPost = this.databroker.quadStore.query(resource.bracketedUri, null, null, null);
@@ -152,7 +156,10 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
             console.error('unsuccessful sync', arguments);
         },
         data: dataDump,
-        processData: !jQuery.isXMLDoc(dataDump)
+        processData: !jQuery.isXMLDoc(dataDump),
+        headers: {
+            'X-CSRFToken': this.getCsrfToken()
+        }
     });
 
     return xhr;
@@ -170,4 +177,8 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
     }, this);
 
     return xhrs;
+};
+
+sc.data.SyncService.prototype.getCsrfToken = function() {
+    return this.cookies.get('csrftoken');
 };
