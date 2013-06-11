@@ -330,24 +330,6 @@ sc.util.Namespaces.prototype.prefix = function(uri) {
     }
 };
 
-/**
- * Takes a {jQuery.rdf} object and adds all known prefixes to it
- * @param {jQuery.rdf} rdfquery
- * @return {jQuery.rdf}
- */
-sc.util.Namespaces.prototype.setupRdfQueryPrefixes = function (rdfquery) {
-    var prefixes = this.uriByPrefix.getKeys();
-    
-    for (var i=0, len=prefixes.length; i<len; i++) {
-        var prefix = prefixes[i];
-        var uri = this.uriByPrefix.get(prefix);
-        
-        rdfquery.prefix(prefix, uri);
-    }
-    
-    return rdfquery;
-};
-
 sc.util.Namespaces.prototype.bindNamespacesToHtmlElement = function(html) {
     goog.structs.forEach(this.uriByPrefix, function(uri, prefix) {
         var xmlns = 'xmlns:' + prefix;

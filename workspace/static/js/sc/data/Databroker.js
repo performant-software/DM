@@ -5,13 +5,14 @@ goog.require('goog.string');
 goog.require('goog.object');
 goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
-goog.require('jquery.rdfquery');
 goog.require('sc.data.Resource');
 
 goog.require('sc.data.Quad');
 goog.require('sc.data.QuadStore');
 goog.require('sc.data.DataModel');
 goog.require('sc.data.SyncService');
+goog.require('sc.data.RDFQueryParser');
+goog.require('sc.data.RDFQuerySerializer');
 
 goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
@@ -34,6 +35,31 @@ sc.data.Databroker = function(options) {
     this.namespaces = this.options.namespaces || new sc.util.Namespaces();
     this.quadStore = this.options.quadStore || new sc.data.QuadStore();
     this.syncService = this.options.syncService || new sc.data.SyncService(this);
+
+    this.parsers = [];
+    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+    this.parseableTypes = new goog.structs.Set();
+    this.serializers = [];
+    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+
+    if (this.options.parsers == null) {
+        goog.structs.forEach(sc.data.Databroker.DEFAULT_PARSER_CLASSES, function(cls) {
+            var parser = new cls(this);
+            this.registerParser(parser);
+        }, this);
+    }
+    else {
+        goog.structs.forEach(this.options.parsers, this.registerParser, this);
+    }
+    if (this.options.serializers == null) {
+        goog.structs.forEach(sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES, function(cls) {
+            var serializer = new cls(this);
+            this.registerSerializer(serializer);
+        }, this);
+    }
+    else {
+        goog.structs.forEach(this.options.serializers, this.registerSerializer, this);
+    }
 
     this.requestedUrls = new goog.structs.Set();
     this.receivedUrls = new goog.structs.Set();
@@ -83,6 +109,9 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
     corsEnabledDomains: []
 };
 
+sc.data.Databroker.DEFAULT_PARSER_CLASSES = [sc.data.RDFQueryParser];
+sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES = [sc.data.RDFQuerySerializer];
+
 
 /**
  * Returns a proxied url without checking if proxying is necessary.
@@ -129,15 +158,6 @@ sc.data.Databroker.prototype.shouldProxy = function(url) {
 
         return !(uri.getDomain() == hostname && uri.getPort() == port);
     }
-};
-
-/**
- * Registers a prefix for a namespace
- * @param {string} prefix
- * @param {string} fullUri
- */
-sc.data.Databroker.prototype.registerNamespace = function(prefix, fullUri) {
-    this.namespaces.addNamespace(prefix, fullUri);
 };
 
 /**
@@ -196,7 +216,7 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
             success: successHandler,
             error: errorHandler,
             headers: {
-                'Accept': sc.data.Databroker.JQUERY_RDF_READABLE_TYPES.getValues().join(', ')
+                'Accept': this.parseableTypes.getValues().join(', ')
             }
         });
 
@@ -209,76 +229,62 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
 
 sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr) {
     var responseHeaders = jqXhr.getAllResponseHeaders();
-    var type = sc.data.Databroker.parseContentType(responseHeaders);
+    var type = sc.data.Parser.parseContentType(responseHeaders);
 
-    if (!sc.data.Databroker.isReadableType(type)) {
-        console.warn('Rdf in ' + type + ' is not yet supported', url);
-    }
+    this.quadStore.addQuads(this.parseRdf(data, type));
 
-    var rdf = jQuery.rdf();
-    this.namespaces.setupRdfQueryPrefixes(rdf);
-
-    try {
-        rdf.load(data);
-    } catch (e) {
-        console.error('rdfquery data load error', e, url);
-
-        return;
-    }
-    
-    this.processJQueryRdf(rdf, url, null);
-    rdf = null;
+    data = null;
 };
 
-sc.data.Databroker.CONTENT_TYPE_REGEX = /^Content-Type:\s*([^;\s]*)$/m;
+sc.data.Databroker.prototype.parseRdf = function(data, format) {
+    var parsers = this.parsersByType.get(format, true);
+    if (parsers.length == 0) parsers = this.parsers;
 
-/**
- * Returns the Content-Type value from a response headers string
- * @param {string} responseHeaders
- * @return {string}
- */
-sc.data.Databroker.parseContentType = function(responseHeaders) {
-    var match = sc.data.Databroker.CONTENT_TYPE_REGEX.exec(responseHeaders);
+    var quads = [];
 
-    if (match) {
-        var type = goog.string.trim(match[1]);
-        return type;
-    }
-    else {
-        return '';
-    }
-};
+    var success = false;
+    for (var i=0, len=parsers.length; i<len; i++) {
+        var parser = parsers[i];
 
-sc.data.Databroker.JQUERY_RDF_READABLE_TYPES = new goog.structs.Set([
-    'text/xml',
-    'application/xml',
-    'application/rdf+xml',
-    'text/rdf+xml',
-    'text/json',
-    'application/json',
-    'xml',
-    'rdf'
-]);
-
-sc.data.Databroker.isReadableType = function(type) {
-    return sc.data.Databroker.JQUERY_RDF_READABLE_TYPES.contains(type.toLowerCase());
-};
-
-/**
- * Takes a {jQuery.rdf} object and parses its triples, adding them to the quad store
- * @param {jQuery.rdf} rdf
- */
-sc.data.Databroker.prototype.processJQueryRdf = function(rdf, url, context) {
-    var jqTriples = rdf.databank.triples();
-
-    for (var i = 0, len = jqTriples.length; i < len; i++) {
-        var jqTriple = jqTriples[i];
-
-        var quad = sc.data.Quad.createFromRdfqueryTriple(jqTriple, context);
-        if (! this.quadStore.containsQuad(quad)) {
-            this.quadStore.addQuad(quad);
+        try {
+            quads = parser.parse(data, null);
+            success = true;
+            break;
+        }
+        catch (e) {
+            console.warn('Parser', parser, 'failed on data', data, 'with error', e);
         }
     }
+
+    if (!success) {
+        console.error('RDF could not be parsed', data);
+    }
+
+    return quads;
+};
+
+sc.data.Databroker.prototype.registerParser = function(parser) {
+    if (parser.databroker != this) {
+        throw "Parser must be instantiated with a reference to this databroker";
+    }
+
+    this.parsers.push(parser);
+    goog.structs.forEach(parser.parseableTypes, function(type) {
+        this.parsersByType.get(type).push(parser);
+
+        this.parseableTypes.add(type);
+    }, this);
+};
+
+sc.data.Databroker.prototype.registerSerializer = function(serializer) {
+    if (serializer.databroker != this) {
+        throw "Serializer must be instantiated with a reference to this databroker";
+    }
+
+    this.serializers.push(serializer);
+    goog.structs.forEach(serializer.serializableTypes, function(type) {
+        this.serializersByType.get(type).push(serializer);
+    }, this);
 };
 
 /**
@@ -318,95 +324,31 @@ sc.data.Databroker.prototype.dumpQuadStore = function(opt_outputType) {
     return this.dumpQuads(this.quadStore.getQuads(), opt_outputType);
 };
 
-sc.data.Databroker.prototype.dumpQuads = function(quads, opt_outputType) {
-    var rdf = jQuery.rdf();
-    this.namespaces.setupRdfQueryPrefixes(rdf);
-    
-    for (var i=0, len=quads.length; i<len; i++) {
-        rdf.add(quads[i].exportToRdfqueryTriple());
-    }
-    
-    return rdf.databank.dump({
-        format: opt_outputType || 'application/rdf+xml'
-    });
-};
+sc.data.Databroker.prototype.serializeQuads = function(quads, opt_format) {
+    var format = opt_format || 'application/rdf+xml';
 
-sc.data.Databroker.prototype.dumpNewQuads = function(opt_outputType) {
-    return this.dumpQuads(this.newQuadStore.getQuads(), opt_outputType);
-};
+    var output = null;
 
-sc.data.Databroker.prototype.postQuads = function(url, quads, opt_handler, opt_format) {
-    var dump = this.dumpQuads(quads, opt_format);
+    var success = false;
+    var serializers = this.serializersByType.get(format);
+    for (var i=0, len=serializers.length; i<len; i++) {
+        var serializer = serializers[i];
 
-    var self = this;
-    
-    var successHandler = function(data, textStatus, jqXhr) { console.log('received data', data)
-        self.processResponse(data, url, jqXhr);
-        
-        if (jQuery.isFunction(opt_handler)) {
-            opt_handler();
+        try {
+            output = serializer.serialize(quads, format);
+            success = true;
+            break;
         }
-    };
-    
-    var errorHandler = function(jqXhr, textStatus, errorThrown) {
-        
-    };
-
-    console.log("postQuads url: ", url);
-    
-    var jqXhr = jQuery.ajax({
-        type: 'POST',
-        data: dump,
-        url: url,
-        processData: !jQuery.isXMLDoc(dump),
-        success: successHandler,
-        error: errorHandler
-    });
-    
-    return jqXhr;
-};
-
-sc.data.Databroker.prototype.saveNewQuads = function(url, opt_handler, opt_format) {
-    this.postQuads(
-        url,
-        this.getAllQuadsForSave(this.newQuadStore.getQuads()),
-        function() {
-            this.newQuadStore.clear();
-
-            if (jQuery.isFunction(opt_handler)) {
-                opt_handler.apply(this, arguments);
-            }
-        }.bind(this),
-        opt_format
-    );
-
-    return this;
-};
-
-sc.data.Databroker.prototype.getAllQuadsForSave = function(quads) {
-    var subjectsAndObjects = new goog.structs.Set();
-    
-    for (var i=0, len=quads.length; i<len; i++) {
-        var quad = quads[i];
-        
-        subjectsAndObjects.add(quad.subject);
-        subjectsAndObjects.add(quad.object);
+        catch (e) {
+            console.warn('Serializer', serializer, 'failed on quads', quads, 'with error', e);
+        }
     }
-    
-    var additionalQuads = [];
-    subjectsAndObjects = subjectsAndObjects.getValues();
-    
-    for (var i=0, len=subjectsAndObjects.length; i<len; i++) {
-        var uri = sc.util.Namespaces.angleBracketWrap(subjectsAndObjects[i]);
-        
-        var relatedQuads = this.quadStore.query(uri, null, null, null);
-        additionalQuads = additionalQuads.concat(relatedQuads);
+
+    if (!success) {
+        console.error('Quads could not be serialized');
     }
-    
-    // No need to add original quads, as they've already been included by
-    // querying for quads with their subjects
-    
-    return additionalQuads;
+
+    return output;
 };
 
 /**
