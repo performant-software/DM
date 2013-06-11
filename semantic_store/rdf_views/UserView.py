@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseNotFou
 from rdflib import Graph, Literal, URIRef
 
 from .GraphView import GraphView
-from semantic_store.namespaces import NS, ns
+from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.validators import ProjectValidator
 from semantic_store.rdfstore import rdfstore
 from semantic_store.projects import create_project_graph
@@ -25,6 +25,10 @@ class UserView(GraphView):
             g = Graph(store=rdfstore(), identifier=user_graph_identifier)
             return HttpResponse(content=g.serialize(), mimetype='text/xml')
         else:
-            return HttpResponse(status=403)
-    
-        
+            g = Graph()
+            bind_namespaces(g)
+            for u in User.objects.filter():
+                user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
+                g += Graph(store=rdfstore(), identifier=user_graph_identifier)
+
+            return HttpResponse(content=g.serialize(), mimetype='text/xml')

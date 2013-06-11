@@ -10,7 +10,7 @@ from semantic_store import uris
 
 from semantic_store.rdfstore import rdfstore
 
-def create_project_graph(g, node, identifier, host, title, user_email=None):
+def create_project_graph(g, node, identifier, host, title, username):
     with transaction.commit_on_success():
         allprojects_uri = uris.uri('semantic_store_projects')
         allprojects_g = Graph(store=rdfstore(), identifier=allprojects_uri)
@@ -32,10 +32,12 @@ def create_project_graph(g, node, identifier, host, title, user_email=None):
         allprojects_g.add((identifier, NS.dc['title'], Literal(title)))
 
         project_g.add((identifier, NS.ore['isDescribedBy'], url))
-        project_g.add((identifier, NS.dcterms['created'], Literal(datetime.utcnow())))
+        project_g.set((identifier, NS.dcterms['created'], Literal(datetime.utcnow())))
         project_g.add((identifier, p, o))
-        if user_email:
-            project_g.add((identifier, NS.dcterms['creator'], URIRef(user_email)))
+
+        user_uri = uris.uri('semantic_store_users', username=username)
+        #if user_email:
+        #    project_g.add((identifier, NS.dcterms['creator'], URIRef(user_email)))
 
         #print "new project", project_g.serialize()
 
@@ -51,14 +53,20 @@ def create_project_graph(g, node, identifier, host, title, user_email=None):
 
 
 # Creates a graph identified by user of the projects belonging to the user, which
-# # can be found at the descriptive url of the user (/store/user/<username>)
+#  can be found at the descriptive url of the user (/store/user/<username>)
 # The graph houses the uri of all of the user's projects and the url where more info
-# # can be found about each project
+#  can be found about each project
 def create_project_user_graph(host, user, project):
     with transaction.commit_on_success():
         identifier = uris.uri('semantic_store_users', username=user)
         g = Graph(store=rdfstore(), identifier = identifier)
         bind_namespaces(g)
-        g.add((identifier, NS.ore['aggregates'], project))
         g.add((project, NS.ore['isDescribedBy'], uris.url(host, "semantic_store_projects", uri=project)))
+        g.add((identifier, NS.ore['aggregates'], project))
+
+        # Permissions triple allows read-only permissions if/when necessary
+        # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
+        # Perhaps we stop using ore:aggregates and use perm:hasPermissionOver and
+        #  its subproperties since they are better definitions in this instance?
+        g.add((identifier, NS.perm['hasPermissionOver'], project))
         return g.serialize()
