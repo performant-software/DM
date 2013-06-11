@@ -142,7 +142,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
         url = this.restUrl(this.databroker.currentProject, resType, null, {});
     }
 
-    var dataDump = this.databroker.dumpQuads(quadsToPost, 'application/rdf+xml');
+    var dataDump = this.databroker.serializeQuads(quadsToPost, 'application/rdf+xml');
 
     console.log('about to send resource', uri, dataDump);
 
