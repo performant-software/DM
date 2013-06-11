@@ -356,7 +356,7 @@ sc.data.Databroker.prototype.serializeQuads = function(quads, opt_format) {
  * @param {Array.<string>} uris
  * @return {goog.structs.Set.<string>}
  */
-sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_forceReload) {
+sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_forceReload, opt_noGuesses) {
     var urlsToRequest = new goog.structs.Set();
     var allUris = new goog.structs.Set();
 
@@ -394,7 +394,7 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
         else if (uri.substring(0, 9) == 'urn:uuid:') {
             continue;
         }
-        else {
+        else if (!opt_noGuesses) {
             urlGuesses = this.guessResourceUrls(uri);
             for (var j = 0, lenj = urlGuesses.length; j < lenj; j++) {
                 var url = urlGuesses[j];
@@ -424,9 +424,10 @@ sc.data.Databroker.prototype.getUrlsToRequestForResource = function(uri, opt_for
  * .done() and .progress() may be called on the returned object to add callback handlers for the loaded
  * resource.
  * @param {string} uri
+ * @param {Array|goog.structs.Collection} opt_urlsToRequest A list of urls which should be queried for the resource.
  * @return {jQuery.deferred}
  */
-sc.data.Databroker.prototype.getDeferredResource = function(uri) {
+sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToRequest) {
     var self = this;
 
     if (uri instanceof sc.data.Resource) {
@@ -439,7 +440,13 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
     var deferredResource = jQuery.Deferred();
 
     window.setTimeout(function() {
-        var urlsToRequest = this.getUrlsToRequestForResource(uri);
+        if (opt_urlsToRequest) {
+            var urlsToRequest = this.getUrlsToRequestForResource(uri, null, true);
+            urlsToRequest.addAll(opt_urlsToRequest);
+        }
+        else {
+            var urlsToRequest = this.getUrlsToRequestForResource(uri);
+        }
         if (urlsToRequest.getCount() == 0) {
             deferredResource.resolveWith(this, [this.getResource(uri), this]);
         }
