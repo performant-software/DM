@@ -13,6 +13,7 @@ goog.require('sc.data.DataModel');
 goog.require('sc.data.SyncService');
 goog.require('sc.data.RDFQueryParser');
 goog.require('sc.data.RDFQuerySerializer');
+goog.require('sc.data.TurtleSerializer');
 
 goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
@@ -110,7 +111,7 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
 };
 
 sc.data.Databroker.DEFAULT_PARSER_CLASSES = [sc.data.RDFQueryParser];
-sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES = [sc.data.RDFQuerySerializer];
+sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES = [sc.data.RDFQuerySerializer, sc.data.TurtleSerializer];
 
 
 /**
@@ -568,42 +569,17 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
     return dump;
 };
 
-sc.data.Databroker.prototype.dumpResourceToTurtleString = function(uri) {
-    var arr = [sc.util.Namespaces.angleBracketWrap(uri)];
-
-    var numUniquePredicates = 0;
-
-    var dump = this.dumpResource(uri);
-    
-    goog.structs.forEach(dump, function(predicates, context) {
-        goog.structs.forEach(predicates, function(objects, predicate) {
-            if (numUniquePredicates != 0) {
-                arr.push(' ;');
-            }
-
-            arr.push('\n\t', predicate, ' ');
-            if (objects.length > 1) {
-                arr.push('[');
-
-                goog.structs.forEach(objects, function(object, i) {
-                    arr.push('\n\t\t', object);
-                    if (i != objects.length - 1) {
-                        arr.push(' ;');
-                    }
-                }, this);
-
-                arr.push('\n\t]');
-            } 
-            else {
-                arr.push(objects[0]);
-            }
-
-            numUniquePredicates ++;
-        }, this);
+sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
+    var resource = this.getResource(r);
+    var quads = [];
+    goog.structs.forEach(this.getEquivalentUris(resource.uri), function(uri) {
+        this.quadStore.forEachQuadMatchingQuery(sc.util.Namespaces.angleBracketWrap(uri), null, null, null, function(quad) {
+            quads.push(quad);
+        }.bind(this));
     }, this);
 
-    arr.push(' .');
-    return arr.join('');
+    var serializer = new sc.data.TurtleSerializer(this);
+    return serializer.getTriplesString(quads);
 };
 
 sc.data.Databroker.prototype.getResource = function(uri) {

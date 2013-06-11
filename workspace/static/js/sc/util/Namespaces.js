@@ -43,18 +43,14 @@ sc.util.Namespaces.prototype.addNamespaces = function(dict) {
     }, this);
 };
 
-sc.util.Namespaces.prototype.toTurtleString = function() {
-    var arr = [];
+sc.util.Namespaces.prototype.toString = function() {
+    var lines = [];
 
     goog.structs.forEach(this.uriByPrefix, function(uri, prefix) {
-        arr.push('@prefix ' + prefix + ': ' + sc.util.Namespaces.angleBracketWrap(uri) + ' .');
+        lines.push('@prefix ' + prefix + ': ' + sc.util.Namespaces.angleBracketWrap(uri) + ' .');
     }, this);
 
-    return arr.join('\n');
-};
-
-sc.util.Namespaces.prototype.toString = function() {
-    return this.toTurtleString();
+    return lines.join('\n');
 };
 
 sc.util.Namespaces.isAngleBracketWrapped = function(str) {
