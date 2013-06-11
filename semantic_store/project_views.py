@@ -75,22 +75,18 @@ def create_project_from_request(request):
         t = tuple(q)
         identifier = t[0]
 
-        # This method takes the username out of the uri
-        # This method fails if "/" is an acceptable character in a username
-        name = None
         for n in t[1].split("/"):
             name = n
-        user = User.objects.get(username = name)
         
         title = t[2]
 
-        create_project(user, identifier, host, title = title, description = description)
+        create_project(name, identifier, host, title = title, description = description)
         create_project_user_graph(host, name, identifier)
         # If you want to see/manipulate the new data, uncomment the following
         #main_graph = ConjunctiveGraph(store=rdfstore(), identifier=identifier)
 
 
-def create_project(user, project_identifier, host, title = Literal("Default project"), description = None):
+def create_project(username, project_identifier, host, title, description):
     g = Graph()
     bind_namespaces(g)
     project = BNode()
@@ -100,10 +96,10 @@ def create_project(user, project_identifier, host, title = Literal("Default proj
     if (description):
         g.add((project, NS.dcterm['description'], Literal(description)))
 
-    create_project_graph(g, project, project_identifier, host, title, user.email)
+    create_project_graph(g, project, project_identifier, host, title, username)
 
     ProjectPermission.objects.create(identifier=project_identifier,
-                                     user=user,
+                                     user=User.objects.get(username = username),
                                      permission=Permission.read_write)
 
 
