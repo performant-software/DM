@@ -122,7 +122,7 @@ goog.addDependency('../../../sc/canvas/PageChooser.js', ['sc.canvas.PageChooser'
 goog.addDependency('../../../sc/canvas/PanZoomGesturesControl.js', ['sc.canvas.PanZoomGesturesControl'], ['goog.events', 'jquery.event.drag', 'jquery.jQuery', 'jquery.mousewheel', 'sc.canvas.Control']);
 goog.addDependency('../../../sc/canvas/ZoomSliderControl.js', ['sc.canvas.ZoomSliderControl'], ['jquery.jQuery', 'jquery.jQueryUI', 'sc.canvas.Control']);
 goog.addDependency('../../../sc/data/DataModel.js', ['sc.data.DataModel'], ['goog.storage.Storage', 'goog.storage.mechanism.mechanismfactory', 'goog.structs.Map', 'goog.structs.Set']);
-goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.DataModel', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SyncService', 'sc.util.DefaultDict', 'sc.util.DeferredCollection', 'sc.util.Namespaces']);
+goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.DataModel', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SyncService', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict', 'sc.util.DeferredCollection', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Parser.js', ['sc.data.ParseError', 'sc.data.Parser'], ['goog.debug.Error']);
 goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], ['jquery.rdfquery']);
 goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.array', 'goog.string', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
@@ -133,6 +133,7 @@ goog.addDependency('../../../sc/data/Serializer.js', ['sc.data.Serializer'], [])
 goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], ['goog.net.Cookies']);
 goog.addDependency('../../../sc/data/Triple.js', ['sc.data.Triple'], []);
 goog.addDependency('../../../sc/data/TripleStore.js', ['sc.data.TripleStore'], ['goog.array', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
+goog.addDependency('../../../sc/data/TurtleSerializer.js', ['sc.data.TurtleSerializer'], ['sc.data.QuadStore', 'sc.data.Serializer']);
 goog.addDependency('../../../sc/util/Array.js', ['sc.Array'], []);
 goog.addDependency('../../../sc/util/DefaultDict.js', ['sc.util.DefaultDict'], ['goog.structs.Map', 'goog.structs.Set', 'jquery.jQuery']);
 goog.addDependency('../../../sc/util/DeferredCollection.js', ['sc.util.DeferredCollection'], []);
