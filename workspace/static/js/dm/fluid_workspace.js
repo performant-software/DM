@@ -176,7 +176,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
             }
         }
     });
-
+    
 	goog.global.clientApp = new atb.ClientApp(
 		new atb.PassThroughLoginWebService(wsURI, mediawsURI, wsSameOriginURI, username), 
         username,
@@ -279,7 +279,7 @@ function newUserTagSystem(usr, usernames){
 
 /* Removes the user from the array of users in new project modal
  * Removes the "tag" displaying the username
- * e: html object - link with username as text
+ * e: html object - link with username as text & id
  * The user may be added again by re-typing the username
 */
 function newRemoveUser(e){
@@ -334,13 +334,27 @@ function sendNewData(){
         var postdata = data.dump({format: 'application/rdf+xml', 
                                   serialize:true});
         console.log("data:", postdata);
+
+        /* Part of csrf-token setup
+         * Copied from Django documentation
+         * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+        */
+        $.ajaxSetup({
+            crossDomain: false,
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type)) {
+                    xhr.setRequestHeader("X-CSRFToken", 
+                                         getCookie("csrftoken"));
+                }
+            }
+        });
         
         $.post('project_forward/', postdata);
 
         //Clear data from create project form
         t.val("");
         d.val("");
-        addedUsers = [];
+        newAddedUsers = [];
         $("#newAddedUsers").text("");
     }
 
@@ -358,6 +372,31 @@ function sendNewData(){
 
     // Add the new project to the databroker as a valid project
     goog.global.databroker.addNewProject(p)
+}
+
+/* The following two methods are copied from Django documentation
+ * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+ * Necessary to avoid 403 error when posting data
+*/
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+};
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
 /* Add project titles to "project" dropdown
@@ -393,7 +432,7 @@ function showProjectTitle(uri){
     if (db.quadStore.numQuadsMatchingQuery(wrap(uri)) <= 1){
         setTimeout(function(){
             db.getDeferredResource(uri).done(function(resource){
-                uri = sc.util.Namespaces.angleBracketStrip(uri)
+                //uri = sc.util.Namespaces.angleBracketStrip(uri)
                 var title = resource.getOneProperty('dc:title')
                 var projects = $("#projects");
                 projects.append('<li><a onClick="selectProject(this)" id="' + uri + '">' + title + '</a></li>');
@@ -509,7 +548,7 @@ function editUserTagSystem(usr, usernames){
     })
 
     /* Script which adds users to current project
-     * Usernames assigned to project are stored in addedUsers
+     * Usernames assigned to project are stored in editAddedUsers
      * 'keyup' call ensures that the user has finished typing the username
      * Looks for Shift+Return combination ONLY
      * Checks for users already added
@@ -540,85 +579,128 @@ function editUserTagSystem(usr, usernames){
     })
 }
 
+/* Removes the user from the array of users in new project modal
+ * Removes the "tag" displaying the username
+ * e: html object - link with username as text & id
+ * The user may be added again by re-typing the username
+*/
 function editRemoveUser(e){
     var u = e.id;
     if (u==clientApp.username){
         $("#editHelp").text("You can't remove yourself from the project.")
     }
     else{
-        editAddedUsers.splice(editAddedUsers.indexOf(u) - 1, 1);
+        editAddedUsers.splice(editAddedUsers.indexOf(u), 1);
         e.remove();
     }
 }
 
+/* Saves changes to data
+ * ((Waiting on Resource.setProperty to work properly, but correctly implemented))
+*/
 function updateEditedData(){
-    //Add the current user to the project
-    newAddedUsers.push(clientApp.username);
-
     //Easier reference to databroker
     var db = goog.global.databroker;
 
     //Collect data
     var t = $("#editTitle"), d = $("#editDescription");
 
-    var data = $.rdf.databank([], { namespaces: {
-                                    ore: "http://www.openarchives.org/ore/terms/", 
-                                    dc: "http://purl.org/dc/elements/1.1/", 
-                                    dcterms: "http://purl.org/dc/terms/",
-                                    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
-                                    dcmitype: "http://purl.org/dc/dcmitype/",
-                                    }
-                                  });
-
     //Get UUID of current project
     var p = db.currentProject;
 
     if(t.val() != ""){
-        //Link user(s) and project
-        for (var i = 0; i < editAddedUsers.length; i++) {
-            var u = db.restUri(null, db.RESTYPE.user, editAddedUsers[i], null);
-            data.add("<" + u + "> ore:aggregates <" + p + ">");
+        var resource = db.getResource(p);
+        var qwrap = sc.util.Namespaces.quoteWrap
+        var wrap = sc.util.Namespaces.angleBracketWrap;
+        var strip = sc.util.Namespaces.angleBracketStrip;
+        var ns = db.namespaces;
+
+        // Set the new values of title & description
+        resource.setProperty('dc:title',qwrap(t.val()))
+        resource.setProperty('dcterms:description',qwrap(d.val()))
+
+        var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user);
+        var oldUsers = []
+
+        // Get data on all users and projects they own
+        db.getDeferredResource(url).done(function(){
+            // Get all users with proper permissions on project prior to edit
+            var query = db.quadStore.subjectsMatchingQuery(null, ns.expand("perm","hasPermissionOver"),wrap(p))
+            
+            for (var i = 0; i < query.length; i++) {
+                // Separate the username from the (bracketed) url
+                var url = strip(query[i])                
+                var username = url.split("/").pop()
+
+                // Add username to list of users with permission prior to edit
+                oldUsers.push(username)
+            };
+        })
+
+        // Compare list of new users to old users
+        for (var i = 0; i < oldUsers.length; i++) {
+            var username = oldUsers[i]
+            var stillHasPermission = false;
+
+            for (var j = 0; j < editAddedUsers.length; j++) {
+                if (editAddedUsers[j] == username) stillHasPermission = true;
+            };
+
+            if (!stillHasPermission){
+                var r = db.getResource(wrap(username));
+                r.deleteProperty(ns.expand('ore','aggregates'),wrap(p))
+                r.deleteProperty(ns.expand('perm','hasPermissionOver'),wrap(p))
+            }
         };
 
-        //Give project title
-        data.add('<' + p + '> dc:title "' + t.val() + '"');
+        for (var i = 0; i < editAddedUsers.length; i++) {
+            var username = editAddedUsers[i]
+            var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
 
-        //Give project description
-        data.add('<' + p + '> dcterms:description "' + d.val() + '"');
-
-        //Set types on project
-        data.add('<' + p + '> rdf:type dcmitype:Collection');
-        data.add('<' + p + '> rdf:type ore:Aggregation');
-
-        var postdata = data.dump({format: 'application/rdf+xml', 
-                                  serialize:true});
-        console.log("data:", postdata);
-        
-        $.post('update_project/', postdata);
-
-        //Clear data from create project form
-        t.val("");
-        d.val("");
-        addedUsers = [];
-        $("#editAddedUsers").text("");
+            var r = db.getResource(wrap(uri))
+            r.setProperty(ns.expand('ore','aggregates'),wrap(p))
+            r.setProperty(ns.expand('perm','hasPermissionOver'),wrap(p))
+        };
     }
 
     else{
         alert("Your project needs a title.")
 
     }
+
 }
 
 function prepareForEdit(){
     var db = goog.global.databroker
     var project = db.currentProject;
-    var wrap = sc.util.Namespaces.angleBracketWrap;
+    var ns = db.namespaces;
+    var wrap = sc.util.Namespaces.angleBracketWrap
+    var strip = sc.util.Namespaces.angleBracketStrip;
+
+    editAddedUsers = [];
+    $("#editAddedUsers").children().remove()
 
     db.getDeferredResource(project).done(function(resource){
-        var resources = db.quadStore.query(wrap(project))
-
+        // Set title & description directly from resource
         $("#editTitle").val(resource.getOneProperty('dc:title'))
-        
         $("#editDescription").val(resource.getOneProperty('dcterms:description'))
+
+        var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user);
+
+        // Get data on all users and projects they own
+        db.getDeferredResource(url).done(function(){
+            // Get all users with proper permissions on project
+            var query = db.quadStore.subjectsMatchingQuery(null, ns.expand("perm","hasPermissionOver"),wrap(project))
+            
+            for (var i = 0; i < query.length; i++) {
+                // Separate the username from the (bracketed) url
+                var url = strip(query[i])                
+                var username = url.split("/").pop()
+                
+                // Add username to list of added users & to tag system
+                editAddedUsers.push(username);
+                $("#editAddedUsers").append('<a onClick="editRemoveUser(this)" id="' + username + '">' + username + "&nbsp;&nbsp;&nbsp;</a>");
+            };
+        })
     })
 }
