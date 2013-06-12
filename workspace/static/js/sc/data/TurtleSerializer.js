@@ -7,6 +7,7 @@ sc.data.TurtleSerializer = function(databroker) {
     sc.data.Serializer.call(this, databroker);
 
     this.compact = false;
+    this.indentString = '\t';
 };
 goog.inherits(sc.data.TurtleSerializer, sc.data.Serializer);
 
@@ -45,17 +46,17 @@ sc.data.TurtleSerializer.prototype.getTriplesString = function(quads) {
             var objects = quadStore.objectsSetMatchingQuery(subject, predicate, null, null);
             var objectsString;
             if (objects.getCount() == 1) {
-                objectsString = [(this.compact ? ' ' : '\n\t\t'), this.formatValue(objects.getValues()[0])].join('');
+                objectsString = [(this.compact ? ' ' : '\n' + this.getIndent(2)), this.formatValue(objects.getValues()[0])].join('');
             }
             else {
                 objectEntries = [];
                 goog.structs.forEach(objects, function(object) {
-                    objectEntries.push([(this.compact ? ' ' : '\n\t\t'), object].join(''));
+                    objectEntries.push([(this.compact ? ' ' : '\n' + this.getIndent(2)), object].join(''));
                 }, this);
                 objectsString = objectEntries.join(',');
             }
 
-            predicateEntries.push([(this.compact ? ' ' : '\n\t'), this.formatValue(predicate), objectsString].join(''));
+            predicateEntries.push([(this.compact ? ' ' : '\n' + this.getIndent(1)), this.formatValue(predicate), objectsString].join(''));
         }, this);
 
         lines.push([subject, predicateEntries.join(' ;'), ' .'].join(''));
@@ -91,4 +92,14 @@ sc.data.TurtleSerializer.prototype.formatValue = function(value) {
     else {
         return value;
     }
+};
+
+sc.data.TurtleSerializer.prototype.getIndent = function(level) {
+    var arr = [];
+
+    for (var i=0; i<level; i++) {
+        arr.push(this.indentString);
+    }
+
+    return arr.join('');
 };
