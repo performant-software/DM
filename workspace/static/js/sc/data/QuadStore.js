@@ -396,7 +396,7 @@ sc.data.QuadStore.prototype.removeQuads = function(quads) {
         if (b) {
             ret = true;
         }
-    })
+    }, this);
 
     return ret;
 };
