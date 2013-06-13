@@ -70,3 +70,15 @@ def create_project_user_graph(host, user, project):
         #  its subproperties since they are better definitions in this instance?
         g.add((identifier, NS.perm['hasPermissionOver'], project))
         return g.serialize()
+
+def update_project_graph(g, identifier):
+    with transaction.commit_on_success():
+        uri = uris.uri('semantic_store_projects', uri=identifier)
+        print "Updating project using graph identifier %s" % uri
+        project_g = Graph(store=rdfstore(), identifier=uri)
+        bind_namespaces(project_g)
+
+        for triple in g:
+            project_g.add(triple)
+
+        return project_g

@@ -10,7 +10,7 @@ from .namespaces import ns
 
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, bind_namespaces
-from semantic_store.projects import create_project_graph, create_project_user_graph
+from semantic_store.projects import create_project_graph, create_project_user_graph, update_project_graph
 from semantic_store.permissions import Permission
 
 from semantic_store import uris
@@ -110,6 +110,8 @@ def create_project(username, project_identifier, host, title, description):
 def read_project(request, uri):
     uri = uris.uri('semantic_store_projects', uri=uri)
     project_g = Graph(store=rdfstore(), identifier=uri)
+
+    print "Reading project using graph identifier %s" % uri
     
     if len(project_g) >0:
         return HttpResponse(project_g.serialize(), mimetype='text/xml')
@@ -118,8 +120,19 @@ def read_project(request, uri):
 
 
 def update_project(request, uri):
-    pass
+    input_graph = Graph()
+    bind_namespaces(input_graph)
+
+    try:
+        input_graph.parse(data=request.body)
+    except rdflib.exceptions.ParserError as e:
+        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
+
+    project_graph = update_project_graph(input_graph, uri)
+
+    return HttpResponse(project_graph.serialize(), status=201, mimetype='text/xml')
 
 
 def delete_project(request, uri):
-    pass
+    # Not implemented
+    return HttpResponse(status=501)
