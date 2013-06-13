@@ -53,7 +53,7 @@ class Command(BaseCommand):
         
             project_identifier = uris.uuid()
             project_url = uris.url(store_host, 'semantic_store_projects', 
-                                   identifier=project_identifier)
+                                   uri=project_identifier)
             title = "Default project"
             create_project(user, project_identifier, title, store_host)
 
