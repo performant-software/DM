@@ -129,6 +129,8 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousedown = function(opts) {
 
     this.mouseDownX = event.pageX;
     this.mouseDownY = event.pageY;
+
+    jQuery(document.body).addClass('user-select-none');
 };
 
 sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {
@@ -160,6 +162,8 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMouseup = function(opts) {
         event.preventDefault();
         event.stopPropagation();
     }
+
+    jQuery(document.body).removeClass('user-select-none');
 };
 
 /**
