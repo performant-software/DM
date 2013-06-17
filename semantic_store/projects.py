@@ -68,7 +68,14 @@ def create_project_user_graph(host, user, project):
         # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
         # Perhaps we stop using ore:aggregates and use perm:hasPermissionOver and
         #  its subproperties since they are better definitions in this instance?
+        #  
+        #  (tandres) agreed. Users should actually be foaf:Agents which have permission over projects
         g.add((identifier, NS.perm['hasPermissionOver'], project))
+        g.add((identifier, NS.perm['mayRead'], project))
+        g.add((identifier, NS.perm['mayUpdate'], project))
+        g.add((identifier, NS.perm['mayDelete'], project))
+        g.add((identifier, NS.perm['mayAugment'], project))
+        g.add((identifier, NS.perm['mayAdminister'], project))
         return g.serialize()
 
 def update_project_graph(g, identifier):

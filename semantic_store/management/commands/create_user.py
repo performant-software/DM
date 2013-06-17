@@ -63,6 +63,12 @@ class Command(BaseCommand):
             user_g = Graph(store=rdfstore.rdfstore(), identifier=user_identifier)
 
             user_g.add((user_identifier, NS.ore['aggregates'], project_identifier))
+            g.add((identifier, NS.perm['hasPermissionOver'], project))
+            g.add((identifier, NS.perm['mayRead'], project))
+            g.add((identifier, NS.perm['mayUpdate'], project))
+            g.add((identifier, NS.perm['mayDelete'], project))
+            g.add((identifier, NS.perm['mayAugment'], project))
+            g.add((identifier, NS.perm['mayAdminister'], project))
             user_g.add((project_identifier, NS.dc['title'], Literal(title))) 
             user_g.add((project_identifier, NS.rdf['type'], NS.dcmitype['Collection']))
             user_g.add((project_identifier, NS.rdf['type'], NS.ore['Aggregation']))
@@ -70,6 +76,7 @@ class Command(BaseCommand):
 
             user_g.add((user_identifier, NS.rdf['type'], NS.dcmitype['Collection']))
             user_g.add((user_identifier, NS.rdf['type'], NS.ore['Aggregation']))
+            user_g.add((user_identifier, NS.rdf['type'], NS.foaf['Agent']))
             user_g.add((user_identifier, NS.ore['isDescribedBy'], user_url))
 
                 
