@@ -144,6 +144,11 @@ atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderD
         }
         else {
             var summary = atb.resource.ResourceSummaryFactory.createFromUri(uri, this, this.clientApp, this.domHelper, this.summaryStyleOptions);
+
+            if (! summary) {
+                continue;
+            }
+
             this.summariesByUri.set(uri, summary);
 
             summary.relationType = relationType;
