@@ -512,6 +512,7 @@ function selectProject(e){
         // Warns that changing projects closes all resources
         else if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
             db.setCurrentProject(e.id);
+            viewerGrid.closeAllContainers();
             workingResourcesViewer.loadManifest(e.id);
         }
     }
