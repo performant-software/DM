@@ -232,18 +232,12 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handle
         this.parseRdf(data, type, function(quadBatch, done) {
             this.quadStore.addQuads(quadBatch);
 
-            window.setTimeout(function() {
-                handler(jqXhr, data);
-            }, 1);
+            if (done) {
+                window.setTimeout(function() {
+                    handler(jqXhr, data);
+                }, 1);
+            }
         }.bind(this));
-
-
-        // var start = goog.now();
-        // var quads = this.parseRdf(data, type);
-        // console.log('number of quads loaded', quads.length, 'time elapsed', goog.now() - start);
-        // start = goog.now();
-        // this.quadStore.addQuads(quads);
-        // console.log('adding to quad store took', goog.now() - start, 'ms')
     }.bind(this), 1);
 };
 
@@ -463,6 +457,17 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToReque
             }
 
             var deferredCollection = new sc.util.DeferredCollection();
+            var numComplete = 0;
+
+            var onComplete = function() {
+                numComplete ++;
+
+                if (numComplete == urlsToRequestArr.length) {
+                    if (! deferredCollection.areAllFailed()) {
+                        deferredResource.resolveWith(this, [self.getResource(uri), self]);
+                    }
+                }
+            };
 
             var urlsToRequestArr = urlsToRequest.getValues();
             for (var i = 0, len = urlsToRequestArr.length; i < len; i++) {
@@ -470,15 +475,11 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToReque
 
                 var jqXhr = this.fetchRdf(url, function(rdf, data) {
                     deferredResource.notifyWith(this, [self.getResource(uri), self]);
+                    onComplete();
                 }, true);
+                jqXhr.fail(onComplete);
                 deferredCollection.add(jqXhr);
             }
-
-            deferredCollection.allComplete(function(deferreds, collection) {
-                if (! collection.areAllFailed()) {
-                    deferredResource.resolveWith(this, [self.getResource(uri), self]);
-                }
-            });
 
             deferredCollection.allFailed(function(deferreds, collection) {
                 var resource = self.getResource(uri);
