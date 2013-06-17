@@ -19,7 +19,9 @@ sc.data.RDFQueryParser.prototype.parseableTypes = new goog.structs.Set([
     'rdf'
 ]);
 
-sc.data.RDFQueryParser.prototype.parse = function(data, context) {
+sc.data.RDFQueryParser.prototype.splitPoint = 1500;
+
+sc.data.RDFQueryParser.prototype.parse = function(data, context, handler) {
     var rdf = jQuery.rdf();
 
     try {
@@ -30,13 +32,26 @@ sc.data.RDFQueryParser.prototype.parse = function(data, context) {
     }
 
     var jqTriples = rdf.databank.triples();
-    var quads = [];
 
-    for (var i=0, len=jqTriples.length; i<len; i++) {
-        quads.push(this.jQueryTripleToQuad(jqTriples[i], context));
+    for (var j=0, len=jqTriples.length; j<len; j+=this.splitPoint) {
+        var end = j + this.splitPoint;
+        if (end > len) {
+            var end = len;
+        }
+        var triplesSlice = goog.array.slice(jqTriples, j, end);
+
+        this._parseSlice(triplesSlice, context, handler, end >= len);
     }
+};
 
-    return quads;
+sc.data.RDFQueryParser.prototype._parseSlice = function(triplesSlice, context, handler, done) {
+    window.setTimeout(function() {
+        var quads = [];
+        for (var i=0, leni=triplesSlice.length; i<leni; i++) {
+            quads.push(this.jQueryTripleToQuad(triplesSlice[i], context));
+        }
+        handler(quads, done);
+    }.bind(this), 1);
 };
 
 sc.data.RDFQueryParser.prototype.jQueryTripleToQuad = function(jQueryTriple, context) {

@@ -195,11 +195,7 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     var successHandler = function(data, textStatus, jqXhr) {
         self.receivedUrls.add(url);
 
-        self.processResponse(data, url, jqXhr);
-
-        window.setTimeout(function() {
-            handler(jqXhr, data, textStatus);
-        }, 1);
+        self.processResponse(data, url, jqXhr, handler);
     };
 
     var errorHandler = function(jqXhr, textStatus, errorThrown) {
@@ -228,27 +224,39 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     return jqXhr;
 };
 
-sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr) {
+sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handler) {
     var responseHeaders = jqXhr.getAllResponseHeaders();
     var type = sc.data.Parser.parseContentType(responseHeaders);
 
-    this.quadStore.addQuads(this.parseRdf(data, type));
+    window.setTimeout(function() {
+        this.parseRdf(data, type, function(quadBatch, done) {
+            this.quadStore.addQuads(quadBatch);
 
-    data = null;
+            window.setTimeout(function() {
+                handler(jqXhr, data);
+            }, 1);
+        }.bind(this));
+
+
+        // var start = goog.now();
+        // var quads = this.parseRdf(data, type);
+        // console.log('number of quads loaded', quads.length, 'time elapsed', goog.now() - start);
+        // start = goog.now();
+        // this.quadStore.addQuads(quads);
+        // console.log('adding to quad store took', goog.now() - start, 'ms')
+    }.bind(this), 1);
 };
 
-sc.data.Databroker.prototype.parseRdf = function(data, format) {
+sc.data.Databroker.prototype.parseRdf = function(data, format, handler) {
     var parsers = this.parsersByType.get(format, true);
     if (parsers.length == 0) parsers = this.parsers;
-
-    var quads = [];
 
     var success = false;
     for (var i=0, len=parsers.length; i<len; i++) {
         var parser = parsers[i];
 
         try {
-            quads = parser.parse(data, null);
+            parser.parse(data, null, handler);
             success = true;
             break;
         }
@@ -260,8 +268,6 @@ sc.data.Databroker.prototype.parseRdf = function(data, format) {
     if (!success) {
         console.error('RDF could not be parsed', data);
     }
-
-    return quads;
 };
 
 sc.data.Databroker.prototype.registerParser = function(parser) {

@@ -22,11 +22,12 @@ sc.data.Parser.prototype.parseableTypes = new goog.structs.Set([]);
 
 /**
  * 
- * @param  {*} data               The data to parse.
- * @param  {string|null} context  The context to be applied to the quads if not specified by the data.
- * @return {Array.<sc.data.Quad>} The parsed quads.
+ * @param {*} data               The data to parse.
+ * @param {string|null} context  The context to be applied to the quads if not specified by the data.
+ * @param {function}    handler  Function to call with loaded quads. First parameter is the just parsed batch of quads, second parameter
+ *                               is whether parsing is complete 
  */
-sc.data.Parser.prototype.parse = function(data, context) {
+sc.data.Parser.prototype.parse = function(data, context, handler) {
     throw "Abstract method not implemented";
 };
 
