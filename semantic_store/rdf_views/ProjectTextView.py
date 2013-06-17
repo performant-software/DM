@@ -1,10 +1,11 @@
 from django.http import HttpResponse, HttpResponseNotFound
 
-from rdflib import Graph
+from rdflib import Graph, URIRef
 
 from .ProjectView import ProjectView
 from semantic_store.namespaces import NS
 from semantic_store.rdfstore import rdfstore
+from semantic_store import uris
 
 
 class ProjectTextView(ProjectView):
@@ -13,7 +14,7 @@ class ProjectTextView(ProjectView):
 
     def text_graph(self, uri, url, title):
         text_g = Graph()
-        text_g.add((URIRef(uri), NS.rdf['type'], NS.dctypes['text']))
+        text_g.add((URIRef(uri), NS.rdf['type'], NS.dctypes['Text']))
         text_g.add((URIRef(uri), NS.dc['title'], Literal(title)))
         text_g.add((URIRef(uri), NS.ore['isDescribedBy'], URIRef(url)))
         return text_g
@@ -28,7 +29,7 @@ class ProjectTextView(ProjectView):
         content = request.body
         title = request.GET.get('title', "")
 
-        alltexts_uri = uris.uri(view, **kwargs)
+        alltexts_uri = uris.uri(self.view, **kwargs)
         alltexts_g = Graph(store=rdfstore(), identifier=alltexts_uri)
 
         text_uri = uris.uri('semantic_store_texts', **kwargs)
