@@ -41,7 +41,8 @@ sc.RepoBrowser = function(options) {
         errorHandler: jQuery.proxy(this.flashErrorIcon, this),
         showLoadingIndicator: jQuery.proxy(this.showLoadingSpinner, this),
         hideLoadingIndicator: jQuery.proxy(this.hideLoadingSpinner, this),
-        showAddButton: true
+        showAddButton: true,
+        showErrors: true
     }, options);
 
     this.databroker = this.options.databroker;
@@ -371,8 +372,13 @@ sc.RepoBrowser.prototype.addManifestItem = function(uri, clickHandler, div) {
     collection.progress(withResource).done(withResource);
 
     collection.fail(function(resource) {
-        item.indicateNetworkError();
-    });
+        if (this.options.showErrors) {
+            item.indicateNetworkError();
+        }
+        else {
+            jQuery(item.getElement()).hide();
+        }
+    }.bind(this));
 };
 
 sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, div) {
@@ -496,8 +502,13 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
     deferredManuscript.progress(withManuscript).done(withManuscript);
 
     deferredManuscript.fail(jQuery.proxy(function(manuscript) {
-        item.indicateNetworkError();
-        item.showFoliaMessage('There was a network error when attempting to load this manuscript.');
+        if (this.options.showErrors) {
+            item.indicateNetworkError();
+            item.showFoliaMessage('There was a network error when attempting to load this manuscript.');
+        }
+        else {
+            jQuery(item.getElement()).hide();
+        }
     }, this));
 
     return item;
