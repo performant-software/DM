@@ -481,6 +481,9 @@ sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
     if (opt_content) {
         text.addProperty('cnt:chars', sc.util.Namespaces.quoteWrap(opt_content));
     }
+    else {
+        text.addProperty('cnt:chars', '""');
+    }
 
     return text;
 };
@@ -523,11 +526,11 @@ sc.data.DataModel.prototype._handleTextContentError = function(handler, textReso
 sc.data.DataModel.prototype.setTextContent = function(text, content) {
     text = this.databroker.getResource(text);
 
-    if (text.hasPredicate('cnt:chars')) {
+    // if (text.hasPredicate('cnt:chars')) {
         text.setProperty('cnt:chars', '"' + content.replace('"', '\\"') + '"');
-    }
-    else {
-        this.textContentByUri.set(text.uri, content);
-        this.modifiedTextUris.add(text.uri);
-    }
+    // }
+    // else {
+    //     this.textContentByUri.set(text.uri, content);
+    //     this.modifiedTextUris.add(text.uri);
+    // }
 };

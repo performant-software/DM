@@ -23,8 +23,6 @@ sc.data.SyncService.DEFAULT_OPTIONS = {
     restUserPath: 'users'
 };
 
-
-
 sc.data.SyncService.RESTYPE = {
     'text': 0, 
     'project': 1, 
@@ -37,9 +35,6 @@ sc.data.SyncService.prototype.requestSync = function() {
     this.postNewResources();
 
     this.putModifiedResources();
-
-    this.databroker.newResourceUris.clear();
-    this.databroker.newQuadStore.clear();
 };
 
 sc.data.SyncService.prototype.createTextHttpUri = function() {
@@ -75,6 +70,10 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
         url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
         url += "/";
     }
+    else if (resType == sc.data.SyncService.RESTYPE.project) {
+        // url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
+        // url += "/";
+    }
     if (resUri != null) {
         url += resUri;
     } 
@@ -104,7 +103,7 @@ sc.data.SyncService.prototype.restUri = function(projectUri, resType, resUri, pa
 sc.data.SyncService.prototype.getModifiedResourceUris = function() {
     var subjectsOfNewQuads = this.databroker.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
 
-    return this.databroker.newResourceUris.difference(subjectsOfNewQuads);
+    return subjectsOfNewQuads.difference(this.databroker.newResourceUris);
 };
 
 sc.data.SyncService.prototype.postNewResources = function() {
@@ -112,6 +111,10 @@ sc.data.SyncService.prototype.postNewResources = function() {
 
     goog.structs.forEach(this.databroker.newResourceUris, function(uri) {
         var xhr = this.sendResource(uri, 'POST');
+
+        xhr.done(function() {
+            this.databroker.newResourceUris.remove(uri);
+        }.bind(this));
 
         xhrs.push(xhr);
     }, this);
@@ -132,17 +135,34 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
         quadsToPost = this.databroker.quadStore.query(resource.bracketedUri, null, null, null);
 
         url = this.restUrl(this.databroker.currentProject, resType,
-                           sc.util.Namespaces.angleBracketStrip(uri), {});
+                           sc.util.Namespaces.angleBracketStrip(uri), null);
     }
     else if (resource.hasType('oac:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.annotation;
 
         quadsToPost = this.databroker.dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
 
-        url = this.restUrl(this.databroker.currentProject, resType, null, {});
+        url = this.restUrl(this.databroker.currentProject, resType, null, null);
+    }
+    else if (resource.hasType('ore:Aggregation')) {
+        console.log('trying to sync ' + resource);
+        if (goog.array.contains(this.databroker.allProjects, resource.uri)) {
+            console.log('identified ' + resource.uri + 'as project')
+            var resType = sc.data.SyncService.RESTYPE.project;
+
+            quadsToPost = this.databroker.quadStore.query(resource.bracketedUri, null, null, null);
+
+            url = this.restUrl(this.databroker.currentProject, resType, null, null);
+        }
+    }
+    else {
+        console.error("Don't know how to sync resource " + resource);
+        return;
     }
 
-    var dataDump = this.databroker.serializeQuads(quadsToPost, 'application/rdf+xml');
+    var format = 'application/rdf+xml';
+
+    var dataDump = this.databroker.serializeQuads(quadsToPost, format);
 
     console.log('about to send resource', uri, dataDump);
 
@@ -151,7 +171,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
         url: url,
         success: function() {
             console.log('successful sync', arguments);
-        },
+            this.databroker.newQuadStore.removeQuads(quadsToPost);
+        }.bind(this),
         error: function() {
             console.error('unsuccessful sync', arguments);
         },
