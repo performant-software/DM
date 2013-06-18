@@ -29,7 +29,8 @@ sc.util.Namespaces.DEFAULT_NAMESPACES = {
     'cnt08': 'http://www.w3.org/2008/content#',
     'owl': 'http://www.w3.org/2002/07/owl#',
     'media-types': 'http://purl.org/NET/mediatypes/',
-    'perm': 'http://vocab.ox.ac.uk/perm#'
+    'perm': 'http://vocab.ox.ac.uk/perm#',
+    'foaf': 'http://xmlns.com/foaf/0.1/'
 };
 
 sc.util.Namespaces.prototype.addNamespace = function (prefix, uri) {

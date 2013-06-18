@@ -456,6 +456,34 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
     return quadsToPost.getValues();
 };
 
+sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project) {
+    project = this.databroker.getResource(project);
+
+    var quads = this.databroker.quadStore.query(project.bracketedUri, null, null, null);
+
+    var contentUris = new goog.structs.Set();
+    contentUris.addAll(project.getProperties('ore:aggregates'));
+    contentUris.addAll(project.getProperties('perm:hasPermissionOver'));
+
+    goog.structs.forEach(contentUris, function(contentUri) {
+        var contentResource = this.databroker.getResource(contentUri);
+        quads = quads.concat(this.databroker.quadStore.query(
+            contentResource.bracketedUri,
+            this.databroker.namespaces.expand('ore', 'isDescribedBy'),
+            null, null));
+        quads = quads.concat(this.databroker.quadStore.query(
+            contentResource.bracketedUri,
+            this.databroker.namespaces.expand('rdf', 'type'),
+            null, null));
+        quads = quads.concat(this.databroker.quadStore.query(
+            contentResource.bracketedUri,
+            this.databroker.namespaces.expand('dc', 'title'),
+            null, null));
+    }, this);
+
+    return quads;
+};
+
 sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
     canvasUri = sc.util.Namespaces.angleBracketWrap(canvasUri);
