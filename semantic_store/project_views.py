@@ -1,28 +1,19 @@
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseNotFound
 
-from rdflib.graph import Graph, ConjunctiveGraph
-import rdflib
+from rdflib.graph import Graph
+from rdflib.exceptions import ParserError
+from rdflib import Literal
 
-from .validators import ProjectValidator
-from .rdfstore import rdfstore
-from .namespaces import ns
-
-from semantic_store.models import ProjectPermission
-from semantic_store.namespaces import NS, bind_namespaces
-from semantic_store.projects import create_project_graph, create_project_user_graph, update_project_graph
-from semantic_store.permissions import Permission
-
+from semantic_store.rdfstore import rdfstore
+from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 
-from settings_local import SITE_ATTRIBUTES
-
-from django.contrib.auth.models import User
-
-from rdflib import BNode, Literal, URIRef
+from datetime import datetime
 
 
 def create_project_from_request(request):
+    host =  request.get_host()
     g = Graph()
     bind_namespaces(g)
     try:
@@ -30,83 +21,38 @@ def create_project_from_request(request):
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
-    # Register plugins for querying graph
-    rdflib.plugin.register(
-    'sparql', rdflib.query.Processor,
-    'rdfextras.sparql.processor', 'Processor')
-    rdflib.plugin.register(
-    'sparql', rdflib.query.Result,
-    'rdfextras.sparql.query', 'SPARQLQueryResult')
-
-    host = SITE_ATTRIBUTES['hostname']
-
-    # Query for the new project URI, added user(s), and title
-    query = g.query("""SELECT ?uri ?user ?title
+    query = g.query("""SELECT ?uri ?user
                     WHERE {
-                        ?uri rdf:type dcmitype:Collection .
-                        ?uri rdf:type ore:Aggregation .
-                        ?user ore:aggregates ?uri .
-                        ?uri dc:title ?title .
+                        ?user perm:hasPermissionOver ?uri .
                     }""", initNs = ns)
 
-    # Description needs to be referenced inside the try-except and outside
-    # # declared as None type because create_project knows not to do anything
-    # # if no description is found    
-    description = None
+    for uri, user in query:
+        with transaction.commit_on_success():
+            username = user.split("/")[-1]
 
-    # Query for description wrapped in try-except statement
-    # Description is an optional field, so it should not break things if it
-    # # does not exist
-    try:
-        query2 = g.query("""SELECT ?description
-                         WHERE{
-                            ?uri rdf:type ore:Aggregation .
-                            ?uri dcterms:description ?description .
-                         }""", initNs = ns)
+            allprojects_uri = uris.uri('semantic_store_projects')
+            allprojects_g = Graph(store=rdfstore(), identifier=allprojects_uri)
+            bind_namespaces(allprojects_g)
 
-        for q in query2:
-            t = tuple(q)
-            descripton = t[0]
-    except Exception, e:
-        pass
+            project_uri = uris.uri('semantic_store_projects', uri=uri)
+            project_g = Graph(store=rdfstore(), identifier=project_uri)
+            bind_namespaces(project_g)
 
-     
-    for q in query:
-        t = tuple(q)
-        identifier = t[0]
+            for t in g.triples((uri, None, None)):
+                allprojects_g.add(t)
+                project_g.add(t)
 
-        for n in t[1].split("/"):
-            name = n
-        
-        title = t[2]
+            url = uris.url(host, 'semantic_store_projects', uri=uri)
+            allprojects_g.set((project_uri, NS.ore['isDescribedBy'], url))
+            project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
-        create_project(name, identifier, host, title = title, description = description)
-        create_project_user_graph(host, name, identifier)
-        # If you want to see/manipulate the new data, uncomment the following
-        #main_graph = ConjunctiveGraph(store=rdfstore(), identifier=identifier)
-
-
-def create_project(username, project_identifier, host, title, description):
-    g = Graph()
-    bind_namespaces(g)
-    project = BNode()
-    g.add((project, NS.rdf['type'], NS.dcmitype['Collection']))
-    g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
-    g.add((project, NS.dc['title'], Literal(title)))
-    if (description):
-        g.add((project, NS.dcterm['description'], Literal(description)))
-
-    create_project_graph(g, project, project_identifier, host, title, username)
-
-    ProjectPermission.objects.create(identifier=project_identifier,
-                                     user=User.objects.get(username = username),
-                                     permission=Permission.read_write)
+        create_project_user_graph(host, username, uri)
 
 
 # Restructured read_project
 # Previously, when hitting multiple project urls in quick succession, a 500 
-# # error occurred occassionally since the graph with the information about
-# # all projects wasn't closed before the next url was hit
+#  error occurred occassionally since the graph with the information about
+#  all projects wasn't closed before the next url was hit
 def read_project(request, uri):
     uri = uris.uri('semantic_store_projects', uri=uri)
     project_g = Graph(store=rdfstore(), identifier=uri)
@@ -125,14 +71,54 @@ def update_project(request, uri):
 
     try:
         input_graph.parse(data=request.body)
-    except rdflib.exceptions.ParserError as e:
+    except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     project_graph = update_project_graph(input_graph, uri)
 
     return HttpResponse(project_graph.serialize(), status=201, mimetype='text/xml')
 
+def update_project_graph(g, identifier):
+    with transaction.commit_on_success():
+        uri = uris.uri('semantic_store_projects', uri=identifier)
+        print "Updating project using graph identifier %s" % uri
+        project_g = Graph(store=rdfstore(), identifier=uri)
+        bind_namespaces(project_g)
+
+        for triple in g:
+            project_g.add(triple)
+
+        return project_g
 
 def delete_project(request, uri):
     # Not implemented
     return HttpResponse(status=501)
+
+# Creates a graph identified by user of the projects belonging to the user, which
+#  can be found at the descriptive url of the user (/store/user/<username>)
+# The graph houses the uri of all of the user's projects and the url where more info
+#  can be found about each project
+def create_project_user_graph(host, user, project):
+    with transaction.commit_on_success():
+        user_uri = uris.uri('semantic_store_users', username=user)
+        g = Graph(store=rdfstore(), identifier = user_uri)
+        bind_namespaces(g)
+        g.add((project, NS.ore['isDescribedBy'], uris.url(host, "semantic_store_projects", uri=project)))
+
+        # Permissions triple allows read-only permissions if/when necessary
+        # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
+        # Perhaps we stop using ore:aggregates and use perm:hasPermissionOver and
+        #  its subproperties since they are better definitions in this instance?
+        #  
+        #  (tandres) agreed. Users should actually be foaf:Agents which have permission over projects
+        g.add((user_uri, NS.perm['hasPermissionOver'], project))
+        g.add((user_uri, NS.perm['mayRead'], project))
+        g.add((user_uri, NS.perm['mayUpdate'], project))
+        g.add((user_uri, NS.perm['mayDelete'], project))
+        g.add((user_uri, NS.perm['mayAugment'], project))
+        g.add((user_uri, NS.perm['mayAdminister'], project))
+
+        g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
+        return g.serialize()
+
+
