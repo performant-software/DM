@@ -27,9 +27,10 @@ def clean_store_host(store_host):
 
 
 def localize_describes(store_host, uri, url, g):
-    for t in g.triples((URIRef(url), ns['ore']['describes'], URIRef(uri))):
-        g.remove(t)
-    for t in g.triples((URIRef(uri), ns['ore']['isDescribedBy'], URIRef(url))):
+    if url:
+        for t in g.triples((URIRef(url), ns['ore']['describes'], None)):
+            g.remove(t)
+    for t in g.triples((URIRef(uri), ns['ore']['isDescribedBy'], URIRef(url) if url else None)):
         g.remove(t)
     local_rel_url = reverse('semantic_store_resources' , kwargs={'uri': str(uri)})
     local_abs_url = "http://%s%s" % (store_host, local_rel_url)
@@ -62,10 +63,7 @@ def harvest_collection(col_url, col_uri, store_host, manifest_file=None):
             for seq_uri, seq_url in seq_uris_urls:
                 page_uris_urls = collection.aggregated_uris_urls(seq_uri, res_g)
                 for page_uri, page_url in page_uris_urls:
-                    if page_uri and page_url:
-                        localize_describes(store_host, page_uri, page_url, res_g)
-                    else:
-                        print "Warning: page_uri: %s, page_url: %s" % (page_uri, page_url)
+                    localize_describes(store_host, page_uri, page_url, res_g)
             localize_describes(store_host, res_uri, res_url, res_g)
             localize_describes(store_host, res_uri, res_url, col_g)
 
