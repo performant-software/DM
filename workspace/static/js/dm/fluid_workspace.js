@@ -89,7 +89,10 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         
         var manuscriptUri = manuscriptResource.getUri();
 
-        console.log(resource.getSourceUrls(), manuscriptResource.getSourceUrls);
+        databroker.addResourceToCurrentProject(resource);
+        if (workingResourcesViewer) {
+            workingResourcesViewer.loadManifest(databroker.currentProject);
+        }
     });
 
     var repoBrowserContainer = jQuery('#repoBrowserModal .modal-body').get(0);
