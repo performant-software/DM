@@ -208,6 +208,23 @@ sc.data.DataModel.prototype.findAggregationContentsUris = function(aggregationUr
     return sc.util.Namespaces.angleBracketStrip(this.databroker.getPropertiesForResource(aggregationUri, 'ore:aggregates'));
 };
 
+sc.data.DataModel.prototype.findAggregationContentsUrisForRepoBrowser = function(aggregationUri) {
+    var aggregation = this.databroker.getResource(aggregationUri);
+
+    var uris = [];
+
+    var contentUris = aggregation.getProperties('ore:aggregates');
+    goog.structs.forEach(contentUris, function(contentUri) {
+        var contentResource = this.databroker.getResource(contentUri);
+
+        if (! contentResource.hasType('dms:AnnotationList')) {
+            uris.push(contentResource.uri);
+        }
+    }, this);
+
+    return uris;
+};
+
 /**
  * Returns the uris of resources aggregated into a manuscript, but does not include those which are labeled as being for
  * a specific canvas
