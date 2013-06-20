@@ -1,25 +1,15 @@
 from optparse import make_option
-import datetime
-import pprint
-import uuid
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
-from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, Literal
+from rdflib import URIRef
 from rdflib.resource import Resource
-from rdflib.namespace import Namespace
 
 from semantic_store.rdfstore import rdfstore, default_identifier
-from semantic_store import collection
-from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.rdf_views import UserView, ProjectView
+from semantic_store.namespaces import NS, ns
 from semantic_store import uris
-from _projects import create_project
 
 from collections import defaultdict
 
