@@ -63,7 +63,7 @@ class GraphView(View):
     def serialized_graph(self, view, **kwargs):
         graph_uri = uris.uri(view, **kwargs)
         g = Graph(store=rdfstore(), identifier=graph_uri)
-        if len(list(g)) == 0:
+        if len(g) == 0:
             return HttpResponseNotFound(mimetype='text/xml')
         return HttpResponse(g.serialize(), mimetype='text/xml')
             
