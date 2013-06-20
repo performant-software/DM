@@ -80,11 +80,11 @@ def resource_urls(manifest_uri, g):
 def aggregated_uris_urls(uri, g):
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
+                   ?uri ore:aggregates ?resource_uri .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
-                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
-               }""" % uri
-    qres = g.query(query, initNs=ns)
+                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url } .
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'uri': URIRef(uri)})
     return list(qres)
 
 
@@ -115,7 +115,7 @@ def image_annotations(manifest_uri, g):
                    <%s> ore:aggregates ?resource_uri .
                    ?resource_uri rdf:type dms:ImageAnnotationList .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
-                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
+                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url } .
                }""" % manifest_uri
     qres = g.query(query, initNs=ns)
     return list(qres)
@@ -127,7 +127,7 @@ def aggregated_seq_uris_urls(uri, g):
                    ?uri ore:aggregates ?resource_uri .
                    {?resource_uri a dms:Sequence} UNION {?resource_uri a sc:Sequence} .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
-                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
+                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url } .
                }"""
     qres = g.query(query, initNs=ns, initBindings={'uri': uri})
     return list(qres)
