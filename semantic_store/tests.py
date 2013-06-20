@@ -3,15 +3,11 @@ import os
 import uuid
 
 from django.utils import unittest
-from django.utils.encoding import iri_to_uri
-from django.utils.http import urlquote, urlquote_plus
 from django.test.client import Client
 from django.core.urlresolvers import reverse
-from django.conf import settings
 
 from rdflib.graph import ConjunctiveGraph, Graph
-from rdflib import plugin, URIRef, Literal, BNode
-from rdflib.store import Store, NO_STORE, VALID_STORE
+from rdflib import URIRef, Literal, BNode
 from .namespaces import NS, ns, bind_namespaces
 import rdfstore
 

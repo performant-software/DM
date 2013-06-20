@@ -3,7 +3,7 @@ import uuid
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.generic import View
 
-from rdflib import Graph, ConjunctiveGraph, BNode, URIRef
+from rdflib import Graph, BNode, URIRef
 
 from semantic_store import uris
 from semantic_store.rdfstore import rdfstore
