@@ -18,8 +18,11 @@ from .namespaces import bind_namespaces, ns
 from .validators import AnnotationValidator
 from .annotation_views import create_or_update_annotations, get_annotations, \
     search_annotations
-from .project_views import create_project_from_request, read_project, update_project, delete_project
+from .project_views import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
 from semantic_store import uris
+
+from django.contrib.auth.models import User
+from django.db import IntegrityError, transaction
 
 
 def repositories(request, uri=None):
@@ -173,4 +176,72 @@ def display_graph(request, identifier):
 
     return HttpResponse(output, mimetype="application/xhtml+xml")
 
+@csrf_exempt
+def import_old_data(request):
+    everything_graph = Graph()
+    bind_namespaces(everything_graph)
+    host = request.get_host()
+
+    # Either gather post data (must be one project/user graph at a time)
+    if request.method == 'POST':
+        everything_graph.parse(data = request.body)
+
+        add_all_users(everything_graph)
+
+        # Create each user's default project
+        # Due to the structure of the data when exported from the old system, this also
+        #  add each annotation to the project as an aggregated resource
+        create_project(everything_graph, host)
+
+    # or serialize from a folder, where each file is one project/user graph
+    else:
+        i = 0
+        while True:
+            graph = Graph()
+            bind_namespaces(everything_graph)
+            try:
+                graph.parse("output/%s.xml"%(i))
+            except IOError:
+                break
+            else:
+                create_project(graph, host)
+                i += 1
+    
+
+    return HttpResponse("I finished migrating data without errors.")
+
+DEFAULT_PASSWORD_STRING="DefaultPassword"
+
+# Ensure users exist in the database before creating projects about them
+# If the user with given username does not exist, creates it with DEFAULT_PASSWORD_STRING
+#  as their password
+def add_all_users(graph):
+    query = graph.query("""SELECT ?user ?email
+                        WHERE {
+                            ?user perm:hasPermissionOver ?project .
+                            ?user foaf:mbox ?email .
+                        }""", initNs=ns)
+
+    for q in query:
+        username = ""
+        # Remove username from customized uri
+        s = q[0].split("/")[-1]
+        username = s.split("'),")[0]
+
+        email = q[1].split("mailto:")[-1]
+
+        try:
+            u = User.objects.create_user(username, email, DEFAULT_PASSWORD_STRING)
+        except IntegrityError:
+            transaction.rollback_unless_managed()
+            print "User '%s' already existed in the database, and was not created."%(username)
+        else:
+            u.save()
+            print "User '%s' was created successfully."%(username)
+
+
+def remove_triples(request, uri):
+    g = delete_triples_from_project(request, uri)
+
+    return HttpResponse("something dammit")
 
