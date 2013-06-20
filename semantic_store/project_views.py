@@ -11,16 +11,23 @@ from semantic_store import uris
 
 from datetime import datetime
 
+from django.conf import settings
+
 
 def create_project_from_request(request):
-    host =  request.get_host()
     g = Graph()
     bind_namespaces(g)
+
+    host = request.get_host()
+
     try:
         g.parse(data=request.body)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
+    create_project(g, host)
+
+def create_project(g, host):
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
@@ -38,8 +45,8 @@ def create_project_from_request(request):
             project_g = Graph(store=rdfstore(), identifier=project_uri)
             bind_namespaces(project_g)
 
-            for t in g.triples((uri, None, None)):
-                allprojects_g.add(t)
+            for t in g:
+                print t
                 project_g.add(t)
 
             url = uris.url(host, 'semantic_store_projects', uri=uri)
@@ -120,5 +127,31 @@ def create_project_user_graph(host, user, project):
 
         g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
         return g.serialize()
+
+
+def delete_triples_from_project(request, uri):
+    g = Graph()
+    bind_namespaces(g)
+    removed = Graph()
+    bind_namespaces(removed)
+
+    try:
+        g.parse(request.body)
+    except:
+        return HttpResponse(status=400, content="Unable to parse serialization.")
+
+    project_uri = uris.uri('semantic_store_projects', uri=uri)
+    project_g = Graph(store=rdfstore(), identifier=project_uri)
+
+    with transaction.commit_on_success():            
+        for t in g:
+            print t
+            if t in project_g:
+                project_g.remove(t)
+                removed.add(t)
+
+    return removed
+
+
 
 
