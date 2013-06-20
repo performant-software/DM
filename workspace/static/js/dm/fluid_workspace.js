@@ -305,6 +305,7 @@ function sendNewData(){
                                     dcterms: "http://purl.org/dc/terms/",
                                     rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
                                     dcmitype: "http://purl.org/dc/dcmitype/",
+                                    perm: 'http://vocab.ox.ac.uk/perm#',
                                     }
                                   });
 
@@ -315,7 +316,7 @@ function sendNewData(){
         //Link user(s) and project
         for (var i = 0; i < newAddedUsers.length; i++) {
             var u = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, newAddedUsers[i], null);
-            data.add("<" + u + "> ore:aggregates <" + p + ">");
+            data.add("<" + u + "> perm:hasPermissionOver <" + p + ">");
         };
 
         //Give project title
