@@ -133,8 +133,7 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
     var databroker = canvas.databroker;
 
     var imageAnnoUris = databroker.dataModel.findAnnosReferencingResourceAsTarget(
-        canvas.uri,
-        sc.canvas.FabricCanvas.RDF_ENUM.imageAnno
+        canvas.uri
     );
 
     var imageUris = [];
@@ -173,9 +172,6 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
                     canvas.imageOptionUris.push(optionUri);
                 }
             }
-        }
-        else {
-            canvas.addImage(databroker.getImageSrc(imageUri), canvas.getSize());
         }
     }
 };
