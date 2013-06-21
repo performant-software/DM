@@ -150,7 +150,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
             console.log('identified ' + resource.uri + 'as project')
             var resType = sc.data.SyncService.RESTYPE.project;
 
-            quadsToPost = this.databroker.dataModel.findQuadsToSyncForProject(resource);
+            quadsToPost = this.databroker.quadStore.query(resource.bracketedUri, null, null, null);
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
         }

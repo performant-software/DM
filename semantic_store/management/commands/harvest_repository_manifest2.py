@@ -14,7 +14,17 @@ from rdflib.namespace import Namespace
 import rdfstore
 from semantic_store import collection
 
-from semantic_store.namespaces import ns
+
+ns = dict(
+    rdf=RDF,
+    dms=Namespace("http://dms.stanford.edu/ns/"),
+    sc=Namespace("http://www.shared-canvas.org/ns/"),
+    ore=Namespace("http://www.openarchives.org/ore/terms/"),
+    dc=Namespace("http://purl.org/dc/elements/1.1/"),
+    dcmitype=Namespace("http://purl.org/dc/dcmitype/"),
+    exif=Namespace("http://www.w3.org/2003/12/exif/ns#"),
+    tei=Namespace("http://www.tei-c.org/ns/1.0/"),
+    oac=Namespace("http://www.openannotation.org/ns/"))
 
 
 col_res_attributes = (ns['dc']['title'], 

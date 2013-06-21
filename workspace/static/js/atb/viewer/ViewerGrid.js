@@ -152,9 +152,3 @@ atb.viewer.ViewerGrid.prototype._onWindowResize = function(event) {
     this.resizeAllContainers();
     window.setTimeout(this.resizeAllContainers.bind(this), 20);
 };
-
-atb.viewer.ViewerGrid.prototype.closeAllContainers = function() {
-    goog.structs.forEach(goog.array.clone(this.containers), function(container) {
-        container.close();
-    }, this);
-};
