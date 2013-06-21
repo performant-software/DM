@@ -11,7 +11,7 @@ from semantic_store.uri import uuid
 
 
 def create_project(user, project_identifier, title, host):
-    create_project_graph(host, user.username, title)
+    create_project_graph(host, user.username, title, project = identifier)
     ProjectPermission.objects.create(identifier=project_identifier,
                                      user=user,
                                      permission=Permission.read_write)

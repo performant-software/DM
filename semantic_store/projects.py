@@ -148,8 +148,9 @@ def delete_triples_from_project(request, uri):
 # Create the project graph, with all of the required data, and sends it to be saved
 # Used for the the create project management command and some part of ProjectView
 # # Have we made ProjectView obsolete since we now export data in RDF?
-def create_project_graph(host, user, title):
-    project = uris.uuid()
+def create_project_graph(host, user, title, project):
+    if not project:
+        project = uris.uuid()
     g = Graph()
     bind_namespaces(g)
     if not title:
