@@ -6,7 +6,6 @@ from rdflib.graph import ConjunctiveGraph as Graph
 from rdflib.namespace import Namespace
 from rdflib.term import URIRef, Literal
 from rdflib import RDF
-from namespaces import ns
 
 """
 Example:
@@ -14,12 +13,23 @@ Example:
 python collection.py --pages BeineckeMS525 --col_uri http://manifests.ydc2.yale.eduMetaManifest.xml --col_url http://openmanifests.s3-website-us-east-1.amazonaws.com/MetaManifest.xml
 """
 
+ns = dict(
+    dms=Namespace("http://dms.stanford.edu/ns/"),
+    sc=Namespace("http://www.shared-canvas.org/ns/"),
+    ore=Namespace("http://www.openarchives.org/ore/terms/"),
+    dc=Namespace("http://purl.org/dc/elements/1.1/"),
+    dcmitype=Namespace("http://purl.org/dc/dcmitype/"),
+    exif=Namespace("http://www.w3.org/2003/12/exif/ns#"),
+    tei=Namespace("http://www.tei-c.org/ns/1.0/"),
+    oac=Namespace("http://www.openannotation.org/ns/"))
+
+
 def resource_url(resource_uri, g):
     query = """SELECT DISTINCT ?resource_url
                WHERE {
-                   ?resource_url ore:describes ?resource .
-               }"""
-    qres = g.query(query, initNs=ns, initBindings={'resource': URIRef(resource_uri)})
+                   ?resource_url ore:describes <%s> .
+               }""" % resource_uri
+    qres = g.query(query, initNs=ns)
     if len(qres) > 0:
         (url,) = list(qres)[0]
         return url
@@ -29,9 +39,9 @@ def resource_url(resource_uri, g):
 def resource_uri(resource_url, g):
     query = """SELECT DISTINCT ?resource_uri
                WHERE {
-                   ?resource_url ore:describes ?resource_uri .
-               }"""
-    qres = g.query(query, initNs=ns, initBindings={'resource_url': URIRef(resource_url)})
+                   <%s> ore:describes ?resource_uri .
+               }""" % resource_url
+    qres = g.query(query, initNs=ns)
     if len(qres) > 0:
         (uri,) = list(qres)[0]
         return uri
@@ -80,11 +90,11 @@ def resource_urls(manifest_uri, g):
 def aggregated_uris_urls(uri, g):
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   ?uri ore:aggregates ?resource_uri .
+                   <%s> ore:aggregates ?resource_uri .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
-                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url } .
-               }"""
-    qres = g.query(query, initNs=ns, initBindings={'uri': URIRef(uri)})
+                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
+               }""" % uri
+    qres = g.query(query, initNs=ns)
     return list(qres)
 
 
@@ -115,7 +125,7 @@ def image_annotations(manifest_uri, g):
                    <%s> ore:aggregates ?resource_uri .
                    ?resource_uri rdf:type dms:ImageAnnotationList .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
-                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url } .
+                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
                }""" % manifest_uri
     qres = g.query(query, initNs=ns)
     return list(qres)
@@ -127,7 +137,7 @@ def aggregated_seq_uris_urls(uri, g):
                    ?uri ore:aggregates ?resource_uri .
                    {?resource_uri a dms:Sequence} UNION {?resource_uri a sc:Sequence} .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
-                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url } .
+                   OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
                }"""
     qres = g.query(query, initNs=ns, initBindings={'uri': uri})
     return list(qres)
@@ -177,8 +187,8 @@ def page_attributes(g, page_uri, res_uri):
                    <%s> dc:title ?title .
                    <%s> exif:width ?width .
                    <%s> exif:height ?height .
-                   ?anno oa:hasTarget <%s> .
-                   ?anno oa:hasBody ?image .
+                   ?anno oac:hasTarget <%s> .
+                   ?anno oac:hasBody ?image .
                    ?image rdf:type dcmitype:Image
                }""" % (res_uri, page_uri, page_uri, page_uri, page_uri)
     # query = """SELECT DISTINCT ?res_title ?title ?width ?height ?image 
@@ -186,8 +196,8 @@ def page_attributes(g, page_uri, res_uri):
     #                <%s> dc:title ?title .
     #                <%s> exif:width ?width .
     #                <%s> exif:height ?height .
-    #                ?anno oa:hasTarget <%s> .
-    #                ?anno oa:hasBody ?image .
+    #                ?anno oac:hasTarget <%s> .
+    #                ?anno oac:hasBody ?image .
     #                ?image rdf:type dcmitype:Image
     #            }""" % (page_uri, page_uri, page_uri, page_uri)
     qres = g.query(query, initNs=ns)

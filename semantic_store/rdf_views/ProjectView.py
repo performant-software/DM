@@ -1,14 +1,7 @@
-from datetime import datetime
-
-from django.core.urlresolvers import reverse
-from django.contrib.auth.models import User
-from django.conf import settings
-from django.http import HttpResponse, HttpResponseNotFound
-
-from rdflib import Graph, Literal, URIRef
+from rdflib import Graph
 
 from .GraphView import GraphView
-from semantic_store.namespaces import NS, ns
+from semantic_store.namespaces import NS, bind_namespaces
 from semantic_store.validators import ProjectValidator
 from semantic_store.rdfstore import rdfstore
 from semantic_store.projects import create_project_graph
@@ -33,11 +26,14 @@ class ProjectView(GraphView):
     
     def add_node(self, g, node, identifier):
         if self.request.user.is_authenticated():
-            user_email = request.user.email
+            user_name = request.user.user_name
         else:
-            user_email = None
-        project_g = create_project_graph(g, node, identifier, self.request.get_host(), 
-                                         user_email)
+            user_name = None
+
+        project_g = Graph()
+        bin
+        project_g = create_project_graph(self.request.get_host(), 
+                                         user_name)
         return project_g
             
     def get(self, *args, **kwargs):

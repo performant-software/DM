@@ -1,18 +1,13 @@
-from datetime import datetime
-
-from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
-from django.conf import settings
-from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseNotFound
 
-from rdflib import Graph, Literal, URIRef
+from rdflib import Graph
 
 from .GraphView import GraphView
-from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.validators import ProjectValidator
+from semantic_store.namespaces import bind_namespaces
 from semantic_store.rdfstore import rdfstore
-from semantic_store.projects import create_project_graph
 from semantic_store import uris
+
+from django.http import HttpResponse
 
 class UserView(GraphView):
     http_method_names = ['get']

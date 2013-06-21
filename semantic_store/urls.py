@@ -21,13 +21,17 @@ urlpatterns = patterns('',
         semantic_store.views.project_annotations, 
         name="semantic_store_project_annotations"),
 
-    url(r'^projects/(?P<identifier>.+)/texts(?:/(?P<text_identifier>.+))?/?$', 
+    url(r'^projects/(?P<uri>.+)/texts(?:/(?P<text_identifier>.+))?/?$', 
         ProjectTextView.as_view(), 
         name="semantic_store_project_texts"),
 
-    url(r'^projects/(?P<identifier>.+)/resources(?:/(?P<resource_identifier>.+))?/?$', 
+    url(r'^projects/(?P<uri>.+)/resources(?:/(?P<resource_identifier>.+))?/?$', 
         semantic_store.views.projects, 
         name="semantic_store_project_resources"),
+
+    url(r'^projects(?:/(?P<uri>.+))/remove_triples?/?$',
+        semantic_store.views.remove_triples,
+        name="semantic_store_projects_remove_triples"),
 
     url(r'^projects(?:/(?P<uri>.+)/)?/?$', 
         semantic_store.views.projects,
@@ -78,4 +82,8 @@ urlpatterns = patterns('',
         semantic_store.views.annotations, 
         name="semantic_store_annotations"),
 
+
+    url(r'^import/?$',
+        semantic_store.views.import_old_data,
+        name="import_old_data"),
 )

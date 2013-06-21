@@ -89,10 +89,7 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         
         var manuscriptUri = manuscriptResource.getUri();
 
-        databroker.addResourceToCurrentProject(resource);
-        if (workingResourcesViewer) {
-            workingResourcesViewer.loadManifest(databroker.currentProject);
-        }
+        console.log(resource.getSourceUrls(), manuscriptResource.getSourceUrls);
     });
 
     var repoBrowserContainer = jQuery('#repoBrowserModal .modal-body').get(0);
@@ -308,6 +305,7 @@ function sendNewData(){
                                     dcterms: "http://purl.org/dc/terms/",
                                     rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
                                     dcmitype: "http://purl.org/dc/dcmitype/",
+                                    perm: 'http://vocab.ox.ac.uk/perm#',
                                     }
                                   });
 
@@ -318,7 +316,7 @@ function sendNewData(){
         //Link user(s) and project
         for (var i = 0; i < newAddedUsers.length; i++) {
             var u = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, newAddedUsers[i], null);
-            data.add("<" + u + "> ore:aggregates <" + p + ">");
+            data.add("<" + u + "> perm:hasPermissionOver <" + p + ">");
         };
 
         //Give project title
@@ -412,14 +410,13 @@ function showProjectTitles(username){
     // Get array of quads where subject is user's uri
     // (object will be uri of all projects owned by user)
     var userUri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
-    var userResource = db.getResource(userUri);
-    var userProjects = userResource.getProperties('ore:aggregates');
+    var userProjects = db.quadStore.query(wrap(userUri), null, null, null);
 
     // Cycle through this array and add each project's title to dropdown
     for (var i = 0; i < userProjects.length; i++) {
         var project = userProjects[i]
 
-        showProjectTitle(project)
+        showProjectTitle(project.object)
     };
 }
 
@@ -516,7 +513,6 @@ function selectProject(e){
         // Warns that changing projects closes all resources
         else if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
             db.setCurrentProject(e.id);
-            viewerGrid.closeAllContainers();
             workingResourcesViewer.loadManifest(e.id);
         }
     }
