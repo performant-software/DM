@@ -28,7 +28,9 @@ sc.data.RDFQueryParser.prototype.parse = function(data, context, handler) {
         rdf.load(data);
     }
     catch (e) {
-        throw new sc.data.ParseError();
+        var error = new sc.data.ParseError();
+        error.rdfqueryError = e;
+        throw error;
     }
 
     var jqTriples = rdf.databank.triples();
