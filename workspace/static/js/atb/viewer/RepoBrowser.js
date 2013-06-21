@@ -55,7 +55,7 @@ atb.viewer.RepoBrowser.prototype.openHandler = function(event) {
 
     var resource = this.databroker.getResource(uri);
     
-    if (resource.hasAnyType(atb.viewer.RepoBrowser.RESOURCE_TYPES.canvases)) {
+    if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
         var viewer = new atb.viewer.CanvasViewer(this.clientApp);
         
         this.getPanelContainer().setViewer(viewer);
