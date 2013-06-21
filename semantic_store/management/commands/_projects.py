@@ -7,7 +7,7 @@ from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, bind_namespaces
 from semantic_store.projects import create_project_graph
 from semantic_store.permissions import Permission
-from semantic_store.uri import uuid
+from semantic_store.uris import uuid
 
 
 def create_project(user, project_identifier, title, host):
