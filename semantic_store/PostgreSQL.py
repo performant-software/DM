@@ -53,3 +53,8 @@ class PostgreSQL(BasePostgreSQL):
             #sys.stderr.write("Returning NO_STORE\n")
             return NO_STORE
         #sys.stderr.write("'open' returning\n")
+    
+    def EscapeQuotes(self, qstr):
+        if qstr is None:
+            return ''
+        return qstr.replace('%', '\%')
