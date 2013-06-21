@@ -385,7 +385,7 @@ sc.RepoBrowser.prototype.addManifestItems = function(manifestUri, clickHandler, 
     this.showLoadingIndicator();
 
     this.databroker.getDeferredResource(manifestUri).done(function(resource) {
-        var aggregatedUris = this.databroker.dataModel.findAggregationContentsUris(manifestUri);
+        var aggregatedUris = this.databroker.dataModel.findAggregationContentsUrisForRepoBrowser(manifestUri);
 
         var fragment = this.options.doc.createDocumentFragment();
 
@@ -453,7 +453,7 @@ sc.RepoBrowser.prototype.generateManuscriptItems = function(manifestUri) {
     var self = this;
     var manuscriptsDiv = this.sectionDivs.manuscripts;
 
-    var aggregatedUris = this.databroker.dataModel.findAggregationContentsUris(manifestUri);
+    var aggregatedUris = this.databroker.dataModel.findAggregationContentsUrisForRepoBrowser(manifestUri);
     this.databroker.sortUrisByTitle(aggregatedUris);
 
     var fragment = this.options.doc.createDocumentFragment();
@@ -515,8 +515,6 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
 };
 
 sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manuscriptItem) {
-    console.log("generateManuscriptFolia(manuscriptUri, manuscriptItem): ", 
-                manuscriptUri, manuscriptItem);
     var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(manuscriptUri)[0];
     var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(manuscriptUri)[0];
 

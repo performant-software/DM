@@ -61,8 +61,8 @@ class ProjectTextView(ProjectView):
 
     def post(self, *args, **kwargs):
         text_g = self.update_text(*args, **kwargs)
-        return HttpResponse(status=201, content=g.serialize())
+        return HttpResponse(status=201, content=text_g.serialize())
 
     def put(self, *args, **kwargs):
         text_g = self.update_text(*args, **kwargs)
-        return HttpResponse(status=200, content=g.serialize())
+        return HttpResponse(status=200, content=text_g.serialize())
