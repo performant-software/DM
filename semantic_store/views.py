@@ -204,6 +204,7 @@ def import_old_data(request):
             except IOError:
                 break
             else:
+                add_all_users(everything_graph)
                 create_project(graph, host)
                 i += 1
     
