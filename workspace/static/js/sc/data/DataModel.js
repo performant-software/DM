@@ -31,6 +31,7 @@ sc.data.DataModel = function (databroker) {
  * Annotation predicates and types
  */
 sc.data.DataModel.VOCABULARY = {
+    annotationType: '<http://www.openannotation.org/ns/Annotation>',
     hasTarget: '<http://www.openannotation.org/ns/hasTarget>',
     hasBody: '<http://www.openannotation.org/ns/hasBody>',
     imageAnno: '<http://dms.stanford.edu/ns/ImageAnnotation>',
@@ -118,7 +119,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resour
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
-    var annoIds = this.findAnnosReferencingResourceAsTarget(canvasUri, sc.data.DataModel.VOCABULARY.imageAnno);
+    var annoIds = this.findAnnosReferencingResourceAsTarget(canvasUri, sc.data.DataModel.VOCABULARY.annotationType);
 
     var imageUris = new goog.structs.Set();
 
@@ -137,9 +138,6 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
             else if (bodyResource.hasAnyType(sc.data.DataModel.VOCABULARY.imageChoiceTypes)) {
                 var optionUris = bodyResource.getProperties(sc.data.DataModel.VOCABULARY.option);
                 imageUris.addAll(optionUris);
-            }
-            else {
-                imageUris.add(bodyUri);
             }
         }
 
