@@ -3,7 +3,7 @@ import uuid
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.generic import View
 
-from rdflib import Graph, BNode, URIRef
+from rdflib import Graph, ConjunctiveGraph, BNode, URIRef
 
 from semantic_store import uris
 from semantic_store.rdfstore import rdfstore
@@ -63,7 +63,7 @@ class GraphView(View):
     def serialized_graph(self, view, **kwargs):
         graph_uri = uris.uri(view, **kwargs)
         g = Graph(store=rdfstore(), identifier=graph_uri)
-        if len(list(g)) == 0:
+        if len(g) == 0:
             return HttpResponseNotFound(mimetype='text/xml')
         return HttpResponse(g.serialize(), mimetype='text/xml')
             

@@ -243,12 +243,13 @@ atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
 
 atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var uri = event.uri;
+    if (! uri) return;
     var feature = event.getFeature();
     var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
 
     console.log('resource click', event, uri, feature)
     
-    if (! uri || !specificResourceUri) return;
+    if (!specificResourceUri) return;
     if (! feature) return;
     if (feature.type == 'image') return;
     
