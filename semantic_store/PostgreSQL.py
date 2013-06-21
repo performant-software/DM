@@ -55,6 +55,7 @@ class PostgreSQL(BasePostgreSQL):
         #sys.stderr.write("'open' returning\n")
     
     def EscapeQuotes(self, qstr):
+        print 'EscapeQuotes with qstr: %s' % qstr
         if qstr is None:
             return ''
-        return qstr.replace('%', '\%')
+        return qstr.replace('%', '%%')
