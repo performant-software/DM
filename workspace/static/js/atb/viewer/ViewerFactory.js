@@ -13,7 +13,7 @@ atb.viewer.ViewerFactory.createViewerForUri = function(uri, clientApp) {
     if (resource.hasType('dctypes:Text')) {
         viewer = new atb.viewer.TextEditor(clientApp);
     }
-    else if (resource.hasType('dms:Canvas')) {
+    else if (resource.hasAnyType(['sc:Canvas', 'dms:Canvas'])) {
         viewer = new atb.viewer.CanvasViewer(clientApp);
     }
     else if (resource.hasAnyType(['dctypes:Audio', 'dms:AudioSegment'])) {
