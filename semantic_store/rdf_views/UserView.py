@@ -7,6 +7,8 @@ from semantic_store.namespaces import bind_namespaces
 from semantic_store.rdfstore import rdfstore
 from semantic_store import uris
 
+from django.http import HttpResponse
+
 class UserView(GraphView):
     http_method_names = ['get']
 
