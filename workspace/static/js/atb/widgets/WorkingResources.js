@@ -266,9 +266,9 @@ atb.widgets.WorkingResources.prototype.updateCanvas = function(item, opt_isFully
         image.getOneProperty('exif:height')
     ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
 
-    var src = firstImageSrc + '?w=' + size.width + '&h=' + size.height;
+    var src = imageSrc + '?w=' + size.width + '&h=' + size.height;
 
-    item.setThumb(firstImageSrc, size.width, size.height);
+    item.setThumb(imageSrc, size.width, size.height);
 };
 
 atb.widgets.WorkingResources.prototype.updateFolio = function(folio) {
