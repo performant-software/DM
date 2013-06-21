@@ -37,7 +37,7 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     workingResourcesViewer.loadUser(username);
 
     workingResourcesViewer.addEventListener('openRequested', function(event) {
-        if (event.resource.hasAnyType(atb.viewer.RepoBrowser.RESOURCE_TYPES.canvases)) {
+        if (event.resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
             openCanvas(event.uri, event.urisInOrder, event.currentIndex);
         }
     });
