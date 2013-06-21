@@ -151,13 +151,12 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
         var imageUri = imageUris[i];
         var imageResource = databroker.getResource(imageUri);
 
-        if (imageResource.hasAnyType(sc.canvas.FabricCanvas.RDF_ENUM.imageTypes)) {
+        if (imageResource.hasAnyType(sc.data.DataModel.VOCABULARY.imageTypes)) {
             if (! canvas.imagesBySrc.containsKey(imageUri)) {
                 canvas.addImageResource(imageResource);
             }
         }
-        else if (imageResource.hasAnyType(sc.canvas.FabricCanvas.RDF_ENUM.
-                                          imageChoice)) {
+        else if (imageResource.hasAnyType(sc.data.DataModel.VOCABULARY.imageChoiceTypes)) {
             var optionUris = imageResource.getProperties(
                 sc.canvas.FabricCanvas.RDF_ENUM.option
             );
