@@ -265,7 +265,7 @@ N3Lexer.prototype = {
     if (typeof(input) === 'string') {
       this._input = input;
       this._inputComplete = true;
-      window.setTimeout(function () {
+      setTimeout(function () {
         while (self._next(callback)) ;
       }, 1);
     }

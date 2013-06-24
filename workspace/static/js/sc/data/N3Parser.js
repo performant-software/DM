@@ -8,6 +8,34 @@ sc.data.N3Parser = function(databroker) {
     sc.data.Parser.call(this, databroker);
 
     this.parser = new N3Parser();
+
+    this.webWorkerEnabled = (Worker != null && Blob != null);
+
+    if (this.webWorkerEnabled) {
+        // Apologies for the inline code, but it's necessary due to cross-site restrictions
+        this.workerBlob = new Blob([
+            "var staticUrl = '" + goog.global.STATIC_URL.replace("'", "\\'") + "';\n\
+            goog = {\n\
+                provide: function() {},\n\
+                require: function() {}\n\
+            };\n\
+            importScripts(staticUrl + 'js/n3/n3lexer.js');\n\
+            importScripts(staticUrl + 'js/n3/n3store.js');\n\
+            importScripts(staticUrl + 'js/n3/n3parser.js');\n\
+            \n\
+            var parser = new N3Parser();\n\
+            \n\
+            this.addEventListener('message', function(e) {\n\
+                parser.parse(e.data, function(error, triple) {\n\
+                    this.postMessage({\n\
+                        'error': error,\n\
+                        'triple': triple\n\
+                    });\n\
+                }.bind(this));\n\
+            }.bind(this));\n"
+        ], {'type': 'text/javascript'});
+        this.workerBlobUrl = window.URL.createObjectURL(this.workerBlob);
+    }
 };
 goog.inherits(sc.data.N3Parser, sc.data.Parser);
 
@@ -17,17 +45,54 @@ sc.data.N3Parser.prototype.parseableTypes = new goog.structs.Set([
 ]);
 
 sc.data.N3Parser.prototype.parse = function(data, context, handler) {
+    if (this.webWorkerEnabled) {
+        try {
+            this.parseThreaded(data, context, handler);
+        }
+        catch (e) {
+            console.warn('Web worker parsing failed', e, 'reverting to standard implementation');
+            this.parseStandard(data, context, handler);
+        }
+    }
+    else {
+        this.parseStandard(data, context, handler);
+    }
+};
+
+sc.data.N3Parser.prototype.parseStandard = function(data, context, handler) {
     this.parser.parse(data, function(error, triple) {
-        if (triple) {
-            handler([this._tripleToQuad(triple)], false);
-        }
-        else if (error) {
-            handler([], false, error);
-        }
-        else {
-            handler([], true);
+        this._n3ParserHandler(error, triple, handler);
+    }.bind(this));
+};
+
+sc.data.N3Parser.prototype._n3ParserHandler = function(error, triple, handler) {
+    if (triple) {
+        handler([this._tripleToQuad(triple)], false);
+    }
+    else if (error) {
+        handler([], false, error);
+    }
+    else {
+        handler([], true);
+    }
+};
+
+sc.data.N3Parser.prototype.parseThreaded = function(data, context, handler) {
+    var worker = new Worker(this.workerBlobUrl);
+
+    worker.addEventListener('message', function(e) {
+        var o = e.data;
+        var error = o.error;
+        var triple = o.triple;
+
+        this._n3ParserHandler(error, triple, handler);
+
+        if (!triple && !error) {
+            worker.terminate();
         }
     }.bind(this));
+
+    worker.postMessage(data);
 };
 
 sc.data.N3Parser._termWrapper = function(str) {
