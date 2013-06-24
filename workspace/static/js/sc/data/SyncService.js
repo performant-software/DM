@@ -112,11 +112,15 @@ sc.data.SyncService.prototype.postNewResources = function() {
     goog.structs.forEach(this.databroker.newResourceUris, function(uri) {
         var xhr = this.sendResource(uri, 'POST');
 
-        xhr.done(function() {
+        if (xhr) {
+            xhr.done(function() {
+                this.databroker.newResourceUris.remove(uri);
+            }.bind(this));
+            xhrs.push(xhr);
+        }
+        else {
             this.databroker.newResourceUris.remove(uri);
-        }.bind(this));
-
-        xhrs.push(xhr);
+        }
     }, this);
 
     return xhrs;
@@ -156,7 +160,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
         }
     }
     else {
-        console.error("Don't know how to sync resource " + resource);
+        // console.error("Don't know how to sync resource " + resource);
         return;
     }
 
