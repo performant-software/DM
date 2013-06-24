@@ -8,6 +8,7 @@ from rdflib import Literal
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
+from semantic_store.utils import negotiated_graph_response, parse_into_graph
 
 from datetime import datetime
 
@@ -19,17 +20,18 @@ def create_project_from_request(request):
     host = request.get_host()
 
     try:
-        g.parse(data=request.body)
+        parse_into_graph(g, data=request.body)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
     create_project(g, host)
 
 def create_project(g, host):
+    bind_namespaces(g)
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
-                    }""", initNs = ns)
+                    }""")
 
     for uri, user in query:
         with transaction.commit_on_success():
@@ -60,7 +62,7 @@ def read_project(request, uri):
     print "Reading project using graph identifier %s" % uri
     
     if len(project_g) >0:
-        return HttpResponse(project_g.serialize(), mimetype='text/xml')
+        return negotiated_graph_response(request, project_g)
     else:
         return HttpResponseNotFound()
 
@@ -70,13 +72,13 @@ def update_project(request, uri):
     bind_namespaces(input_graph)
 
     try:
-        input_graph.parse(data=request.body)
+        parse_into_graph(input_graph, data=request.body)
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     project_graph = update_project_graph(input_graph, uri)
 
-    return HttpResponse(project_graph.serialize(), status=201, mimetype='text/xml')
+    return negotiated_graph_response(request, project_graph, status=201)
 
 def update_project_graph(g, identifier):
     with transaction.commit_on_success():
@@ -129,7 +131,7 @@ def delete_triples_from_project(request, uri):
     bind_namespaces(removed)
 
     try:
-        g.parse(request.body)
+        parse_into_graph(g, data=request.body)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
@@ -154,14 +156,14 @@ def create_project_graph(host, user, title, project):
     g = Graph()
     bind_namespaces(g)
     if not title:
-        title = Literal("Default Project")
+        title = "Default Project"
     g.add((project, NS.rdf['type'], NS.dcmitype['Collection']))
     g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
-    g.add((project, NS.dc['title'], title))
-    g.add((identifier, NS.dcterms['created'], Literal(datetime.utcnow())))
+    g.add((project, NS.dc['title'], Literal(title)))
+    g.add((project, NS.dcterms['created'], Literal(datetime.utcnow())))
 
     user_uri = uris.uri('semantic_store_users', username=user)
         
-    create_project_graph(g, host)
+    # create_project_graph(g, host)
 
 

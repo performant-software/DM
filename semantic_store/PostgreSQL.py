@@ -7,7 +7,6 @@ from rdflib.store import NO_STORE, VALID_STORE
 from rdflib_postgresql.PostgreSQL import PostgreSQL as BasePostgreSQL
 import rdflib
 
-
 def default_configuration():
     if len(settings.DATABASES.keys()) == 1:
         dblabel = 'default'
@@ -29,7 +28,7 @@ class PostgreSQL(BasePostgreSQL):
     def open(self):
         self._db = connection
         self.configuration = default_configuration()
-        print "configuration:", self.configuration
+        # print "configuration:", self.configuration
         if self._db:
             # if create:
             #     #sys.stderr.write("Calling init_db\n")

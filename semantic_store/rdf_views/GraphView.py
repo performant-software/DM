@@ -7,6 +7,7 @@ from rdflib import Graph, ConjunctiveGraph, BNode, URIRef
 
 from semantic_store import uris
 from semantic_store.rdfstore import rdfstore
+from semantic_store.utils import negotiated_graph_response
 
 
 class GraphView(View):
@@ -48,24 +49,24 @@ class GraphView(View):
             identifiers.append(identifier)
             graphs.append(self.add_node(g, n, identifier))
         if num_nodes is 1:
-            return graphs[0].serialize()
+            return graphs[0]
         else:
-            nodes_str = ""
+            nodes_g = Graph()
             g = Graph()
             aggregation = BNode()
             for i in identifiers:
                 g.add((aggregation, NS.ore['aggregates'], i))
-            nodes_str += g.serialize()
+            nodes_g += g
             for g in graphs:
-                nodes_str += g.serialize()
-            return nodes_str
+                nodes_g += g
+            return nodes_g
 
-    def serialized_graph(self, view, **kwargs):
+    def serialized_graph(self, view, request, **kwargs):
         graph_uri = uris.uri(view, **kwargs)
         g = Graph(store=rdfstore(), identifier=graph_uri)
         if len(g) == 0:
-            return HttpResponseNotFound(mimetype='text/xml')
-        return HttpResponse(g.serialize(), mimetype='text/xml')
+            return HttpResponseNotFound(mimetype='text/n3')
+        return negotiated_graph_response(request, graph)
             
     def post(self, *args, **kwargs):
         self.request = args[0]
@@ -87,6 +88,6 @@ class GraphView(View):
             if not validator.valid(g, n):
                 return HttpResponse(status=400, content=validator.failure)
 
-        created_str = self.create_nodes(g)
-        return HttpResponse(status=201, content=created_str)
+        created_graph = self.create_nodes(g)
+        return negotiated_graph_response(self.request, created_graph, status=201)
 

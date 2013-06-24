@@ -6,6 +6,7 @@ from .GraphView import GraphView
 from semantic_store.namespaces import bind_namespaces
 from semantic_store.rdfstore import rdfstore
 from semantic_store import uris
+from semantic_store.utils import negotiated_graph_response
 
 from django.http import HttpResponse
 
@@ -18,7 +19,7 @@ class UserView(GraphView):
         if username: # and (username == request.user.username):
             user_graph_identifier = uris.uri('semantic_store_users', username=username)
             g = Graph(store=rdfstore(), identifier=user_graph_identifier)
-            return HttpResponse(content=g.serialize(), mimetype='text/xml')
+            return negotiated_graph_response(request, g)
         else:
             g = Graph()
             bind_namespaces(g)
@@ -26,4 +27,4 @@ class UserView(GraphView):
                 user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
                 g += Graph(store=rdfstore(), identifier=user_graph_identifier)
 
-            return HttpResponse(content=g.serialize(), mimetype='text/xml')
+            return negotiated_graph_response(request, g)

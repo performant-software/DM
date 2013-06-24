@@ -1,5 +1,7 @@
 goog.provide('sc.data.Parser');
 
+goog.require('sc.data.Quad');
+
 /**
  * @class 
  * @abstract

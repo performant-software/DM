@@ -8,7 +8,7 @@ from rdflib import URIRef
 from rdflib.resource import Resource
 
 from semantic_store.rdfstore import rdfstore, default_identifier
-from semantic_store.namespaces import NS, ns
+from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 
 from collections import defaultdict
@@ -28,13 +28,13 @@ class Command(BaseCommand):
 
     def project_uris_by_title(self, user_graph, user_uri):
         projectsByTitle = defaultdict(list)
-
+        bind_namespaces(user_graph)
         for row in user_graph.query("""
                 SELECT DISTINCT ?project ?title WHERE {
                     ?user ore:aggregates ?project .
                     OPTIONAL {?project dc:title ?title .}
                 }
-            """, initNs=ns, initBindings={'user': URIRef(user_uri)}):
+            """, initBindings={'user': URIRef(user_uri)}):
             project_uri = uris.uri('semantic_store_projects', uri=row[0])
             project_graph = Graph(store=rdfstore(), identifier=project_uri)
 
