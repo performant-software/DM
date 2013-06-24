@@ -148,10 +148,6 @@ var resizeViewerGrid = function() {
     viewerGrid.resize(width, height);
 }
 
-//TODO: kill the default content of the left/right panes probably and let the panels add the children of those tags themselves as they see fit, during their
-//          tenure of their panelcontainer's tag...
-//			maybe wrap them in another child tag that they "keep" owning and stops being a child when it moves...??
-
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
     goog.global.staticUrl = staticUrl;
 
