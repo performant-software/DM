@@ -752,11 +752,13 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromSVGString = function(str, uri) {
     fabric.loadSVGFromString(svgDoc, function(objects, options) {
         var obj = objects[0];
 
-        var transformMatrix = obj.transformMatrix;
-        delete obj.transformMatrix;
+        if (obj.transformMatrix) {
+            var transformMatrix = obj.transformMatrix;
+            delete obj.transformMatrix;
 
-        obj.set('left', obj.get('left') + transformMatrix[4]);
-        obj.set('top', obj.get('top') + transformMatrix[5]);
+            obj.set('left', obj.get('left') + transformMatrix[4]);
+            obj.set('top', obj.get('top') + transformMatrix[5]);
+        }
 
         obj.set(sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
         if (!obj.isType('image')) {

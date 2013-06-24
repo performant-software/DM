@@ -203,11 +203,11 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
     var databroker = canvas.databroker;
 
     var specificResourceUris = databroker.getUrisWithProperty(
-        'oac:hasSource', '<' + canvas.uri + '>');
+        'oa:hasSource', '<' + canvas.uri + '>');
     for (var i=0; i<specificResourceUris.length; i++) {
         var specificResource = databroker.getResource(specificResourceUris[i]);
 
-        if (!specificResource.hasType('oac:SpecificResource')) {
+        if (!specificResource.hasType('oa:SpecificResource')) {
             goog.array.removeAt(specificResourceUris, i);
             i--;
 
@@ -218,11 +218,11 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
     for (var i=0, len=specificResourceUris.length; i<len; i++) {
         var specificResource = databroker.getResource(specificResourceUris[i]);
 
-        var selectorUris = specificResource.getProperties('oac:hasSelector');
+        var selectorUris = specificResource.getProperties('oa:hasSelector');
         for (var j=0, lenj=selectorUris.length; j<lenj; j++) {
             var selector = databroker.getResource(selectorUris[j]);
 
-            if (!selector.hasType('oac:SvgSelector')) {
+            if (!selector.hasType('oa:SvgSelector')) {
                 continue;
             }
 
@@ -233,7 +233,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
                     if (canvas.hasFeature(selector.getUri())) {
                         canvas.removeObjectByUri(selector.getUri());
                     }
-                    
+
                     canvas.addFeatureFromSVGString(svgText, selector.getUri());
                 }
             }
