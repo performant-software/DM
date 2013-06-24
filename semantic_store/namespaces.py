@@ -29,8 +29,7 @@ NS = _ns_named_tuple(**ns)
     
 
 def bind_namespaces(g):
-    existing_namespaces = g.namespaces()
     for prefix, namespace in ns.items():
-        if prefix not in existing_namespaces:
-            g.bind(prefix, namespace)
+        if (prefix, namespace) not in g.namespaces():
+            g.bind(prefix, namespace, True)
     

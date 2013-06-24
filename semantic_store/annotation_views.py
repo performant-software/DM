@@ -12,6 +12,7 @@ from .rdfstore import rdfstore, default_identifier
 from .namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 from semantic_store import manuscripts
+from semantic_store.utils import negotiated_graph_response, parse_into_graph
 
 def graph():
     g = Graph()
@@ -80,7 +81,7 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     dest_g = destination_graph(dest_graph_uri)
     annotations_g = graph()
     try:
-        annotations_g.parse(data=request.body)
+        parse_into_graph(annotations_g, data=request.body)
 #        print "annotations.g:"
 #        print annotations_g.serialize(initNs=ns)
     except:
@@ -97,7 +98,7 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
         for i in anno_uris:
             stored_g = update_annotation(request, dest_g, annotations_g, i)
 
-    return HttpResponse(stored_g.serialize(), status=201, mimetype='text/xml')
+    return negotiated_graph_response(request, stored_g, status=201)
 
 def get_annotations(request, graph_uri, anno_uris=[]):
     result_g = graph()
@@ -127,7 +128,7 @@ def get_annotations(request, graph_uri, anno_uris=[]):
             result_g.add((URIRef(i), NS.ore['isDescribedBy'], URIRef(url)))
 
     if len(result_g) > 0:
-        return HttpResponse(result_g.serialize(), status=200, mimetype='text/xml')
+        return negotiated_graph_response(request, result_g, status=200)
     else:
         return HttpResponseNotFound()
 

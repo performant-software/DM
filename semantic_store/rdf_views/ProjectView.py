@@ -37,4 +37,4 @@ class ProjectView(GraphView):
         return project_g
             
     def get(self, *args, **kwargs):
-        return self.serialized_graph('semantic_store_projects', **kwargs)
+        return self.serialized_graph('semantic_store_projects', args[0], **kwargs)

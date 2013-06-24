@@ -14,9 +14,7 @@ sc.data.RDFQueryParser.prototype.parseableTypes = new goog.structs.Set([
     'application/rdf+xml',
     'text/rdf+xml',
     'text/json',
-    'application/json',
-    'xml',
-    'rdf'
+    'application/json'
 ]);
 
 sc.data.RDFQueryParser.prototype.splitPoint = 1000;

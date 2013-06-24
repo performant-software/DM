@@ -12,6 +12,7 @@ goog.require('sc.data.QuadStore');
 goog.require('sc.data.DataModel');
 goog.require('sc.data.SyncService');
 goog.require('sc.data.RDFQueryParser');
+goog.require('sc.data.N3Parser');
 goog.require('sc.data.RDFQuerySerializer');
 goog.require('sc.data.TurtleSerializer');
 
@@ -110,7 +111,8 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
     corsEnabledDomains: []
 };
 
-sc.data.Databroker.DEFAULT_PARSER_CLASSES = [sc.data.RDFQueryParser];
+// Note: ordering here matters for preferred formats
+sc.data.Databroker.DEFAULT_PARSER_CLASSES = [sc.data.N3Parser, sc.data.RDFQueryParser];
 sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES = [sc.data.RDFQuerySerializer, sc.data.TurtleSerializer];
 
 
@@ -229,13 +231,16 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handle
     var type = sc.data.Parser.parseContentType(responseHeaders);
 
     window.setTimeout(function() {
-        this.parseRdf(data, type, function(quadBatch, done) {
+        this.parseRdf(data, type, function(quadBatch, done, error) {
             this.quadStore.addQuads(quadBatch);
 
             if (done) {
                 window.setTimeout(function() {
                     handler(jqXhr, data);
                 }, 1);
+            }
+            if (error) {
+                console.error(error);
             }
         }.bind(this));
     }.bind(this), 1);

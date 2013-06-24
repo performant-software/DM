@@ -57,7 +57,7 @@ class ProjectTextView(ProjectView):
             except:
                 return HttpResponseNotFound()
         else:
-            return self.serialized_graph('semantic_store_project_texts', **kwargs)
+            return self.serialized_graph('semantic_store_project_texts', args[0], **kwargs)
 
     def post(self, *args, **kwargs):
         text_g = self.update_text(*args, **kwargs)

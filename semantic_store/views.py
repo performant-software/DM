@@ -11,7 +11,8 @@ from rdflib import URIRef
 
 from semantic_store import collection
 from semantic_store.models import ProjectPermission
-from semantic_store.namespaces import NS
+from semantic_store.namespaces import NS, bind_namespaces
+from semantic_store.utils import negotiated_graph_response
 from .rdfstore import rdfstore, default_identifier
 
 from .namespaces import bind_namespaces, ns
@@ -126,7 +127,7 @@ def resources(request, uri, ext=None):
                 g.add((URIRef(anno_uri), NS.rdf['type'], NS.ore['Aggregation']))
                 g.add((URIRef(anno_uri), NS.rdf['type'], NS.rdf['List']))
                 g.add((URIRef(anno_uri), NS.rdf['type'], NS.dms['AnnotationList']))
-            return HttpResponse(g.serialize(), mimetype='text/xml')
+            return negotiated_graph_response(request, g)
         else:
             main_graph = ConjunctiveGraph(store=rdfstore(), 
                                           identifier=default_identifier)
@@ -135,7 +136,7 @@ def resources(request, uri, ext=None):
             for t in main_graph.triples((URIRef(uri), None, None)):
                 g.add(t)
             if len(g) > 0:
-                return HttpResponse(g.serialize(), mimetype='text/xml')
+                return negotiated_graph_response(request, g)
             else:
                 return HttpResponseNotFound()
     except Exception as e:
@@ -217,11 +218,12 @@ DEFAULT_PASSWORD_STRING="DefaultPassword"
 # If the user with given username does not exist, creates it with DEFAULT_PASSWORD_STRING
 #  as their password
 def add_all_users(graph):
+    bind_namespaces(graph)
     query = graph.query("""SELECT ?user ?email
                         WHERE {
                             ?user perm:hasPermissionOver ?project .
                             ?user foaf:mbox ?email .
-                        }""", initNs=ns)
+                        }""")
 
     for q in query:
         username = ""
