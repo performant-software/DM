@@ -149,8 +149,6 @@ var resizeViewerGrid = function() {
 }
 
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
-    goog.global.staticUrl = staticUrl;
-
     cookies = new goog.net.Cookies(window.document);
     /* The following method is copied from Django documentation
      * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/

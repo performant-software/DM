@@ -761,8 +761,8 @@ sc.canvas.FabricCanvas.prototype.addFeatureFromSVGString = function(str, uri) {
         }
 
         obj.set(sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
-        if (!obj.isType('image')) {
-            obj.set('perPixelTargetFind', true);
+        if (obj.isType('image')) {
+            obj.set('perPixelTargetFind', false);
         }
 
         this._scaleAndPositionNewFeature(obj);
