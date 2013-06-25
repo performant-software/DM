@@ -95,8 +95,16 @@ sc.util.Namespaces.angleBracketWrap = function(str) {
     }
 };
 
+sc.util.Namespaces._escapeLiteral = function(str) {
+    return str.replace(/("|\\|>|\^)/g, '\\$1').replace(/(\t)/g, '\\t');
+};
+
+sc.util.Namespaces._unescapeLiteral = function(str) {
+    return str.replace(/(?:\\(")|\\(\\)|\\(>)|\\(\^))/g, '$1').replace(/(\\t)/g, '\t')
+};
+
 sc.util.Namespaces.quoteWrap = function(str) {
-    str = str.replace('"', '\"');
+    str = sc.util.Namespaces._escapeLiteral;
     return ['"', str, '"'].join('');
 };
 
@@ -113,7 +121,7 @@ sc.util.Namespaces.isQuoteWrapped = function(str) {
 sc.util.Namespaces.stripWrappingQuotes = function(str) {
     var remover = function(str) {
         if (sc.util.Namespaces.isQuoteWrapped(str)) {
-            return str.substring(1, str.length - 1).replace('\\"', '"');
+            return sc.util.Namespaces._unescapeLiteral(str.substring(1, str.length - 1));
         }
         else {
             return str;
@@ -141,7 +149,7 @@ sc.util.Namespaces.stripQuotesAndDatatype = function(str) {
         var match = sc.util.Namespaces.quotesAndDatatypeRegex.exec(str);
         
         if (match) {
-            return match[1];
+            return sc.util.Namespaces._unescapeLiteral(match[1]);
         }
         else {
             return sc.util.Namespaces.stripWrappingQuotes(str);
@@ -160,6 +168,18 @@ sc.util.Namespaces.stripQuotesAndDatatype = function(str) {
     else {
         return remover(str);
     }
+};
+
+sc.util.Namespaces.isLiteral = function(str) {
+    return sc.util.Namespaces.isQuoteWrapped(str);
+};
+
+sc.util.Namespaces.wrapLiteral = function(literal) {
+    return sc.util.Namespaces.quoteWrap(literal);
+};
+
+sc.util.Namespaces.unwrapLiteral = function(literal) {
+    return sc.util.Namespaces.stripQuotesAndDatatype(literal);
 };
 
 sc.util.Namespaces.xmlSafeCharsByChar = {
