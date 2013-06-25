@@ -89,6 +89,24 @@ sc.data.TurtleSerializer.prototype.formatValue = function(value) {
     if (sc.util.Namespaces.isAngleBracketWrapped(value)) {
         return this.databroker.namespaces.prefix(value);
     }
+    else if (sc.util.Namespaces.isLiteral(value)) {
+        var lastIndexOfQuote = value.lastIndexOf('"')
+        var literalSegment = value.substring(1, lastIndexOfQuote);
+        var typeSegment =  lastIndexOfQuote != value.length - 1 ? value.substring(lastIndexOfQuote + 1, value.length) : '';
+
+        if (value.indexOf('\n') != -1) {
+            var parts = ['"""', literalSegment, '"""', typeSegment];
+
+            value = parts.join('');
+        }
+        else {
+            var parts = ['"', literalSegment, '"', typeSegment];
+
+            value = parts.join('');
+        }
+
+        return value;
+    }
     else {
         return value;
     }
