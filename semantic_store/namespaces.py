@@ -21,7 +21,8 @@ ns = {
     'rdfs': Namespace("http://www.w3.org/2000/01/rdf-schema#"),
     'skos': Namespace("http://www.w3.org/2004/02/skos/core#"),
     'trig': Namespace("http://www.w3.org/2004/03/trix/rdfg-1/"),
-    'perm': Namespace("http://vocab.ox.ac.uk/perm#")
+    'perm': Namespace("http://vocab.ox.ac.uk/perm#"),
+    'dm': Namespace("http://dm.drew.edu/ns/")
 }
 
 _ns_named_tuple = namedtuple('ns_named_tuple', ns.keys())

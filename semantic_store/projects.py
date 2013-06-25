@@ -157,6 +157,8 @@ def create_project_graph(host, user, title, project):
     bind_namespaces(g)
     if not title:
         title = "Default Project"
+    g.add((project, NS.rdf.type, NS.foaf.Project))
+    g.add((project, NS.rdf.type, NS.dm.Project))
     g.add((project, NS.rdf['type'], NS.dcmitype['Collection']))
     g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
     g.add((project, NS.dc['title'], Literal(title)))
