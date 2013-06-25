@@ -246,5 +246,23 @@ def add_all_users(graph):
 def remove_triples(request, uri):
     g = delete_triples_from_project(request, uri)
 
-    return HttpResponse("something dammit")
+    return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+
+def project_texts(request, project_uri, text_uri):
+    if request.method == 'POST':
+        g = create_project_text_from_request(request, project_uri)
+        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+
+    elif request.method == 'GET':
+        g = read_project_text(project_uri, text_uri)
+        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+
+    elif request.method == 'PUT':
+        g = update_project_text_from_request(request, project_uri, text_uri)
+        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+
+    elif request.method == 'DELETE':
+        g = delete_project_text(project_uri, text_uri)
+        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+
 
