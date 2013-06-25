@@ -50,7 +50,7 @@ def create_project_text_from_request(request, project_uri):
 
     # Parse body of request, catching ParserError which breaks request
     try:
-        g.parse(request.body)
+        g.parse(data=request.body)
     except ParserError:
         return HttpResponse(status=400, content="Unable to parse serialization.")
     else:
@@ -142,7 +142,7 @@ def update_project_text_from_request(request, project_uri, text_uri):
 
     # Parse body of request, catching ParserError which breaks request
     try:
-        g.parse(request.body)
+        g.parse(data=request.body)
     except ParserError:
         return HttpResponse(status=400, content="Unable to parse serialization.")
     else:
