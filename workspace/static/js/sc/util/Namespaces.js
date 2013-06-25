@@ -105,7 +105,7 @@ sc.util.Namespaces._unescapeLiteral = function(str) {
 };
 
 sc.util.Namespaces.quoteWrap = function(str) {
-    str = sc.util.Namespaces._escapeLiteral;
+    str = sc.util.Namespaces._escapeLiteral(str);
     return ['"', str, '"'].join('');
 };
 
