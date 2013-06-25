@@ -21,8 +21,8 @@ urlpatterns = patterns('',
         semantic_store.views.project_annotations, 
         name="semantic_store_project_annotations"),
 
-    url(r'^projects/(?P<uri>.+)/texts(?:/(?P<text_identifier>.+))?/?$', 
-        ProjectTextView.as_view(), 
+    url(r'^projects/(?P<project_uri>.+)/texts(?:/(?P<text_uri>.+))?/?$', 
+        semantic_store.views.project_texts, 
         name="semantic_store_project_texts"),
 
     url(r'^projects/(?P<uri>.+)/resources(?:/(?P<resource_identifier>.+))?/?$', 
