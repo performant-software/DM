@@ -166,28 +166,28 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
 
     var format = 'application/rdf+xml';
 
-    var dataDump = this.databroker.serializeQuads(quadsToPost, format);
+    this.databroker.serializeQuads(quadsToPost, format, function(data, error) {
+        if (data != null) {
+            console.log('about to send resource', uri, data);
 
-    console.log('about to send resource', uri, dataDump);
-
-    var xhr = jQuery.ajax({
-        type: method,
-        url: url,
-        success: function() {
-            console.log('successful sync', arguments);
-            this.databroker.newQuadStore.removeQuads(quadsToPost);
-        }.bind(this),
-        error: function() {
-            console.error('unsuccessful sync', arguments);
-        },
-        data: dataDump,
-        processData: !jQuery.isXMLDoc(dataDump),
-        headers: {
-            'X-CSRFToken': this.getCsrfToken()
+            var xhr = jQuery.ajax({
+                type: method,
+                url: url,
+                success: function() {
+                    console.log('successful sync', arguments);
+                    this.databroker.newQuadStore.removeQuads(quadsToPost);
+                }.bind(this),
+                error: function() {
+                    console.error('unsuccessful sync', arguments);
+                },
+                data: data,
+                processData: !jQuery.isXMLDoc(data),
+                headers: {
+                    'X-CSRFToken': this.getCsrfToken()
+                }
+            });
         }
-    });
-
-    return xhr;
+    }.bind(this));
 };
 
 sc.data.SyncService.prototype.putModifiedResources = function() {
