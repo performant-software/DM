@@ -407,13 +407,12 @@ function showProjectTitles(username){
     // Get array of quads where subject is user's uri
     // (object will be uri of all projects owned by user)
     var userUri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
-    var userProjects = db.quadStore.query(wrap(userUri), null, null, null);
+    var userProjects = db.getResource(userUri).getProperties('perm:hasPermissionOver')
 
     // Cycle through this array and add each project's title to dropdown
     for (var i = 0; i < userProjects.length; i++) {
         var project = userProjects[i]
-
-        showProjectTitle(project.object)
+        showProjectTitle(project)
     };
 }
 
