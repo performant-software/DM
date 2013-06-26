@@ -137,9 +137,6 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
     if (item) {
         this.updateItem(item);
     }
-    else {
-        console.warn('Working resources item', uri, 'not created, has types', resource.getProperties('rdf:type'));
-    }
 
     return item;
 };
@@ -356,9 +353,6 @@ atb.widgets.WorkingResources.prototype.handleItemAction = function(event) {
         }
     }
 };
-
-atb.widgets.WorkingResources.HOVER_SHOW_DELAY = 300;
-atb.widgets.WorkingResources.HOVER_HIDE_DELAY = 200;
 
 atb.widgets.WorkingResources.prototype.addListenersToItem = function(item) {
     var resource = this.databroker.getResource(item.getUri());
