@@ -1,1 +1,7 @@
-python closure-library/closure/bin/build/closurebuilder.py --root=. --input="atb/Includes.js" --output_mode=compiled --compiler_jar=compiler.jar > all-js-code.js
+python closure-library/closure/bin/build/closurebuilder.py \
+    --root=. \
+    --input="atb/Includes.js" \
+    --output_mode=compiled \
+    --compiler_jar=compiler.jar \
+    --compiler_flags="--language_in=ECMASCRIPT5" \
+> all-js-code.js

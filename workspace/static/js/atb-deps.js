@@ -129,7 +129,7 @@ goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['g
 goog.addDependency('../../../sc/data/N3Parser.js', ['sc.data.N3Parser'], ['n3.parser', 'sc.data.Parser', 'sc.util.Namespaces']);
 goog.addDependency('../../../sc/data/Parser.js', ['sc.data.ParseError', 'sc.data.Parser'], ['goog.debug.Error', 'sc.data.Quad']);
 goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], ['jquery.rdfquery']);
-goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.array', 'goog.string', 'goog.structs.Set', 'sc.util.DefaultDict', 'sc.util.Namespaces']);
+goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.structs.Set', 'sc.util.DefaultDict']);
 goog.addDependency('../../../sc/data/RDFQueryParser.js', ['sc.data.RDFQueryParser'], ['jquery.rdfquery', 'sc.data.Parser']);
 goog.addDependency('../../../sc/data/RDFQuerySerializer.js', ['sc.data.RDFQuerySerializer'], ['sc.data.Serializer']);
 goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'jquery.jQuery', 'sc.data.Quad', 'sc.util.Namespaces']);
