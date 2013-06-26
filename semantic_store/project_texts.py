@@ -118,7 +118,7 @@ def update_project_text(g, p_uri, t_uri):
                     ?t cnt:chars ?content .
                     ?t dc:title ?title .
                     ?t rdf:type cnt:ContentAsText .
-                })""", initNs=ns)
+                }""", initNs=ns)
 
     # Make text uri a URIRef (so Graph will understand)
     text_uri = URIRef(t_uri)
