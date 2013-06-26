@@ -6,8 +6,8 @@ goog.require('sc.data.QuadStore');
 sc.data.TurtleSerializer = function(databroker) {
     sc.data.Serializer.call(this, databroker);
 
-    this.compact = false;
-    this.indentString = '\t';
+    this.compact = true;
+    this.indentString = '  ';
 };
 goog.inherits(sc.data.TurtleSerializer, sc.data.Serializer);
 
@@ -81,17 +81,17 @@ sc.data.TurtleSerializer.prototype.getPrefixesString = function(namespaces) {
         lines.push('@prefix ' + prefix + ': ' + sc.util.Namespaces.angleBracketWrap(uri) + ' .');
     }, this);
 
-    if (this.compact) {
-        return lines.join(' ');
-    }
-    else {
-        return lines.join('\n');
-    }
+    return lines.join('\n');
 };
 
 sc.data.TurtleSerializer.prototype.formatValue = function(value) {
     if (sc.util.Namespaces.isAngleBracketWrapped(value)) {
-        return this.databroker.namespaces.prefix(value);
+        if (value == '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
+            return 'a';
+        }
+        else {
+            return this.databroker.namespaces.prefix(value);
+        }
     }
     else if (sc.util.Namespaces.isLiteral(value)) {
         var lastIndexOfQuote = value.lastIndexOf('"')
