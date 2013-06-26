@@ -1,10 +1,7 @@
 goog.provide('sc.data.QuadStore');
 
-goog.require('goog.array');
 goog.require('goog.structs.Set');
-goog.require('goog.string');
 goog.require('sc.util.DefaultDict');
-goog.require('sc.util.Namespaces');
 
 /**
  * An indexed store of {sc.data.Quad} Quads (triples with a context),

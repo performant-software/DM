@@ -22,7 +22,7 @@ var patterns = {
   _shortPredicates: /^a(?=\s+|<)/,
   _newline: /^[ \t]*(?:#[^\n\r]*)?(?:\r\n|\n|\r)[ \t]*/,
   _whitespace: /^[ \t]+|^#[^\n\r]*/,
-  _nonwhitespace: /^\S*/,
+  _nonwhitespace: /^\S*/
 };
 
 // Regular expression and replacement string to escape N3 strings.
@@ -86,7 +86,7 @@ N3Lexer.prototype = {
     var token = { line: this._line,
                   type: '',
                   value: '',
-                  prefix: '',
+                  prefix: ''
                 };
     var unescaped;
 
@@ -292,5 +292,5 @@ N3Lexer.prototype = {
         while (self._next(callback)) ;
       });
     }
-  },
+  }
 };
