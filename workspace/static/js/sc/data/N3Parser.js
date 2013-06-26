@@ -13,25 +13,8 @@ sc.data.N3Parser = function(databroker) {
         try {
             // Apologies for the inline code, but it's necessary due to cross-site restrictions
             this.workerBlob = new Blob([
-                "var staticUrl = '" + goog.global.STATIC_URL.replace(/'/g, "\\'") + "';\n\
-                goog = {\n\
-                    provide: function() {},\n\
-                    require: function() {}\n\
-                };\n\
-                importScripts(staticUrl + 'js/n3/n3lexer.js');\n\
-                importScripts(staticUrl + 'js/n3/n3store.js');\n\
-                importScripts(staticUrl + 'js/n3/n3parser.js');\n\
-                \n\
-                var parser = new N3Parser();\n\
-                \n\
-                this.addEventListener('message', function(e) {\n\
-                    parser.parse(e.data, function(error, triple) {\n\
-                        this.postMessage({\n\
-                            'error': error,\n\
-                            'triple': triple\n\
-                        });\n\
-                    }.bind(this));\n\
-                }.bind(this));\n"
+                "var STATIC_URL = '" + goog.global.STATIC_URL.replace(/'/g, "\\'") + "';\n\
+                importScripts(STATIC_URL + 'js/sc/data/N3ParserWorker.js');\n"
             ], {'type': 'text/javascript'});
             this.workerBlobUrl = window.URL.createObjectURL(this.workerBlob);
 
