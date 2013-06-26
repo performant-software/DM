@@ -576,6 +576,7 @@ sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
     }, this);
 
     var serializer = new sc.data.TurtleSerializer(this);
+    serializer.compact = false;
     return serializer.getTriplesString(quads);
 };
 
