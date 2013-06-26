@@ -11,10 +11,6 @@
     overflow-y: scroll;
 }
 
-.atb-WorkingResources-panelChooser {
-    
-}
-
 .atb-WorkingResourcesItem {
     clear: both;
     padding: 5px;
@@ -145,6 +141,13 @@
     position: relative;
 }
 
+.atb-WorkingResourcesText .atb-WorkingResourcesItem-thumb {
+    font-size: 75px;
+    font-style: italic;
+    font-family: serif;
+    line-height: 75px;
+}
+
 .atb-WorkingResourcesFolio {
     border: none;
     background: none;
@@ -171,10 +174,6 @@
     text-decoration: underline;
 }
 
-.atb-WorkingResources-panelChooser {
-    
-}
-
 .atb-WorkingResources-hoverMenu {
     z-index: 100000;
 }
@@ -188,75 +187,4 @@
     
     background-color: transparent;
     background: url("../../img/icons-16x16-sprite.png") -880px 0 no-repeat;
-}
-
-
-
-
-.atb-PanelChooser {
-    position: relative;
-    top: 0;
-    left: 0;
-    
-    text-align: center;
-    color: white;
-    
-    background-color: rgba(150, 150, 150, 0.5);
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px;
-    
-    -moz-box-shadow: 5px 5px 10px #999;
-    -webkit-box-shadow: 5px 5px 10px #999;
-    box-shadow: 5px 5px 10px #999;
-    
-    z-index: 100;
-    width: 150px;
-    height: 150px;
-}
-
-.atb-PanelChooser-panel {
-    position: absolute;
-    
-    background-color: rgba(255, 255, 255, 0.5);
-    
-    border: 2px solid rgba(100, 100, 100, 0.7);
-    
-    -moz-transition: background 0.5s, border 0.5s;
-    -webkit-transition: background 0.5s, border 0.5s;
-    -o-transition: background 0.5s, border 0.5s;
-    transition: background 0.5s, border 0.5s;
-    
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    border-radius: 4px;
-}
-
-.atb-PanelChooser-panel-hover {
-    cursor: pointer;
-    
-    background-color: rgba(255, 255, 255, 0.95);
-    
-    border: 2px solid rgba(100, 100, 100, 0.95);
-    
-    -moz-transition: background 0.5s, border 0.5s;
-    -webkit-transition: background 0.5s, border 0.5s;
-    -o-transition: background 0.5s, border 0.5s;
-    transition: background 0.5s, border 0.5s;
-}
-
-.atb-PanelChooser-left {
-    width: 50px;
-    height: 75px;
-    
-    top: 37px;
-    left: 21px;
-}
-
-.atb-PanelChooser-right {
-    width: 50px;
-    height: 75px;
-    
-    top: 37px;
-    right: 21px;
 }

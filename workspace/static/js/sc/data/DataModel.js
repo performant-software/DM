@@ -45,6 +45,7 @@ sc.data.DataModel.VOCABULARY = {
     sequenceTypes: ['<http://dms.stanford.edu/ns/Sequence>', '<http://www.shared-canvas.org/ns/Sequence>'],
     imageTypes: ['<http://dms.stanford.edu/ns/Image>', '<http://dms.stanford.edu/ns/ImageBody>', '<http://purl.org/dc/dcmitype/Image>'],
     imageChoiceTypes: ['<http://dms.stanford.edu/ns/ImageChoice>'],
+    textTypes: ['<http://purl.org/dc/dcmitype/Text>'],
     option: '<http://dms.stanford.edu/ns/option>'
 };
 
