@@ -4,6 +4,7 @@ goog.require('atb.util.StyleUtil');
 goog.require('atb.widgets.WorkingResourcesFolio');
 goog.require('atb.widgets.WorkingResourcesItem');
 goog.require('atb.widgets.WorkingResourcesManuscript');
+goog.require('atb.widgets.WorkingResourcesText');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.math.Coordinate');
 goog.require('goog.math.Size');
@@ -43,14 +44,6 @@ atb.widgets.WorkingResources = function(databroker, opt_domHelper) {
     this.itemsByUri = new goog.structs.Map();
 };
 goog.inherits(atb.widgets.WorkingResources, goog.events.EventTarget);
-
-/**
- * Loads all working resources for a given user
- * @param  {strint} username The user's username.
- */
-atb.widgets.WorkingResources.prototype.loadUser = function(username) {
-
-};
 
 /**
  * Loads the resources in a given manifest file
@@ -133,6 +126,13 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
             this.domHelper
         );
     }
+    else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.textTypes)) {
+        item = new atb.widgets.WorkingResourcesText(
+            this.databroker,
+            uri,
+            this.domHelper
+        );
+    }
 
     if (item) {
         this.updateItem(item);
@@ -185,8 +185,9 @@ atb.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLo
     var uri = item.getUri();
     var resource = this.databroker.getResource(uri);
 
-    if (resource.hasPredicate('dc:title')) {
-        item.setTitle(resource.getOneProperty('dc:title'));
+    var title = resource.getOneProperty('dc:title');
+    if (title) {
+        item.setTitle(title);
     }
 
     this.updateItemAttrs(item);
@@ -196,6 +197,9 @@ atb.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLo
     }
     else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
         this.updateCanvas(item, opt_isFullyLoaded);
+    }
+    else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.textTypes)) {
+        this.updateText(item, opt_isFullyLoaded);
     }
 
     return item;
@@ -275,9 +279,17 @@ atb.widgets.WorkingResources.prototype.updateFolio = function(folio) {
     var uri = folio.getUri();
     var resource = this.databroker.getResource(uri);
 
-    if (resource.hasPredicate('dc:title')) {
-        folio.setTitle(resource.getOneProperty('dc:title'));
+    var title = resource.getOneProperty('dc:title');
+    if (title) {
+        folio.setTitle(title);
     }
+};
+
+atb.widgets.WorkingResources.prototype.updateText = function(item) {
+    var uri = item.getUri();
+    var resource = this.databroker.getResource(uri);
+
+    
 };
 
 atb.widgets.WorkingResources.prototype.refreshItem = function(item) {

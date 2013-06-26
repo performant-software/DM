@@ -34,11 +34,16 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var wrContainer = jQuery('#workingResourcesModal .modal-body').get(0);
 
     workingResourcesViewer.render(wrContainer);
-    workingResourcesViewer.loadUser(username);
 
     workingResourcesViewer.addEventListener('openRequested', function(event) {
-        if (event.resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
-            openCanvas(event.uri, event.urisInOrder, event.currentIndex);
+        var resource = event.resource;
+        var uri = resource.uri;
+
+        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
+            openCanvas(uri, event.urisInOrder, event.currentIndex);
+        }
+        else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.textTypes)) {
+            openText(uri);
         }
     });
 
@@ -72,11 +77,16 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         var uri = event.uri;
         var resource = event.resource;
 
-        if (resource.hasAnyType('dms:Canvas')) {
+        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
             var manifestUri = event.manifestUri;
             var urisInOrder = event.urisInOrder;
             var index = event.currentIndex;
             openCanvas(uri, urisInOrder, index);
+
+            event.preventDefault();
+        }
+        else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.textTypes)) {
+            openText(uri);
 
             event.preventDefault();
         }
@@ -105,6 +115,18 @@ var openCanvas = function(uri, urisInOrder, index) {
     viewerContainer.setViewer(viewer);
     viewerGrid.addViewerContainer(viewerContainer);
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
+
+    return viewer;
+};
+
+var openText = function(uri) {
+    var viewerContainer = new atb.viewer.ViewerContainer();
+    var viewer = new atb.viewer.TextEditor(clientApp);
+    viewerGrid.addViewerContainer(viewerContainer);
+    viewerContainer.setViewer(viewer);
+    viewer.loadResourceByUri(uri);
+
+    return viewer;
 };
 
 var openBlankTextDocument = function() {
@@ -112,12 +134,9 @@ var openBlankTextDocument = function() {
     textResource.setProperty('dc:title', '"Untitled text document"');
 
     databroker.addResourceToCurrentProject(textResource);
+    workingResourcesViewer.loadManifest(databroker.currentProject);
 
-    var viewerContainer = new atb.viewer.ViewerContainer();
-    var viewer = new atb.viewer.TextEditor(clientApp);
-    viewerGrid.addViewerContainer(viewerContainer);
-    viewerContainer.setViewer(viewer);
-    viewer.loadResourceByUri(textResource.uri);
+    return openText(textResource.uri);
 };
 
 var setupCurrentProject = function(clientApp, username) {

@@ -77,10 +77,11 @@ goog.addDependency('../../../atb/widgets/MenuUtil.js', ['atb.widgets.MenuUtil'],
 goog.addDependency('../../../atb/widgets/Toolbar.js', ['atb.widgets.Toolbar'], ['atb.util.Map', 'atb.util.ReferenceUtil', 'atb.widgets.IMenu', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
 goog.addDependency('../../../atb/widgets/TwirlDown.js', ['atb.widgets.TwirlDown'], ['goog.ui.AnimatedZippy', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/VerticalToolbar.js', ['atb.widgets.VerticalToolbar'], ['atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.widgets.IMenu', 'goog.dom', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.Container', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
-goog.addDependency('../../../atb/widgets/WorkingResources.js', ['atb.widgets.WorkingResources'], ['atb.util.StyleUtil', 'atb.widgets.WorkingResourcesFolio', 'atb.widgets.WorkingResourcesItem', 'atb.widgets.WorkingResourcesManuscript', 'goog.dom.DomHelper', 'goog.events.Event', 'goog.events.EventTarget', 'goog.math.Coordinate', 'goog.math.Size', 'goog.positioning.ClientPosition', 'goog.structs.Map', 'goog.style', 'goog.ui.Popup', 'jquery.jQuery']);
+goog.addDependency('../../../atb/widgets/WorkingResources.js', ['atb.widgets.WorkingResources'], ['atb.util.StyleUtil', 'atb.widgets.WorkingResourcesFolio', 'atb.widgets.WorkingResourcesItem', 'atb.widgets.WorkingResourcesManuscript', 'atb.widgets.WorkingResourcesText', 'goog.dom.DomHelper', 'goog.events.Event', 'goog.events.EventTarget', 'goog.math.Coordinate', 'goog.math.Size', 'goog.positioning.ClientPosition', 'goog.structs.Map', 'goog.style', 'goog.ui.Popup', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesFolio.js', ['atb.widgets.WorkingResourcesFolio'], ['atb.widgets.WorkingResourcesItem', 'sc.RepoBrowserFolio']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesItem.js', ['atb.widgets.WorkingResourcesItem'], ['goog.dom.DomHelper', 'goog.events', 'goog.events.ActionEvent', 'goog.events.EventTarget', 'jquery.jQuery']);
 goog.addDependency('../../../atb/widgets/WorkingResourcesManuscript.js', ['atb.widgets.WorkingResourcesManuscript'], ['atb.widgets.WorkingResourcesItem', 'goog.structs.Map', 'goog.ui.AnimatedZippy']);
+goog.addDependency('../../../atb/widgets/WorkingResourcesText.js', ['atb.widgets.WorkingResourcesText'], ['atb.widgets.WorkingResourcesItem']);
 goog.addDependency('../../../fabric/fabric.js', ['fabric'], []);
 goog.addDependency('../../../jquery/jquery-1.10.1.js', ['jquery.jQuery'], ['jquery.migrate']);
 goog.addDependency('../../../jquery/jquery-migrate-1.2.1.js', ['jquery.migrate'], []);
@@ -108,7 +109,7 @@ goog.addDependency('../../../sc/canvas/CanvasToolbar.js', ['sc.canvas.CanvasTool
 goog.addDependency('../../../sc/canvas/CanvasViewer.js', ['sc.canvas.CanvasViewer'], ['goog.dom', 'goog.events', 'goog.math.Size', 'jquery.jQuery', 'sc.canvas.CanvasToolbar', 'sc.canvas.DragFeatureControl', 'sc.canvas.FabricCanvas', 'sc.canvas.FabricCanvasFactory', 'sc.canvas.FabricCanvasViewport', 'sc.canvas.ZoomSliderControl']);
 goog.addDependency('../../../sc/canvas/CommentedCanvasViewer.js', ['sc.canvas.CommentedCanvasViewer'], ['goog.events', 'sc.CommentViewer', 'sc.canvas.CanvasViewer']);
 goog.addDependency('../../../sc/canvas/Control.js', ['sc.canvas.Control'], ['goog.events.Event', 'goog.events.EventTarget']);
-goog.addDependency('../../../sc/canvas/DragFeatureControl.js', ['sc.canvas.DragFeatureControl'], ['Raphael', 'sc.canvas.FeatureControl']);
+goog.addDependency('../../../sc/canvas/DragFeatureControl.js', ['sc.canvas.DragFeatureControl'], ['sc.canvas.FeatureControl']);
 goog.addDependency('../../../sc/canvas/DrawCircleControl.js', ['sc.canvas.DrawCircleControl'], ['sc.canvas.DrawFeatureControl']);
 goog.addDependency('../../../sc/canvas/DrawEllipseControl.js', ['sc.canvas.DrawEllipseControl'], ['sc.canvas.DrawFeatureControl']);
 goog.addDependency('../../../sc/canvas/DrawFeatureControl.js', ['sc.canvas.DrawFeatureControl'], ['goog.events.Event', 'jquery.jQuery', 'sc.canvas.FeatureControl', 'sc.util.svg']);
