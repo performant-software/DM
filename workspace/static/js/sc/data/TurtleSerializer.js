@@ -78,7 +78,7 @@ sc.data.TurtleSerializer.prototype.getPrefixesString = function(namespaces) {
     var lines = [];
 
     goog.structs.forEach(namespaces.uriByPrefix, function(uri, prefix) {
-        lines.push('@prefix ' + prefix + ': ' + sc.util.Namespaces.angleBracketWrap(uri) + ' .');
+        lines.push(['@prefix ', prefix, ': ', sc.util.Namespaces.angleBracketWrap(uri), ' .'].join(''));
     }, this);
 
     return lines.join('\n');
