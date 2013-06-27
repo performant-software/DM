@@ -144,7 +144,8 @@ var setupCurrentProject = function(clientApp, username) {
     var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
     var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     db.fetchRdf(url, function() {
-        var uris = db.dataModel.findAggregationContentsUris(uri);
+        var userResource = db.getResource(uri);
+        var uris = userResource.getProperties('perm:hasPermissionOver');
         for (var i=0; i<uris.length; i++) {
             db.allProjects.push(uris[i]);
         }
