@@ -184,6 +184,18 @@ sc.util.Namespaces.unwrapLiteral = function(literal) {
     return sc.util.Namespaces.stripQuotesAndDatatype(literal);
 };
 
+sc.util.Namespaces.isWrappedUri = function(str) {
+    return this.isAngleBracketWrapped(str);
+};
+
+sc.util.Namespaces.wrapUri = function(uri) {
+    return sc.util.Namespaces.angleBracketWrap(uri);
+};
+
+sc.util.Namespaces.unwrapUri = function(uri) {
+    return sc.util.Namespaces.angleBracketStrip(uri);
+};
+
 sc.util.Namespaces.xmlSafeCharsByChar = {
     '&': '&amp;',
     '<': '&lt;',
