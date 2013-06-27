@@ -107,26 +107,20 @@ sc.data.SyncService.prototype.getModifiedResourceUris = function() {
 };
 
 sc.data.SyncService.prototype.postNewResources = function() {
-    var xhrs = [];
-
     goog.structs.forEach(this.databroker.newResourceUris, function(uri) {
-        var xhr = this.sendResource(uri, 'POST');
-
-        if (xhr) {
-            xhr.done(function() {
-                this.databroker.newResourceUris.remove(uri);
-            }.bind(this));
-            xhrs.push(xhr);
-        }
-        else {
+        this.sendResource(uri, 'POST', function() {
             this.databroker.newResourceUris.remove(uri);
-        }
+        }.bind(this));
     }, this);
-
-    return xhrs;
 };
 
-sc.data.SyncService.prototype.sendResource = function(uri, method) {
+sc.data.SyncService.prototype.putModifiedResources = function() {
+    goog.structs.forEach(this.getModifiedResourceUris(), function(uri) {
+        this.sendResource(uri, 'PUT');
+    }, this);
+};
+
+sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {
     var resource = this.databroker.getResource(uri);
 
     var resType;
@@ -149,9 +143,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
         url = this.restUrl(this.databroker.currentProject, resType, null, null);
     }
     else if (resource.hasType('ore:Aggregation')) {
-        console.log('trying to sync ' + resource);
         if (goog.array.contains(this.databroker.allProjects, resource.uri)) {
-            console.log('identified ' + resource.uri + 'as project')
             var resType = sc.data.SyncService.RESTYPE.project;
 
             quadsToPost = this.databroker.dataModel.findQuadsToSyncForProject(resource);
@@ -164,44 +156,52 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
         return;
     }
 
-    var format = 'application/rdf+xml';
+    if (quadsToPost.length == 0) {
+        return 0;
+    }
 
-    this.databroker.serializeQuads(quadsToPost, format, function(data, error) {
+    this.sendQuads(quadsToPost, url, method, null, function() {
+        // Success
+        if (method == 'PUT' || method == 'POST') {
+            this.databroker.newQuadStore.removeQuads(quadsToPost);
+        }
+        if (goog.isFunction(successHandler)) {
+            successHandler();
+        }
+    }.bind(this), function() {
+        // Error handling here
+    }.bind(this));
+};
+
+sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, successHandler, errorHandler) {
+    successHandler = successHandler || jQuery.noop;
+    errorHandler = errorHandler || jQuery.noop;
+    format = format || 'application/rdf+xml';
+    this.databroker.serializeQuads(quads, format, function(data, error) {
         if (data != null) {
-            console.log('about to send resource', uri, data);
-
-            var xhr = jQuery.ajax({
+            jQuery.ajax({
                 type: method,
                 url: url,
                 success: function() {
                     console.log('successful sync', arguments);
-                    this.databroker.newQuadStore.removeQuads(quadsToPost);
+                    successHandler.apply(this, arguments);
                 }.bind(this),
                 error: function() {
                     console.error('unsuccessful sync', arguments);
+                    errorHandler.apply(this, arguments);
                 },
                 data: data,
                 processData: !jQuery.isXMLDoc(data),
                 headers: {
                     'X-CSRFToken': this.getCsrfToken()
-                }
+                },
+                contentType: format + '; charset=UTF-8'
             });
         }
+        else if (error) {
+            errorHandler(error);
+        }
     }.bind(this));
-};
-
-sc.data.SyncService.prototype.putModifiedResources = function() {
-    var modifiedUris = this.getModifiedResourceUris();
-
-    var xhrs = [];
-
-    goog.structs.forEach(modifiedUris, function(uri) {
-        var xhr = this.sendResource(uri, 'PUT');
-
-        xhrs.push(xhr);
-    }, this);
-
-    return xhrs;
 };
 
 sc.data.SyncService.prototype.getCsrfToken = function() {

@@ -62,7 +62,8 @@ sc.util.Namespaces.isAngleBracketWrapped = function(str) {
 sc.util.Namespaces.angleBracketStrip = function (str) {
     var remover = function(str) {
         if (sc.util.Namespaces.isAngleBracketWrapped(str)) {
-            return str.substring(1, str.length - 1);
+            str = str.substring(1, str.length - 1);
+            return str.replace(/\\>/g, '>');
         }
         else {
             return str;
@@ -92,7 +93,7 @@ sc.util.Namespaces.angleBracketWrap = function(str) {
         return str;
     }
     else {
-        return '<' + str + '>';
+        return '<' + str.replace(/>/g, '\\>') + '>';
     }
 };
 

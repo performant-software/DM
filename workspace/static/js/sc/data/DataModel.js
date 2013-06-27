@@ -46,7 +46,12 @@ sc.data.DataModel.VOCABULARY = {
     imageTypes: ['<http://dms.stanford.edu/ns/Image>', '<http://dms.stanford.edu/ns/ImageBody>', '<http://purl.org/dc/dcmitype/Image>'],
     imageChoiceTypes: ['<http://dms.stanford.edu/ns/ImageChoice>'],
     textTypes: ['<http://purl.org/dc/dcmitype/Text>'],
-    option: '<http://dms.stanford.edu/ns/option>'
+    option: '<http://dms.stanford.edu/ns/option>',
+    metadataPredicates: [
+        '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
+        '<http://www.openarchives.org/ore/terms/isDescribedBy>',
+        '<http://purl.org/dc/elements/1.1/title>'
+    ]
 };
 
 /**
@@ -477,24 +482,12 @@ sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project) {
 
     var quads = this.databroker.quadStore.query(project.bracketedUri, null, null, null);
 
-    var contentUris = new goog.structs.Set();
-    contentUris.addAll(project.getProperties('ore:aggregates'));
-    contentUris.addAll(project.getProperties('perm:hasPermissionOver'));
-
-    goog.structs.forEach(contentUris, function(contentUri) {
+    goog.structs.forEach(project.getProperties('ore:aggregates'), function(contentUri) {
         var contentResource = this.databroker.getResource(contentUri);
-        quads = quads.concat(this.databroker.quadStore.query(
-            contentResource.bracketedUri,
-            this.databroker.namespaces.expand('ore', 'isDescribedBy'),
-            null, null));
-        quads = quads.concat(this.databroker.quadStore.query(
-            contentResource.bracketedUri,
-            this.databroker.namespaces.expand('rdf', 'type'),
-            null, null));
-        quads = quads.concat(this.databroker.quadStore.query(
-            contentResource.bracketedUri,
-            this.databroker.namespaces.expand('dc', 'title'),
-            null, null));
+
+        goog.structs.forEach(sc.data.DataModel.VOCABULARY.metadataPredicates, function(predicate) {
+            quads = quads.concat(this.databroker.quadStore.query(contentResource.bracketedUri, predicate, null, null))
+        }, this);
     }, this);
 
     return quads;
