@@ -49,7 +49,7 @@ sc.util.Namespaces.prototype.toString = function() {
     var lines = [];
 
     goog.structs.forEach(this.uriByPrefix, function(uri, prefix) {
-        lines.push('@prefix ' + prefix + ': ' + sc.util.Namespaces.angleBracketWrap(uri) + ' .');
+        lines.push(['@prefix ', prefix, ': ', sc.util.Namespaces.angleBracketWrap(uri), ' .'].join(''));
     }, this);
 
     return lines.join('\n');
@@ -70,7 +70,7 @@ sc.util.Namespaces.angleBracketStrip = function (str) {
         }
     };
     
-    if (jQuery.isArray(str)) {
+    if (goog.isArray(str)) {
         var ret = [];
         
         for (var i=0, len=str.length; i<len; i++) {
@@ -93,7 +93,7 @@ sc.util.Namespaces.angleBracketWrap = function(str) {
         return str;
     }
     else {
-        return '<' + str.replace(/>/g, '\\>') + '>';
+        return ['<', str.replace(/>/g, '\\>'), '>'].join('');
     }
 };
 
@@ -130,7 +130,7 @@ sc.util.Namespaces.stripWrappingQuotes = function(str) {
         }
     };
     
-    if (jQuery.isArray(str)) {
+    if (goog.isArray(str)) {
         var ret = [];
         
         for (var i=0, len=str.length; i<len; i++) {
@@ -158,7 +158,7 @@ sc.util.Namespaces.stripQuotesAndDatatype = function(str) {
         }
     };
     
-    if (jQuery.isArray(str)) {
+    if (goog.isArray(str)) {
         var ret = [];
         
         for (var i=0, len=str.length; i<len; i++) {
@@ -225,7 +225,7 @@ sc.util.Namespaces.escapeForXml = function(str) {
         return s;
     }
     
-    if (jQuery.isArray(str)) {
+    if (goog.isArray(str)) {
         var ret = [];
         
         for (var i=0, len=str.length; i<len; i++) {
@@ -252,7 +252,7 @@ sc.util.Namespaces.unescapeFromXml = function(str) {
         return s;
     };
     
-    if (jQuery.isArray(str)) {
+    if (goog.isArray(str)) {
         var ret = [];
         
         for (var i=0, len=str.length; i<len; i++) {
@@ -321,7 +321,7 @@ sc.util.Namespaces.prototype.autoExpand = function (ns) {
 
 sc.util.Namespaces.prototype.expand = function(prefix, postfix) {
     if (this.uriByPrefix.containsKey(prefix)) {
-        return '<' + this.uriByPrefix.get(prefix) + postfix + '>';
+        return ['<', this.uriByPrefix.get(prefix), postfix, '>'].join('');
     }
     else {
         throw "Prefix " + prefix + " is not in the registered namespaces";
@@ -339,19 +339,27 @@ sc.util.Namespaces.prototype.prefix = function(uri) {
     var matchedBaseUri = null;
     var matchedPrefix = null;
 
-    goog.structs.every(this.uriByPrefix, function(baseUri, prefix) {
-        if (goog.string.startsWith(uri, baseUri)) {
-            matchedBaseUri = baseUri;
-            matchedPrefix = prefix;
-            return false;
-        }
-        else {
-            return true;
-        }
-    }, this);
+    var i = uri.lastIndexOf('/') + 1;
+    var guessedBaseUri = uri.substring(0, i);
+    var matchedPrefix = this.prefixByUri.get(guessedBaseUri, null);
+    if (matchedPrefix) {
+        matchedBaseUri = uri.substring(i, uri.length);
+    }
+    else {
+        goog.structs.every(this.uriByPrefix, function(baseUri, prefix) {
+            if (goog.string.startsWith(uri, baseUri)) {
+                matchedBaseUri = baseUri;
+                matchedPrefix = prefix;
+                return false;
+            }
+            else {
+                return true;
+            }
+        }, this);
+    }
 
     if (matchedBaseUri && matchedPrefix) {
-        return matchedPrefix + ':' + goog.string.removeAt(uri, 0, matchedBaseUri.length);
+        return [matchedPrefix, ':', uri.substring(matchedBaseUri.length, uri.length)].join('');
     }
     else if (!sc.util.Namespaces.isBNode(uri)) {
         return sc.util.Namespaces.angleBracketWrap(uri);

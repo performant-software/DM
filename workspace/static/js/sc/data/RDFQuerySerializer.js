@@ -9,12 +9,25 @@ goog.inherits(sc.data.RDFQuerySerializer, sc.data.Serializer);
 
 sc.data.RDFQuerySerializer.prototype.serializableTypes = new goog.structs.Set([
     'application/rdf+xml',
-    'application/json'
+    'application/xml',
+    'text/rdf+xml',
+    'text/xml',
+    'application/json',
+    'text/json'
 ]);
 
 sc.data.RDFQuerySerializer.prototype.defaultFormat = 'application/rdf+xml';
 
 sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, handler) {
+    if (opt_format == 'application/xml' ||
+        opt_format == 'text/rdf+xml;' ||
+        opt_format == 'text/xml') {
+        opt_format = 'application/rdf+xml'
+    }
+    else if (opt_format == 'text/json') {
+        opt_format = 'application/json'
+    }
+
     window.setTimeout(function() {
         var rdf = jQuery.rdf();
         this.bindNamespaces(rdf);
