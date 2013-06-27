@@ -102,6 +102,7 @@ sc.data.SyncService.prototype.restUri = function(projectUri, resType, resUri, pa
 
 sc.data.SyncService.prototype.getModifiedResourceUris = function() {
     var subjectsOfNewQuads = this.databroker.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
+    subjectsOfNewQuads.addAll(this.databroker.deletedQuadsStore.subjectsSetMatchingQuery(null, null, null, null));
 
     return subjectsOfNewQuads.difference(this.databroker.newResourceUris);
 };
@@ -122,6 +123,7 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
 
 sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {
     var resource = this.databroker.getResource(uri);
+    var dataModel = this.databroker.dataModel;
 
     var resType;
     var quadsToPost = [];
@@ -141,7 +143,9 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     else if (resource.hasType('oac:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.annotation;
 
-        quadsToPost = this.databroker.dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
+        quadsToPost = dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
+        // The back end just overwrites with new data for texts, so we can just ignore quad deletion
+        this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri, null, null, null);
 
         url = this.restUrl(this.databroker.currentProject, resType, null, null);
     }
@@ -149,7 +153,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         if (goog.array.contains(this.databroker.allProjects, resource.uri)) {
             var resType = sc.data.SyncService.RESTYPE.project;
 
-            quadsToPost = this.databroker.dataModel.findQuadsToSyncForProject(resource);
+            quadsToPost = dataModel.findQuadsToSyncForProject(resource);
+            quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
         }
@@ -159,21 +164,28 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         return;
     }
 
-    if (quadsToPost.length == 0) {
-        return 0;
+    if (quadsToPost.length > 0) {
+        this.sendQuads(quadsToPost, url, method, null, function() {
+            // Success
+            if (method == 'PUT' || method == 'POST') {
+                this.databroker.newQuadStore.removeQuads(quadsToPost);
+            }
+            if (goog.isFunction(successHandler)) {
+                successHandler();
+            }
+        }.bind(this), function() {
+            // Error handling here
+        }.bind(this));
     }
 
-    this.sendQuads(quadsToPost, url, method, null, function() {
-        // Success
-        if (method == 'PUT' || method == 'POST') {
-            this.databroker.newQuadStore.removeQuads(quadsToPost);
-        }
-        if (goog.isFunction(successHandler)) {
-            successHandler();
-        }
-    }.bind(this), function() {
-        // Error handling here
-    }.bind(this));
+    if (quadsToRemove.length > 0)  {
+        this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
+            // Success
+            this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
+        }.bind(this), function() {
+            // Error
+        }.bind(this));
+    }
 };
 
 sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, successHandler, errorHandler) {
@@ -186,7 +198,6 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
                 type: method,
                 url: url,
                 success: function() {
-                    console.log('successful sync', arguments);
                     successHandler.apply(this, arguments);
                 }.bind(this),
                 error: function() {
