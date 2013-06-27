@@ -50,12 +50,12 @@ sc.data.TurtleSerializer.prototype.getTriplesString = function(quads) {
             var objects = quadStore.objectsSetMatchingQuery(subject, predicate, null, null);
             var objectsString;
             if (objects.getCount() == 1) {
-                objectsString = [(this.compact ? ' ' : '\n' + this.getIndent(2)), this.formatValue(objects.getValues()[0])].join('');
+                objectsString = ' ' + this.formatValue(objects.getValues()[0]);
             }
             else {
                 objectEntries = [];
                 goog.structs.forEach(objects, function(object) {
-                    objectEntries.push([(this.compact ? ' ' : '\n' + this.getIndent(2)), object].join(''));
+                    objectEntries.push((this.compact ? ' ' : '\n' + this.getIndent(2)) + object);
                 }, this);
                 objectsString = objectEntries.join(',');
             }
