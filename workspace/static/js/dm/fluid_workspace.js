@@ -3,7 +3,6 @@ goog.require('atb.PassThroughLoginWebService');
 goog.require('atb.viewer.Finder');
 goog.require('atb.viewer.TextEditor');
 goog.require('atb.viewer.AudioViewer');
-goog.require('atb.ClientApp');
 goog.require('goog.events');
 goog.require('goog.dom');
 goog.require('goog.Uri');
@@ -15,6 +14,8 @@ goog.require('goog.ui.Dialog');
 
 goog.require('atb.viewer.ViewerGrid');
 goog.require('atb.viewer.ViewerContainer');
+
+goog.require("sc.ProjectManager")
 
 
 var clientApp = null;
@@ -34,7 +35,7 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var wrContainer = jQuery('#workingResourcesModal .modal-body').get(0);
 
     workingResourcesViewer.render(wrContainer);
-    workingResourcesViewer.loadUser(username);
+    workingResourcesViewer.loadUser(username)
 
     workingResourcesViewer.addEventListener('openRequested', function(event) {
         if (event.resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
@@ -125,15 +126,18 @@ var setupCurrentProject = function(clientApp, username) {
     var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
     var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     db.fetchRdf(url, function() {
-        var uris = db.dataModel.findAggregationContentsUris(uri);
+        var uris = db.getResource(uri).getProperties('perm:hasPermissionOver');
         for (var i=0; i<uris.length; i++) {
             db.allProjects.push(uris[i]);
         }
-        if (uris.length == 1) {
+        // Where we should check for "last worked on" triple
+        /*if (uris.length == 1) {
             db.currentProject = uris[0];
 
             workingResourcesViewer.loadManifest(uris[0]);
-        }
+        }*/
+
+        goog.global.projectManager.addAllUserProjects(username)
     });
 }
 
@@ -148,7 +152,7 @@ var resizeViewerGrid = function() {
     viewerGrid.resize(width, height);
 }
 
-function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
+function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl, usernames) {
     cookies = new goog.net.Cookies(window.document);
     /* The following method is copied from Django documentation
      * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
@@ -194,11 +198,12 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 
     var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
+    
+    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username, usernames);
 
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
     setupCurrentProject(clientApp, username);
-    
 }
 
 
@@ -206,234 +211,6 @@ var createCanvasViewer = function(uri) {
     var viewer = new atb.viewer.CanvasViewer(clientApp);
     viewer.setCanvasByUri(uri, null, null, null, null);
     return viewer;
-}
-
-/* Instantiate two variables with scope outside userTagSystem
- * Need to be accesibly by newRemoveUser as well
- * Instatiated here because they belong with the "tag system"
-*/
-var newAddedUsers = [];
-var shift = false;
-
-/* Appends username from input field into corresponding paragraph (creation modal)
- * Multiple elements; each has a description preceding
- * usr: Username input field
- * usernames: List of usernames in the database
- * * usernames is passed with an json dump in render_to_response
-*/
-function newUserTagSystem(usr, usernames){
-
-    /* Ensures shift is down
-     * Shift+Return combo needed because the typeahead system uses Return
-    */
-    usr.keydown(function(e){
-        // Watches the shift key
-        if (e.which == 16) shift = true;
-
-        //Toggles off the "incorrect user" help text
-        $("#newHelp").text("");
-    })
-
-    /* Script which adds users
-     * Usernames assigned to project are stored in newAddedUsers
-     * 'keyup' call ensures that the user has finished typing the username
-     * Looks for Shift+Return combination ONLY
-     * Checks for users already added
-     * Rejects invalid usernames
-     * ((Next Up: suggests usernames using typeahead))
-    */
-    usr.keyup(function(e){
-        if (e.which == 13&&shift){
-            var val = usr.val();
-            
-            if(val == clientApp.username){
-                $("#newHelp").text("Your username is automatically added to the project.");
-            }
-            else{
-                if (usernames.indexOf(val) != -1){
-                    if (newAddedUsers.indexOf(val) == -1){
-                        // "&nbsp" text allows 3 character widths between usernames
-                        $("#newAddedUsers").append('<a onClick="newRemoveUser(this) id="' + usr.val() + '">'  + usr.val() + "&nbsp;&nbsp;&nbsp;</a>");
-                        newAddedUsers.push(val);
-
-                        usr.val("");
-                    }
-                    else{
-                        $("#newHelp").text("You already added this user.");
-                    }
-                }
-                else{
-                    $("#newHelp").text("This is not a valid user.");
-                }
-            }
-        }
-        else if (e.which == 16) shift = false;
-    })
-}
-
-/* Removes the user from the array of users in new project modal
- * Removes the "tag" displaying the username
- * e: html object - link with username as text & id
- * The user may be added again by re-typing the username
-*/
-function newRemoveUser(e){
-    var u = e.id
-    newAddedUsers.splice(newAddedUsers.indexOf(u) - 1, 1);
-    e.remove();
-}
-
-/* Collects data from new project modal
- * Clears the data so that another project can be created without refresh
- * Serializes data and sends POST request /workspace/project_forward/
-*/
-function sendNewData(){
-    //Add the current user to the project
-    newAddedUsers.push(clientApp.username);
-
-    //Easier reference to databroker
-    var db = goog.global.databroker;
-
-    //Collect data
-    var t = $("#newTitle"), d = $("#newDescription");
-
-    var data = $.rdf.databank([], { namespaces: {
-                                    ore: "http://www.openarchives.org/ore/terms/", 
-                                    dc: "http://purl.org/dc/elements/1.1/", 
-                                    dcterms: "http://purl.org/dc/terms/",
-                                    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
-                                    dcmitype: "http://purl.org/dc/dcmitype/",
-                                    perm: 'http://vocab.ox.ac.uk/perm#',
-                                    }
-                                  });
-
-    //Create UUID for new project
-    var p = db.createUuid();
-
-    if(t.val() != ""){
-        //Link user(s) and project
-        for (var i = 0; i < newAddedUsers.length; i++) {
-            var u = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, newAddedUsers[i], null);
-            data.add("<" + u + "> perm:hasPermissionOver <" + p + ">");
-        };
-
-        //Give project title
-        data.add('<' + p + '> dc:title "' + t.val() + '"');
-
-        //Give project description
-        data.add('<' + p + '> dcterms:description "' + d.val() + '"');
-
-        //Set types on project
-        data.add('<' + p + '> rdf:type dcmitype:Collection');
-        data.add('<' + p + '> rdf:type ore:Aggregation');
-
-        var postdata = data.dump({format: 'application/rdf+xml', 
-                                  serialize:true});
-        console.log("data:", postdata);
-
-        /* Part of csrf-token setup
-         * Copied from Django documentation
-         * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-        */
-        $.ajaxSetup({
-            crossDomain: false,
-            beforeSend: function(xhr, settings) {
-                if (!csrfSafeMethod(settings.type)) {
-                    xhr.setRequestHeader("X-CSRFToken", 
-                                         getCookie("csrftoken"));
-                }
-            }
-        });
-        
-        $.post('project_forward/', postdata);
-
-        //Clear data from create project form
-        t.val("");
-        d.val("");
-        newAddedUsers = [];
-        $("#newAddedUsers").text("");
-    }
-
-    else{
-        alert("Your project needs a title.")
-
-    }
-
-    // Add the new project's title to project dropdown
-    // Wrapped in timeout to avoid server errors from hitting database too quickly
-    setTimeout(function(){
-        var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, clientApp.username, null)
-        db.getDeferredResource(url).done(showProjectTitle(p));
-    },3000)
-
-    // Add the new project to the databroker as a valid project
-    goog.global.databroker.addNewProject(p)
-}
-
-/* The following two methods are copied from Django documentation
- * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
- * Necessary to avoid 403 error when posting data
-*/
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-};
-
-function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-}
-
-/* Add project titles to "project" dropdown
- * Projects gathered by username
- * * At /store/users/<username> is rdf with all the projects belonging to a user,
- * *  and the url for more info ('ore:isDescribedBy')
-*/
-function showProjectTitles(username){
-    // Variables used to shorten some references
-    var db = goog.global.databroker;
-    var wrap = sc.util.Namespaces.angleBracketWrap;
-
-    // Get array of quads where subject is user's uri
-    // (object will be uri of all projects owned by user)
-    var userUri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
-    var userProjects = db.getResource(userUri).getProperties('perm:hasPermissionOver')
-
-    // Cycle through this array and add each project's title to dropdown
-    for (var i = 0; i < userProjects.length; i++) {
-        var project = userProjects[i]
-        showProjectTitle(project)
-    };
-}
-
-/* Add the title of a single project (with uri supplied) to the title dropdown
- * Abstracted from showProjectTitles so it can be called for just one new project
-*/
-function showProjectTitle(uri){
-    var db = goog.global.databroker;
-    var wrap = sc.util.Namespaces.angleBracketWrap;
-
-    if (db.quadStore.numQuadsMatchingQuery(wrap(uri)) <= 1){
-        setTimeout(function(){
-            db.getDeferredResource(uri).done(function(resource){
-                //uri = sc.util.Namespaces.angleBracketStrip(uri)
-                var title = resource.getOneProperty('dc:title')
-                var projects = $("#projects");
-                projects.append('<li><a onClick="selectProject(this)" id="' + uri + '">' + title + '</a></li>');
-                sortChildrenAlphabetically(projects);
-            })
-        }, 1000)
-    }
 }
 
 /* Sorts the children of a jQuery object in alphabetical order and replaces them
@@ -469,56 +246,6 @@ function sortChildrenAlphabetically(parent){
 
 }
 
-/* Ensures databroker has all information about the user's projects, and then adds
- *  each title to the projects dropdown menu in alphabetical order
-*/
-function setupProjects(){
-    // Variables used to shorten some references
-    var db = goog.global.databroker;
-    var username = clientApp.username
-
-    // Get address of information about current user
-    var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null)
-
-    // Ensure databroker is up-to-date on projects and then add all titles
-    // Wrapped in timeout to avoid server errors from querying data too quickly
-    setTimeout(function(){
-        db.getDeferredResource(url).done(showProjectTitles(username))
-    }, 3000)    
-}
-
-/* Switches between projects, which are labeled with the title
- * Confirms that switching projects will close all resources
- * When current project is selected, prompts to reload the current project
-*/
-function selectProject(e){
-    // Simplify reference
-    var db = goog.global.databroker
-
-    // Skips checking on initial load (when there is no current project)
-    if (db.currentProject){
-
-        // Prompts to reload current project when it is selected
-        if (db.currentProject == e.id){
-            if(confirm("You have selected the current project!\nWould you like to reload it? Doing so will close all resources.")){
-                db.setCurrentProject(e.id)
-                workingResourcesViewer.loadManifest(e.id);
-            }
-        } 
-
-        // Warns that changing projects closes all resources
-        else if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
-            db.setCurrentProject(e.id);
-            workingResourcesViewer.loadManifest(e.id);
-        }
-    }
-
-    // Does not need to warn about closing resources when no resources are open!
-    else{
-        db.setCurrentProject(e.id);
-        workingResourcesViewer.loadManifest(e.id);
-    }
-}
 
 var editAddedUsers = [];
 
@@ -571,22 +298,6 @@ function editUserTagSystem(usr, usernames){
         }
         else if (e.which == 16) shift = false;
     })
-}
-
-/* Removes the user from the array of users in new project modal
- * Removes the "tag" displaying the username
- * e: html object - link with username as text & id
- * The user may be added again by re-typing the username
-*/
-function editRemoveUser(e){
-    var u = e.id;
-    if (u==clientApp.username){
-        $("#editHelp").text("You can't remove yourself from the project.")
-    }
-    else{
-        editAddedUsers.splice(editAddedUsers.indexOf(u), 1);
-        e.remove();
-    }
 }
 
 /* Saves changes to data

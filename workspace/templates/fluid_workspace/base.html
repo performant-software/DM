@@ -32,7 +32,12 @@
   <script type="text/javascript">
     STATIC_URL = '{{ STATIC_URL }}';
   </script>
-  <script src="{{ STATIC_URL }}js/jquery-min.js" 
+  <!--<script src="{{ STATIC_URL }}js/closure-library/closure/goog/base.js"
+          type="text/javascript"></script>
+  <script>
+    goog.require("jquery.jQuery")
+  </script>-->
+  <script src="{{ STATIC_URL }}js/jquery-1.10.1.min.js" 
           type="text/javascript"></script>
   <script src="{{ STATIC_URL }}bootstrap/js/bootstrap.min.js" 
           type="text/javascript"></script>
@@ -69,23 +74,11 @@
       </a>
       <a class="brand" href="/">DM</a>
       <div class="nav-collapse collapse top-level-nav-collapse">
-        <ul class="nav">
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-              resources
-              <b class="caret"></b>
-            </a>
-            <div class="dropdown-menu navbar-inverse">                 
-              <ul>
-                <li target="">MS 1</li>
-              </ul>
-            </div>
-          </li>
-        </ul>
         <form class="navbar-search pull-left">
           <input type="text" class="search-query" placeholder="Search">
         </form>
         <ul class="nav pull-right">
+          <li id="projectManagerButton"></li>
           <!--<li><a href="">add resources</a></li>-->
           {% block header_buttons %}
           {% endblock %}
@@ -97,8 +90,6 @@
               <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
-              <li><a href="#newProjectModal" role="button" data-toggle="modal">new project</a></li>
-              <li><a href="#editProjectModal" role="button" data-toggle="modal" onclick="prepareForEdit()">current project</a></li>
               <li><a href="#">my account</a></li>
               <li class="divider"></li>
               <li><a href="{% url accounts.views.sign_out %}">logout</a></li>
