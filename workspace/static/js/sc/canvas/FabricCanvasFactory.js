@@ -250,7 +250,7 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
 
     var addedTextUris = [];
 
-    var partUris = databroker.getResourcePartUris(canvas.uri);
+    var partUris = databroker.dataModel.getResourcePartUris(canvas.uri);
     for (var i = 0, len = partUris.length; i < len; i++) {
         var partUri = partUris[i];
 

@@ -773,14 +773,6 @@ sc.data.Databroker.prototype.getResourceDescribers = function(uri) {
     return sc.util.Namespaces.angleBracketStrip(describerUrls.getValues());
 };
 
-sc.data.Databroker.prototype.getResourcePartUris = function(uri) {
-    uri = sc.util.Namespaces.angleBracketWrap(uri);
-    
-    return sc.util.Namespaces.angleBracketStrip(
-        this.getUrisWithProperty(sc.data.DataModel.VOCABULARY.isPartOf, uri)
-    );
-};
-
 sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
     url = sc.util.Namespaces.angleBracketWrap(url);
 
