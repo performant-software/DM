@@ -8,7 +8,7 @@ from semantic_store.rdfstore import rdfstore
 from semantic_store import uris
 from semantic_store.utils import negotiated_graph_response
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 
 class UserView(GraphView):
     http_method_names = ['get']
@@ -17,9 +17,14 @@ class UserView(GraphView):
         request = args[0]
         username = kwargs['username']
         if username: # and (username == request.user.username):
-            user_graph_identifier = uris.uri('semantic_store_users', username=username)
-            g = Graph(store=rdfstore(), identifier=user_graph_identifier)
-            return negotiated_graph_response(request, g)
+            try:
+                User.objects.get(username=username)
+            except:
+                return HttpResponseNotFound()
+            else:
+                user_graph_identifier = uris.uri('semantic_store_users', username=username)
+                g = Graph(store=rdfstore(), identifier=user_graph_identifier)
+                return negotiated_graph_response(request, g)
         else:
             g = Graph()
             bind_namespaces(g)
