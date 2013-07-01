@@ -87,11 +87,28 @@ sc.data.Resource.prototype.getUnescapedProperties = function(predicate) {
 };
 
 sc.data.Resource.prototype.escapeProperty = function(property) {
-    property = sc.util.Namespaces.stripQuotesAndDatatype(property);
-    property = sc.util.Namespaces.angleBracketStrip(property);
-    property = sc.util.Namespaces.unescapeFromXml(property);
+    var escaper = function(property) {
+        if (sc.util.Namespaces.isWrappedUri(property)) {
+            return sc.util.Namespaces.unwrapUri(property);
+        }
+        else if (sc.util.Namespaces.isLiteral(property)) {
+            return sc.util.Namespaces.unwrapLiteral(property);
+        }
+        else {
+            return property;
+        }
+    };
     
-    return property;
+    if (goog.isArray(property)) {
+        var result = [];
+        goog.structs.forEach(property, function(p) {
+            result.push(escaper(p));
+        });
+        return result;
+    }
+    else {
+        return escaper(property);
+    }
 };
 sc.data.Resource.prototype.escapeProperties = sc.data.Resource.prototype.escapeProperty;
 
@@ -307,14 +324,6 @@ sc.data.Resource.prototype.hasAllTypes = function(possibleTypes) {
     return intersection.equals(possibleTypesSet);
 };
 
-sc.data.Resource.prototype.getTitles = function() {
-    return this.getProperties('dc:title');
-};
-
-sc.data.Resource.prototype.getOneTitle = function() {
-    return this.getOneProperty('dc:title');
-};
-
 sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
     return this.databroker.dataModel.findAnnosReferencingResource(this.bracketedUri, opt_annoType);
 };
@@ -391,8 +400,9 @@ sc.data.Resource.prototype.getDeferred = function() {
 };
 
 sc.data.Resource.compareByTitle = function(a, b) {
-    var titleA = a.getOneProperty('dc:title');
-    var titleB = b.getOneProperty('dc:title');
+    var getTitle = a.databroker.dataModel.getTitle;
+    var titleA = getTitle(a).toLowerCase();
+    var titleB = getTitle(b).toLowerCase();
 
     return goog.array.defaultCompare(titleA, titleB);
 };

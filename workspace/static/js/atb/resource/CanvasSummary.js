@@ -18,7 +18,7 @@ atb.resource.CanvasSummary = function (uri, viewer, clientApp, opt_domHelper, op
     atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     
     this.size = new goog.math.Size(75, 75);
-    this.title = this.resource.getOneProperty('dc:title');
+    this.title = this.databroker.dataModel.getTitle(this.resource);
 	
     this.decorate();
 };

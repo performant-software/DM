@@ -331,7 +331,7 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
             
             var leftUri = urisInOrder[currentIndex - 1];
             var leftResource = this.databroker.getResource(leftUri);
-            var leftTitle = leftResource.getOneProperty('dc:title');
+            var leftTitle = this.databroker.dataModel.getTitle(leftResource);
             
             if (leftTitle) {
                 leftButton.setTooltip('Go to ' + leftTitle);
@@ -352,7 +352,7 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
             
             var rightUri = urisInOrder[currentIndex + 1];
             var rightResource = this.databroker.getResource(rightUri);
-            var rightTitle = rightResource.getOneProperty('dc:title');
+            var rightTitle = this.databroker.dataModel.getTitle(rightResource);
             
             if (rightTitle) {
                 rightButton.setTooltip('Go to ' + rightTitle);

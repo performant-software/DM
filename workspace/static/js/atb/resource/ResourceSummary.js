@@ -257,7 +257,8 @@ atb.resource.ResourceSummary.prototype.getView = function () {
 };
 
 atb.resource.ResourceSummary.prototype.getSortTitle = function() {
-    return jQuery.trim(this.resource.getOneProperty('dc:title')) || '';
+    var getTitle = this.databroker.dataModel.getTitle;
+    return jQuery.trim(getTitle(this.resource).toLowerCase());
 };
 
 

@@ -96,7 +96,7 @@ sc.canvas.FabricCanvas.RDF_ENUM = {
     constrains: 'oa:constrains',
     constrainedBy: 'oa:constrainedBy',
     commentAnno: 'dms:CommentAnnotation',
-    title: ['dc:title']
+    title: ['dc:title', 'rdfs:label']
 };
 
 /**

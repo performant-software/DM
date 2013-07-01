@@ -63,7 +63,7 @@ sc.canvas.PageChooser.prototype.addPages = function(uris, opt_currentUri) {
 
     goog.structs.forEach(uris, function(uri) {
         var resource = this.databroker.getResource(uri);
-        var title = resource.getOneProperty('dc:title');
+        var title = this.databroker.dataModel.getTitle(resource);
 
         var li = document.createElement('li');
         jQuery(li).text(title);

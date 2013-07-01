@@ -74,8 +74,10 @@ atb.viewer.AudioViewer.prototype.buildJPlayerDom = function() {
 atb.viewer.AudioViewer.prototype.loadResourceByUri = function(uri) {
     this.resource = this.databroker.getResource(uri);
 
+    var getTitle = this.databroker.dataModel.getTitle;
+
     if (this.resource.hasType('dctypes:Audio')) {
-        this.setTitle(this.resource.getOneProperty('dc:title') || atb.resource.AudioSummary.findTitleFromUri(this.resource.uri));
+        this.setTitle(getTitle(this.resource) || atb.resource.AudioSummary.findTitleFromUri(this.resource.uri));
 
         var setMedia = function() {
             this.player.jPlayer('setMedia', {
@@ -93,7 +95,7 @@ atb.viewer.AudioViewer.prototype.loadResourceByUri = function(uri) {
     else if (this.resource.hasType('dms:AudioSegment')) {
         this.parentResource = this.databroker.getResource(this.resource.getOneProperty('dcterms:isPartOf'));
 
-        this.setTitle(this.parentResource.getOneProperty('dc:title') || atb.resource.AudioSummary.findTitleFromUri(this.parentResource.uri));
+        this.setTitle(getTitle(this.parentResource) || atb.resource.AudioSummary.findTitleFromUri(this.parentResource.uri));
 
         var audioAttrs = sc.data.DataModel.getConstraintAttrsFromUri(this.resource.uri);
 

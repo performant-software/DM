@@ -2290,7 +2290,9 @@ fabric.Collection = {
   function populateWithProperties(source, destination, properties) {
     if (properties && Object.prototype.toString.call(properties) === '[object Array]') {
       for (var i = 0, len = properties.length; i < len; i++) {
-        destination[properties[i]] = source[properties[i]];
+        if (properties[i] in source) {
+          destination[properties[i]] = source[properties[i]];
+        }
       }
     }
   }
@@ -2450,6 +2452,32 @@ fabric.Collection = {
     ];
   }
 
+  /**
+   * Takes an array of points and returns a bounding rectangle around them
+   * @static
+   * @memberOf fabric.util
+   * @param  {Array.<Object>} points An array of objects with x and y properties.
+   * @return {Object}                An object with x1, y1, x2, and y2 properties
+   *                                 corresponding to the points of the rect, and
+   *                                 width and height properties.
+   */
+  function getBoundingRect(points) {
+    var utilMin = fabric.util.array.min,
+        utilMax = fabric.util.array.max;
+
+    var rect = {
+      x1: utilMin(points, 'x'),
+      y1: utilMin(points, 'y'),
+      x2: utilMax(points, 'x'),
+      y2: utilMax(points, 'y')
+    };
+
+    rect.width = rect.x2 - rect.x1;
+    rect.height = rect.y2 - rect.y1;
+
+    return rect;
+  }
+
   function getFunctionBody(fn) {
     return (String(fn).match(/function[^{]*\{([\s\S]*)\}/) || {})[1];
   }
@@ -2583,6 +2611,7 @@ fabric.Collection = {
   fabric.util.createAccessors = createAccessors;
   fabric.util.clipContext = clipContext;
   fabric.util.multiplyTransformMatrices = multiplyTransformMatrices;
+  fabric.util.getBoundingRect = getBoundingRect;
   fabric.util.getFunctionBody = getFunctionBody;
   fabric.util.drawArc = drawArc;
 
@@ -5433,7 +5462,7 @@ fabric.util.string = {
             opacity = this.colorStops[i].opacity,
             offset = this.colorStops[i].offset;
 
-        if (opacity) {
+        if (typeof opacity !== 'undefined') {
           color = new fabric.Color(color).setAlpha(opacity).toRgba();
         }
         gradient.addColorStop(parseFloat(offset), color);
@@ -8280,7 +8309,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       t.target.set('left', t.original.left);
       t.target.set('top', t.original.top);
 
-      if (e.altKey || this.centerTransform) {
+      if (e.altKey || this.centerTransform || t.target.centerTransform) {
         if (t.originX !== 'center') {
           if (t.originX === 'right') {
             t.mouseXSign = -1;
@@ -8538,7 +8567,11 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
           // only if there's an active object
           if (target !== this._activeObject) {
             // and that object is not the actual target
-            var group = new fabric.Group([ this._activeObject, target ]);
+            var objects = this.getObjects();
+            var isActiveLower = objects.indexOf(this._activeObject) < objects.indexOf(target);
+            var group = new fabric.Group(
+              isActiveLower ? [ target, this._activeObject ] : [ this._activeObject, target ]);
+
             this.setActiveGroup(group);
             activeGroup = this.getActiveGroup();
             this.fire('selection:created', { target: activeGroup, e: e });
@@ -8614,7 +8647,7 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
         }
       }
 
-      // adjust the mouse coordinates when dealing with padding      
+      // adjust the mouse coordinates when dealing with padding
       if (abs(localMouse.x) > target.padding) {
         if (localMouse.x < 0 ) {
           localMouse.x += target.padding;
@@ -8624,13 +8657,13 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       } else { // mouse is within the padding, set to 0
         localMouse.x = 0;
       }
-      
+
       if (abs(localMouse.y) > target.padding) {
         if (localMouse.y < 0 ) {
           localMouse.y += target.padding;
         } else {
           localMouse.y -= target.padding;
-        }      
+        }
       } else {
         localMouse.y = 0;
       }
@@ -8639,9 +8672,9 @@ fabric.PatternBrush = fabric.util.createClass(fabric.PencilBrush, /** @lends fab
       var newScaleX = target.scaleX, newScaleY = target.scaleY;
       if (by === 'equally' && !lockScalingX && !lockScalingY) {
         var dist = localMouse.y + localMouse.x;
-        var lastDist = (target.height + (target.strokeWidth)) * t.original.scaleY + 
+        var lastDist = (target.height + (target.strokeWidth)) * t.original.scaleY +
                        (target.width + (target.strokeWidth)) * t.original.scaleX;
-        
+
         // We use t.scaleX/Y instead of target.scaleX/Y because the object may have a min scale and we'll loose the proportions
         newScaleX = t.original.scaleX * dist/lastDist;
         newScaleY = t.original.scaleY * dist/lastDist;
@@ -10284,6 +10317,13 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
      * @default
      */
     cornerColor:              'rgba(102,153,255,0.5)',
+
+    /**
+     * When true, this object will use center point as the origin of transformation
+     * when being resized via the controls
+     * @type Boolean
+     */
+    centerTransform:        false,
 
     /**
      * Color of object's fill
@@ -13415,8 +13455,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
   "use strict";
 
   var fabric = global.fabric || (global.fabric = { }),
-      toFixed = fabric.util.toFixed,
-      min = fabric.util.array.min;
+      toFixed = fabric.util.toFixed;
 
   if (fabric.Polyline) {
     fabric.warn('fabric.Polyline is already defined');
@@ -13563,17 +13602,18 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     options || (options = { });
 
     var points = fabric.parsePointsAttribute(element.getAttribute('points')),
-        parsedAttributes = fabric.parseAttributes(element, fabric.Polyline.ATTRIBUTE_NAMES),
-        minX = min(points, 'x'),
-        minY = min(points, 'y');
+        parsedAttributes = fabric.parseAttributes(element, fabric.Polyline.ATTRIBUTE_NAMES);
 
-    minX = minX < 0 ? minX : 0;
-    minY = minX < 0 ? minY : 0;
+    var boundingRect = fabric.util.getBoundingRect(points);
+    var width = boundingRect.width;
+    var height = boundingRect.height;
+    options.top = boundingRect.y1 + height / 2;
+    options.left = boundingRect.x1 + width / 2;
 
     for (var i = 0, len = points.length; i < len; i++) {
-      // normalize coordinates, according to containing box (dimensions of which are passed via `options`)
-      points[i].x -= (options.width / 2 + minX) || 0;
-      points[i].y -= (options.height / 2 + minY) || 0;
+      // normalize coordinates, according to containing box (dimensions of which are calculated above)
+      points[i].x -= options.left;
+      points[i].y -= options.top;
     }
 
     return new fabric.Polyline(points, fabric.util.object.extend(parsedAttributes, options), true);
@@ -13776,17 +13816,18 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     options || (options = { });
 
     var points = fabric.parsePointsAttribute(element.getAttribute('points')),
-        parsedAttributes = fabric.parseAttributes(element, fabric.Polygon.ATTRIBUTE_NAMES),
-        minX = min(points, 'x'),
-        minY = min(points, 'y');
+        parsedAttributes = fabric.parseAttributes(element, fabric.Polygon.ATTRIBUTE_NAMES);
 
-    minX = minX < 0 ? minX : 0;
-    minY = minX < 0 ? minY : 0;
+    var boundingRect = fabric.util.getBoundingRect(points);
+    var width = boundingRect.width;
+    var height = boundingRect.height;
+    options.top = boundingRect.y1 + height / 2;
+    options.left = boundingRect.x1 + width / 2;
 
     for (var i = 0, len = points.length; i < len; i++) {
-      // normalize coordinates, according to containing box (dimensions of which are passed via `options`)
-      points[i].x -= (options.width / 2 + minX) || 0;
-      points[i].y -= (options.height / 2 + minY) || 0;
+      // normalize coordinates, according to containing box (dimensions of which are calculated above)
+      points[i].x -= options.left;
+      points[i].y -= options.top;
     }
 
     return new fabric.Polygon(points, extend(parsedAttributes, options), true);
@@ -17726,7 +17767,7 @@ fabric.util.object.extend(fabric.Text.prototype, {
       callback && callback.call(context, img);
     };
     var img = new Image();
-    if (url && url.indexOf('data') === 0) {
+    if (url && (url instanceof Buffer || url.indexOf('data') === 0)) {
       img.src = img._src = url;
       callback && callback.call(context, img);
     }

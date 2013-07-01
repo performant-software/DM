@@ -127,12 +127,12 @@ atb.viewer.CanvasViewer.prototype.onCanvasAdded = function(event) {
 atb.viewer.CanvasViewer.prototype.getCompleteTitle = function() {
     var canvas = this.viewer.mainViewport.canvas;
     var canvasResource = this.databroker.getResource(canvas.getUri());
-    var title = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
+    var title = this.databroker.dataModel.getTitle(canvasResource) || 'Untitled canvas';
 
     var parentResourceUri = this.databroker.dataModel.findManifestsContainingCanvas(canvasResource.uri)[0];
     if (parentResourceUri) {
         var parentResource = this.databroker.getResource(parentResourceUri);
-        var parentTitle = parentResource.getOneProperty('dc:title');
+        var parentTitle = this.databroker.dataModel.getTitle(parentResource);
 
         if (title.indexOf(parentTitle) == -1) {
             title = parentTitle + ', ' + title;
@@ -363,7 +363,7 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var canvasUri = this.viewer.mainViewport.canvas.getUri();
     var canvasResource = this.databroker.getResource(canvasUri);
-    var canvasTitle = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
+    var canvasTitle = this.databroker.dataModel.getTitle(canvasResource) || 'Untitled canvas';
     
     var databroker = this.databroker;
     var body = databroker.dataModel.createText('New annotation on ' + canvasTitle);

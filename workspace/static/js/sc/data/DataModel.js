@@ -514,7 +514,7 @@ sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
     text.addProperty('dc:format', '"text/html"');
 
     if (opt_title) {
-        text.addProperty('dc:title', sc.util.Namespaces.quoteWrap(opt_title));
+        this.setTitle(text, opt_title);
     }
 
     if (opt_content) {
@@ -566,10 +566,25 @@ sc.data.DataModel.prototype.setTextContent = function(text, content) {
     text = this.databroker.getResource(text);
 
     // if (text.hasPredicate('cnt:chars')) {
-        text.setProperty('cnt:chars', '"' + content.replace('"', '\\"') + '"');
+        text.setProperty('cnt:chars', sc.util.Namespaces.wrapLiteral(content));
     // }
     // else {
     //     this.textContentByUri.set(text.uri, content);
     //     this.modifiedTextUris.add(text.uri);
     // }
+};
+
+sc.data.DataModel.prototype.getTitle = function(resource) {
+    resource = this.databroker.getResource(resource);
+
+    return resource.getOneProperty('dc:title') || resource.getOneProperty('rdfs:label') || '';
+};
+
+sc.data.DataModel.prototype.setTitle = function(resource, title) {
+    resource = this.databroker.getResource(resource);
+
+    var wrappedTitle = sc.util.Namespaces.wrapLiteral(title);
+
+    resource.setProperty('dc:title', wrappedTitle);
+    resource.setProperty('rdfs:label', wrappedTitle);
 };

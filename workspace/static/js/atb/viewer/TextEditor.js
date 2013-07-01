@@ -194,7 +194,7 @@ atb.viewer.TextEditor.prototype.saveContents = function (
     this.unsavedChanges = false;
 
     var resource = this.databroker.getResource(this.resourceId);
-    resource.setProperty('dc:title', '"' + this.getTitle() + '"');
+    this.databroker.dataModel.setTitle(resource, this.getTitle());
     this.databroker.dataModel.setTextContent(resource, this.getSanitizedHtml());
 
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
@@ -536,11 +536,11 @@ atb.viewer.TextEditor.prototype.dismissContextMenu = function(menu) {
 };
 
 atb.viewer.TextEditor.prototype.getTitle = function () {
-    return this.resource.getOneProperty('dc:title');
+    return this.databroker.dataModel.getTitle(this.resource);
 };
 
 atb.viewer.TextEditor.prototype.setTitle = function(title) {
-    this.resource.setProperty('dc:title', sc.util.Namespaces.quoteWrap(title));
+    this.databroker.dataModel.setTitle(this.resource, title);
     this.setDisplayTitle(title);
 };
 
@@ -560,7 +560,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
     if (resource.hasType('dctypes:Text')) {
         this.resourceId = resource.getUri();
         this.uri = resource.getUri();
-        this.setDisplayTitle(resource.getOneProperty('dc:title') || '');
+        this.setDisplayTitle(this.databroker.dataModel.getTitle(resource));
 
         this.databroker.dataModel.textContents(resource, function(contents, error) {
             if (contents) {
