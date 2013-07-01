@@ -51,6 +51,8 @@ goog.inherits(atb.widgets.WorkingResources, goog.events.EventTarget);
  * @param {?Function} opt_doAfter An optional function to call after the manifest has loaded.
  */
 atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter) {
+    this.uri = uri;
+
     var withManifest = function(manifest) {
         this.clear();
 
@@ -182,7 +184,7 @@ atb.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLo
     var uri = item.getUri();
     var resource = this.databroker.getResource(uri);
 
-    var title = resource.getOneProperty('dc:title');
+    var title = this.databroker.dataModel.getTitle(resource);
     if (title) {
         item.setTitle(title);
     }
@@ -276,7 +278,7 @@ atb.widgets.WorkingResources.prototype.updateFolio = function(folio) {
     var uri = folio.getUri();
     var resource = this.databroker.getResource(uri);
 
-    var title = resource.getOneProperty('dc:title');
+    var title = this.databroker.dataModel.getTitle(resource);
     if (title) {
         folio.setTitle(title);
     }
@@ -287,6 +289,12 @@ atb.widgets.WorkingResources.prototype.updateText = function(item) {
     var resource = this.databroker.getResource(uri);
 
     
+};
+
+atb.widgets.WorkingResources.prototype.refreshCurrentItems = function() {
+    goog.structs.forEach(this.itemsByUri, function(item, uri) {
+        this.refreshItem(item);
+    }, this);
 };
 
 atb.widgets.WorkingResources.prototype.refreshItem = function(item) {
