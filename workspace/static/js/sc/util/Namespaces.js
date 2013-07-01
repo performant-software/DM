@@ -344,7 +344,7 @@ sc.util.Namespaces.prototype.prefix = function(uri) {
     var guessedBaseUri = uri.substring(0, i);
     var matchedPrefix = this.prefixByUri.get(guessedBaseUri, null);
     if (matchedPrefix) {
-        matchedBaseUri = uri.substring(i, uri.length);
+        matchedBaseUri = guessedBaseUri;
     }
     else {
         goog.structs.every(this.uriByPrefix, function(baseUri, prefix) {
