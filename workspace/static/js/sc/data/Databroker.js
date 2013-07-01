@@ -784,9 +784,9 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
         null,
         null));
     uris.addAll(this.quadStore.subjectsSetMatchingQuery(
-        url,
-        this.namespaces.expand('ore', 'describes'),
         null,
+        this.namespaces.expand('ore', 'isDescribedBy'),
+        url,
         null));
     
     return sc.util.Namespaces.angleBracketStrip(uris.getValues());
