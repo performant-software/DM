@@ -19,7 +19,6 @@ def create_project_text(g, project_uri):
     project_g = Graph(rdfstore(), identifier=project_uri)
 
     # Get content and title out of request
-    print ns
     q = g.query("""SELECT ?title ?content 
                 WHERE {
                     ?t dc:title ?title .
@@ -50,7 +49,7 @@ def create_project_text_from_request(request, project_uri):
 
     # Parse body of request, catching ParserError which breaks request
     try:
-        g.parse(request.body)
+        g.parse(data=request.body)
     except ParserError:
         return HttpResponse(status=400, content="Unable to parse serialization.")
     else:
@@ -111,17 +110,15 @@ def update_project_text(g, p_uri, t_uri):
     # Correctly format project uri and get project graph
     project_uri = uris.uri('semantic_store_projects', uri=p_uri)
     project_g = Graph(rdfstore(), identifier=project_uri)
+    text_uri = URIRef(t_uri)
 
     # Get content and title out of request
     q = g.query("""SELECT ?content ?title
                 WHERE{
                     ?t cnt:chars ?content .
                     ?t dc:title ?title .
-                    ?t rdf:type cnt:ContentAsText .
-                })""", initNs=ns)
-
-    # Make text uri a URIRef (so Graph will understand)
-    text_uri = URIRef(t_uri)
+                    ?t rdf:type dctypes:Text .
+                }""", initNs=ns, initBindings={'t': text_uri})
 
     with transaction.commit_on_success():
         for content, title in q:
@@ -142,7 +139,7 @@ def update_project_text_from_request(request, project_uri, text_uri):
 
     # Parse body of request, catching ParserError which breaks request
     try:
-        g.parse(request.body)
+        g.parse(data=request.body)
     except ParserError:
         return HttpResponse(status=400, content="Unable to parse serialization.")
     else:

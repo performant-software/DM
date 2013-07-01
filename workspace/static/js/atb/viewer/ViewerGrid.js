@@ -158,3 +158,11 @@ atb.viewer.ViewerGrid.prototype.closeAllContainers = function() {
         container.close();
     }, this);
 };
+
+atb.viewer.ViewerGrid.prototype.getCount = function() {
+    return this.containers.length;
+};
+
+atb.viewer.ViewerGrid.prototype.isEmpty = function() {
+    return this.getCount() == 0;
+};

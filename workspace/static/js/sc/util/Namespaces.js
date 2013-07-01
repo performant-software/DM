@@ -30,7 +30,8 @@ sc.util.Namespaces.DEFAULT_NAMESPACES = {
     'owl': 'http://www.w3.org/2002/07/owl#',
     'media-types': 'http://purl.org/NET/mediatypes/',
     'perm': 'http://vocab.ox.ac.uk/perm#',
-    'foaf': 'http://xmlns.com/foaf/0.1/'
+    'foaf': 'http://xmlns.com/foaf/0.1/',
+    'dm': 'http://dm.drew.edu/ns/'
 };
 
 sc.util.Namespaces.prototype.addNamespace = function (prefix, uri) {
@@ -61,7 +62,8 @@ sc.util.Namespaces.isAngleBracketWrapped = function(str) {
 sc.util.Namespaces.angleBracketStrip = function (str) {
     var remover = function(str) {
         if (sc.util.Namespaces.isAngleBracketWrapped(str)) {
-            return str.substring(1, str.length - 1);
+            str = str.substring(1, str.length - 1);
+            return str.replace(/\\>/g, '>');
         }
         else {
             return str;
@@ -91,7 +93,7 @@ sc.util.Namespaces.angleBracketWrap = function(str) {
         return str;
     }
     else {
-        return '<' + str + '>';
+        return '<' + str.replace(/>/g, '\\>') + '>';
     }
 };
 
@@ -104,7 +106,7 @@ sc.util.Namespaces._unescapeLiteral = function(str) {
 };
 
 sc.util.Namespaces.quoteWrap = function(str) {
-    str = sc.util.Namespaces._escapeLiteral;
+    str = sc.util.Namespaces._escapeLiteral(str);
     return ['"', str, '"'].join('');
 };
 
@@ -180,6 +182,18 @@ sc.util.Namespaces.wrapLiteral = function(literal) {
 
 sc.util.Namespaces.unwrapLiteral = function(literal) {
     return sc.util.Namespaces.stripQuotesAndDatatype(literal);
+};
+
+sc.util.Namespaces.isWrappedUri = function(str) {
+    return this.isAngleBracketWrapped(str);
+};
+
+sc.util.Namespaces.wrapUri = function(uri) {
+    return sc.util.Namespaces.angleBracketWrap(uri);
+};
+
+sc.util.Namespaces.unwrapUri = function(uri) {
+    return sc.util.Namespaces.angleBracketStrip(uri);
 };
 
 sc.util.Namespaces.xmlSafeCharsByChar = {

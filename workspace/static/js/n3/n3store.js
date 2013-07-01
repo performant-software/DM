@@ -221,5 +221,5 @@ N3Store.prototype = {
     }
     this._entities[name] = this._entityCount++;
     return name;
-  },
+  }
 };

@@ -1,7 +1,6 @@
 goog.provide('sc.canvas.DragFeatureControl');
 
 goog.require('sc.canvas.FeatureControl');
-goog.require('Raphael');
 
 /**
  * Allows features on a canvas to be dragged with the mouse.

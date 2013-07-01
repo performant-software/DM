@@ -6,8 +6,8 @@ goog.require('sc.data.QuadStore');
 sc.data.TurtleSerializer = function(databroker) {
     sc.data.Serializer.call(this, databroker);
 
-    this.compact = false;
-    this.indentString = '\t';
+    this.compact = true;
+    this.indentString = '  ';
 };
 goog.inherits(sc.data.TurtleSerializer, sc.data.Serializer);
 
@@ -16,19 +16,23 @@ sc.data.TurtleSerializer.prototype.serializableTypes = new goog.structs.Set([
     'text/n3'
 ]);
 
-sc.data.TurtleSerializer.prototype.serialize = function(quads, opt_format) {
-    var lines = [];
+sc.data.TurtleSerializer.prototype.serialize = function(quads, opt_format, handler) {
+    setTimeout(function() {
+        var lines = [];
 
-    lines.push(this.getPrefixesString(this.databroker.namespaces));
+        lines.push(this.getPrefixesString(this.databroker.namespaces));
 
-    lines.push(this.getTriplesString(quads));
+        lines.push(this.getTriplesString(quads));
 
-    if (this.compact) {
-        return lines.join('\n');
-    }
-    else {
-        return lines.join('\n\n');
-    }
+        if (this.compact) {
+            var data = lines.join('\n');
+        }
+        else {
+            var data = lines.join('\n\n');
+        }
+
+        handler(data, null);
+    }.bind(this), 1);
 };
 
 sc.data.TurtleSerializer.prototype.getTriplesString = function(quads) {
@@ -46,12 +50,12 @@ sc.data.TurtleSerializer.prototype.getTriplesString = function(quads) {
             var objects = quadStore.objectsSetMatchingQuery(subject, predicate, null, null);
             var objectsString;
             if (objects.getCount() == 1) {
-                objectsString = [(this.compact ? ' ' : '\n' + this.getIndent(2)), this.formatValue(objects.getValues()[0])].join('');
+                objectsString = ' ' + this.formatValue(objects.getValues()[0]);
             }
             else {
                 objectEntries = [];
                 goog.structs.forEach(objects, function(object) {
-                    objectEntries.push([(this.compact ? ' ' : '\n' + this.getIndent(2)), object].join(''));
+                    objectEntries.push((this.compact ? ' ' : '\n' + this.getIndent(2)) + object);
                 }, this);
                 objectsString = objectEntries.join(',');
             }
@@ -77,17 +81,17 @@ sc.data.TurtleSerializer.prototype.getPrefixesString = function(namespaces) {
         lines.push('@prefix ' + prefix + ': ' + sc.util.Namespaces.angleBracketWrap(uri) + ' .');
     }, this);
 
-    if (this.compact) {
-        return lines.join(' ');
-    }
-    else {
-        return lines.join('\n');
-    }
+    return lines.join('\n');
 };
 
 sc.data.TurtleSerializer.prototype.formatValue = function(value) {
     if (sc.util.Namespaces.isAngleBracketWrapped(value)) {
-        return this.databroker.namespaces.prefix(value);
+        if (value == '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
+            return 'a';
+        }
+        else {
+            return this.databroker.namespaces.prefix(value);
+        }
     }
     else if (sc.util.Namespaces.isLiteral(value)) {
         var lastIndexOfQuote = value.lastIndexOf('"')

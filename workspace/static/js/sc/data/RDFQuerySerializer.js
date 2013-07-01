@@ -14,17 +14,26 @@ sc.data.RDFQuerySerializer.prototype.serializableTypes = new goog.structs.Set([
 
 sc.data.RDFQuerySerializer.prototype.defaultFormat = 'application/rdf+xml';
 
-sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format) {
-    var rdf = jQuery.rdf();
-    this.bindNamespaces(rdf);
-    
-    for (var i=0, len=quads.length; i<len; i++) {
-        rdf.add(this.quadTojQueryTriple(quads[i]));
-    }
-    
-    return rdf.databank.dump({
-        format: opt_format || this.defaultFormat
-    });
+sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, handler) {
+    window.setTimeout(function() {
+        var rdf = jQuery.rdf();
+        this.bindNamespaces(rdf);
+
+        try {
+            for (var i=0, len=quads.length; i<len; i++) {
+                rdf.add(this.quadTojQueryTriple(quads[i]));
+            }
+            
+            var dump = rdf.databank.dump({
+                format: opt_format || this.defaultFormat
+            });
+
+            handler(dump, null);
+        }
+        catch (e) {
+            handler(null, e);
+        }
+    }.bind(this), 1);
 };
 
 sc.data.RDFQuerySerializer.prototype.quadTojQueryTriple = function(quad) {
