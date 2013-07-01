@@ -125,13 +125,13 @@ sc.ProjectManager.prototype.clearProjectDropdown = function(){
 */
 sc.ProjectManager.prototype.selectProject = function(e){
     // If no open resources, does not need to warn about closing them!
-    /*if (this.viewerGrid.isEmpty()){
+    if (this.viewerGrid.isEmpty()){
         this.setTitle($(e).text())
         this.databroker.setCurrentProject(e.id);
         this.workingResources.loadManifest(e.id);
     }
 
-    else*/{
+    else{
         // Prompts to reload current project when it is selected
         if (this.databroker.currentProject == e.id){
             if(confirm("You have selected the current project!\nWould you like to reload it? Doing so will close all resources.")){
@@ -147,6 +147,7 @@ sc.ProjectManager.prototype.selectProject = function(e){
 }
 
 sc.ProjectManager.prototype.selectThisProject = function(e){
+	this.viewerGrid.closeAllContainers()
 	this.databroker.setCurrentProject(e.id)
 	this.setTitle($(e).text())
 	this.workingResources.loadManifest(e.id)
