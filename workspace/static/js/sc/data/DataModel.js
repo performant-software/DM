@@ -83,14 +83,17 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(reso
         return sc.util.Namespaces.angleBracketStrip(annoIds.getValues());
     }
     else {
-        var type = this.databroker.namespaces.autoExpand(opt_annoType);
+        var typeCheckedAnnoIds = [];
 
-        var typedAnnoIds = this.databroker.getUrisSetWithProperty('rdf:type', type);
-        
-        var intersection = typedAnnoIds.intersection(annoIds);
-        return sc.util.Namespaces.angleBracketStrip(intersection.getValues());
-        // Because of google's set implementation, this particular way
-        // of finding the intersection is quite efficient
+        goog.structs.forEach(annoIds, function(annoId) {
+            var anno = this.databroker.getResource(annoId);
+
+            if (anno.hasType(opt_annoType)) {
+                typeCheckedAnnoIds.push(anno.uri);
+            }
+        }, this);
+
+        return typeCheckedAnnoIds;
     }
 };
 
@@ -109,13 +112,17 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resour
         return annoIds.getValues();
     }
     else {
-        var type = this.databroker.namespaces.autoExpand(opt_annoType);
+        var typeCheckedAnnoIds = [];
 
-        var typedAnnoIds = this.databroker.getUrisSetWithProperty('rdf:type', type);
+        goog.structs.forEach(annoIds, function(annoId) {
+            var anno = this.databroker.getResource(annoId);
 
-        var intersection = typedAnnoIds.intersection(annoIds);
-        return sc.util.Namespaces.angleBracketStrip(intersection.getValues()); // Because of google's set implementation, this particular way
-        // of finding the intersection is quite efficient
+            if (anno.hasType(opt_annoType)) {
+                typeCheckedAnnoIds.push(anno.uri);
+            }
+        }, this);
+
+        return typeCheckedAnnoIds;
     }
 };
 
@@ -153,6 +160,14 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
     return sc.util.Namespaces.angleBracketStrip(imageUris.getValues());
 };
 
+sc.data.DataModel.prototype.getResourcePartUris = function(uri) {
+    uri = sc.util.Namespaces.angleBracketWrap(uri);
+    
+    return sc.util.Namespaces.angleBracketStrip(
+        this.databroker.getUrisWithProperty(sc.data.DataModel.VOCABULARY.isPartOf, uri)
+    );
+};
+
 sc.data.DataModel.prototype.findConstraintUrisOnResource = function(uri) {
     var resourceParts = this.databroker.getResourcePartUris(uri);
 
@@ -166,19 +181,20 @@ sc.data.DataModel.prototype.findConstraintUrisOnResource = function(uri) {
         annoUrisSet.addAll(annoIds);
     }
 
-    var annoUris = annoUrisSet.getValues();
     var bodyUris = [];
-    for (var i = 0, len = annoUris.length; i < len; i++) {
-        var annoUri = annoUris[i];
+    goog.structs.forEach(annoUrisSet, function(annoUri) {
+        var anno = this.databroker.getResource(annoUri);
 
-        var bodies = this.databroker.getPropertiesForResource(annoUri, sc.data.DataModel.VOCABULARY.hasBody);
-        bodyUris = bodyUris.concat(bodies);
-    }
+        goog.structs.forEach(anno.getProperties('oa:hasBody'), function(bodyUri) {
+            var body = this.databroker.getResource(bodyUri);
 
-    var typedConstraintIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.constraint);
+            if (body.hasType(sc.data.DataModel.VOCABULARY.constraint)) {
+                bodyUris.push(body.uri);
+            }
+        }, this);
+    }, this);
 
-    var constraintIds = typedConstraintIds.intersection(bodyUris);
-    return sc.util.Namespaces.angleBracketStrip(constraintIds.getValues());
+    return bodyUris;
 };
 
 //Note(tandres): I can't find this used anywhere, maybe should be deprecated
@@ -207,17 +223,13 @@ sc.data.DataModel.prototype.findConstraintValuesOnResource = function(uri) {
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findAggregationContentsUris = function(aggregationUri) {
-    aggregationUri = sc.util.Namespaces.angleBracketWrap(aggregationUri);
-    
-    return sc.util.Namespaces.angleBracketStrip(this.databroker.getPropertiesForResource(aggregationUri, 'ore:aggregates'));
+    return this.databroker.getResource(aggregationUri).getProperties('ore:aggregates');
 };
 
 sc.data.DataModel.prototype.findAggregationContentsUrisForRepoBrowser = function(aggregationUri) {
-    var aggregation = this.databroker.getResource(aggregationUri);
-
     var uris = [];
 
-    var contentUris = aggregation.getProperties('ore:aggregates');
+    var contentUris = this.findAggregationContentsUris(aggregationUri);
     goog.structs.forEach(contentUris, function(contentUri) {
         var contentResource = this.databroker.getResource(contentUri);
 
@@ -251,38 +263,33 @@ sc.data.DataModel.prototype.findManuscriptAggregationUris = function(manifestUri
 };
 
 sc.data.DataModel.prototype.findManuscriptSequenceUris = function(manifestUri) {
-    manifestUri = sc.util.Namespaces.angleBracketWrap(manifestUri);
-    
-    var aggregateUris = this.databroker.getPropertiesForResource(manifestUri, 'ore:aggregates');
+    var manifest = this.databroker.getResource(manifestUri);
+    var sequenceUris = new goog.structs.Set();
 
-    var allSequences = new goog.structs.Set();
-    goog.structs.forEach(sc.data.DataModel.VOCABULARY.sequenceTypes, function(sequenceType) {
-        allSequences.addAll(
-            this.databroker.quadStore.subjectsSetMatchingQuery(
-                null,
-                this.databroker.namespaces.expand('rdf', 'type'),
-                sequenceType,
-                null)
-        );
+    goog.structs.forEach(manifest.getProperties('ore:aggregates'), function(aggregateUri) {
+        var aggregateResource = this.databroker.getResource(aggregateUri);
+
+        if (aggregateResource.hasAnyType(sc.data.DataModel.VOCABULARY.sequenceTypes)) {
+            sequenceUris.add(aggregateResource.uri);
+        }
     }, this);
 
-    var intersection = allSequences.intersection(aggregateUris);
-    return sc.util.Namespaces.angleBracketStrip(intersection.getValues());
+    return sequenceUris.getValues();
 };
 
 sc.data.DataModel.prototype.findManuscriptImageAnnoUris = function(manifestUri) {
-     manifestUri = sc.util.Namespaces.angleBracketWrap(manifestUri);
-    
-    var aggregateUris = this.databroker.getPropertiesForResource(manifestUri, 'ore:aggregates');
+    var manifest = this.databroker.getResource(manifestUri);
+    var imageAnnoUris = new goog.structs.Set();
 
-    var allImageAnnos = this.databroker.quadStore.subjectsSetMatchingQuery(
-        null,
-        this.databroker.namespaces.expand('rdf', 'type'),
-        this.databroker.namespaces.expand('dms', 'ImageAnnotationList'),
-        null);
+    goog.structs.forEach(manifest.getProperties('ore:aggregates'), function(aggregateUri) {
+        var aggregateResource = this.databroker.getResource(aggregateUri);
 
-    var intersection = allImageAnnos.intersection(aggregateUris);
-    return sc.util.Namespaces.angleBracketStrip(intersection.getValues());
+        if (aggregateResource.hasType('dms:ImageAnnotationList')) {
+            imageAnnoUris.add(aggregateResource.uri);
+        }
+    }, this);
+
+    return imageAnnoUris.getValues();
 };
 
 sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) {
@@ -291,13 +298,13 @@ sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) 
     var manifestUris = new goog.structs.Set();
 
     this.databroker.quadStore.forEachQuadMatchingQuery(
-        null, this.databroker.namespaces.autoExpand('ore:aggregates'), canvasUri, null,
+        null, this.databroker.namespaces.expand('ore', 'aggregates'), canvasUri, null,
         function(quad) {
             var sequence = this.databroker.getResource(quad.subject);
 
             if (sequence.hasAnyType(sc.data.DataModel.VOCABULARY.sequenceTypes)) {
                 this.databroker.quadStore.forEachQuadMatchingQuery(
-                    null, this.databroker.namespaces.autoExpand('ore:aggregates'), quad.subject, null,
+                    null, this.databroker.namespaces.expand('ore', 'aggregates'), quad.subject, null,
                     function(quad) {
                         var manifest = this.databroker.getResource(quad.subject);
 
