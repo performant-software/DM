@@ -13,11 +13,11 @@ sc.data.Serializer.prototype.serializableTypes = new goog.structs.Set([]);
 
 /**
  * @abstract
- * @param  {Array.<sc.data.Quad>}  quads      The quads to serialize.
- * @param  {String|null|undefined} opt_format The mime type of the desired serialization (if not the default).
- * @return {*}                                The serialized data.
+ * @param {Array.<sc.data.Quad>}     quads      The quads to serialize.
+ * @param {String|null|undefined}    opt_format The mime type of the desired serialization (if not the default).
+ * @param {function(*, Object|null)} handler    A function to be called with the data and a possible error.
  */
-sc.data.Serializer.prototype.serialize = function(quads, opt_format) {
+sc.data.Serializer.prototype.serialize = function(quads, opt_format, handler) {
     throw "Abstract method not implemented";
 };
 

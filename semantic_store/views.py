@@ -22,6 +22,14 @@ from .annotation_views import create_or_update_annotations, get_annotations, \
 from .projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
 from semantic_store import uris
 
+from project_texts import (
+    create_project_text_from_request,
+    read_project_text,
+    update_project_text_from_request,
+    remove_project_text
+)
+
+
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 
@@ -254,23 +262,23 @@ def add_all_users(graph):
 def remove_triples(request, uri):
     g = delete_triples_from_project(request, uri)
 
-    return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+    return negotiated_graph_response(request, g)
 
 def project_texts(request, project_uri, text_uri):
     if request.method == 'POST':
         g = create_project_text_from_request(request, project_uri)
-        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+        return negotiated_graph_response(request, g)
 
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
-        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+        return negotiated_graph_response(request, g)
 
     elif request.method == 'PUT':
         g = update_project_text_from_request(request, project_uri, text_uri)
-        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+        return negotiated_graph_response(request, g)
 
     elif request.method == 'DELETE':
-        g = delete_project_text(project_uri, text_uri)
-        return HttpResponse(g.serialize(), mimetype="application/xhtml+xml")
+        g = remove_project_text(project_uri, text_uri)
+        return negotiated_graph_response(request, g)
 
 

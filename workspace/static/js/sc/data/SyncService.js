@@ -102,41 +102,40 @@ sc.data.SyncService.prototype.restUri = function(projectUri, resType, resUri, pa
 
 sc.data.SyncService.prototype.getModifiedResourceUris = function() {
     var subjectsOfNewQuads = this.databroker.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
+    subjectsOfNewQuads.addAll(this.databroker.deletedQuadsStore.subjectsSetMatchingQuery(null, null, null, null));
 
     return subjectsOfNewQuads.difference(this.databroker.newResourceUris);
 };
 
 sc.data.SyncService.prototype.postNewResources = function() {
-    var xhrs = [];
-
     goog.structs.forEach(this.databroker.newResourceUris, function(uri) {
-        var xhr = this.sendResource(uri, 'POST');
-
-        if (xhr) {
-            xhr.done(function() {
-                this.databroker.newResourceUris.remove(uri);
-            }.bind(this));
-            xhrs.push(xhr);
-        }
-        else {
+        this.sendResource(uri, 'POST', function() {
             this.databroker.newResourceUris.remove(uri);
-        }
+        }.bind(this));
     }, this);
-
-    return xhrs;
 };
 
-sc.data.SyncService.prototype.sendResource = function(uri, method) {
+sc.data.SyncService.prototype.putModifiedResources = function() {
+    goog.structs.forEach(this.getModifiedResourceUris(), function(uri) {
+        this.sendResource(uri, 'PUT');
+    }, this);
+};
+
+sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {
     var resource = this.databroker.getResource(uri);
+    var dataModel = this.databroker.dataModel;
 
     var resType;
     var quadsToPost = [];
+    var quadsToRemove = [];
     var url;
 
     if (resource.hasType('dctypes:Text')) {
         resType = sc.data.SyncService.RESTYPE.text;
 
         quadsToPost = this.databroker.quadStore.query(resource.bracketedUri, null, null, null);
+        // The back end just overwrites with new data for texts, so we can just ignore quad deletion
+        this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri);
 
         url = this.restUrl(this.databroker.currentProject, resType,
                            sc.util.Namespaces.angleBracketStrip(uri), null);
@@ -144,17 +143,18 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
     else if (resource.hasType('oac:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.annotation;
 
-        quadsToPost = this.databroker.dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
+        quadsToPost = dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
+        // The back end just overwrites with new data for texts, so we can just ignore quad deletion
+        this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri, null, null, null);
 
         url = this.restUrl(this.databroker.currentProject, resType, null, null);
     }
     else if (resource.hasType('ore:Aggregation')) {
-        console.log('trying to sync ' + resource);
         if (goog.array.contains(this.databroker.allProjects, resource.uri)) {
-            console.log('identified ' + resource.uri + 'as project')
             var resType = sc.data.SyncService.RESTYPE.project;
 
-            quadsToPost = this.databroker.dataModel.findQuadsToSyncForProject(resource);
+            quadsToPost = dataModel.findQuadsToSyncForProject(resource);
+            quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
         }
@@ -164,44 +164,58 @@ sc.data.SyncService.prototype.sendResource = function(uri, method) {
         return;
     }
 
-    var format = 'application/rdf+xml';
+    if (quadsToPost.length > 0) {
+        this.sendQuads(quadsToPost, url, method, null, function() {
+            // Success
+            if (method == 'PUT' || method == 'POST') {
+                this.databroker.newQuadStore.removeQuads(quadsToPost);
+            }
+            if (goog.isFunction(successHandler)) {
+                successHandler();
+            }
+        }.bind(this), function() {
+            // Error handling here
+        }.bind(this));
+    }
 
-    var dataDump = this.databroker.serializeQuads(quadsToPost, format);
-
-    console.log('about to send resource', uri, dataDump);
-
-    var xhr = jQuery.ajax({
-        type: method,
-        url: url,
-        success: function() {
-            console.log('successful sync', arguments);
-            this.databroker.newQuadStore.removeQuads(quadsToPost);
-        }.bind(this),
-        error: function() {
-            console.error('unsuccessful sync', arguments);
-        },
-        data: dataDump,
-        processData: !jQuery.isXMLDoc(dataDump),
-        headers: {
-            'X-CSRFToken': this.getCsrfToken()
-        }
-    });
-
-    return xhr;
+    if (quadsToRemove.length > 0)  {
+        this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
+            // Success
+            this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
+        }.bind(this), function() {
+            // Error
+        }.bind(this));
+    }
 };
 
-sc.data.SyncService.prototype.putModifiedResources = function() {
-    var modifiedUris = this.getModifiedResourceUris();
-
-    var xhrs = [];
-
-    goog.structs.forEach(modifiedUris, function(uri) {
-        var xhr = this.sendResource(uri, 'PUT');
-
-        xhrs.push(xhr);
-    }, this);
-
-    return xhrs;
+sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, successHandler, errorHandler) {
+    successHandler = successHandler || jQuery.noop;
+    errorHandler = errorHandler || jQuery.noop;
+    format = format || 'application/rdf+xml';
+    this.databroker.serializeQuads(quads, format, function(data, error) {
+        if (data != null) {
+            jQuery.ajax({
+                type: method,
+                url: url,
+                success: function() {
+                    successHandler.apply(this, arguments);
+                }.bind(this),
+                error: function() {
+                    console.error('unsuccessful sync', arguments);
+                    errorHandler.apply(this, arguments);
+                },
+                data: data,
+                processData: !jQuery.isXMLDoc(data),
+                headers: {
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                contentType: format + '; charset=UTF-8'
+            });
+        }
+        else if (error) {
+            errorHandler(error);
+        }
+    }.bind(this));
 };
 
 sc.data.SyncService.prototype.getCsrfToken = function() {

@@ -45,7 +45,13 @@ sc.data.DataModel.VOCABULARY = {
     sequenceTypes: ['<http://dms.stanford.edu/ns/Sequence>', '<http://www.shared-canvas.org/ns/Sequence>'],
     imageTypes: ['<http://dms.stanford.edu/ns/Image>', '<http://dms.stanford.edu/ns/ImageBody>', '<http://purl.org/dc/dcmitype/Image>'],
     imageChoiceTypes: ['<http://dms.stanford.edu/ns/ImageChoice>'],
-    option: '<http://dms.stanford.edu/ns/option>'
+    textTypes: ['<http://purl.org/dc/dcmitype/Text>'],
+    option: '<http://dms.stanford.edu/ns/option>',
+    metadataPredicates: [
+        '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
+        '<http://www.openarchives.org/ore/terms/isDescribedBy>',
+        '<http://purl.org/dc/elements/1.1/title>'
+    ]
 };
 
 /**
@@ -441,10 +447,11 @@ sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_delete
     }
 };
 
-sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
+sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri, opt_quadStore) {
     var anno = this.databroker.getResource(uri);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
 
-    var quadsToPost = this.databroker.quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
+    var quadsToPost = quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
 
     var targetUris = anno.getProperties('oa:hasTarget');
     var bodyUris = anno.getProperties('oa:hasBody');
@@ -452,11 +459,11 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
     for (var i=0, len=targetUris.length; i<len; i++) {
         var target = this.databroker.getResource(targetUris[i]);
 
-        quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(target.bracketedUri, null, null, null));
+        quadsToPost.addAll(quadStore.queryReturningSet(target.bracketedUri, null, null, null));
 
         if (target.hasType('oa:SpecificResource')) {
             goog.structs.forEach(target.getProperties('oa:hasSelector'), function(selectorUri) {
-                quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(
+                quadsToPost.addAll(quadStore.queryReturningSet(
                     sc.util.Namespaces.angleBracketWrap(selectorUri), null, null, null));
             }, this);
         }
@@ -465,35 +472,24 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri) {
     for (var i=0, len=bodyUris.length; i<len; i++) {
         var body = this.databroker.getResource(bodyUris[i]);
 
-        quadsToPost.addAll(this.databroker.quadStore.queryReturningSet(body.bracketedUri, null, null, null));
+        quadsToPost.addAll(quadStore.queryReturningSet(body.bracketedUri, null, null, null));
     }
 
     return quadsToPost.getValues();
 };
 
-sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project) {
+sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project, opt_quadStore) {
     project = this.databroker.getResource(project);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
 
-    var quads = this.databroker.quadStore.query(project.bracketedUri, null, null, null);
+    var quads = quadStore.query(project.bracketedUri, null, null, null);
 
-    var contentUris = new goog.structs.Set();
-    contentUris.addAll(project.getProperties('ore:aggregates'));
-    contentUris.addAll(project.getProperties('perm:hasPermissionOver'));
-
-    goog.structs.forEach(contentUris, function(contentUri) {
+    goog.structs.forEach(project.getProperties('ore:aggregates'), function(contentUri) {
         var contentResource = this.databroker.getResource(contentUri);
-        quads = quads.concat(this.databroker.quadStore.query(
-            contentResource.bracketedUri,
-            this.databroker.namespaces.expand('ore', 'isDescribedBy'),
-            null, null));
-        quads = quads.concat(this.databroker.quadStore.query(
-            contentResource.bracketedUri,
-            this.databroker.namespaces.expand('rdf', 'type'),
-            null, null));
-        quads = quads.concat(this.databroker.quadStore.query(
-            contentResource.bracketedUri,
-            this.databroker.namespaces.expand('dc', 'title'),
-            null, null));
+
+        goog.structs.forEach(sc.data.DataModel.VOCABULARY.metadataPredicates, function(predicate) {
+            quads = quads.concat(quadStore.query(contentResource.bracketedUri, predicate, null, null))
+        }, this);
     }, this);
 
     return quads;

@@ -330,31 +330,16 @@ sc.data.Databroker.prototype.dumpQuadStore = function(opt_outputType) {
     return this.dumpQuads(this.quadStore.getQuads(), opt_outputType);
 };
 
-sc.data.Databroker.prototype.serializeQuads = function(quads, opt_format) {
+sc.data.Databroker.prototype.serializeQuads = function(quads, opt_format, handler) {
     var format = opt_format || 'application/rdf+xml';
 
-    var output = null;
-
-    var success = false;
     var serializers = this.serializersByType.get(format);
     for (var i=0, len=serializers.length; i<len; i++) {
         var serializer = serializers[i];
 
-        try {
-            output = serializer.serialize(quads, format);
-            success = true;
-            break;
-        }
-        catch (e) {
-            console.warn('Serializer', serializer, 'failed on quads', quads, 'with error', e);
-        }
+        serializer.serialize(quads, opt_format, handler);
+        break;
     }
-
-    if (!success) {
-        console.error('Quads could not be serialized');
-    }
-
-    return output;
 };
 
 /**
@@ -591,6 +576,7 @@ sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
     }, this);
 
     var serializer = new sc.data.TurtleSerializer(this);
+    serializer.compact = false;
     return serializer.getTriplesString(quads);
 };
 
@@ -904,14 +890,15 @@ sc.data.Databroker.prototype.getCurrentProject = function() {
  * Returns "false" if invalid project uri
 */
 sc.data.Databroker.prototype.setCurrentProject = function(uri) {
-    var isValid = false
-    for (var i = 0; i < this.allProjects.length; i++) {
-        if (this.allProjects[i] == uri) isValid = true;
-    };
+    // var isValid = false
+    // for (var i = 0; i < this.allProjects.length; i++) {
+    //     if (this.allProjects[i] == uri) isValid = true;
+    // };
     
-    if (isValid) this.currentProject = uri;
+    // if (isValid) this.currentProject = uri;
     
-    return isValid;
+    // return isValid;
+    this.currentProject = uri;
 };
 
 sc.data.Databroker.prototype.getAllProjects = function() {
@@ -930,6 +917,8 @@ sc.data.Databroker.prototype.addNewProject = function(uri) {
 };
 
 sc.data.Databroker.prototype.addResourceToCurrentProject = function(resource) {
+    goog.asserts.assert(this.currentProject != null, 'The current project is null');
+
     var project = this.getResource(this.currentProject);
     project.addProperty('ore:aggregates', resource);
 };
