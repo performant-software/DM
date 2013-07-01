@@ -25,6 +25,8 @@ from semantic_store import uris
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 
+from django.db import connection
+
 
 def repositories(request, uri=None):
     pass
@@ -111,38 +113,44 @@ def resources(request, uri, ext=None):
         perms = []
 
     uri = uri.rstrip('/')
-    try:
-        g = Graph(store=rdfstore(), identifier=URIRef(uri))
+# try:
+    store_g = Graph(store=rdfstore(), identifier=URIRef(uri))
+    g = Graph()
+    g += store_g
+    store_g.close()
+    if len(g) > 0:
+        for i in perms:
+            anno_uri = settings.URI_MINT_BASE \
+                + "/projects/" + i.identifier \
+                + "/resources/" + uri \
+                + "/annotations/"
+            anno_url = reverse('semantic_store_project_annotations', 
+                               kwargs={'project_uri': i.identifier}) \
+                               + "?uri=" + uri
+            g.add((URIRef(uri), NS.ore['aggregates'], URIRef(anno_uri)))
+            g.add((URIRef(anno_uri), NS.ore['isDescribedBy'], URIRef(anno_url)))
+            g.add((URIRef(anno_uri), NS.rdf['type'], NS.ore['Aggregation']))
+            g.add((URIRef(anno_uri), NS.rdf['type'], NS.rdf['List']))
+            g.add((URIRef(anno_uri), NS.rdf['type'], NS.dms['AnnotationList']))
+        return negotiated_graph_response(request, g)
+    else:
+        main_graph_store = ConjunctiveGraph(store=rdfstore(), 
+                                      identifier=default_identifier)
+        main_graph = Graph()
+        main_graph += main_graph_store
+        main_graph_store.close()
+        g = Graph()
+        bind_namespaces(g)
+        for t in main_graph.triples((URIRef(uri), None, None)):
+            g.add(t)
         if len(g) > 0:
-            for i in perms:
-                anno_uri = settings.URI_MINT_BASE \
-                    + "/projects/" + i.identifier \
-                    + "/resources/" + uri \
-                    + "/annotations/"
-                anno_url = reverse('semantic_store_project_annotations', 
-                                   kwargs={'project_uri': i.identifier}) \
-                                   + "?uri=" + uri
-                g.add((URIRef(uri), NS.ore['aggregates'], URIRef(anno_uri)))
-                g.add((URIRef(anno_uri), NS.ore['isDescribedBy'], URIRef(anno_url)))
-                g.add((URIRef(anno_uri), NS.rdf['type'], NS.ore['Aggregation']))
-                g.add((URIRef(anno_uri), NS.rdf['type'], NS.rdf['List']))
-                g.add((URIRef(anno_uri), NS.rdf['type'], NS.dms['AnnotationList']))
             return negotiated_graph_response(request, g)
         else:
-            main_graph = ConjunctiveGraph(store=rdfstore(), 
-                                          identifier=default_identifier)
-            g = Graph()
-            bind_namespaces(g)
-            for t in main_graph.triples((URIRef(uri), None, None)):
-                g.add(t)
-            if len(g) > 0:
-                return negotiated_graph_response(request, g)
-            else:
-                return HttpResponseNotFound()
-    except Exception as e:
-        print e
-        connection._rollback()
-        raise e
+            return HttpResponseNotFound()
+    # except Exception as e:
+        # print e
+        #transaction.rollback_unless_managed()
+        # raise e
 
 
 def add_working_resource(request, uri):
@@ -223,7 +231,7 @@ def add_all_users(graph):
                         WHERE {
                             ?user perm:hasPermissionOver ?project .
                             ?user foaf:mbox ?email .
-                        }""")
+                        }""", initNs = ns)
 
     for q in query:
         username = ""

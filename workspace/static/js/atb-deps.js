@@ -100,6 +100,7 @@ goog.addDependency('../../../raphael/raphael-min.js', ['Raphael'], []);
 goog.addDependency('../../../raphael/raphael.export.js', ['Raphael.export'], []);
 goog.addDependency('../../../sc/BreadCrumbs.js', ['sc.BreadCrumbs'], ['jquery.jQuery']);
 goog.addDependency('../../../sc/CommentViewer.js', ['sc.CommentViewer'], ['goog.dom.DomHelper', 'goog.events.EventTarget', 'goog.structs.Map', 'goog.ui.AnimatedZippy']);
+goog.addDependency('../../../sc/ProjectManager.js', ['sc.ProjectManager'], ['goog.dom', 'jquery.jQuery']);
 goog.addDependency('../../../sc/RepoBrowser.js', ['sc.RepoBrowser'], ['goog.events.Event', 'goog.events.EventTarget', 'jquery.jQuery', 'jquery.popout', 'jquery.rdfquery', 'sc.Array', 'sc.BreadCrumbs', 'sc.RepoBrowserFolio', 'sc.RepoBrowserItem', 'sc.RepoBrowserManuscript', 'sc.data.Databroker']);
 goog.addDependency('../../../sc/RepoBrowserFolio.js', ['sc.RepoBrowserFolio'], ['sc.RepoBrowserItem']);
 goog.addDependency('../../../sc/RepoBrowserItem.js', ['sc.RepoBrowserItem'], ['jquery.jQuery']);

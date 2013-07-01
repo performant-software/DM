@@ -31,7 +31,7 @@ def create_project(g, host):
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
-                    }""")
+                    }""", initNs = ns)
 
     for uri, user in query:
         with transaction.commit_on_success():
@@ -41,9 +41,7 @@ def create_project(g, host):
             project_g = Graph(store=rdfstore(), identifier=project_uri)
             bind_namespaces(project_g)
 
-            for t in g:
-                print t
-                project_g.add(t)
+            project_g += g
 
             url = uris.url(host, 'semantic_store_projects', uri=uri)
             project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))

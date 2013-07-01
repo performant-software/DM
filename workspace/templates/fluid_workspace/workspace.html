@@ -36,13 +36,8 @@
 {% endblock %}
 
 {% block header_buttons %}
-  <li class="dropdown">
-    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-      switch project
-      <b class="caret"></b>
-    </a>
-    <ul class="dropdown-menu" id="projects">
-    </ul>
+  <li id="projectManagerButton">
+
   </li>
   <li id="new_text_button"><a href="#" role="button">new text document</a></li>
   <li id="my_resources_button"><a href="#workingResourcesModal" role="button" data-toggle="modal">my resources</a></li>
@@ -101,107 +96,12 @@
   </div>
 </div>
 
-<!-- New Project Modal -->
-<div class="modal hide fade" id="newProjectModal">
 
-  <div class="modal-header">
-    <!--close "button" on top right of modal-->
-    <a class="close" data-dismiss="modal">x</a>
-
-    <h3>New Project Creation</h3>
-  </div>
-
-  <div class="modal-body">
-    <!--New Project Form-->
-    <form>
-      <fieldset>  
-        <!--Title area-->
-        <!--limit title length?-->
-        <label id="titleLabel">Title:</label>
-        <input type="text" id="newTitle">
-        
-        <!--Description area in long block form-->
-        <label>Description:</label>
-        <p class="help-block">Please enter a brief description of your new project. (Optional)</p>
-        <textarea rows="3" id="newDescription"></textarea>
-        
-        <label>Add Users:</label>
-        <p class="help-block">Type a username, and then hit shift+enter to add that user to your project. If you want to remove a user, click on the username.</p>
-
-        <!--This block is specifically for displaying the added users
-            It will NOT display until a user is added/tagged-->
-        <p class="help-block" id="newAddedUsers"></p>
-
-        <input type="text" id="newUsers" data-provide="typeahead">
-        <!--use data-source to specify usernames above-->
-
-        <span class="help-block" id="newHelp"></span>
-      </fieldset>
-    </form>
-  </div>
-
-  <!--The footer holds the create/cancel buttons at the bottom of the modal.
-      Cancel only closes the modal, it does not delete the data in the modal.-->
-  <div class="modal-footer">
-    <a href="#newProjectModal" class="btn" data-toggle="modal">Cancel</a>
-    <a href="#newProjectModal" onclick="sendNewData()" class="btn btn-primary" data-toggle="modal" id="create">Create New Project</a>
-  </div>
-</div>
-
-<!-- Edit project modal -->
-<div class="modal hide fade" id="editProjectModal">
-  <div class="modal-header">
-    <!--close "button" on top right of modal-->
-    <a class="close" data-dismiss="modal">x</a>
-    <h3>Edit Project</h3>
-  </div>
-
-  <div class="modal-body">
-    <!--Edit Project Form-->
-    <form>
-      <fieldset>  
-        <!--Title area-->
-        <label>Title:</label>
-        <input type="text" id="editTitle">
-        
-        <!--Description area in long block form-->
-        <label>Description:</label>
-        <p class="help-block">Please enter a brief description of your project. (Optional)</p>
-        <textarea rows="3" id="editDescription"></textarea>
-        
-        <label>Add Users:</label>
-        <p class="help-block">Type a username, and then hit shift+enter to add that user to your project. If you want to remove a user, click on the username.</p>
-
-        <!--This block is specifically for displaying the added users
-            It will NOT display until a user is added/tagged-->
-        <p class="help-block" id="editAddedUsers"></p>
-
-        <input type="text" id="editUsers" data-provide="typeahead">
-        <!--use data-source to specify usernames above-->
-
-        <span class="help-block" id="editHelp"></span>
-      </fieldset>
-    </form>
-  </div>
-
-
-  <div class="modal-footer">
-    <a href="#editProjectModal" class="btn" data-toggle="modal" onlick="prepareForEdit()">Discard changes</a>
-    <a href="#editProjectModal" class="btn btn-primary" onclick="updateEditedData()" data-toggle="modal">Save changes</a>
-  </div>
-</div>
 {% endblock %}
 
 {% block init_scripts %}
 <script type="text/javascript" >
   var usernames = {{ js_users|safe }};
-  var usr = $("#newUsers");
-
-  // User "tagging" system abstracted to fluid_workspace.js
-  newUserTagSystem(usr, usernames);
-
-  usr = $("#editUsers")
-  editUserTagSystem(usr, usernames);
 
   // Workspace setup code
   var staticUrl = "{{ STATIC_URL }}";
@@ -211,10 +111,10 @@
   var wsSameOriginURI = "/";
 
   initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", 
-                styleRoot, staticUrl);
+                styleRoot, staticUrl, usernames);
   
   // Add project titles to project dropdown
-  setupProjects();
+  // setupProjects();
 
   $("#new_text_button").click(function(e) {
     openBlankTextDocument();
