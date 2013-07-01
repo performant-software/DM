@@ -309,7 +309,7 @@ sc.RepoBrowser.prototype.loadAllRepositories = function() {
             item.setTitle(repo.title);
         }
         else {
-            var title = this.databroker.getResource(repo.uri).getOneProperty('rdf:title') ||
+            var title = this.databroker.dataModel.getTitle(repo.uri) ||
                 'Untitled repository';
             item.setTitle(title);
         }
@@ -365,10 +365,11 @@ sc.RepoBrowser.prototype.addManifestItem = function(uri, clickHandler, div) {
     });
 
     var withResource = function(resource) {
-        if (resource.hasPredicate('dc:title')) {
-            item.setTitle(resource.getOneProperty('dc:title'));
+        var title = this.databroker.dataModel.getTitle(resource);
+        if (title) {
+            item.setTitle(title);
         }
-    };
+    }.bind(this);
     collection.progress(withResource).done(withResource);
 
     collection.fail(function(resource) {
@@ -482,8 +483,9 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
 
     var deferredManuscript = this.databroker.getDeferredResource(uri);
     var withManuscript = jQuery.proxy(function(manuscript) {
-        if (manuscript.hasPredicate('dc:title')) {
-            item.setTitle(manuscript.getOneProperty('dc:title'));
+        var title = this.databroker.dataModel.getTitle(manuscript);
+        if (title) {
+            item.setTitle(title);
         }
 
         this.setManuscriptThumb(uri, item);
@@ -542,7 +544,7 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
 
             var canvasResource = this.databroker.getResource(canvasUri);
 
-            var title = canvasResource.getOneProperty('dc:title');
+            var title = this.databroker.dataModel.getTitle(canvasResource);
             if (title) {
                 thumb.setTitle(title);
             }
@@ -599,7 +601,7 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
             var thumb = thumbsByUri[uri];
             var canvasResource = this.databroker.getResource(uri);
 
-            var title = canvasResource.getOneProperty('dc:title');
+            var title = this.databroker.dataModel.getTitle(canvasResource);
             if (title) {
                 thumb.setTitle(title);
             }

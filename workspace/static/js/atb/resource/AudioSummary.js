@@ -23,12 +23,10 @@ atb.resource.AudioSummary.prototype.type = 'Audio';
 
 atb.resource.AudioSummary.prototype.findTitle = function() {
     var title = null;
+    var getTitle = this.databroker.dataModel.getTitle;
 
     if (this.parentResource) {
-        if (this.parentResource.hasPredicate('dc:title')) {
-            title = this.parentResource.getOneProperty('dc:title');
-        }
-        else {
+        if (!(title = getTitle(this.parentResource))) {
             title = atb.resource.AudioSummary.findTitleFromUri(this.parentResource.uri);
         }
 
@@ -37,10 +35,7 @@ atb.resource.AudioSummary.prototype.findTitle = function() {
         }
     }
     else {
-        if (this.resource.hasPredicate('dc:title')) {
-            title = this.resource.getOneProperty('dc:title');
-        }
-        else {
+        if (!(title = getTitle(this.resource))) {
             title = atb.resource.AudioSummary.findTitleFromUri(this.resource.uri);
         }
     }

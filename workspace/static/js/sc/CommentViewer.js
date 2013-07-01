@@ -91,7 +91,7 @@ sc.CommentViewer.prototype.clear = function() {
 sc.CommentViewer.prototype.addOrModifyComment = function(uri) {
     var resource = this.databroker.getResource(uri);
     
-    var title = resource.getOneProperty('dc:title') || 'Untitled comment';
+    var title = this.databroker.dataModel.getTitle(resource) || 'Untitled comment';
     var content = resource.getOneProperty('cnt:chars') ||
     'comment has no content';
     

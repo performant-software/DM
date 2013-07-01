@@ -171,37 +171,19 @@ def harvest_resource_triples(g, collection_uri=None, pred=None, obj=None,
 
 def page_attributes(g, page_uri, res_uri):
     bind_namespaces(g)
-    # height_triples = list(g.triples((rdflib.URIRef(page_uri), 
-    #                                  rdflib.URIRef(ns['exif']['height']), 
-    #                                  None)))
-    # if height_triples:
-    #     height = int(height_triples[0][2])
-    # width_triples = list(g.triples((rdflib.URIRef(page_uri), 
-    #                                 rdflib.URIRef(ns['exif']['width']), 
-    #                                 None)))
-    # if width_triples:
-    #     width = int(width_triples[0][2])
-
-    query = """SELECT DISTINCT ?res_title ?title ?width ?height ?image 
+    qres = g.query("""SELECT DISTINCT ?res_title ?title ?width ?height ?image 
                WHERE {
-                   <%s> dc:title ?res_title .
-                   <%s> dc:title ?title .
-                   <%s> exif:width ?width .
-                   <%s> exif:height ?height .
-                   ?anno oac:hasTarget <%s> .
-                   ?anno oac:hasBody ?image .
-                   ?image rdf:type dcmitype:Image
-               }""" % (res_uri, page_uri, page_uri, page_uri, page_uri)
-    # query = """SELECT DISTINCT ?res_title ?title ?width ?height ?image 
-    #            WHERE {
-    #                <%s> dc:title ?title .
-    #                <%s> exif:width ?width .
-    #                <%s> exif:height ?height .
-    #                ?anno oac:hasTarget <%s> .
-    #                ?anno oac:hasBody ?image .
-    #                ?image rdf:type dcmitype:Image
-    #            }""" % (page_uri, page_uri, page_uri, page_uri)
-    qres = g.query(query)
+                   {?res_uri dc:title ?res_title} UNION {?res_uri rdfs:label ?res_title} .
+                   {?page_uri dc:title ?title} UNION {?page_uri rdfs:label ?title} .
+                   ?page_uri exif:width ?width .
+                   ?page_uri exif:height ?height .
+                   ?anno oa:hasTarget ?page_uri .
+                   ?anno oa:hasBody ?image .
+                   ?image rdf:type dcmitype:Image .
+               }""", initBindings={
+        'res_uri': URIRef(res_uri),
+        'page_uri': URIRef(page_uri)
+    })
     if qres:
         (res_title, page_title, width, height, image) = list(qres)[0]
         return (unicode(res_title), unicode(page_title), int(width), int(height), 

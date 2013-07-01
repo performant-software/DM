@@ -67,7 +67,7 @@ atb.resource.TextHighlightSummary.prototype.decorate = function (opt_label) {
     jQuery(this.textBodySpan).addClass('atb-resourcesummary-textbody');
     this.textBody.appendChild(this.textBodySpan);
     jQuery(this.textBodySpan).html(truncHtml)
-    var textTitleText = this.domHelper.createTextNode(" in " + this.parentResource.getOneProperty('dc:title'));
+    var textTitleText = this.domHelper.createTextNode(" in " + this.databroker.dataModel.getTitle(this.parentResource));
     jQuery(this.textBody).append(textTitleText);
     jQuery(this.div).append(this.textBody);
 	
@@ -102,11 +102,11 @@ atb.resource.TextHighlightSummary.prototype.generateTitle = function () {
     if (cutoff != exactText.length)
         result += '...';
     
-    result += '" in ' + this.parentResource.getOneProperty('dc:title');
+    result += '" in ' + this.databroker.dataModel.getTitle(this.parentResource);
     
     return result;
 };
 
 atb.resource.TextHighlightSummary.prototype.getSortTitle = function() {
-    return this.highlightResource.getOneProperty('oa:exact') + this.parentResource.getOneProperty('dc:title');
+    return this.highlightResource.getOneProperty('oa:exact') + this.databroker.dataModel.getTitle(this.parentResource);
 };

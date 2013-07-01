@@ -15,7 +15,7 @@ atb.resource.TextSummary = function (uri, viewer, clientApp, opt_domHelper, opt_
     atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
 	
     this.text = this.resource.getOneProperty('cnt:chars') || 'no contents';
-    this.title = this.resource.getOneProperty('dc:title') || 'Untitled text';
+    this.title = this.databroker.dataModel.getTitle(this.resource) || 'Untitled text';
     this.user = '';
     
     this.cutoff = this.determineCutoff_(atb.resource.TextSummary.MAX_SUMMARY_LENGTH);
