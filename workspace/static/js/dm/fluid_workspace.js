@@ -34,6 +34,10 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
 
     var wrContainer = jQuery('#workingResourcesModal .modal-body').get(0);
 
+    jQuery('#my_resources_button').on('click', function(event) {
+        workingResourcesViewer.refreshCurrentItems();
+    });
+
     workingResourcesViewer.render(wrContainer);
     workingResourcesViewer.loadUser(username)
 
@@ -51,8 +55,8 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         repositories: [
             {
                 title: 'Stanford University',
-                url: '/store/resources/http://dms-data.stanford.edu/Repository3',
-                uri: 'http://dms-data.stanford.edu/Repository3'
+                url: '/store/resources/http://dms-data.stanford.edu/Repository',
+                uri: 'http://dms-data.stanford.edu/Repository'
             },
             {
                 title: 'Yale University',
@@ -110,7 +114,7 @@ var openCanvas = function(uri, urisInOrder, index) {
 
 var openBlankTextDocument = function() {
     var textResource = databroker.createResource(null, 'dctypes:Text');
-    textResource.setProperty('dc:title', '"Untitled text document"');
+    databroker.dataModel.setTitle(textResource, 'Untitled text document');
 
     databroker.addResourceToCurrentProject(textResource);
 
