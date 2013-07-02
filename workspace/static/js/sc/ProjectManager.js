@@ -56,9 +56,11 @@ sc.ProjectManager.prototype.decorate = function() {
 	this.setTitle()
 }
 
-sc.ProjectManager.prototype.setTitle = function(title){
-	if (title != null){
+sc.ProjectManager.prototype.setTitle = function(){
+	var projectId = this.databroker.currentProject
+	if (projectId){
 		this.titleButton.removeChild(this.titleSpan)
+		title = this.databroker.getResource(projectId).getOneProperty('dc:title')
 		this.titleSpan = goog.dom.createDom("span", {'style':'color:#999'}, title)
 	}
 
@@ -126,9 +128,7 @@ sc.ProjectManager.prototype.clearProjectDropdown = function(){
 sc.ProjectManager.prototype.selectProject = function(e){
     // If no open resources, does not need to warn about closing them!
     if (this.viewerGrid.isEmpty()){
-        this.setTitle($(e).text())
-        this.databroker.setCurrentProject(e.id);
-        this.workingResources.loadManifest(e.id);
+        this.selectThisProject(e)
     }
 
     else{
@@ -149,7 +149,7 @@ sc.ProjectManager.prototype.selectProject = function(e){
 sc.ProjectManager.prototype.selectThisProject = function(e){
 	this.viewerGrid.closeAllContainers()
 	this.databroker.setCurrentProject(e.id)
-	this.setTitle($(e).text())
+	this.setTitle()
 	this.workingResources.loadManifest(e.id)
 }
 
@@ -225,7 +225,7 @@ sc.ProjectManager.prototype.createNewProjectModal = function(){
 
 /* Collects data from new project modal
  * Clears the data so that another project can be created without refresh
- * Serializes data and sends POST request /workspace/project_forward/
+ * Serializes data and sends POST request to /semantic_store/projects/
 */
 sc.ProjectManager.prototype.sendNewData = function (){
     //Collect data
@@ -270,6 +270,7 @@ sc.ProjectManager.prototype.sendNewData = function (){
         t.val("");
         d.val("");
         this.clearAllUsers(this.newAddedUsers, this.newAddedUsersList)
+        this.newAddedUsersList.push(this.username)
 
 	    // Add the new project's title to project dropdown
 	    // Wrapped in timeout to avoid server errors from hitting database too quickly
@@ -330,9 +331,8 @@ sc.ProjectManager.prototype.setupPost = function(){
  * Removes the "tags" for all users
 */
 sc.ProjectManager.prototype.clearAllUsers = function(parentElement, userList){
-	while (parentElement.lastChild){
-		this.clearUser(parentElement.lastChild,userList)
-	}
+	$(parentElement).empty()
+	userList = new Array()
 }
 
 /* Removes the specified user from the speicified array of users
@@ -346,6 +346,8 @@ sc.ProjectManager.prototype.clearUser = function(userElement, userList){
 			break;
 		}
 	};
+
+	userElement.remove()
 }
 
 sc.ProjectManager.prototype.clearNewUser = function(userElement){
@@ -353,7 +355,6 @@ sc.ProjectManager.prototype.clearNewUser = function(userElement){
 }
 
 sc.ProjectManager.prototype.clearEditUser = function(userElement){
-	console.log(userElement)
 	if (userElement.id == this.username){
 		$(this.editHelp).text("You cannot delete yourself from a project.")
 	}
@@ -411,7 +412,6 @@ sc.ProjectManager.prototype.newUserTagSystem = function(){
     usr.keyup(function(e){
         if (e.which == 13&&this.shift){
             var val = $(this.newUsers).val();
-            console.log(val)
             
             if (this.allUsers.indexOf(val) != -1){
                 if (this.newAddedUsersList.indexOf(val) == -1){
@@ -572,20 +572,23 @@ sc.ProjectManager.prototype.prepareForEdit = function(){
 
 		this.editAddedUsersList = []
 
-		users = this.databroker.quadStore.subjectsMatchingQuery(null, this.databroker.namespaces.expand("perm","hasPermissionOver"),wrap(project))
+		var url = this.databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user);
+		this.databroker.getDeferredResource(url).done(function(){
+			users = this.databroker.quadStore.subjectsMatchingQuery(null,this.databroker.namespaces.expand("perm","hasPermissionOver"),wrap(project))
 
-		for (var i = 0; i < users.length; i++) {
-			var url = strip(users[i])
-            var username = url.split("/").pop()
+			for (var i = 0; i < users.length; i++) {
+				var url = strip(users[i])
+	            var username = url.split("/").pop()
 
-			this.editAddedUsersList.push(username);
+				this.editAddedUsersList.push(username);
 
-			var user = goog.dom.createDom("a",{id:username},username + "\xa0 \xa0")
-            // onClick refuses to be set when passed into above function
-            user.setAttribute('onclick','projectManager.clearEditUser(this)')
+				var user = goog.dom.createDom("a",{id:username},username + "\xa0 \xa0")
+	            // onClick refuses to be set when passed into above function
+	            user.setAttribute('onclick','projectManager.clearEditUser(this)')
 
-			this.editAddedUsers.appendChild(user)
-		};
+				this.editAddedUsers.appendChild(user)
+			};
+		}.bind(this))
 	}
 }
 
@@ -627,8 +630,8 @@ sc.ProjectManager.prototype.sendEditData = function(){
 	            var username = oldUsers[i]
 	            var stillHasPermission = false;
 
-	            for (var j = 0; j < editAddedUsers.length; j++) {
-	                if (editAddedUsers[j] == username) stillHasPermission = true;
+	            for (var j = 0; j < this.editAddedUsers.length; j++) {
+	                if (this.editAddedUsers[j].id == username) stillHasPermission = true;
 	            };
 
 	            if (!stillHasPermission){
@@ -638,11 +641,11 @@ sc.ProjectManager.prototype.sendEditData = function(){
 	            }
 	        };
 
-	        for (var i = 0; i < editAddedUsers.length; i++) {
-	            var username = editAddedUsers[i]
-	            var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
+	        for (var i = 0; i < this.editAddedUsers.length; i++) {
+	            var username = this.editAddedUsers[i].id
+	            var uri = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
 
-	            var r = db.getResource(wrap(uri))
+	            var r = this.databroker.getResource(wrap(uri))
 	            r.setProperty(ns.expand('ore','aggregates'),wrap(projectId))
 	            r.setProperty(ns.expand('perm','hasPermissionOver'),wrap(projectId))
 	        };
