@@ -99,12 +99,23 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
                 url = url.replace('/image/', '/image/app/');
         }
 
-        if (opt_width || opt_height)
-            url += '?'
-        if (opt_width)
-            url += 'w=' + String(Math.round(opt_width)) + '&';
-        if (opt_height)
-            url += 'h=' + String(Math.round(opt_height)) + '&';
+        if (opt_width && opt_height) {
+            if (window.devicePixelRatio) {
+                opt_width *= window.devicePixelRatio;
+                opt_height *= window.devicePixelRatio;
+            }
+
+            if (url.indexOf('/full/full/0/') == -1) {
+                url += '?'
+                if (opt_width)
+                    url += 'w=' + String(Math.round(opt_width)) + '&';
+                if (opt_height)
+                    url += 'h=' + String(Math.round(opt_height)) + '&';
+            }
+            else {
+                url = url.replace('/full/full/0/', '/full/!' + Math.round(opt_width) + ',' + Math.round(opt_height) + '/0/');
+            }
+        }
 
         return url;
     },
