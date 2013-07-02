@@ -39,7 +39,6 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     });
 
     workingResourcesViewer.render(wrContainer);
-    workingResourcesViewer.loadUser(username)
 
     workingResourcesViewer.addEventListener('openRequested', function(event) {
         if (event.resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
@@ -203,10 +202,10 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
     
-    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username, usernames);
-
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
+    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username, usernames);
+
     setupCurrentProject(clientApp, username);
 }
 
