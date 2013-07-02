@@ -20,6 +20,8 @@ sc.data.QuadStore = function(opt_quads) {
         return new goog.structs.Set();
     });
 
+    this._bNodeCounter = 0;
+
     if (opt_quads) {
         this.addQuads(opt_quads);
     }
@@ -281,6 +283,12 @@ sc.data.QuadStore.prototype.objectsMatchingQuery = function(subject, predicate, 
  */
 sc.data.QuadStore.prototype.contextsMatchingQuery = function(subject, predicate, object, context) {
     return this.contextsSetMatchingQuery(subject, predicate, object, context).getValues();
+};
+
+sc.data.QuadStore.prototype.getNextBNode = function() {
+    var node = '_:b' + this._bNodeCounter;
+    this._bNodeCounter ++;
+    return node;
 };
 
 /**
