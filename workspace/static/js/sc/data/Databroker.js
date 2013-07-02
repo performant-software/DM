@@ -226,13 +226,74 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     return jqXhr;
 };
 
+/**
+ * Returns a quad with Blank Nodes guaranteed to be unique in the main quad store.
+ * @param  {sc.data.Quad} quad             The quad to make unique
+ * @param  {goog.structs.Map} bNodeMapping A reference to a mapping of old BNodes to new BNodes
+ *                                         for the current batch of quads (usually one file)
+ * @return {sc.data.Quad}                  A guaranteed BNode safe quad.
+ */
+sc.data.Databroker.prototype.getBNodeHandledQuad = function(quad, bNodeMapping) {
+    var modifiedQuad = quad.clone();
+
+    if (sc.util.Namespaces.isBNode(quad.subject)) {
+        if (bNodeMapping.containsKey(quad.subject)) {
+            modifiedQuad.subject = bNodeMapping.get(quad.subject);
+        }
+        else {
+            var newBNode = this.quadStore.getNextBNode();
+            modifiedQuad.subject = newBNode;
+            bNodeMapping.set(quad.subject, newBNode);
+        }
+    }
+
+    if (sc.util.Namespaces.isBNode(quad.predicate)) {
+        if (bNodeMapping.containsKey(quad.predicate)) {
+            modifiedQuad.predicate = bNodeMapping.get(quad.predicate);
+        }
+        else {
+            var newBNode = this.quadStore.getNextBNode();
+            modifiedQuad.predicate = newBNode;
+            bNodeMapping.set(quad.predicate, newBNode);
+        }
+    }
+
+    if (sc.util.Namespaces.isBNode(quad.object)) {
+        if (bNodeMapping.containsKey(quad.object)) {
+            modifiedQuad.object = bNodeMapping.get(quad.object);
+        }
+        else {
+            var newBNode = this.quadStore.getNextBNode();
+            modifiedQuad.object = newBNode;
+            bNodeMapping.set(quad.object, newBNode);
+        }
+    }
+
+    if (sc.util.Namespaces.isBNode(quad.context)) {
+        if (bNodeMapping.containsKey(quad.context)) {
+            modifiedQuad.context = bNodeMapping.get(quad.context);
+        }
+        else {
+            var newBNode = this.quadStore.getNextBNode();
+            modifiedQuad.context = newBNode;
+            bNodeMapping.set(quad.context, newBNode);
+        }
+    }
+
+    return modifiedQuad;
+};
+
 sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handler) {
     var responseHeaders = jqXhr.getAllResponseHeaders();
     var type = sc.data.Parser.parseContentType(responseHeaders);
 
     window.setTimeout(function() {
+        var bNodeMapping = new goog.structs.Map();
+
         this.parseRdf(data, type, function(quadBatch, done, error) {
-            this.quadStore.addQuads(quadBatch);
+            for (var i=0, len=quadBatch.length; i<len; i++) {
+                this.quadStore.addQuad(this.getBNodeHandledQuad(quadBatch[i], bNodeMapping));
+            }
 
             if (done) {
                 window.setTimeout(function() {

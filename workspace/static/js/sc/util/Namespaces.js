@@ -286,7 +286,7 @@ sc.util.Namespaces.isUri = function(str) {
 };
 
 sc.util.Namespaces.isBNode = function(str) {
-    return goog.string.startsWith(str, '_:');
+    return str ? goog.string.startsWith(str, '_:') : false;
 };
 
 /**
