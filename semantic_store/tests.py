@@ -7,13 +7,14 @@ from django.test.client import Client
 from django.core.urlresolvers import reverse
 
 from rdflib.graph import ConjunctiveGraph, Graph
-from rdflib import URIRef, Literal, BNode
+from rdflib import URIRef, Literal, BNode, Namespace
 from .namespaces import NS, ns, bind_namespaces
 import rdfstore
+from semantic_store.namespaces import update_oa
 
 annotations_url = reverse('semantic_store_annotations', kwargs=dict())
 project_annotations_url = reverse('semantic_store_project_annotations',
-                                  kwargs=dict(project_uri=URIRef(uuid.uuid4())))
+                                  kwargs=dict(project_uri=URIRef(str(uuid.uuid4()))))
 annotation_urls = [annotations_url, project_annotations_url]
 
 def graph():
@@ -296,3 +297,33 @@ class TestSearchAnnotations(unittest.TestCase):
         # g, target, selector = svg_specific_resource(self.canvas, res=target)
         # g, anno, body, target = annotation(g=g, anno=anno, target=target)
         # response = self.client.post(url, data=data, content_type="text/xml")
+
+class TestDataUpdate(unittest.TestCase):
+    def setup(self):
+        self.old_oa = Namespace('http://www.openannotation.org/ns/')
+        self.new_oa = Namespace('http://www.w3.org/ns/oa#')
+
+    def teardown(self):
+        pass
+
+    def test_oa_namespace_update(self):
+        old_graph = Graph()
+        correct_graph = Graph()
+
+        anno_node = BNode()
+        target_node = BNode()
+        body_node = BNode()
+
+        old_graph.add((anno_node, NS.rdf.type, self.old_oa.Annotation))
+        old_graph.add((anno_node, self.old_oa.hasTarget, target_node))
+        old_graph.add((anno_node, self.old_oa.hasBody, body_node))
+        old_graph.add((body_node, NS.rdf.type, NS.dctypes.Text))
+
+        correct_graph.add((anno_node, NS.rdf.type, self.new_oa.Annotation))
+        correct_graph.add((anno_node, self.new_oa.hasTarget, target_node))
+        correct_graph.add((anno_node, self.new_oa.hasBody, body_node))
+        correct_graph.add((body_node, NS.rdf.type, NS.dctypes.Text))
+
+        new_graph = update_oa(old_graph)
+
+        self.assertTrue(new_graph.isomorphic(correct_graph))

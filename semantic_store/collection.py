@@ -7,7 +7,7 @@ from rdflib.graph import ConjunctiveGraph as Graph
 from rdflib.namespace import Namespace
 from rdflib.term import URIRef, Literal
 from rdflib import RDF
-from semantic_store.namespaces import ns, bind_namespaces
+from semantic_store.namespaces import ns, bind_namespaces, update_old_namespaces
 from semantic_store.utils import parse_into_graph
 
 """
@@ -155,6 +155,8 @@ def fetch_and_parse(url, g, manifest_file=None, fmt="xml", cache=None):
             parse_into_graph(g, data=rdf_str, format=fmt)
     if cache:
         cache['urls'].add(url)
+
+    update_old_namespaces(g)
 
 
 def harvest_resource_triples(g, collection_uri=None, pred=None, obj=None, 

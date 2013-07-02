@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from rdflib import Graph
+from rdflib import Graph, URIRef
 
 RDFQUERY_SERIALIZER_FORMATS = set((
     'n3',

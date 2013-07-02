@@ -165,7 +165,7 @@ sc.CommentViewer.prototype.setUri = function(uri) {
         for (var i=0, len=targetAnnoUris.length; i<len; i++) {
             var annoResource = this.databroker.getResource(targetAnnoUris[i]);
             
-            var bodyUri = annoResource.getOneProperty('oac:hasBody');
+            var bodyUri = annoResource.getOneProperty('oa:hasBody');
             var deferredBody = this.databroker.getDeferredResource(bodyUri);
             deferredBody.progress(withBodyResource).done(withBodyResource);
         }
