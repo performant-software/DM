@@ -46,6 +46,9 @@ def create_project(g, host):
             url = uris.url(host, 'semantic_store_projects', uri=uri)
             project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
+            # Deletes permissions triples, which should not be stored in project graph
+            project_g.remove((None,NS.perm['hasPermissionOver'],uri))
+
         create_project_user_graph(host, username, uri)
 
 
@@ -107,10 +110,6 @@ def create_project_user_graph(host, user, project):
 
         # Permissions triple allows read-only permissions if/when necessary
         # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
-        # Perhaps we stop using ore:aggregates and use perm:hasPermissionOver and
-        #  its subproperties since they are better definitions in this instance?
-        #  
-        #  (tandres) agreed. Users should actually be foaf:Agents which have permission over projects
         g.add((user_uri, NS.perm['hasPermissionOver'], project))
         g.add((user_uri, NS.perm['mayRead'], project))
         g.add((user_uri, NS.perm['mayUpdate'], project))
@@ -163,7 +162,5 @@ def create_project_graph(host, user, title, project):
     g.add((project, NS.dcterms['created'], Literal(datetime.utcnow())))
 
     user_uri = uris.uri('semantic_store_users', username=user)
-        
-    # create_project_graph(g, host)
 
 

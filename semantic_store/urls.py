@@ -1,6 +1,5 @@
 from django.conf.urls.defaults import patterns, url, include
 import semantic_store.views
-from semantic_store.rdf_views import ProjectView, ProjectTextView, UserView
 
 urlpatterns = patterns('',
     url(r'^resources(?:/(?P<uri>.+))?/?$', 
@@ -70,12 +69,8 @@ urlpatterns = patterns('',
 
 
     url(r'^users(?:/(?P<username>.+))?/?$', 
-        UserView.as_view(), 
+        semantic_store.views.users, 
         name="semantic_store_users"),
-
-    url(r'^users/(?P<username>.+)/annotations/?$', 
-        UserView.as_view(), 
-        name="semantic_store_user_annotations"),
 
 
     url(r'^annotations(?:/(?P<anno_uri>.+))?/?$', 
