@@ -17,7 +17,7 @@ atb.resource.ResourceSummaryFactory.createFromUri = function(uri, viewer, client
         result = new atb.resource.TextSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
-    else if (resource.hasAnyType('oac:SpecificResource')) {
+    else if (resource.hasAnyType('oa:SpecificResource')) {
         var selector = resource.getOneResourceByProperty('oa:hasSelector');
 
         if (selector.hasType('oa:TextQuoteSelector')) {

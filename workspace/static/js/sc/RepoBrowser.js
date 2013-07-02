@@ -520,14 +520,14 @@ sc.RepoBrowser.prototype.generateManuscriptFolia = function(manuscriptUri, manus
     var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(manuscriptUri)[0];
     var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(manuscriptUri)[0];
 
-    var urisInOrder = this.databroker.getListUrisInOrder(sequenceUri);
+    var urisInOrder = this.databroker.dataModel.listSequenceContents(sequenceUri);
 
     var renderSequence = function() {
         if (manuscriptItem.getNumFolia() > 0) {
             return;
         }
 
-        var urisInOrder = this.databroker.getListUrisInOrder(sequenceUri);
+        var urisInOrder = this.databroker.dataModel.listSequenceContents(sequenceUri);
         var thumbs = [];
         var thumbsByUri = {};
 
@@ -640,7 +640,7 @@ sc.RepoBrowser.prototype.setManuscriptThumb = function(manuscriptUri, manuscript
         return;
     }
 
-    var urisInOrder = this.databroker.getListUrisInOrder(sequenceUri);
+    var urisInOrder = this.databroker.dataModel.listSequenceContents(sequenceUri);
 
     if (urisInOrder.length > 0) {
         var firstThumbSrc = this.databroker.dataModel.findCanvasImageUris(urisInOrder[0])[0];

@@ -31,13 +31,13 @@ sc.data.DataModel = function (databroker) {
  * Annotation predicates and types
  */
 sc.data.DataModel.VOCABULARY = {
-    annotationType: '<http://www.openannotation.org/ns/Annotation>',
-    hasTarget: '<http://www.openannotation.org/ns/hasTarget>',
-    hasBody: '<http://www.openannotation.org/ns/hasBody>',
+    annotationType: '<http://www.w3.org/ns/oa#Annotation>',
+    hasTarget: '<http://www.w3.org/ns/oa#hasTarget>',
+    hasBody: '<http://www.w3.org/ns/oa#hasBody>',
     imageAnno: '<http://dms.stanford.edu/ns/ImageAnnotation>',
-    constrains: '<http://www.openannotation.org/ns/constrains>',
-    constrainedBy: '<http://www.openannotation.org/ns/constrainedBy>',
-    constraint: '<http://www.openannotation.org/ns/ConstrainedBody>',
+    constrains: '<http://www.w3.org/ns/oa#constrains>',
+    constrainedBy: '<http://www.w3.org/ns/oa#constrainedBy>',
+    constraint: '<http://www.w3.org/ns/oa#ConstrainedBody>',
     isPartOf: '<http://purl.org/dc/terms/isPartOf>',
     forCanvasPredicates: ['<http://dms.stanford.edu/ns/forCanvas>', '<http://www.shared-canvas.org/ns/forCanvas>'],
     manifestTypes: ['<http://www.shared-canvas.org/ns/Manifest>', '<http://dms.stanford.edu/ns/Manifest>'],
@@ -274,7 +274,28 @@ sc.data.DataModel.prototype.findManuscriptSequenceUris = function(manifestUri) {
         }
     }, this);
 
+    var sequencesList = manifest.getOneProperty('sc:hasSequences');
+    if (sequencesList) {
+        sequenceUris.addAll(this.databroker.getListUrisInOrder(sequencesList));
+    }
+
     return sequenceUris.getValues();
+};
+
+sc.data.DataModel.prototype.listSequenceContents = function(sequence) {
+    sequence = this.databroker.getResource(sequence);
+
+    var uris = [];
+
+    if (sequence.hasType('rdf:List')) {
+        uris = this.databroker.getListUrisInOrder(sequence);
+    }
+    else {
+        var canvasListUri = sequence.getOneProperty('sc:hasCanvases');
+        uris = this.databroker.getListUrisInOrder(canvasListUri);
+    }
+
+    return uris;
 };
 
 sc.data.DataModel.prototype.findManuscriptImageAnnoUris = function(manifestUri) {
