@@ -511,6 +511,7 @@ sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project, opt_qu
     var quadStore = opt_quadStore || this.databroker.quadStore;
 
     var quads = quadStore.query(project.bracketedUri, null, null, null);
+    quads = quads.concat(quadStore.query(null, null, project.bracketedUri, null));
 
     goog.structs.forEach(project.getProperties('ore:aggregates'), function(contentUri) {
         var contentResource = this.databroker.getResource(contentUri);
