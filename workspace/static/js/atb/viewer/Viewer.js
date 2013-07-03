@@ -37,8 +37,6 @@ atb.viewer.Viewer = function (clientApp) {
     this.viewerType = 'viewer';
     
     this.setClientApp(clientApp);
-    /** @type {atb.WebService}*/
-    this.webService = this.clientApp.getWebService();
     
     /** @type {sc.data.Databroker} */
     this.databroker = this.clientApp.getDatabroker();
@@ -56,9 +54,6 @@ atb.viewer.Viewer = function (clientApp) {
     this.hoverMenusEnabled = true;
     /** @type {boolean} */
     this.isShowingHoverMenu = false;
-    
-    /** @type {number} */
-    this.timeOfLastThumbnailRegistration = 0;
 };
 goog.inherits(atb.viewer.Viewer, goog.events.EventTarget);
 
@@ -554,54 +549,6 @@ atb.viewer.Viewer.prototype.disableHoverMenus = function () {
     this.hoverMenusEnabled = false;
     
     this.hideHoverMenu();
-};
-
-/**
- * Creates an atb.viewer.ViewerThumbnail object for the current state of the
- * viewer
- *
- * Should be overridden by subclasses
- */
-atb.viewer.Viewer.prototype.generateViewerThumbnail = function () {
-    return new atb.viewer.ViewerThumbnail(this);
-};
-
-/**
- * Calls the generateViewerThumbnail() method, and registers the thumbnail to
- * the panel container, and debounces multiple calls to the method in quick
- * succession
- *
- * @param opt_synchronous
- * @return {Boolean} true if the thumbnail has been (or is about to be)
- * registered, false if it was debounced
- */
-atb.viewer.Viewer.prototype.registerThumbnailToPanel =
-function(opt_synchronous) {
-    // if (goog.now() - this.timeOfLastThumbnailRegistration > 500) {
-    //     this.timeOfLastThumbnailRegistration = goog.now();
-        
-    //     var code = function () {
-    //         var thumbnail = this.generateViewerThumbnail();
-            
-    //         var panelContainer = this.getPanelContainer();
-    //         if (this.panelContainer) {
-    //             panelContainer.registerViewerThumbnail(thumbnail);
-    //         }
-    //     };
-    //     code = jQuery.proxy(code, this);
-        
-    //     if (opt_synchronous) {
-    //         code();
-    //     }
-    //     else {
-    //         window.setTimeout(code, 500);
-    //     }
-        
-    //     return true;
-    // }
-    // else {
-    //     return false;
-    // }
 };
 
 atb.viewer.Viewer.prototype.equals = function (other) {

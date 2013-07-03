@@ -72,10 +72,6 @@ atb.viewer.CanvasViewer.prototype.handleDocumentIconClick_ = function(event) {
     
 };
 
-atb.viewer.CanvasViewer.prototype.getResourceId = function() {
-    return this.webService.resourceUriToId(this.getUri());
-};
-
 atb.viewer.CanvasViewer.prototype.getUri = function() {
     if (this.viewer.mainViewport.canvas) {
         return this.viewer.mainViewport.canvas.getUri();
@@ -84,6 +80,8 @@ atb.viewer.CanvasViewer.prototype.getUri = function() {
         return '';
     }
 };
+
+atb.viewer.CanvasViewer.prototype.getResourceId = atb.viewer.CanvasViewer.prototype.getUri;
 
 atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     var self = this;
@@ -109,7 +107,7 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     goog.events.listen(eventDispatcher, 'resource deleted', function (e) {
                        if (e && e.target)
                        var id = e.target;
-                       var uri = this.webService.resourceIdToUri(id);
+                       var uri = id;
                        
                        try {
                        viewport.canvas.removeObjectByUri(uri);
@@ -152,7 +150,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
 
     this.mouseIsOverFloatingMenuParent = true;
     
-    var id = this.webService.resourceUriToId(uri);
+    var id = uri;
     var self = this;
     var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri) || uri;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
@@ -304,7 +302,7 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
 
 atb.viewer.CanvasViewer.prototype.setCanvasById =
 function(id, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
-    var uri = this.webService.resourceIdToUri(id);
+    var uri = id;
     
     this.setCanvasByUri(uri, opt_onLoad, opt_scope, opt_sequenceUris,
                         opt_sequenceIndex);
@@ -349,7 +347,7 @@ atb.viewer.CanvasViewer.prototype.hideFeature = function(uri) {
 
 atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 	var uri = opt_uri || this.viewer.mainViewport.canvas.uri;
-    var id = this.webService.resourceUriToId(uri);
+    var id = uri;
     
     var otherContainer = this.getPanelManager().getAnotherPanel(this.getPanelContainer());
     

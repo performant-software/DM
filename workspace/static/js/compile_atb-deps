@@ -1,4 +1,10 @@
-#!/bin/sh
+#! /bin/sh
 rm atb-deps.js
 
-closure-library/closure/bin/build/depswriter.py --root_with_prefix="atb ../../../atb/" --root_with_prefix="jquery ../../../jquery" --root_with_prefix="Raphael ../../../raphael" --root_with_prefix="sc ../../../sc" --root_with_prefix="fabric ../../../fabric" --root_with_prefix="n3 ../../../n3" > atb-deps.js
+closure-library/closure/bin/build/depswriter.py \
+    --root_with_prefix="atb ../../../atb/" \
+    --root_with_prefix="jquery ../../../jquery" \
+    --root_with_prefix="sc ../../../sc" \
+    --root_with_prefix="fabric ../../../fabric" \
+    --root_with_prefix="n3 ../../../n3" \
+> atb-deps.js

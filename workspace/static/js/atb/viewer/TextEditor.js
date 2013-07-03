@@ -52,8 +52,6 @@ goog.require('atb.widgets.ForegroundMenuDisplayer');
 goog.require('atb.events.ResourceClick');
 goog.require('atb.events.ResourceModified');
 
-goog.require('atb.viewer.TextThumbnail');
-
 /**
  * atb.viewer.TextEditor
  * Creates a Text Editor
@@ -88,8 +86,6 @@ atb.viewer.TextEditor = function(clientApp, opt_initialTextContent, opt_annoBody
     }
 	
     this.purpose = 'other';
-    
-    this.crawler = this.clientApp.getResourceCrawler();
     
     this.scrollTop = 0;
 
@@ -1264,10 +1260,6 @@ atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
            this.flashDocumentIconHighlight();
        }
    }, this);
-};
-
-atb.viewer.TextEditor.prototype.generateViewerThumbnail = function () {
-    return new atb.viewer.TextThumbnail(this);
 };
 
 atb.viewer.TextEditor.prototype.getResource = function () {
