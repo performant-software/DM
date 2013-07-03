@@ -193,6 +193,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
         username,
         styleRoot
     );
+    goog.global.clientApp.renderLinkCreationUI();
 
     goog.global.databroker = clientApp.getDatabroker();
 

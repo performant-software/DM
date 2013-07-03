@@ -43,7 +43,6 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     goog.events.listen(window, 'beforeunload', this.onBeforeUnload, false, this);
     
     this.linkingInProgress = false;
-    this.renderLinkCreationUI();
     
     this.keyboardShortcutHandler = new goog.ui.KeyboardShortcutHandler(window);
     this.registerKeyboardShortcuts();
