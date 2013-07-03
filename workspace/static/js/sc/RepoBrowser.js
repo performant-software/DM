@@ -492,9 +492,8 @@ sc.RepoBrowser.prototype.generateManuscriptItem = function(uri) {
 
         item.bind('click', function(event) {
             var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
-            var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(uri)[0];
 
-            if (sequenceUri && imageAnnoUri && item.getNumFolia() == 0) {
+            if (sequenceUri && item.getNumFolia() == 0) {
                 window.setTimeout(jQuery.proxy(function() {
                     this.generateManuscriptFolia(uri, item);
                 }, this), 1);
