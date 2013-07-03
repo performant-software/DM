@@ -76,7 +76,7 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         var uri = event.uri;
         var resource = event.resource;
 
-        if (resource.hasAnyType('dms:Canvas')) {
+        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
             var manifestUri = event.manifestUri;
             var urisInOrder = event.urisInOrder;
             var index = event.currentIndex;
