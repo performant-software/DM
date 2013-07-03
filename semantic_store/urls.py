@@ -29,7 +29,7 @@ urlpatterns = patterns('',
         name="semantic_store_project_resources"),
 
     url(r'^projects(?:/(?P<uri>.+))/remove_triples?/?$',
-        semantic_store.views.remove_triples,
+        semantic_store.views.remove_project_triples,
         name="semantic_store_projects_remove_triples"),
 
     url(r'^projects(?:/(?P<uri>.+)/)?/?$', 
@@ -72,6 +72,10 @@ urlpatterns = patterns('',
         semantic_store.views.users, 
         name="semantic_store_users"),
 
+    url(r'^users(?:/(?P<username>.+))?/remove_triples/?$', 
+        semantic_store.views.remove_user_triples, 
+        name="semantic_store_users_remove_triples"),
+    
 
     url(r'^annotations(?:/(?P<anno_uri>.+))?/?$', 
         semantic_store.views.annotations, 

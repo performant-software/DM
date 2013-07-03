@@ -21,7 +21,7 @@ from .annotation_views import create_or_update_annotations, get_annotations, \
     search_annotations
 from .projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
 from semantic_store import uris
-from semantic_store.users import read_user, update_user
+from semantic_store.users import read_user, update_user, remove_triples_from_user
 
 from project_texts import (
     create_project_text_from_request,
@@ -260,7 +260,7 @@ def add_all_users(graph):
             print "User '%s' was created successfully."%(username)
 
 
-def remove_triples(request, uri):
+def remove_project_triples(request, uri):
     g = delete_triples_from_project(request, uri)
 
     return negotiated_graph_response(request, g)
@@ -292,3 +292,8 @@ def users(request, username=None):
             return HttpResponse(status=400, 
                                 content="User update request must specify URI.")
         return update_user(request, username)
+
+def remove_user_triples(request, username):
+    g = remove_triples_from_user(request, uri)
+
+    return negotiated_graph_response(request, g)

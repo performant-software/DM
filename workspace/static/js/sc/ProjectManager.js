@@ -629,25 +629,27 @@ sc.ProjectManager.prototype.sendEditData = function(){
 	        for (var i = 0; i < oldUsers.length; i++) {
 	            var username = oldUsers[i]
 	            var stillHasPermission = false;
+	            var newUsers = this.editAddedUsersList
 
-	            for (var j = 0; j < this.editAddedUsers.length; j++) {
-	                if (this.editAddedUsers[j].id == username) stillHasPermission = true;
+	            for (var j = 0; j < newUsers.length; j++) {
+	                if (newUsers[j] == username) stillHasPermission = true;
 	            };
 
 	            if (!stillHasPermission){
-	                var r = this.databroker.getResource(wrap(username));
-	                r.deleteProperty(ns.expand('ore','aggregates'),wrap(projectId))
+	            	var uri = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
+	                var r = this.databroker.getResource(wrap(uri));
+
 	                r.deleteProperty(ns.expand('perm','hasPermissionOver'),wrap(projectId))
 	            }
 	        };
 
-	        for (var i = 0; i < this.editAddedUsers.length; i++) {
-	            var username = this.editAddedUsers[i].id
+	        for (var i = 0; i < this.editAddedUsersList.length; i++) {
+	            var username = this.editAddedUsersList[i]
 	            var uri = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
 
 	            var r = this.databroker.getResource(wrap(uri))
-	            r.setProperty(ns.expand('ore','aggregates'),wrap(projectId))
-	            r.setProperty(ns.expand('perm','hasPermissionOver'),wrap(projectId))
+
+	            r.addProperty(ns.expand('perm','hasPermissionOver'),wrap(projectId))
 	        };
         }.bind(this))
     }
