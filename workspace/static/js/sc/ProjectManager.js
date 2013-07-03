@@ -266,11 +266,11 @@ sc.ProjectManager.prototype.sendNewData = function (){
 
         $.post('project_forward/', postdata);
 
-        //Clear data from create project form
+        //Clear data from create project form /reset it
         t.val("");
         d.val("");
-        this.clearAllUsers(this.newAddedUsers, this.newAddedUsersList)
-        this.newAddedUsersList.push(this.username)
+        $(this.newAddedUsers).empty()
+        this.newAddedUsersList = [this.username,]
 
 	    // Add the new project's title to project dropdown
 	    // Wrapped in timeout to avoid server errors from hitting database too quickly
@@ -327,14 +327,6 @@ sc.ProjectManager.prototype.setupPost = function(){
 	}
 }
 
-/* Removes all specified users from specified array
- * Removes the "tags" for all users
-*/
-sc.ProjectManager.prototype.clearAllUsers = function(parentElement, userList){
-	$(parentElement).empty()
-	userList = new Array()
-}
-
 /* Removes the specified user from the speicified array of users
  * Removes the "tag" displaying the username
  * Used by both project edit & create modals, so functions independently of either
@@ -361,22 +353,6 @@ sc.ProjectManager.prototype.clearEditUser = function(userElement){
 	else{
 		this.clearUser(userElement, this.editAddedUsersList)
 	}
-}
-
-sc.ProjectManager.prototype.userTagSystem = function(userElement, helpElement, isNew){
-	usr = $(userElement)
-    /* Ensures shift is down
-     * Shift+Return combo needed because the typeahead system uses Return
-    */
-    usr.keydown(function(e){
-        // Watches the shift key
-        if (e.which == 16) this.shift = true;
-
-        //Toggles off the "incorrect user" help text
-        $(helpElement).text("");
-    })
-
-
 }
 
 
@@ -422,7 +398,7 @@ sc.ProjectManager.prototype.newUserTagSystem = function(){
                     this.newAddedUsers.appendChild(user)
                     this.newAddedUsersList.push(val);
 
-                    usr.val("");
+                    $(this.newUsers).val("")
                 }
                 else{
                     $(this.newHelp).text("This user is already added to the project.");
@@ -436,7 +412,7 @@ sc.ProjectManager.prototype.newUserTagSystem = function(){
     }.bind(this))
 }
 
-/* Appends username from input field into corresponding paragraph (creation modal)
+/* Appends username from input field into corresponding paragraph (edit modal)
  * Multiple elements; each has a description preceding
  * usr: Username input field
  * usernames: List of usernames in the database
