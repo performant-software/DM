@@ -9,6 +9,7 @@ from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 from semantic_store.utils import negotiated_graph_response, parse_into_graph
+from semantic_store.users import add_triple, remove_triple
 
 from datetime import datetime
 
@@ -59,8 +60,6 @@ def create_project(g, host):
 def read_project(request, uri):
     uri = uris.uri('semantic_store_projects', uri=uri)
     project_g = Graph(store=rdfstore(), identifier=uri)
-
-    print "Reading project using graph identifier %s" % uri
     
     if len(project_g) >0:
         return negotiated_graph_response(request, project_g)
@@ -77,14 +76,21 @@ def update_project(request, uri):
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-    project_graph = update_project_graph(input_graph, uri)
+    project_graph = update_project_graph(input_graph, uri,request.get_host())
 
     return negotiated_graph_response(request, project_graph, status=201)
 
-def update_project_graph(g, identifier):
+def update_project_graph(g, identifier, host):
+    predicate = NS.perm['hasPermissionOver']
+    for subj, obj in g.subject_objects(predicate):
+        username = subj.split("/")[-1]
+        
+        add_triple(username,subj,predicate,obj, host)
+
+        g.remove((subj,predicate,obj))
+
     with transaction.commit_on_success():
         uri = uris.uri('semantic_store_projects', uri=identifier)
-        print "Updating project using graph identifier %s" % uri
         project_g = Graph(store=rdfstore(), identifier=uri)
         bind_namespaces(project_g)
 
@@ -135,32 +141,20 @@ def delete_triples_from_project(request, uri):
     project_uri = uris.uri('semantic_store_projects', uri=uri)
     project_g = Graph(store=rdfstore(), identifier=project_uri)
 
-    with transaction.commit_on_success():            
+    predicate = NS.perm['hasPermissionOver']
+    for subj, obj in g.subject_objects(predicate):
+        username = subj.split("/")[-1]
+        
+        remove_triple(username,subj,predicate,obj,request.get_host())
+
+        g.remove((subj,predicate,obj))
+
+    with transaction.commit_on_success():
         for t in g:
-            print t
             if t in project_g:
                 project_g.remove(t)
                 removed.add(t)
 
     return removed
-
-# Create the project graph, with all of the required data, and sends it to be saved
-# Used for the the create project management command and some part of ProjectView
-# # Have we made ProjectView obsolete since we now export data in RDF?
-def create_project_graph(host, user, title, project):
-    if not project:
-        project = uris.uuid()
-    g = Graph()
-    bind_namespaces(g)
-    if not title:
-        title = "Default Project"
-    g.add((project, NS.rdf.type, NS.foaf.Project))
-    g.add((project, NS.rdf.type, NS.dm.Project))
-    g.add((project, NS.rdf['type'], NS.dcmitype['Collection']))
-    g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
-    g.add((project, NS.dc['title'], Literal(title)))
-    g.add((project, NS.dcterms['created'], Literal(datetime.utcnow())))
-
-    user_uri = uris.uri('semantic_store_users', username=user)
 
 
