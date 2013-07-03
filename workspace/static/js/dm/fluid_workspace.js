@@ -1,5 +1,5 @@
 goog.require("atb.ClientApp");
-goog.require('atb.PassThroughLoginWebService');
+
 goog.require('atb.viewer.Finder');
 goog.require('atb.viewer.TextEditor');
 goog.require('atb.viewer.AudioViewer');
@@ -41,8 +41,12 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     workingResourcesViewer.render(wrContainer);
 
     workingResourcesViewer.addEventListener('openRequested', function(event) {
-        if (event.resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
+        var resource = event.resource;
+        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
             openCanvas(event.uri, event.urisInOrder, event.currentIndex);
+        }
+        else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.textTypes)) {
+            openText(resource.uri);
         }
     });
 
@@ -111,17 +115,23 @@ var openCanvas = function(uri, urisInOrder, index) {
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
-var openBlankTextDocument = function() {
-    var textResource = databroker.createResource(null, 'dctypes:Text');
-    databroker.dataModel.setTitle(textResource, 'Untitled text document');
-
-    databroker.addResourceToCurrentProject(textResource);
+var openText = function(uri) {
+    var textResource = databroker.getResource(uri);
 
     var viewerContainer = new atb.viewer.ViewerContainer();
     var viewer = new atb.viewer.TextEditor(clientApp);
     viewerGrid.addViewerContainer(viewerContainer);
     viewerContainer.setViewer(viewer);
     viewer.loadResourceByUri(textResource.uri);
+};
+
+var openBlankTextDocument = function() {
+    var textResource = databroker.createResource(null, 'dctypes:Text');
+    databroker.dataModel.setTitle(textResource, 'Untitled text document');
+
+    databroker.addResourceToCurrentProject(textResource);
+
+    openText(textResource.uri);
 };
 
 var setupCurrentProject = function(clientApp, username) {
@@ -179,7 +189,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     });
     
 	goog.global.clientApp = new atb.ClientApp(
-		new atb.PassThroughLoginWebService(wsURI, mediawsURI, wsSameOriginURI, username), 
+		null, 
         username,
         styleRoot
     );

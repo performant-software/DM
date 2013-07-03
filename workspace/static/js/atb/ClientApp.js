@@ -1,7 +1,5 @@
 goog.provide("atb.ClientApp");
 
-goog.require("atb.WebService");
-
 goog.require("atb.util.StyleUtil"); //used for a giant hack
 goog.require("atb.util.ReferenceUtil");
 
@@ -20,31 +18,18 @@ goog.require('goog.ui.KeyboardShortcutHandler');
 goog.require('atb.events.LinkingModeEntered');
 goog.require('atb.events.LinkingModeExited');
 
-goog.require('atb.resource.ResourceCrawler');
-
-goog.require('atb.ui.ViewerThumbnailTimeline');
-
 goog.require('sc.data.Databroker');
 
 atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     var self = this;
-
-	this.webService = webService;
-    this.webService.setClientApp(this);
     
-    this.databroker = new sc.data.Databroker({
-        proxiedUrlGenerator: function (url) {
-            return self.webService.proxiedUri(url);
-        }
-    });
+    this.databroker = new sc.data.Databroker();
     
     this.eventDispatcher = new goog.events.EventTarget();
     
     this.username = username;
     
 	this.force_styleRoot = atb.util.ReferenceUtil.applyDefaultValue(opt_hack_set_styleRoot, null);
-	
-	this.resourceCrawler = new atb.resource.ResourceCrawler(this);
     
 	atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.getStyleRoot(); // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
 
@@ -60,22 +45,12 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     this.linkingInProgress = false;
     this.renderLinkCreationUI();
     
-    this.viewerThumbnailTimeline = new atb.ui.ViewerThumbnailTimeline(this);
-    
     this.keyboardShortcutHandler = new goog.ui.KeyboardShortcutHandler(window);
     this.registerKeyboardShortcuts();
 };
 
-atb.ClientApp.prototype.getWebService = function () {
-	return this.webService;
-};
-
 atb.ClientApp.prototype.getEventDispatcher = function () {
     return this.eventDispatcher;
-};
-
-atb.ClientApp.prototype.getResourceCrawler = function () {
-    return this.resourceCrawler;
 };
 
 atb.ClientApp.prototype.getDatabroker = function() {
@@ -86,7 +61,6 @@ atb.ClientApp.prototype.getStyleRoot = function () {
 	if (this.force_styleRoot !== null) {
 		return this.force_styleRoot;
 	}
-	return this.webService.getCssRoot(); //for now...
 };
 
 atb.ClientApp.prototype.getActiveAnnotation = function () {
@@ -364,13 +338,5 @@ atb.ClientApp.prototype.onBeforeUnload = function (event) {
 };
 
 atb.ClientApp.prototype.registerKeyboardShortcuts = function () {
-    this.keyboardShortcutHandler.registerShortcut('show_desktop', 'ctrl+d');
     
-    var handleKey = function (event) {
-        if (event.identifier) {
-            this.viewerThumbnailTimeline.toggleVisibility();
-        }
-    };
-    
-    goog.events.listen(this.keyboardShortcutHandler, goog.ui.KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED, handleKey, false, this);
 };

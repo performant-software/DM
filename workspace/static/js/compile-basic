@@ -1,3 +1,5 @@
+#! /bin/sh
+
 python closure-library/closure/bin/build/closurebuilder.py \
     --root=. \
     --input="atb/Includes.js" \
