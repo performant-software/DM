@@ -1,33 +1,65 @@
-from rdflib.term import URIRef, Literalfrom rdflib.namespace import Namespacefrom rdflib.graph import Graph
-from annotation_store.webservice.models import *
-from django.conf import settingsfrom django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturnedfrom django.contrib.auth.models import User
+from rdflib.term import URIRef, Literal
+from rdflib.namespace import Namespace
+from rdflib.graph import Graph
+from annotation_store.webservice.models import *
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+
+from django.contrib.auth.models import User
 from uuid import uuid4
 
-from re import findallIMG_SRC = settings.BASE_URL + settings.MEDIA_URL + 'user_images/'
-# URI of each type we are using in the project linked to simple string of typeTYPE_URI = {    'text':'http://purl.org/dc/dcmitype/Text',    'canvas':'http://www.shared-canvas.org/ns/Canvas',    'anno':'http://www.openannotation.org/ns/Annotation',    'image':'http://purl.org/dc/dcmitype/Image',    'SpecificResource':'http://www.openannotation.org/ns/SpecificResource',    'highlight':'http://www.openannotation.org/extension/Highlight',
+from re import findall
+
+IMG_SRC = settings.BASE_URL + settings.MEDIA_URL + 'user_images/'
+# URI of each type we are using in the project linked to simple string of type
+TYPE_URI = {
+    'text':'http://purl.org/dc/dcmitype/Text',
+    'canvas':'http://www.shared-canvas.org/ns/Canvas',
+    'anno':'http://www.openannotation.org/ns/Annotation',
+    'image':'http://purl.org/dc/dcmitype/Image',
+    'SpecificResource':'http://www.openannotation.org/ns/SpecificResource',
+    'highlight':'http://www.openannotation.org/extension/Highlight',
     'collection':'http://purl.org/dc/dcmitype/Collection',
     'aggregation':'http://www.openarchives.org/ore/terms/Aggregation',
     'agent':'http://xmlns.com/foaf/0.1/Agent',
     'svg':"http://www.openannotation.org/ns/SvgSelector",
-    'contentastext':'http://www.w3.org/2011/content#ContentAsText',}
-# Namespaces we will be using, declared globally for easy referenceOA    = Namespace("http://www.w3.org/ns/oa#")RDF   = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")ORE   = Namespace("http://www.openarchives.org/ore/terms/")DC    = Namespace("http://purl.org/dc/elements/1.1/")EXIF  = Namespace("http://www.w3.org/2003/12/exif/ns#")CNT   = Namespace("http://www.w3.org/2011/content#")
+    'contentastext':'http://www.w3.org/2011/content#ContentAsText',
+}
+# Namespaces we will be using, declared globally for easy reference
+OA    = Namespace("http://www.w3.org/ns/oa#")
+SC    = Namespace("http://www.shared-canvas.org/ns/Canvas")
+RDF   = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+ORE   = Namespace("http://www.openarchives.org/ore/terms/")
+DC    = Namespace("http://purl.org/dc/elements/1.1/")
+EXIF  = Namespace("http://www.w3.org/2003/12/exif/ns#")
+CNT   = Namespace("http://www.w3.org/2011/content#")
 PERM  = Namespace("http://vocab.ox.ac.uk/perm#")
-FOAF  = Namespace("http://xmlns.com/foaf/0.1/")IMGS  = Namespace(IMG_SRC)
-# Integer type for the height/width declarationsINT     = "http://www.w3.org/2001/XMLSchema#integer"
-# SVG strings with string formatting operators (%s) for each data valueSVG     = {'polygon':"<polygon xmlns=\'http://www.w3.org/2000/svg\' fill=\'rgba(15, 108, 214, 0.6)\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",           'circle':"<circle xmlns=\'http://www.w3.org/2000/svg\' fill=\'rgba(15, 108, 214, 0.6)\'  stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' cx=\'%s\' cy=\'%s\' r=\'%s\' />",           'polyline':"<polyline xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",           }
+FOAF  = Namespace("http://xmlns.com/foaf/0.1/")
+IMGS  = Namespace(IMG_SRC)
+# Integer type for the height/width declarations
+INT     = "http://www.w3.org/2001/XMLSchema#integer"
+# SVG strings with string formatting operators (%s) for each data value
+SVG     = {'polygon':"<polygon xmlns=\'http://www.w3.org/2000/svg\' fill=\'rgba(15, 108, 214, 0.6)\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
+           'circle':"<circle xmlns=\'http://www.w3.org/2000/svg\' fill=\'rgba(15, 108, 214, 0.6)\'  stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' cx=\'%s\' cy=\'%s\' r=\'%s\' />",
+           'polyline':"<polyline xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
+           }
 # URL for the base of user URIs
 # Hard-coded to be understood properly in the new version
 USER_URL_BASE = 'http://dm.drew.edu/store/users/'
 # Dictionary for mapping User object to a custom uuid, which is the uuid of the
-#  user's default projectuser_mapping = {}
+#  user's default project
+user_mapping = {}
 
 # Dictionary for mapping each r_id of an item to a custom uuid so as to be
-#  understood by the new versionr_id_mapping = {}
+#  understood by the new version
+r_id_mapping = {}
 
 # These are r_ids which should be annos, except that no triples
 #  about them exist
 # Used by get_mapped_uri
-bad_r_ids = ["95470", "235609", "275822", "275857", "275860", "275865", "279188", "279205", "279228", "280257", "281629", "284706", "284718", "284721", "284912", "285385", "286279", "286284", "263621"]def print_me():
+bad_r_ids = ["95470", "235609", "275822", "275857", "275860", "275865", "279188", "279205", "279228", "280257", "281629", "284706", "284718", "284721", "284912", "285385", "286279", "286284", "263621"]
+
+def print_me():
     #return just_one_user("lisafdavis@yahoo.com")
     return all_users()
     #return just_one_user("alex.fleck3@gmail.com")
@@ -36,7 +68,8 @@ def just_one_user(name):
     # Create a graph in which to hold all the data
     everything_graph = instantiate_graph()
 
-    # Map all users to a custom uri (for their project)    map_users()
+    # Map all users to a custom uri (for their project)
+    map_users()
 
     # For testing purposes, just look at one of the users
     user = User.objects.get(username=name)
@@ -56,7 +89,8 @@ def just_one_user(name):
     # Annos are special because we need to check that there is information
     #  about them in the larger graph as well
     everything_graph += handle_annos(user, everything_graph)
-    everything_graph.serialize("0.xml",format="xml")    return everything_graph
+    everything_graph.serialize("0.xml",format="xml")
+    return everything_graph
 
 def all_users():
     everything_graph = instantiate_graph()
@@ -72,7 +106,12 @@ def all_users():
 
 # Canvases, although gotten by username, are structured as global data
 # ((only gotten by username to shorten query time for testing purposes))
-def handle_canvases(user):    graph = instantiate_graph()    canvases = Canvas.objects.filter(user=user, valid=True, most_recent=True)    for i in range(len(canvases)):        canvas = canvases[i]
+def handle_canvases(user):
+    graph = instantiate_graph()
+    canvases = Canvas.objects.filter(user=user, valid=True, most_recent=True)
+
+    for i in range(len(canvases)):
+        canvas = canvases[i]
         graph += add_canvas(canvas, get_mapped_user(user))
     
     return graph
@@ -90,8 +129,6 @@ def add_canvas(canvas, project):
     graph.add((uri, EXIF['height'], Literal(canvas.height, datatype=INT)))
     graph.add((uri, EXIF['width'], Literal(canvas.width, datatype=INT)))
     graph.add((project, ORE['aggregates'], uri))
-    graph.add((project, PERM['hasPermissionOver'], uri))
-    graph.add((project, PERM['mayRead'], uri))
 
     return graph
 
@@ -469,7 +506,8 @@ def get_mapped_uri(r_id):
             uri = r_id_mapping[r_id]
         except KeyError:
             # Create custom uri and map it to the r_id
-            uri = uuid4().urn            r_id_mapping[r_id]=uri
+            uri = uuid4().urn
+            r_id_mapping[r_id]=uri
 
         return URIRef(uri)
 
@@ -486,13 +524,15 @@ def map_users():
 def instantiate_graph():
     g = Graph()
 
-    g.bind('rdf',  "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-    g.bind('ore',  "http://www.openarchives.org/ore/terms/")
-    g.bind('dc',   "http://purl.org/dc/elements/1.1/")
-    g.bind('exif', "http://www.w3.org/2003/12/exif/ns#")
-    g.bind('cnt',  "http://www.w3.org/2008/content#")
-    g.bind('perm', "http://vocab.ox.ac.uk/perm#")
-    g.bind('oa',   "http://www.openannotation.org/ns/")
-    g.bind('foaf', "http://xmlns.com/foaf/0.1/")
+    g.bind('rdf',    "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+    g.bind('ore',    "http://www.openarchives.org/ore/terms/")
+    g.bind('dc',     "http://purl.org/dc/elements/1.1/")
+    g.bind('exif',   "http://www.w3.org/2003/12/exif/ns#")
+    g.bind('cnt',    "http://www.w3.org/2008/content#")
+    g.bind('perm',   "http://vocab.ox.ac.uk/perm#")
+    g.bind('oa',     "http://www.openannotation.org/ns/")
+    g.bind('foaf',   "http://xmlns.com/foaf/0.1/")
+    g.bind('sc',     "http://www.shared-canvas.org/ns/Canvas")
+    g.bind('dm_img', IMG_SRC)
 
     return g
