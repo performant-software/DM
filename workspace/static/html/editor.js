@@ -1,7 +1,6 @@
 //goog.require('goog.events');
 //goog.require('atb.DMWebService');
 goog.require('atb.viewer.TextEditor');
-goog.require("atb.viewer.FakePanelContainer");
 goog.require("atb.ClientApp");
 
 initEditor = function()
