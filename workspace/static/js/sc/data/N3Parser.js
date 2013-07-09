@@ -2,7 +2,8 @@ goog.provide('sc.data.N3Parser');
 
 goog.require('sc.data.Parser');
 goog.require('n3.parser');
-goog.require('sc.util.Namespaces')
+goog.require('sc.util.Namespaces');
+goog.require('goog.asserts');
 
 sc.data.N3Parser = function(databroker) {
     sc.data.Parser.call(this, databroker);
@@ -11,6 +12,7 @@ sc.data.N3Parser = function(databroker) {
 
     if (Worker != null && Blob != null) {
         try {
+            goog.asserts.assert(goog.global.STATIC_URL != null);
             // Apologies for the inline code, but it's necessary due to cross-site restrictions
             this.workerBlob = new Blob([
                 "var STATIC_URL = '" + goog.global.STATIC_URL.replace(/'/g, "\\'") + "';\n\
