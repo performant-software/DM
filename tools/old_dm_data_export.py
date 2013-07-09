@@ -1,3 +1,5 @@
+#Note(tandres): This script is intended to be run from the shell of the old annotation_store, not the new dm django project
+
 from rdflib.term import URIRef, Literal
 from rdflib.namespace import Namespace
 from rdflib.graph import Graph
@@ -8,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.auth.models import User
 from uuid import uuid4
 
-from re import findall
+from bs4 import BeautifulSoup
 
 IMG_SRC = settings.BASE_URL + settings.MEDIA_URL + 'user_images/'
 # URI of each type we are using in the project linked to simple string of type
@@ -25,6 +27,9 @@ TYPE_URI = {
     'svg':"http://www.openannotation.org/ns/SvgSelector",
     'contentastext':'http://www.w3.org/2011/content#ContentAsText',
 }
+
+HIGHLIGHT_CLASS = 'atb-editor-textannotation'
+
 # Namespaces we will be using, declared globally for easy reference
 OA    = Namespace("http://www.w3.org/ns/oa#")
 SC    = Namespace("http://www.shared-canvas.org/ns/Canvas")
@@ -244,6 +249,13 @@ def handle_constraints(user):
 
     return graph
 
+# Note(tandres): We may need to modify this to move the images to a new location
+def get_image_src(image):
+    if (image.src_url):
+        src = image.src_url
+    else:
+        src = IMG_SRC + image.r_id + '.jpg'
+
 # Gets all images owned by <user> and collects the data in a Graph
 def handle_images(user):
     graph = instantiate_graph()
@@ -253,11 +265,7 @@ def handle_images(user):
         # For images, the uri is the url at which the image exists
         image = images[i]
 
-        # If src_url is defined, use that; otherwise create one
-        if (image.src_url):
-            uri = image.src_url
-        else:
-            uri = IMG_SRC + image.r_id + ".jpg"
+        uri = get_image_src(image)
 
         # Map this r_id to this uri
         r_id_mapping[image.r_id] = uri
@@ -314,17 +322,22 @@ def handle_texts(user):
 
     return graph
 
+def get_highlight_r_id_from_span(span):
+    for classname in span['class']:
+        if classname.startswith(HIGHLIGHT_CLASS + '-ID-'):
+            return classname[len(HIGHLIGHT_CLASS + '-ID-'):]
+    return None
+
 # Finds highlights within text which is wrapped with span tags, then adds the data to a graph
 def parse_for_highlights(content, content_uri):
     graph = instantiate_graph()
 
-    # Regex string for extract r_id and content from text
-    regex = r'<span class="[a-z\-\s]*ID\-(\d*?)">(.*?)</span>'
-    split_content = findall(regex,content)
-
-    for r_id, text in split_content:
+    soup = BeautifulSoup(content)
+    for span in soup.find_all('span', class_=HIGHLIGHT_CLASS):
         # Get uri of highlight
-        uri = get_mapped_uri(r_id)
+        uri = get_mapped_uri(get_highlight_r_id_from_span(span))
+
+        text = span.get_text(strip=True)
 
         # Create uri for highlight selector
         selector_uri = URIRef(uuid4().urn)
@@ -530,7 +543,7 @@ def instantiate_graph():
     g.bind('exif',   "http://www.w3.org/2003/12/exif/ns#")
     g.bind('cnt',    "http://www.w3.org/2008/content#")
     g.bind('perm',   "http://vocab.ox.ac.uk/perm#")
-    g.bind('oa',     "http://www.openannotation.org/ns/")
+    g.bind('oa',     "http://www.w3.org/ns/oa#")
     g.bind('foaf',   "http://xmlns.com/foaf/0.1/")
     g.bind('sc',     "http://www.shared-canvas.org/ns/Canvas")
     g.bind('dm_img', IMG_SRC)
