@@ -300,8 +300,11 @@ def handle_texts(user):
         # Add relevant data to graph
         title = text.title.replace('"', '&quot;')
         graph.add((uri, DC['title'], Literal(title)))
-        content = text.content.replace('"','&quot;')
-        graph.add((uri, CNT['chars'], Literal(content)))
+
+        # This should now be done by parse_for_highlights
+        # content = text.content.replace('"','&quot;')
+        # graph.add((uri, CNT['chars'], Literal(content)))
+
         graph.add((uri, RDF['type'], TYPE_URI['text']))
 
         # Mark annotations as such
@@ -328,6 +331,7 @@ def get_highlight_r_id_from_span(span):
             return classname[len(HIGHLIGHT_CLASS + '-ID-'):]
     return None
 
+
 # Finds highlights within text which is wrapped with span tags, then adds the data to a graph
 def parse_for_highlights(content, content_uri):
     graph = instantiate_graph()
@@ -336,8 +340,12 @@ def parse_for_highlights(content, content_uri):
     for span in soup.find_all('span', class_=HIGHLIGHT_CLASS):
         # Get uri of highlight
         uri = get_mapped_uri(get_highlight_r_id_from_span(span))
-
         text = span.get_text(strip=True)
+
+        # Modernize highlight span
+        span['class'] = HIGHLIGHT_CLASS
+        span['about'] = uri
+        span['property'] = 'oa:exact'
 
         # Create uri for highlight selector
         selector_uri = URIRef(uuid4().urn)
@@ -351,6 +359,7 @@ def parse_for_highlights(content, content_uri):
         graph.add((selector_uri, OA['exact'], Literal(text)))
         graph.add((selector_uri, RDF['type'], OA['TextQuoteSelector']))
 
+    graph.add((content_uri, CNT.chars, Literal(unicode(soup))))
 
     return graph
         
