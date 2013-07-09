@@ -32,6 +32,7 @@ def create_project(g, host):
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
+                        ?user rdf:type foaf:Agent .
                     }""", initNs = ns)
 
     for uri, user in query:
