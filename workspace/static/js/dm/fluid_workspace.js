@@ -165,7 +165,7 @@ var resizeViewerGrid = function() {
     viewerGrid.resize(width, height);
 }
 
-function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl, usernames) {
+function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
     cookies = new goog.net.Cookies(window.document);
     /* The following method is copied from Django documentation
      * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
@@ -215,7 +215,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
-    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username, usernames);
+    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username);
 
     setupCurrentProject(clientApp, username);
 }
