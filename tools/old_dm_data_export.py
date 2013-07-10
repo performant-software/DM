@@ -12,6 +12,10 @@ from uuid import uuid4
 
 from bs4 import BeautifulSoup
 
+import Queue
+import os
+from threading import Thread
+
 IMG_SRC = settings.BASE_URL + settings.MEDIA_URL + 'user_images/'
 # URI of each type we are using in the project linked to simple string of type
 TYPE_URI = {
@@ -43,11 +47,13 @@ FOAF  = Namespace("http://xmlns.com/foaf/0.1/")
 IMGS  = Namespace(IMG_SRC)
 # Integer type for the height/width declarations
 INT     = "http://www.w3.org/2001/XMLSchema#integer"
+
 # SVG strings with string formatting operators (%s) for each data value
-SVG     = {'polygon':"<polygon xmlns=\'http://www.w3.org/2000/svg\' fill=\'rgba(15, 108, 214, 0.6)\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
-           'circle':"<circle xmlns=\'http://www.w3.org/2000/svg\' fill=\'rgba(15, 108, 214, 0.6)\'  stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' cx=\'%s\' cy=\'%s\' r=\'%s\' />",
-           'polyline':"<polyline xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
-           }
+SVG     = {
+    'polygon':"<polygon fill=\'rgba(15, 108, 214, 0.6)\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
+    'circle':"<circle fill=\'rgba(15, 108, 214, 0.6)\'  stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' cx=\'%s\' cy=\'%s\' r=\'%s\' />",
+    'polyline':"<polyline fill=\'none\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
+}
 # URL for the base of user URIs
 # Hard-coded to be understood properly in the new version
 USER_URL_BASE = 'http://dm.drew.edu/store/users/'
@@ -62,21 +68,16 @@ r_id_mapping = {}
 # These are r_ids which should be annos, except that no triples
 #  about them exist
 # Used by get_mapped_uri
-bad_r_ids = ["95470", "235609", "275822", "275857", "275860", "275865", "279188", "279205", "279228", "280257", "281629", "284706", "284718", "284721", "284912", "285385", "286279", "286284", "263621"]
+bad_r_ids = ("95470", "235609", "275822", "275857", "275860", "275865", "279188", "279205", "279228", "280257", "281629", "284706", "284718", "284721", "284912", "285385", "286279", "286284", "263621")
 
-def print_me():
-    #return just_one_user("lisafdavis@yahoo.com")
-    return all_users()
-    #return just_one_user("alex.fleck3@gmail.com")
 
-def just_one_user(name):
+def complete_user_graph(name):
     # Create a graph in which to hold all the data
     everything_graph = instantiate_graph()
 
     # Map all users to a custom uri (for their project)
     map_users()
 
-    # For testing purposes, just look at one of the users
     user = User.objects.get(username=name)
 
     # Add all the data to everything_graph
@@ -94,19 +95,53 @@ def just_one_user(name):
     # Annos are special because we need to check that there is information
     #  about them in the larger graph as well
     everything_graph += handle_annos(user, everything_graph)
-    everything_graph.serialize("0.xml",format="xml")
+
     return everything_graph
 
-def all_users():
-    everything_graph = instantiate_graph()
-    i = 0;
+class UserGraphThread(Thread):
+    def __init__(self, queue, output_path=None):
+        Thread.__init__(self)
+        self.queue = queue
+        self.output_path = output_path
 
-    for user in User.objects.filter():
+    def path_for_username(self, username):
+        if self.output_path is not None:
+            return os.path.join(self.output_path, "%s.xml" % username)
+        else:
+            return "%s.xml" % username
+
+    def run(self):
+        while True:
+            username = self.queue.get()
+
+            graph = complete_user_graph(username)
+            graph.serialize(self.path_for_username(username), format="xml")
+            print "Exported %s's data." % username
+
+            self.queue.task_done()
+
+def threaded_export_all_users():
+    queue = Queue.Queue()
+    usernames = [user.username for user in User.objects.all()]
+
+    for username in usernames:
+        thread = UserGraphThread(queue, "output")
+        thread.setDaemon(True)
+        thread.start()
+
+    for username in usernames:
+        queue.put(username)
+
+    queue.join()
+
+
+
+def export_all_users():
+    for user in User.objects.all():
         name = user.username
         print name
-        user_graph = just_one_user(name)
-        user_graph.serialize("output/%s.xml"%(i), format="xml")
-        i += 1
+        user_graph = complete_user_graph(name)
+        user_graph.serialize("output/%s.xml" % name, format="xml")
 
 
 # Canvases, although gotten by username, are structured as global data
