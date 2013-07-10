@@ -370,14 +370,11 @@ sc.util.Namespaces.prototype.prefix = function(uri) {
 };
 
 sc.util.Namespaces.prototype.bindNamespacesToHtmlElement = function(html) {
+    var arr = [];
+
     goog.structs.forEach(this.uriByPrefix, function(uri, prefix) {
-        var xmlns = 'xmlns:' + prefix;
-
-        var original = jQuery(html).attr(xmlns);
-        if (original) {
-            console.warn('Overwriting original ' + xmlns + '=' + original);
-        }
-
-        jQuery(html).attr(xmlns, uri);
+        arr.push([prefix, ': ', uri].join(''));
     }, this);
+
+    jQuery(html).attr(prefix, arr.join('\n'))
 };
