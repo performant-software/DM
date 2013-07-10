@@ -376,5 +376,5 @@ sc.util.Namespaces.prototype.bindNamespacesToHtmlElement = function(html) {
         arr.push([prefix, ': ', uri].join(''));
     }, this);
 
-    jQuery(html).attr(prefix, arr.join('\n'))
+    jQuery(html).attr('prefix', arr.join('\n'))
 };
