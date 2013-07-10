@@ -343,16 +343,11 @@ def handle_texts(user):
 
         graph.add((uri, RDF['type'], TYPE_URI['text']))
 
-        # Mark annotations as such
-        # The new version will know to look for the annotation discussing this
-        #  text and correctly link the text to the annotatiom
-        if text.purpose == 'anno':
-            graph.add((uri, OA['motivatedBy'], OA['commenting']))
         # Non-annotating texts become personal resources for the user, so they must be 
         #  individually connected to the project
         # (All objects handled previously which depend on user are linked to the user through 
         #  annotations, which are directly connected to their default project
-        else:
+        if text.purpose != 'anno':
             project = get_mapped_user_default_project(user)
             graph.add((project, ORE['aggregates'], uri))
 
@@ -436,6 +431,18 @@ def handle_annos(user, parent_graph):
             target = Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True)[0].obj
 
         if (target and body):
+            target_resource = Resources.objects.get(r_id=target)
+            body_resource = Resources.objects.get(r_id=body)
+
+            if body_resource.r_type == 'text':
+                text = Texts.objects.get(r_id=body)
+                if text.purpose == 'anno' or text.purpose == 'notes':
+                    graph.add((uri, OA.motivatedBy, OA.commenting))
+                elif text.purpose == 'trans':
+                    graph.add((uri, OA.motivatedBy, OA.describing))
+                elif text.purpose == 'bib':
+                    graph.add((uri, OA.motivatedBy, OA.bookmarking))
+
             target_uri = get_mapped_uri(target)
             body_uri = get_mapped_uri(body)
 
@@ -592,15 +599,15 @@ def map_users():
 def instantiate_graph():
     g = Graph()
 
-    g.bind('rdf',    "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-    g.bind('ore',    "http://www.openarchives.org/ore/terms/")
-    g.bind('dc',     "http://purl.org/dc/elements/1.1/")
-    g.bind('exif',   "http://www.w3.org/2003/12/exif/ns#")
-    g.bind('cnt',    "http://www.w3.org/2008/content#")
-    g.bind('perm',   "http://vocab.ox.ac.uk/perm#")
-    g.bind('oa',     "http://www.w3.org/ns/oa#")
-    g.bind('foaf',   "http://xmlns.com/foaf/0.1/")
-    g.bind('sc',     "http://www.shared-canvas.org/ns/Canvas")
+    g.bind('rdf',    RDF)
+    g.bind('ore',    ORE)
+    g.bind('dc',     DC)
+    g.bind('exif',   EXIF)
+    g.bind('cnt',    CNT)
+    g.bind('perm',   PERM)
+    g.bind('oa',     OA)
+    g.bind('foaf',   FOAF)
+    g.bind('sc',     SC)
     g.bind('dm_img', IMG_SRC)
     g.bind('dm',     DM)
 
