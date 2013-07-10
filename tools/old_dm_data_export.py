@@ -168,7 +168,7 @@ def add_canvas(canvas, project):
 
     # Add data to graph
     graph.add((uri, RDF['type'],TYPE_URI['canvas']))
-    title = canvas.name.replace('"', '&quot;')
+    title = canvas.name
     graph.add((uri, DC['title'],Literal(title)))
     graph.add((uri, EXIF['height'], Literal(canvas.height, datatype=INT)))
     graph.add((uri, EXIF['width'], Literal(canvas.width, datatype=INT)))
@@ -314,7 +314,7 @@ def handle_images(user):
 
         # Thumbnails are being dynamically generated in the new version, so
         #  we don't need to work about thumbnails saved in the old version
-        title = image.name.replace('"','&quot;')
+        title = image.name
         if not (("thumb of" in title) or ("(thumb)" in title)):
             # If not a thumbnail, add all relevant data to graph
             graph.add((uri, DC['title'], Literal(title)))
@@ -337,12 +337,8 @@ def handle_texts(user):
         uri = get_mapped_uri(text.r_id)
 
         # Add relevant data to graph
-        title = text.title.replace('"', '&quot;')
+        title = text.title
         graph.add((uri, DC['title'], Literal(title)))
-
-        # This should now be done by parse_for_highlights
-        # content = text.content.replace('"','&quot;')
-        # graph.add((uri, CNT['chars'], Literal(content)))
 
         graph.add((uri, RDF['type'], TYPE_URI['text']))
 
