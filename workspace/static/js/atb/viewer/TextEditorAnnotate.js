@@ -530,8 +530,10 @@ atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function (
 };
 
 atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(element, uri) {
+	var namespaces = this.databroker.namespaces;
+
     jQuery(element).attr('about', uri);
-    jQuery(element).attr('property', 'oa:exact');
+    jQuery(element).attr('property', namespaces.expand('oa', 'exact'));
 };
 
 
