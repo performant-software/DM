@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.auth.models import User
 from uuid import uuid4
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 
 import Queue
 import os
@@ -366,6 +366,13 @@ def get_highlight_r_id_from_span(span):
             return classname[len(HIGHLIGHT_CLASS + '-ID-'):]
     return None
 
+def sanitize_html(soup):
+    for comment in soup.find_all(text=lambda text: isinstance(text, Comment)):
+        comment.extract()
+
+    for script in soup.find_all('script'):
+        script.extract()
+
 
 # Finds highlights within text which is wrapped with span tags, then adds the data to a graph
 def parse_for_highlights(content, content_uri):
@@ -380,7 +387,7 @@ def parse_for_highlights(content, content_uri):
         # Modernize highlight span
         span['class'] = HIGHLIGHT_CLASS
         span['about'] = uri
-        span['property'] = 'oa:exact'
+        span['property'] = unicode(OA.exact)
 
         # Create uri for highlight selector
         selector_uri = URIRef(uuid4().urn)
@@ -393,6 +400,8 @@ def parse_for_highlights(content, content_uri):
         # Add information about selector
         graph.add((selector_uri, OA['exact'], Literal(text)))
         graph.add((selector_uri, RDF['type'], OA['TextQuoteSelector']))
+
+    sanitize_html(soup)
 
     graph.add((content_uri, CNT.chars, Literal(unicode(soup))))
 

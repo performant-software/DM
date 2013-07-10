@@ -11,6 +11,19 @@ from semantic_store import uris
 
 from datetime import datetime
 
+from bs4 import BeautifulSoup, Comment
+
+def sanitized_content(content):
+    soup = BeautifulSoup(content)
+
+    for comment in soup.find_all(text=lambda text: isinstance(text, Comment)):
+        comment.extract()
+
+    for script in soup.find_all('script'):
+        script.extract()
+
+    return unicode(soup)
+
 # Create project text using data in a properly-formatted graph
 # Can handle multiple texts, but only one project 
 def create_project_text(g, project_uri):
@@ -33,6 +46,8 @@ def create_project_text(g, project_uri):
     with transaction.commit_on_success():
         # Using create_text_graph, add info to project graph and empty graph
         for title, content in q:
+            content = sanitized_content(content)
+
             project_g += create_text_graph(title, content)
             return_graph += create_text_graph(title, content)
 
@@ -123,7 +138,7 @@ def update_project_text(g, p_uri, t_uri):
     with transaction.commit_on_success():
         for content, title in q:
             # Replace content & title data in project graph
-            project_g.set((text_uri, NS.cnt['chars'], Literal(content)))
+            project_g.set((text_uri, NS.cnt['chars'], Literal(sanitized_content(content))))
             project_g.set((text_uri, NS.dc['title'], Literal(title)))
 
     # Return (updated) data about graph
