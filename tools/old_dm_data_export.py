@@ -45,6 +45,7 @@ CNT   = Namespace("http://www.w3.org/2011/content#")
 PERM  = Namespace("http://vocab.ox.ac.uk/perm#")
 FOAF  = Namespace("http://xmlns.com/foaf/0.1/")
 IMGS  = Namespace(IMG_SRC)
+DM    = Namespace("http://dm.drew.edu/ns/")
 # Integer type for the height/width declarations
 INT     = "http://www.w3.org/2001/XMLSchema#integer"
 
@@ -152,7 +153,7 @@ def handle_canvases(user):
 
     for i in range(len(canvases)):
         canvas = canvases[i]
-        graph += add_canvas(canvas, get_mapped_user(user))
+        graph += add_canvas(canvas, get_mapped_user_default_project(user))
     
     return graph
 
@@ -352,7 +353,7 @@ def handle_texts(user):
         # (All objects handled previously which depend on user are linked to the user through 
         #  annotations, which are directly connected to their default project
         else:
-            project = get_mapped_user(user)
+            project = get_mapped_user_default_project(user)
             graph.add((project, ORE['aggregates'], uri))
 
         #Parse for highlights
@@ -444,7 +445,7 @@ def handle_annos(user, parent_graph):
             graph.add((uri, RDF['type'], TYPE_URI['anno']))
 
             # Link anno to project
-            graph.add((get_mapped_user(user), ORE['aggregates'], uri))
+            graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
 
     return graph
 
@@ -453,18 +454,19 @@ def handle_annos(user, parent_graph):
 def handle_user(user):
     graph = instantiate_graph()
 
-    uri = get_mapped_user(user)
+    project_uri = get_mapped_user_default_project(user)
 
     # Add data about project
-    graph.add((uri, RDF['type'], TYPE_URI['collection']))
-    graph.add((uri, RDF['type'], TYPE_URI['aggregation']))
-    graph.add((uri, DC['title'], Literal("Default Title")))
+    graph.add((project_uri, RDF['type'], TYPE_URI['collection']))
+    graph.add((project_uri, RDF['type'], TYPE_URI['aggregation']))
+    graph.add((project_uri, RDF.type, DM.Project))
+    graph.add((project_uri, RDF.type, FOAF.Project))
+    graph.add((project_uri, DC['title'], Literal("Default Project")))
 
     user_uri = get_user_uri(user)
     
     # Add data about user
-    graph.add((user_uri, ORE['aggregates'], uri))
-    graph.add((user_uri, PERM['hasPermissionOver'], uri))
+    graph.add((user_uri, PERM['hasPermissionOver'], project_uri))
     graph.add((user_uri, RDF['type'], TYPE_URI['agent']))
     graph.add((user_uri, FOAF['mbox'], URIRef("mailto:"+user.email)))
 
@@ -552,7 +554,7 @@ def transform_poly_points(points, height, width):
 
 # Quick function to either create a uri for a user, or return the one that has already been
 #  mapped to that user
-def get_mapped_user(user):
+def get_mapped_user_default_project(user):
     try:
         uri = user_mapping[user]
     except KeyError:
@@ -584,7 +586,7 @@ def get_mapped_uri(r_id):
 def map_users():
     users = User.objects.filter()
     for i in range(len(users)):
-        get_mapped_user(users[i])
+        get_mapped_user_default_project(users[i])
 
 # Create a new Graph object and bind all of the namespaces we will be using
 def instantiate_graph():
@@ -600,5 +602,6 @@ def instantiate_graph():
     g.bind('foaf',   "http://xmlns.com/foaf/0.1/")
     g.bind('sc',     "http://www.shared-canvas.org/ns/Canvas")
     g.bind('dm_img', IMG_SRC)
+    g.bind('dm',     DM)
 
     return g
