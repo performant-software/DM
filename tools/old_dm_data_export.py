@@ -121,12 +121,12 @@ class UserGraphThread(Thread):
 
             self.queue.task_done()
 
-def threaded_export_all_users():
+def threaded_export_all_users(path_to_export_folder):
     queue = Queue.Queue()
     usernames = [user.username for user in User.objects.all()]
 
     for username in usernames:
-        thread = UserGraphThread(queue, "output")
+        thread = UserGraphThread(queue, path_to_export_folder)
         thread.setDaemon(True)
         thread.start()
 
@@ -137,12 +137,15 @@ def threaded_export_all_users():
 
 
 
-def export_all_users():
+def export_all_users(path_to_export_folder):
     for user in User.objects.all():
         name = user.username
-        print name
+        print "- %s" % name
+        print "  Creating graph"
         user_graph = complete_user_graph(name)
-        user_graph.serialize("output/%s.xml" % name, format="xml")
+        print "  Serializing graph"
+        user_graph.serialize(os.path.join(path_to_export_folder, "%s.xml" % name), format="xml")
+        print "  Done."
 
 
 # Canvases, although gotten by username, are structured as global data
@@ -431,28 +434,31 @@ def handle_annos(user, parent_graph):
             target = Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True)[0].obj
 
         if (target and body):
-            target_resource = Resources.objects.get(r_id=target)
-            body_resource = Resources.objects.get(r_id=body)
+            try:
+                target_resource = Resource.objects.get(r_id=target)
+                body_resource = Resource.objects.get(r_id=body)
 
-            if body_resource.r_type == 'text':
-                text = Texts.objects.get(r_id=body)
-                if text.purpose == 'anno' or text.purpose == 'notes':
-                    graph.add((uri, OA.motivatedBy, OA.commenting))
-                elif text.purpose == 'trans':
-                    graph.add((uri, OA.motivatedBy, OA.describing))
-                elif text.purpose == 'bib':
-                    graph.add((uri, OA.motivatedBy, OA.bookmarking))
+                if body_resource.r_type == 'text':
+                    text = Text.objects.get(r_id=body, valid=True, most_recent=True)
+                    if text.purpose == 'anno' or text.purpose == 'notes':
+                        graph.add((uri, OA.motivatedBy, OA.commenting))
+                    elif text.purpose == 'trans':
+                        graph.add((uri, OA.motivatedBy, OA.describing))
+                    elif text.purpose == 'bib':
+                        graph.add((uri, OA.motivatedBy, OA.bookmarking))
 
-            target_uri = get_mapped_uri(target)
-            body_uri = get_mapped_uri(body)
+                target_uri = get_mapped_uri(target)
+                body_uri = get_mapped_uri(body)
 
-            # Add information about anno
-            graph.add((uri, OA['hasTarget'], get_mapped_uri(target)))
-            graph.add((uri, OA['hasBody'], get_mapped_uri(body)))
-            graph.add((uri, RDF['type'], TYPE_URI['anno']))
+                # Add information about anno
+                graph.add((uri, OA['hasTarget'], get_mapped_uri(target)))
+                graph.add((uri, OA['hasBody'], get_mapped_uri(body)))
+                graph.add((uri, RDF['type'], TYPE_URI['anno']))
 
-            # Link anno to project
-            graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
+                # Link anno to project
+                graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
+            except ObjectDoesNotExist:
+                pass
 
     return graph
 
