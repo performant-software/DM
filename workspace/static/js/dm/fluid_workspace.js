@@ -163,6 +163,15 @@ var resizeViewerGrid = function() {
     var width = jQuery(window).width() - GRID_LEFT_MARGIN - GRID_RIGHT_MARGIN;
 
     viewerGrid.resize(width, height);
+
+    if ($(window).width() > 1275 && $(window).height() > 825) {
+        $('#3x4_layout_button').show();
+        $('#4x4_layout_button').show();
+    }
+    else {
+        $('#3x4_layout_button').hide();
+        $('#4x4_layout_button').hide();
+    }
 }
 
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
