@@ -21,7 +21,7 @@ def create_project_from_request(request):
     host = request.get_host()
 
     try:
-        parse_into_graph(g, data=request.body)
+        parse_into_graph(g, data=request.body, format="turtle")
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
@@ -159,3 +159,21 @@ def delete_triples_from_project(request, uri):
     return removed
 
 
+# Create the project graph, with all of the required data, and sends it to be saved
+# Used for the the create project management command and some part of ProjectView
+# # Have we made ProjectView obsolete since we now export data in RDF?
+def create_project_graph(host, user, title, project):
+    if not project:
+        project = uris.uuid()
+    g = Graph()
+    bind_namespaces(g)
+    if not title:
+        title = "Default Project"
+    g.add((project, NS.rdf.type, NS.foaf.Project))
+    g.add((project, NS.rdf.type, NS.dm.Project))
+    g.add((project, NS.rdf['type'], NS.dcmitype['Collection']))
+    g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
+    g.add((project, NS.dc['title'], Literal(title)))
+    g.add((project, NS.dcterms['created'], Literal(datetime.utcnow())))
+
+    user_uri = uris.uri('semantic_store_users', username=user)
