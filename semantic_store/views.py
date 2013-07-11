@@ -218,10 +218,10 @@ def import_old_data(request):
             graph = Graph()
             bind_namespaces(everything_graph)
             try:
-                graph.parse("output/%s.xml"%(i))
+                graph.parse("output/%s.ttl"%(i))
             except IOError:
                 break
-            else:
+            else:   
                 add_all_users(everything_graph)
                 create_project(graph, host)
                 i += 1
