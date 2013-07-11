@@ -262,16 +262,16 @@ atb.widgets.WorkingResources.prototype.updateCanvas = function(item, opt_isFully
 
     if (imageSrc) {
         var image = this.databroker.getResource(imageSrc);
+
+        var size = new goog.math.Size(
+            image.getOneProperty('exif:width'),
+            image.getOneProperty('exif:height')
+        ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
+
+        var src = imageSrc + '?w=' + size.width + '&h=' + size.height;
+
+        item.setThumb(imageSrc, size.width, size.height);
     }
-
-    var size = new goog.math.Size(
-        image.getOneProperty('exif:width'),
-        image.getOneProperty('exif:height')
-    ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
-
-    var src = imageSrc + '?w=' + size.width + '&h=' + size.height;
-
-    item.setThumb(imageSrc, size.width, size.height);
 };
 
 atb.widgets.WorkingResources.prototype.updateFolio = function(folio) {
