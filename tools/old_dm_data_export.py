@@ -12,9 +12,8 @@ from uuid import uuid4
 
 from bs4 import BeautifulSoup, Comment
 
-import Queue
+from multiprocessing import Process, Pool
 import os
-from threading import Thread
 
 IMG_SRC = settings.BASE_URL + settings.MEDIA_URL + 'user_images/'
 # URI of each type we are using in the project linked to simple string of type
@@ -99,43 +98,22 @@ def complete_user_graph(name):
 
     return everything_graph
 
-class UserGraphThread(Thread):
-    def __init__(self, queue, output_path=None):
-        Thread.__init__(self)
-        self.queue = queue
-        self.output_path = output_path
-
-    def path_for_username(self, username):
-        if self.output_path is not None:
-            return os.path.join(self.output_path, "%s.xml" % username)
-        else:
-            return "%s.xml" % username
-
-    def run(self):
-        while True:
-            username = self.queue.get()
-
-            graph = complete_user_graph(username)
-            graph.serialize(self.path_for_username(username), format="xml")
+def multiprocess_export_all_users(path_to_export_folder):
+    def with_username(username):
+        def user_serialization_callback(g):
+            g.serialize(os.path.join(path_to_export_folder, "%s.xml" % username), format='xml')
             print "Exported %s's data." % username
 
-            self.queue.task_done()
-
-def threaded_export_all_users(path_to_export_folder):
-    queue = Queue.Queue()
+        result = pool.apply_async(complete_user_graph, (username,), callback=user_serialization_callback)
+    
     usernames = [user.username for user in User.objects.all()]
 
+    pool = Pool(processes=10)
     for username in usernames:
-        thread = UserGraphThread(queue, path_to_export_folder)
-        thread.setDaemon(True)
-        thread.start()
+        with_username(username)
 
-    for username in usernames:
-        queue.put(username)
-
-    queue.join()
-
-
+    pool.close()
+    pool.join()
 
 def export_all_users(path_to_export_folder):
     for user in User.objects.all():
@@ -415,23 +393,24 @@ def handle_annos(user, parent_graph):
         r_id = anno.r_id
         uri = get_mapped_uri(r_id)
 
-        try:
-            target = Triple.objects.get(subj=r_id, pred='oac:hasTarget', most_recent=True, valid=True).obj
-        except ObjectDoesNotExist:
-            pass
-        except MultipleObjectsReturned:
-            target = Triple.objects.filter(subj=r_id, pred='oac:hasTarget', most_recent=True, valid=True)[0].obj
+        targets = Triple.objects.filter(subj=r_id, pred='oac:hasTarget', most_recent=True, valid=True)
+        target_resources = []
+        for target in list(targets):
+            try:
+                target_resources.append(Resource.objects.get(r_id=target))
+            except ObjectDoesNotExist:
+                pass
 
         try:
             body = Triple.objects.get(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True).obj
         except ObjectDoesNotExist:
             pass
         except MultipleObjectsReturned:
-            target = Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True)[0].obj
+            body = Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True)[0].obj
+            print 'Warning: with user="%s", anno %s has multiple bodies' % (user.username, r_id)
 
-        if (target and body):
+        if (len(target_resources) > 0 and body):
             try:
-                target_resource = Resource.objects.get(r_id=target)
                 body_resource = Resource.objects.get(r_id=body)
 
                 if body_resource.r_type == 'text':
@@ -443,13 +422,14 @@ def handle_annos(user, parent_graph):
                     elif text.purpose == 'bib':
                         graph.add((uri, OA.motivatedBy, OA.bookmarking))
 
-                target_uri = get_mapped_uri(target)
                 body_uri = get_mapped_uri(body)
 
                 # Add information about anno
-                graph.add((uri, OA['hasTarget'], get_mapped_uri(target)))
-                graph.add((uri, OA['hasBody'], get_mapped_uri(body)))
+                graph.add((uri, OA['hasBody'], body_uri))
                 graph.add((uri, RDF['type'], TYPE_URI['anno']))
+
+                for target_resource in target_resources:
+                    graph.add((uri, OA.hasTarget, get_mapped_uri(target_resource.r_id)))
 
                 # Link anno to project
                 graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
