@@ -140,7 +140,7 @@ def aggregated_seq_uris_urls(uri, g):
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
                }"""
-    qres = g.query(query, initBindings={'uri': uri})
+    qres = g.query(query, initNs=ns, initBindings={'uri': uri})
     return list(qres)
 
 def fetch_and_parse(url, g, manifest_file=None, fmt="xml", cache=None):
@@ -234,7 +234,7 @@ def pagination(g, collection_uri=None, pred=None, obj=None,
                    {?first a dms:Canvas} UNION {?first a sc:Canavas} .
                    ?sequence_uri rdf:rest ?rest
                }"""
-    qres = g.query(query, initBindings={'res_uri': res_uri})
+    qres = g.query(query, initNs=ns, initBindings={'res_uri': res_uri})
 
     (first, rest, seq_uri) = list(qres)[0]
     seq_num = 1
