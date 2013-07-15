@@ -3,6 +3,7 @@
 @import url("atb/atb.css");
 @import url("atb/bezel.css");
 @import url("atb/editor.css");
+@import url("atb/editorframe.css");
 @import url("atb/markereditor.css");
 @import url("atb/resourceviewer.css");   /* TODO: clean this up soon */
 @import url("atb/verticaltoolbar.css");

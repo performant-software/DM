@@ -364,6 +364,10 @@ atb.viewer.Viewer.prototype.getMousePosition = function () {
     return this.mousePosition;
 };
 
+atb.viewer.Viewer.prototype.isEditable = function() {
+    return false;
+};
+
 /**
  * Shows a self hiding hover menu with the given buttons
  *
