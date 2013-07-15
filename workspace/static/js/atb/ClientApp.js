@@ -20,10 +20,10 @@ goog.require('atb.events.LinkingModeExited');
 
 goog.require('sc.data.Databroker');
 
-atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
+atb.ClientApp = function (webService, username, opt_hack_set_styleRoot, databrokerOptions) {
     var self = this;
     
-    this.databroker = new sc.data.Databroker();
+    this.databroker = new sc.data.Databroker(databrokerOptions);
     
     this.eventDispatcher = new goog.events.EventTarget();
     
