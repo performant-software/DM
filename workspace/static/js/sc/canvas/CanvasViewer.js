@@ -27,6 +27,8 @@ sc.canvas.CanvasViewer = function(options) {
     
     this.databroker = this.options.databroker;
 
+    this._isEditable = true;
+
     this.proxiedOnMarqueeMousedown = this.handleMarqueeMousedown.bind(this);
     this.proxiedOnMarqueeMousemove = this.handleMarqueeMousemove.bind(this);
     this.proxiedOnMarqueeMouseup = this.handleMarqueeMouseup.bind(this);
@@ -76,6 +78,28 @@ sc.canvas.CanvasViewer = function(options) {
 sc.canvas.CanvasViewer.prototype.options = {
     'databroker': new sc.data.Databroker(),
     'marqueeSize': new goog.math.Size(100, 100)
+};
+
+sc.canvas.CanvasViewer.prototype.isEditable = function() {
+    return this._isEditable;
+};
+
+sc.canvas.CanvasViewer.prototype.makeEditable = function() {
+    if (!this.isEditable()) {
+
+
+        this._isEditable = true;
+    }
+};
+
+sc.canvas.CanvasViewer.prototype.makeUneditable = function() {
+    if (this.isEditable()) {
+        this.toolbar = new sc.canvas.CanvasToolbar(this, true);
+        jQuery(this.toolbarDiv).replaceWith(this.toolbar.getElement());
+        this.toolbarDiv = this.toolbar.getElement();
+
+        this._isEditable = false;
+    }
 };
 
 sc.canvas.CanvasViewer.prototype.setupControls = function() {
