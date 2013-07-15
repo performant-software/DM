@@ -17,25 +17,12 @@ import os
 
 IMG_SRC = settings.BASE_URL + settings.MEDIA_URL + 'user_images/'
 # URI of each type we are using in the project linked to simple string of type
-TYPE_URI = {
-    'text':'http://purl.org/dc/dcmitype/Text',
-    'canvas':'http://www.shared-canvas.org/ns/Canvas',
-    'anno':'http://www.openannotation.org/ns/Annotation',
-    'image':'http://purl.org/dc/dcmitype/Image',
-    'SpecificResource':'http://www.openannotation.org/ns/SpecificResource',
-    'highlight':'http://www.openannotation.org/extension/Highlight',
-    'collection':'http://purl.org/dc/dcmitype/Collection',
-    'aggregation':'http://www.openarchives.org/ore/terms/Aggregation',
-    'agent':'http://xmlns.com/foaf/0.1/Agent',
-    'svg':"http://www.openannotation.org/ns/SvgSelector",
-    'contentastext':'http://www.w3.org/2011/content#ContentAsText',
-}
 
 HIGHLIGHT_CLASS = 'atb-editor-textannotation'
 
 # Namespaces we will be using, declared globally for easy reference
 OA    = Namespace("http://www.w3.org/ns/oa#")
-SC    = Namespace("http://www.shared-canvas.org/ns/Canvas")
+SC    = Namespace("http://www.shared-canvas.org/ns/")
 RDF   = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 ORE   = Namespace("http://www.openarchives.org/ore/terms/")
 DC    = Namespace("http://purl.org/dc/elements/1.1/")
@@ -47,6 +34,20 @@ IMGS  = Namespace(IMG_SRC)
 DM    = Namespace("http://dm.drew.edu/ns/")
 # Integer type for the height/width declarations
 INT     = "http://www.w3.org/2001/XMLSchema#integer"
+
+TYPE_URI = {
+    'text':URIRef('http://purl.org/dc/dcmitype/Text'),
+    'canvas':URIRef('http://www.shared-canvas.org/ns/Canvas'),
+    'anno':OA.Annotation,
+    'image':URIRef('http://purl.org/dc/dcmitype/Image'),
+    'SpecificResource':OA.SpecificResource,
+    'highlight':URIRef('http://www.openannotation.org/extension/Highlight'),
+    'collection':URIRef('http://purl.org/dc/dcmitype/Collection'),
+    'aggregation':URIRef('http://www.openarchives.org/ore/terms/Aggregation'),
+    'agent':URIRef('http://xmlns.com/foaf/0.1/Agent'),
+    'svg':OA.SvgSelector,
+    'contentastext':URIRef('http://www.w3.org/2011/content#ContentAsText'),
+}
 
 # SVG strings with string formatting operators (%s) for each data value
 SVG     = {
@@ -101,11 +102,11 @@ def complete_user_graph(name):
 def multiprocess_export_all_users(path_to_export_folder):
     def with_username(username):
         def user_serialization_callback(g):
-            g.serialize(os.path.join(path_to_export_folder, "%s.xml" % username), format='xml')
+            g.serialize(os.path.join(path_to_export_folder, "%s.ttl" % username), format='turtle')
             print "Exported %s's data." % username
 
         result = pool.apply_async(complete_user_graph, (username,), callback=user_serialization_callback)
-    
+
     usernames = [user.username for user in User.objects.all()]
 
     pool = Pool(processes=10)
@@ -122,7 +123,7 @@ def export_all_users(path_to_export_folder):
         print "  Creating graph"
         user_graph = complete_user_graph(name)
         print "  Serializing graph"
-        user_graph.serialize(os.path.join(path_to_export_folder, "%s.xml" % name), format="xml")
+        user_graph.serialize(os.path.join(path_to_export_folder, "%s.ttl" % name), format="turtle")
         print "  Done."
 
 
@@ -272,6 +273,7 @@ def get_image_src(image):
         src = image.src_url
     else:
         src = IMG_SRC + image.r_id + '.jpg'
+    return src
 
 # Gets all images owned by <user> and collects the data in a Graph
 def handle_images(user):
@@ -376,7 +378,7 @@ def parse_for_highlights(content, content_uri):
 
     sanitize_html(soup)
 
-    graph.add((content_uri, CNT.chars, Literal(unicode(soup))))
+    graph.add((content_uri, CNT.chars, Literal(unicode(soup.find('body')))))
 
     return graph
         
@@ -393,11 +395,10 @@ def handle_annos(user, parent_graph):
         r_id = anno.r_id
         uri = get_mapped_uri(r_id)
 
-        targets = Triple.objects.filter(subj=r_id, pred='oac:hasTarget', most_recent=True, valid=True)
         target_resources = []
-        for target in list(targets):
+        for target in Triple.objects.filter(subj=r_id, pred='oac:hasTarget', most_recent=True, valid=True):
             try:
-                target_resources.append(Resource.objects.get(r_id=target))
+                target_resources.append(Resource.objects.get(r_id=target.obj))
             except ObjectDoesNotExist:
                 pass
 
@@ -409,7 +410,7 @@ def handle_annos(user, parent_graph):
             body = Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True)[0].obj
             print 'Warning: with user="%s", anno %s has multiple bodies' % (user.username, r_id)
 
-        if (len(target_resources) > 0 and body):
+        if ((len(target_resources) > 0) and body):
             try:
                 body_resource = Resource.objects.get(r_id=body)
 
