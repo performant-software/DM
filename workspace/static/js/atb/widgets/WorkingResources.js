@@ -268,9 +268,11 @@ atb.widgets.WorkingResources.prototype.updateCanvas = function(item, opt_isFully
             image.getOneProperty('exif:height')
         ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
 
-        var src = imageSrc + '?w=' + size.width + '&h=' + size.height;
-
-        item.setThumb(imageSrc, size.width, size.height);
+        item.setThumb(
+            this.databroker.getImageSrc(imageSrc, size.width, size.height),
+            Math.round(size.width),
+            Math.round(size.height)
+        );
     }
 };
 
