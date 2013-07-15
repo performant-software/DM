@@ -34,7 +34,7 @@ class Command(BaseCommand):
                     ?user ore:aggregates ?project .
                     OPTIONAL {?project dc:title ?title .}
                 }
-            """, initBindings={'user': URIRef(user_uri)}):
+            """, initNs = ns, initBindings={'user': URIRef(user_uri)}):
             project_uri = uris.uri('semantic_store_projects', uri=row[0])
             project_graph = Graph(store=rdfstore(), identifier=project_uri)
 

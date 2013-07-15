@@ -23,7 +23,7 @@ def resource_url(resource_uri, g):
                WHERE {
                    ?resource_url ore:describes <%s> .
                }""" % resource_uri
-    qres = g.query(query)
+    qres = g.query(query, initNs = ns)
     if len(qres) > 0:
         (url,) = list(qres)[0]
         return url
@@ -36,7 +36,7 @@ def resource_uri(resource_url, g):
                WHERE {
                    <%s> ore:describes ?resource_uri .
                }""" % resource_url
-    qres = g.query(query)
+    qres = g.query(query, initNs = ns)
     if len(qres) > 0:
         (uri,) = list(qres)[0]
         return uri
@@ -51,7 +51,7 @@ def find_resource(manifest_uri, g, pred, obj):
                    ?resource_url ore:describes ?resource_uri .
                    ?resource_uri %s "%s" .
                }""" % (manifest_uri, pred, obj)
-    qres = g.query(query)
+    qres = g.query(query, initNs = ns)
     return qres
     
 
@@ -73,14 +73,14 @@ def resource_urls(manifest_uri, g):
                    <%s> ore:aggregates ?resource_uri .
                    ?resource_url ore:describes ?resource_uri
                }""" % manifest_uri
-    qres = g.query(query)
+    qres = g.query(query, initNs=ns)
     if len(qres) == 0:
         query = """SELECT DISTINCT ?resource_url
                    WHERE {
                        <%s> ore:aggregates ?resource_uri .
                        ?resource_uri ore:isDescribedBy ?resource_url
                    }""" % manifest_uri
-        qres = g.query(query)
+        qres = g.query(query,initNs=ns)
     return qres
 
 
@@ -92,7 +92,7 @@ def aggregated_uris_urls(uri, g):
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
                }""" % uri
-    qres = g.query(query)
+    qres = g.query(query, initNs=ns)
     return list(qres)
 
 
@@ -103,7 +103,7 @@ def resource_uris_urls_old(manifest_uri, g):
                    <%s> ore:aggregates ?resource_uri .
                    ?resource_url ore:describes ?resource_uri
                }""" % manifest_uri
-    qres = g.query(query)
+    qres = g.query(query, initNs=ns)
     uris_urls = set(qres)
 
     query = """SELECT DISTINCT ?resource_uri ?resource_url
@@ -111,7 +111,7 @@ def resource_uris_urls_old(manifest_uri, g):
                    <%s> ore:aggregates ?resource_uri .
                    ?resource_uri ore:isDescribedBy ?resource_url
                }""" % manifest_uri
-    qres = g.query(query)
+    qres = g.query(query, initNs=ns)
     for i in qres:
         uris_urls.add(i)
 
@@ -127,7 +127,7 @@ def image_annotations(manifest_uri, g):
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
                }""" % manifest_uri
-    qres = g.query(query)
+    qres = g.query(query, initNs=ns)
     return list(qres)
 
 
@@ -140,7 +140,7 @@ def aggregated_seq_uris_urls(uri, g):
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
                }"""
-    qres = g.query(query, initBindings={'uri': uri})
+    qres = g.query(query, initNs=ns, initBindings={'uri': uri})
     return list(qres)
 
 def fetch_and_parse(url, g, manifest_file=None, fmt="xml", cache=None):
@@ -234,7 +234,7 @@ def pagination(g, collection_uri=None, pred=None, obj=None,
                    {?first a dms:Canvas} UNION {?first a sc:Canavas} .
                    ?sequence_uri rdf:rest ?rest
                }"""
-    qres = g.query(query, initBindings={'res_uri': res_uri})
+    qres = g.query(query, initNs=ns, initBindings={'res_uri': res_uri})
 
     (first, rest, seq_uri) = list(qres)[0]
     seq_num = 1
