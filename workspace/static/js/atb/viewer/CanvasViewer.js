@@ -136,7 +136,7 @@ atb.viewer.CanvasViewer.prototype.isEditable = function() {
 
 atb.viewer.CanvasViewer.prototype.makeEditable = function() {
     if (!this.isEditable()) {
-
+        this.viewer.makeEditable();
 
         this._isEditable = true;
     }
@@ -144,7 +144,7 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
 
 atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
-
+        this.viewer.makeUneditable();
 
         this._isEditable = false;
     }

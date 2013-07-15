@@ -18,9 +18,11 @@ goog.require('sc.canvas.DrawPolygonControl');
 goog.require('sc.canvas.DragFeatureControl');
 goog.require('sc.canvas.DrawCircleControl');
 
-sc.canvas.CanvasToolbar = function(viewer) {
+sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
     this.viewer = viewer;
     this.databroker = viewer.databroker;
+
+    this.forReadOnly = opt_forReadOnly || false;
     
     this.boundsByUri = new goog.structs.Map();
 
@@ -153,53 +155,55 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
     this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
-    var panZoomButton = this.createButton(
-        'pan-zoom',
-        'Pan and zoom the canvas',
-        '',
-        'icon-hand-up',
-        this.handlePanZoomClick
-    );
-    this.selectButton(panZoomButton);
-    this.addButton(panZoomButton);
+    if (!this.forReadOnly) {
+        var panZoomButton = this.createButton(
+            'pan-zoom',
+            'Pan and zoom the canvas',
+            '',
+            'icon-hand-up',
+            this.handlePanZoomClick
+        );
+        this.selectButton(panZoomButton);
+        this.addButton(panZoomButton);
 
-    var drawCircleButton = this.createButton(
-        'draw-circle',
-        'Draw circles and ellipses on the canvas',
-        '',
-        'sc-CanvasToolbar-drawCircleIcon',
-        this.handleDrawCircleClick
-    );
-    this.addButton(drawCircleButton);
+        var drawCircleButton = this.createButton(
+            'draw-circle',
+            'Draw circles and ellipses on the canvas',
+            '',
+            'sc-CanvasToolbar-drawCircleIcon',
+            this.handleDrawCircleClick
+        );
+        this.addButton(drawCircleButton);
 
-    var drawLineButton = this.createButton(
-        'draw-line',
-        'Draw lines and polylines on the canvas',
-        '',
-        'sc-CanvasToolbar-drawLineIcon',
-        this.handleDrawLineClick
-    );
-    this.addButton(drawLineButton);
+        var drawLineButton = this.createButton(
+            'draw-line',
+            'Draw lines and polylines on the canvas',
+            '',
+            'sc-CanvasToolbar-drawLineIcon',
+            this.handleDrawLineClick
+        );
+        this.addButton(drawLineButton);
 
-    var drawPolygonButton = this.createButton(
-        'draw-polygon',
-        'Draw polygons on the canvas',
-        '',
-        'sc-CanvasToolbar-drawPolygonIcon',
-        this.handleDrawPolygonClick
-    );
-    this.addButton(drawPolygonButton);
+        var drawPolygonButton = this.createButton(
+            'draw-polygon',
+            'Draw polygons on the canvas',
+            '',
+            'sc-CanvasToolbar-drawPolygonIcon',
+            this.handleDrawPolygonClick
+        );
+        this.addButton(drawPolygonButton);
 
-    var drawBoxButton = this.createButton(
-        'draw-box',
-        'Draw rectangles on the canvas',
-        '',
-        'sc-CanvasToolbar-drawBoxIcon',
-        this.handleDrawBoxClick
-    );
-    this.addButton(drawBoxButton);
+        var drawBoxButton = this.createButton(
+            'draw-box',
+            'Draw rectangles on the canvas',
+            '',
+            'sc-CanvasToolbar-drawBoxIcon',
+            this.handleDrawBoxClick
+        );
+        this.addButton(drawBoxButton);
 
-    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+        this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+    }
 
     var toggleMarkersButton = this.createButton(
         'toggle-markers',
