@@ -162,7 +162,7 @@ atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper2_ = function(info) {
 	
 
 atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(uri) {
-	var domHelper = this.fieldObject.getEditableDomHelper();
+	var domHelper = this.fieldObject.getEditableDomHelper() || this.viewer.domHelper;
 	var span = domHelper.createElement('span');
 
 	jQuery(span).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
@@ -453,52 +453,57 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
     }
     
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-	
-	var menuButtons = [
-		new atb.widgets.MenuItem(
-			"newTextAnno",
-			createButtonGenerator("atb-radialmenu-button icon-pencil"),
-			function(actionEvent) {
-	            self.createNewAnnoBody(object);
 
-	            if (self.annoTitlesList) {
-	                self.annoTitlesList.loadForResource(specificResourceUri);
-	            }
-	        },
-            'Annotate this highlight'
-		),
-	  
-		new atb.widgets.MenuItem(
-			"createLink",
-			createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
-			function(actionEvent) {
-	            self.linkAnnotation(object);
+    if (this.viewer.isEditable()) {
+		var menuButtons = [
+			new atb.widgets.MenuItem(
+				"newTextAnno",
+				createButtonGenerator("atb-radialmenu-button icon-pencil"),
+				function(actionEvent) {
+		            self.createNewAnnoBody(object);
 
-	            if (self.annoTitlesList) {
-	                self.annoTitlesList.loadForResource(specificResourceUri);
-	            }
-			},
-            'Link another resource to this highlight'
-		),
-		// new atb.widgets.MenuItem(
-	 //        "showLinkedAnnos",
-	 //        createButtonGenerator("atb-radialmenu-button icon-search"),
-	 //        function(actionEvent) {
-	 //            self.showAnnos(object);
-	 //        }, 
-	 //        'Show resources linked to this highlight'
-	 //    ),
-		new atb.widgets.MenuItem(
-			'delete_highlight_button',
-			createButtonGenerator('atb-radialmenu-button icon-remove'),
-			function(actionEvent) {
-				self.viewer.hideHoverMenu()
-				self.deleteAnnotation(object);
-			},
-            'Delete this highlight'
-		)
-	];
-    menuButtons.reverse();
+		            if (self.annoTitlesList) {
+		                self.annoTitlesList.loadForResource(specificResourceUri);
+		            }
+		        },
+	            'Annotate this highlight'
+			),
+		  
+			new atb.widgets.MenuItem(
+				"createLink",
+				createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
+				function(actionEvent) {
+		            self.linkAnnotation(object);
+
+		            if (self.annoTitlesList) {
+		                self.annoTitlesList.loadForResource(specificResourceUri);
+		            }
+				},
+	            'Link another resource to this highlight'
+			),
+			// new atb.widgets.MenuItem(
+		 //        "showLinkedAnnos",
+		 //        createButtonGenerator("atb-radialmenu-button icon-search"),
+		 //        function(actionEvent) {
+		 //            self.showAnnos(object);
+		 //        }, 
+		 //        'Show resources linked to this highlight'
+		 //    ),
+			new atb.widgets.MenuItem(
+				'delete_highlight_button',
+				createButtonGenerator('atb-radialmenu-button icon-remove'),
+				function(actionEvent) {
+					self.viewer.hideHoverMenu()
+					self.deleteAnnotation(object);
+				},
+	            'Delete this highlight'
+			)
+		];
+	    menuButtons.reverse();
+    }
+    else {
+    	var menuButtons = [];
+    }
     
     this.viewer.addHoverMenuListenersToElement(object, menuButtons, specificResourceUri);
 	
@@ -656,13 +661,19 @@ atb.viewer.TextEditorAnnotate.prototype.unhoverAnnotationSpan = function(forSpan
 atb.viewer.TextEditorAnnotate.prototype.setHoverAnnotationHelper = function(hoverAnnotationId,forSpan) {
     var viewer = this.viewer;
     var field = viewer.field;
-    
-    // Prevents firing of delayed change events
-    field.manipulateDom(function() {
-    	var domHelper = this.fieldObject.getEditableDomHelper();
-    	jQuery('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER, domHelper.getDocument()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-        jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-    }, true, this);
+
+    if (field && viewer.isEditable()) {
+    	// Prevents firing of delayed change events
+    	field.manipulateDom(function() {
+    		var domHelper = this.fieldObject.getEditableDomHelper();
+    		jQuery('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER, domHelper.getDocument()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	    jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	}, true, this);
+    }
+    else {
+    	jQuery('#' + viewer.useID + ' .' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    }
 };
 
 atb.viewer.TextEditorAnnotate.prototype.deselectAllHighlights = function() {

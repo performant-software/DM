@@ -312,45 +312,50 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     }
 };
 
-atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
-    this.documentIcon = this.domHelper.createDom('div', {'class': 'atb-viewer-documentIcon'});
-    goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
-    
+atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-    var menuItems = [
-        // new atb.widgets.MenuItem(
-        //         "showLinkedAnnos",
-        //         createButtonGenerator("atb-radialmenu-button icon-search"),
-        //         function(actionEvent) {
-        //             this.showAnnos(this.resourceId);
-        //         }.bind(this), 
-        //         'Show resources linked to this document'
-        // ),
-        new atb.widgets.MenuItem(
-            "createLink",
-            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
-            function(actionEvent) {
-                this.linkAnnotation();
 
-                if (this.annoTitlesList) {
-                    this.annoTitlesList.loadForResource(this.uri);
-                }
-            }.bind(this),
-            'Link another resource to this document'
-        ),
-        new atb.widgets.MenuItem(
-            "newTextAnno",
-            createButtonGenerator("atb-radialmenu-button icon-pencil"),
-            function(actionEvent) {
-                this.createNewTextBody(this.resourceId);
+    if (this.isEditable()) {
+        var menuItems = [
+            // new atb.widgets.MenuItem(
+            //         "showLinkedAnnos",
+            //         createButtonGenerator("atb-radialmenu-button icon-search"),
+            //         function(actionEvent) {
+            //             this.showAnnos(this.resourceId);
+            //         }.bind(this), 
+            //         'Show resources linked to this document'
+            // ),
+            new atb.widgets.MenuItem(
+                "createLink",
+                createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
+                function(actionEvent) {
+                    this.linkAnnotation();
 
-                if (this.annoTitlesList) {
-                    this.annoTitlesList.loadForResource(this.uri);
-                }
-            }.bind(this),
-            'Annotate this document'
-        )
-    ];
+                    if (this.annoTitlesList) {
+                        this.annoTitlesList.loadForResource(this.uri);
+                    }
+                }.bind(this),
+                'Link another resource to this document'
+            ),
+            new atb.widgets.MenuItem(
+                "newTextAnno",
+                createButtonGenerator("atb-radialmenu-button icon-pencil"),
+                function(actionEvent) {
+                    this.createNewTextBody(this.resourceId);
+
+                    if (this.annoTitlesList) {
+                        this.annoTitlesList.loadForResource(this.uri);
+                    }
+                }.bind(this),
+                'Annotate this document'
+            )
+        ];
+    }
+    else {
+        var menuItems = [];
+    }
+
+    jQuery(this.documentIcon).unbind('mouseover').unbind('mouseout');
     this.addHoverMenuListenersToElement(
         this.documentIcon,
         menuItems,
@@ -358,6 +363,13 @@ atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
             return this.resourceId;
         }.bind(this)
     );
+};
+
+atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
+    this.documentIcon = this.domHelper.createDom('div', {'class': 'atb-viewer-documentIcon'});
+    goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
+    
+    this._addDocumentIconListeners();
     
     this.rootDiv.appendChild(this.documentIcon);
 };
@@ -550,6 +562,48 @@ atb.viewer.TextEditor.prototype.isTitleEditable = function() {
 	return true;
 };
 
+atb.viewer.TextEditor.prototype.isEditable = function() {
+    if (this.field) {
+        return !this.field.isUneditable();
+    }
+    else {
+        return true;
+    }
+};
+
+atb.viewer.TextEditor.prototype.makeEditable = function() {
+    if (!this.isEditable()) {
+        this.field.makeEditable();
+
+        jQuery('#' + this.useID).width(this.size.width)
+            .height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true));
+    }
+};
+
+atb.viewer.TextEditor.prototype.makeUneditable = function() {
+    if (this.isEditable()) {
+        this.field.makeUneditable();
+
+        jQuery('#' + this.useID).width(this.size.width)
+            .height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true))
+            .addClass('atb-Editor-noedit');
+
+        this._addHighlightListenersWhenUneditable();
+
+        this._addDocumentIconListeners();
+    }
+};
+
+atb.viewer.TextEditor.prototype._addHighlightListenersWhenUneditable = function() {
+    if (!this.isEditable()) {
+        var annotatePlugin = new atb.viewer.TextEditorAnnotate(this);
+
+        jQuery('#' + this.useID + ' .' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS).each(function(index, element) {
+            annotatePlugin.addListeners(element);
+        }.bind(this));
+    }
+};
+
 atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
@@ -561,6 +615,8 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
         this.databroker.dataModel.textContents(resource, function(contents, error) {
             if (contents) {
                 this.setHtml(contents);
+
+                this._addHighlightListenersWhenUneditable();
             }
             else {
                 console.error(error);

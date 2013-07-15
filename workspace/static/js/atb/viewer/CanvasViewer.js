@@ -21,42 +21,16 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
         return;
     }
 
-    var self = this;
-    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
+    this._isEditable = true;
 
     atb.viewer.Viewer.prototype.render.call(this, div);
     jQuery(this.rootDiv).addClass('atb-CanvasViewer');
-
-    var menuButtons = [
-        new atb.widgets.MenuItem(
-            "showLinkedAnnos",
-            createButtonGenerator("atb-radialmenu-button icon-search"),
-            function(actionEvent) {
-                self.showAnnos(self.getUri());
-                
-                self.hideHoverMenu();
-            },
-            'Show resources which are linked to this canvas'
-        ),
-        new atb.widgets.MenuItem(
-            "newTextAnno",
-            createButtonGenerator("atb-radialmenu-button icon-pencil"),
-            function(actionEvent) {
-                self.createTextAnno(self.getUri());
-                
-                self.hideHoverMenu();
-            },
-            'Annotate this canvas'
-        )
-    ];
     
     this.documentIcon = this.domHelper.createElement('div');
 	jQuery(this.documentIcon).addClass('atb-viewer-documentIcon ' +
                                        'atb-viewer-documentIcon-noScrollbars');
 	goog.events.listen(this.documentIcon, 'click',
                        this.handleDocumentIconClick_, false, this);
-    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons,
-                                        jQuery.proxy(this.getResourceId, this));
     this.rootDiv.appendChild(this.documentIcon);
     
     this.viewer = new sc.canvas.CanvasViewer({
@@ -66,6 +40,44 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     this.setupEventListeners();
     
     this.viewer.render(this.rootDiv);
+};
+
+atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
+    jQuery(this.documentIcon).unbind('mouseover').unbind('mouseout');
+
+    var self = this;
+    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
+
+    if (this.isEditable()) {
+        var menuButtons = [
+            new atb.widgets.MenuItem(
+                "showLinkedAnnos",
+                createButtonGenerator("atb-radialmenu-button icon-search"),
+                function(actionEvent) {
+                    self.showAnnos(self.getUri());
+                    
+                    self.hideHoverMenu();
+                },
+                'Show resources which are linked to this canvas'
+            ),
+            new atb.widgets.MenuItem(
+                "newTextAnno",
+                createButtonGenerator("atb-radialmenu-button icon-pencil"),
+                function(actionEvent) {
+                    self.createTextAnno(self.getUri());
+                    
+                    self.hideHoverMenu();
+                },
+                'Annotate this canvas'
+            )
+        ];
+    }
+    else {
+        var menuButtons = [];
+    }
+
+    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons,
+                                        jQuery.proxy(this.getResourceId, this));
 };
 
 atb.viewer.CanvasViewer.prototype.handleDocumentIconClick_ = function(event) {
@@ -118,6 +130,26 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
                        this.handleLinkingModeExited, false, this);
 };
 
+atb.viewer.CanvasViewer.prototype.isEditable = function() {
+    return this._isEditable;
+};
+
+atb.viewer.CanvasViewer.prototype.makeEditable = function() {
+    if (!this.isEditable()) {
+
+
+        this._isEditable = true;
+    }
+};
+
+atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
+    if (this.isEditable()) {
+
+
+        this._isEditable = false;
+    }
+};
+
 atb.viewer.CanvasViewer.prototype.onCanvasAdded = function(event) {
     this.setTitle(this.getCompleteTitle());
 };
@@ -157,74 +189,91 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     var afterTimer = function () {
         if (this.mouseIsOverFloatingMenuParent) {
-            var menuButtons = [
-                new atb.widgets.MenuItem(
-                    "getMarkerInfo",
-                    createButtonGenerator("atb-radialmenu-button icon-info-sign"),
-                    function(actionEvent) {
-                        var pane = new atb.ui.InfoPane(self.clientApp, id, self.domHelper);
-                        pane.show();
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Get marker info'
-                ),
-                new atb.widgets.MenuItem(
-                    "deleteThisMarker",
-                    createButtonGenerator("atb-radialmenu-button icon-remove"),
-                    function(actionEvent) {
-                        self.deleteFeature(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Delete this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "hideMarker",
-                    createButtonGenerator("atb-radialmenu-button icon-eye-close"),
-                    function(actionEvent) {
-                        self.hideFeature(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Temporarily hide this marker'
-                ),
-                // new atb.widgets.MenuItem(
-                //     "showLinkedAnnos",
-                //     createButtonGenerator("atb-radialmenu-button icon-search"),
-                //     function(actionEvent) {
-                //         self.showAnnos(specificResourceUri);
-                        
-                //         self.hideHoverMenu();
-                //     },
-                //     'Show other resources which are linked to this marker'
-                // ),
-                new atb.widgets.MenuItem(
-                    "linkAway",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
-                    function(actionEvent) {
-                        self.clientApp.createAnnoLink(specificResourceUri);
-                        self.highlightFeature(uri);
+            if (this.isEditable()) {
+                var menuButtons = [
+                    // new atb.widgets.MenuItem(
+                    //     "getMarkerInfo",
+                    //     createButtonGenerator("atb-radialmenu-button icon-info-sign"),
+                    //     function(actionEvent) {
+                    //         var pane = new atb.ui.InfoPane(self.clientApp, id, self.domHelper);
+                    //         pane.show();
+                            
+                    //         self.hideHoverMenu();
+                    //     },
+                    //     'Get marker info'
+                    // ),
+                    new atb.widgets.MenuItem(
+                        "deleteThisMarker",
+                        createButtonGenerator("atb-radialmenu-button icon-remove"),
+                        function(actionEvent) {
+                            self.deleteFeature(uri);
+                            
+                            self.hideHoverMenu();
+                        },
+                        'Delete this marker'
+                    ),
+                    new atb.widgets.MenuItem(
+                        "hideMarker",
+                        createButtonGenerator("atb-radialmenu-button icon-eye-close"),
+                        function(actionEvent) {
+                            self.hideFeature(uri);
+                            
+                            self.hideHoverMenu();
+                        },
+                        'Temporarily hide this marker'
+                    ),
+                    // new atb.widgets.MenuItem(
+                    //     "showLinkedAnnos",
+                    //     createButtonGenerator("atb-radialmenu-button icon-search"),
+                    //     function(actionEvent) {
+                    //         self.showAnnos(specificResourceUri);
+                            
+                    //         self.hideHoverMenu();
+                    //     },
+                    //     'Show other resources which are linked to this marker'
+                    // ),
+                    new atb.widgets.MenuItem(
+                        "linkAway",
+                        createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
+                        function(actionEvent) {
+                            self.clientApp.createAnnoLink(specificResourceUri);
+                            self.highlightFeature(uri);
 
-                        if (self.annoTitlesList) {
-                            self.annoTitlesList.loadForResource(specificResourceUri);
-                        }
-                    },
-                    'Link another resource to this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "newTextAnno",
-                    createButtonGenerator("atb-radialmenu-button icon-pencil"),
-                    function(actionEvent) {
-                        self.createTextAnno(specificResourceUri);
+                            if (self.annoTitlesList) {
+                                self.annoTitlesList.loadForResource(specificResourceUri);
+                            }
+                        },
+                        'Link another resource to this marker'
+                    ),
+                    new atb.widgets.MenuItem(
+                        "newTextAnno",
+                        createButtonGenerator("atb-radialmenu-button icon-pencil"),
+                        function(actionEvent) {
+                            self.createTextAnno(specificResourceUri);
 
-                        if (self.annoTitlesList) {
-                            self.annoTitlesList.loadForResource(specificResourceUri);
-                        }
-                    },
-                    'Annotate this marker'
-                )
-            ];
+                            if (self.annoTitlesList) {
+                                self.annoTitlesList.loadForResource(specificResourceUri);
+                            }
+                        },
+                        'Annotate this marker'
+                    )
+                ];
+            }
+            else {
+                var menuButtons = [
+                    new atb.widgets.MenuItem(
+                        "hideMarker",
+                        createButtonGenerator("atb-radialmenu-button icon-eye-close"),
+                        function(actionEvent) {
+                            self.hideFeature(uri);
+                            
+                            self.hideHoverMenu();
+                        },
+                        'Temporarily hide this marker'
+                    )
+                ];
+            }
+            
             this.showHoverMenu(menuButtons, specificResourceUri);
         }
     };
