@@ -375,58 +375,67 @@ atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
 };
 
 atb.viewer.TextEditor.prototype._renderToolbar = function() {
-    // Specify the buttons to add to the toolbar, using built in default buttons.
-    var buttons = [
-        goog.editor.Command.BOLD,
-        goog.editor.Command.ITALIC,
-        goog.editor.Command.UNDERLINE,
-        //goog.editor.Command.FONT_COLOR,
-        //goog.editor.Command.BACKGROUND_COLOR,
-        //goog.editor.Command.FONT_FACE,
-        goog.editor.Command.FONT_SIZE,
-        goog.editor.Command.LINK,
-        //goog.editor.Command.UNDO,
-        //goog.editor.Command.REDO,
-        goog.editor.Command.UNORDERED_LIST,
-        goog.editor.Command.ORDERED_LIST//,
-        //goog.editor.Command.INDENT,
-        //goog.editor.Command.OUTDENT
-        //goog.editor.Command.JUSTIFY_LEFT,
-        //goog.editor.Command.JUSTIFY_CENTER,
-        //goog.editor.Command.JUSTIFY_RIGHT,
-        //goog.editor.Command.SUBSCRIPT,
-        //goog.editor.Command.SUPERSCRIPT,
-        //goog.editor.Command.STRIKE_THROUGH
-    ];
+    if (this.isEditable()) {
+        // Specify the buttons to add to the toolbar, using built in default buttons.
+        var buttons = [
+            goog.editor.Command.BOLD,
+            goog.editor.Command.ITALIC,
+            goog.editor.Command.UNDERLINE,
+            //goog.editor.Command.FONT_COLOR,
+            //goog.editor.Command.BACKGROUND_COLOR,
+            //goog.editor.Command.FONT_FACE,
+            goog.editor.Command.FONT_SIZE,
+            goog.editor.Command.LINK,
+            //goog.editor.Command.UNDO,
+            //goog.editor.Command.REDO,
+            goog.editor.Command.UNORDERED_LIST,
+            goog.editor.Command.ORDERED_LIST//,
+            //goog.editor.Command.INDENT,
+            //goog.editor.Command.OUTDENT
+            //goog.editor.Command.JUSTIFY_LEFT,
+            //goog.editor.Command.JUSTIFY_CENTER,
+            //goog.editor.Command.JUSTIFY_RIGHT,
+            //goog.editor.Command.SUBSCRIPT,
+            //goog.editor.Command.SUPERSCRIPT,
+            //goog.editor.Command.STRIKE_THROUGH
+        ];
+    }
+    else {
+        var buttons = [];
+    }
+
+    jQuery(this.toolbarDiv).empty();
 
     var myToolbar = goog.ui.editor.DefaultToolbar.makeToolbar(buttons, this.domHelper.getElement(this.toolbarDiv));
 
-    // Create annotate button
-    // TODO: See if we can move this into the plugin instead of here
-    var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
-        atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
-        'Annotate selected text',
-        '',
-        'icon-tag');
-    /*
-    //lol@seems un-needed, and infact causes a redundant event, it would seem, from what i can tell:
-    goog.events.listen(annotateButton, goog.ui.Component.EventType.ACTION, function (e) {
-        //debugPrint("annotate command!");
-        this.field.execCommand(atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION);
-    }, false, this);
-    */
-    annotateButton.queryable = true;//Fixes wierd annotations bug
+    if (this.isEditable()) {
+        // Create annotate button
+        // TODO: See if we can move this into the plugin instead of here
+        var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
+            atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
+            'Annotate selected text',
+            '',
+            'icon-tag');
+        /*
+        //lol@seems un-needed, and infact causes a redundant event, it would seem, from what i can tell:
+        goog.events.listen(annotateButton, goog.ui.Component.EventType.ACTION, function (e) {
+            //debugPrint("annotate command!");
+            this.field.execCommand(atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION);
+        }, false, this);
+        */
+        annotateButton.queryable = true;//Fixes wierd annotations bug
 
-    myToolbar.addChildAt(annotateButton, 0, true);
-    
-    this.propertiesButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
-        'properties',
-        'Edit this document\'s properties',
-        '',
-        'icon-info-sign'
-    );
-    goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
-    myToolbar.addChild(this.propertiesButton, true);
+        myToolbar.addChildAt(annotateButton, 0, true);
+        
+        this.propertiesButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
+            'properties',
+            'Edit this document\'s properties',
+            '',
+            'icon-info-sign'
+        );
+        goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
+        myToolbar.addChild(this.propertiesButton, true);
+    }
 
     // Hook the toolbar into the field.
     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
@@ -559,7 +568,7 @@ atb.viewer.TextEditor.prototype.setDisplayTitle = function(title) {
 };
 
 atb.viewer.TextEditor.prototype.isTitleEditable = function() {
-	return true;
+	return this.container.isTitleEditable;
 };
 
 atb.viewer.TextEditor.prototype.isEditable = function() {
@@ -575,14 +584,21 @@ atb.viewer.TextEditor.prototype.makeEditable = function() {
     if (!this.isEditable()) {
         this.field.makeEditable();
 
+        this._renderToolbar();
+
         jQuery('#' + this.useID).width(this.size.width)
             .height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true));
+
+        this.setTitleEditable(true);
     }
 };
 
 atb.viewer.TextEditor.prototype.makeUneditable = function() {
     if (this.isEditable()) {
         this.field.makeUneditable();
+
+        this._renderToolbar();
+        jQuery(this.toolbarDiv).find('.goog-toolbar').css('min-height', 32);
 
         jQuery('#' + this.useID).width(this.size.width)
             .height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true))
@@ -591,6 +607,8 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
         this._addHighlightListenersWhenUneditable();
 
         this._addDocumentIconListeners();
+
+        this.setTitleEditable(false);
     }
 };
 
