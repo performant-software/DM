@@ -174,39 +174,49 @@ sc.ProjectManager.prototype.addAllUserProjects = function(username){
 
 
 /* Switches between projects, which are labeled with the title
+ * Set as onClick property of each link that has a project's title
+ * * That element has the uri of the project with the displayed title as its id
  * Confirms that switching projects will close all resources
  * When current project is selected, prompts to reload the current project
 */
 sc.ProjectManager.prototype.selectProject = function(e){
     // If no open resources, does not need to warn about closing them!
     if (this.viewerGrid.isEmpty()){
-        this.selectThisProject(e)
+        this.selectThisProject(e.id)
     }
 
     else{
         // Prompts to reload current project when it is selected
         if (this.databroker.currentProject == e.id){
             if(confirm("You have selected the current project!\nWould you like to reload it? Doing so will close all resources.")){
-                this.selectThisProject(e)
+                this.selectThisProject(e.id)
             }
         } 
 
         // Warns that changing projects closes all resources
         else if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
-            this.selectThisProject(e)
+            this.selectThisProject(e.id)
         }
     }
 }
 
 /* Selects the project supplied by an element
- * Set as onClick property of all links in the project dropdown menu
+ * A valid uri is supplied
  * Once a way to save the layout is configured, we would save that here
 */
-sc.ProjectManager.prototype.selectThisProject = function(e){
+sc.ProjectManager.prototype.selectThisProject = function(uri){
+    // Load new project
     this.viewerGrid.closeAllContainers()
-    this.databroker.setCurrentProject(e.id)
+    this.databroker.setCurrentProject(uri)
     this.setTitle()
-    this.workingResources.loadManifest(e.id)
+    this.workingResources.loadManifest(uri)
+
+    // Set last opened project
+    var wrap = sc.util.Namespaces.angleBracketWrap
+    var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, this.username, null);
+    var pred = this.databroker.namespaces.expand("dm", "lastOpenProject")
+    console.log(userUri, uri)
+    this.databroker.getResource(userUri).setProperty(pred, wrap(uri))
 }
 
 /* Creates the modal which handles new project creation
@@ -259,7 +269,7 @@ sc.ProjectManager.prototype.createNewProjectModal = function(){
     // Create -- default button -- creates new project
     var saveButton = goog.dom.createDom('a',{href:'#newProjectModal','class':'btn btn-primary','data-toggle':'modal'},"Create New Project")
     // onClick refuses to be set when passed into above function
-    saveButton.setAttribute('onclick','projectManager.sendNewData()')
+    saveButton.setAttribute('onclick','projectManager.sendNewDataFromModal()')
     footer.appendChild(saveButton)
 
     // Add to modal
@@ -276,14 +286,34 @@ sc.ProjectManager.prototype.createNewProjectModal = function(){
     return modal
 }
 
+sc.ProjectManager.prototype.sendNewDataFromModal = function(){
+    //Collect data
+    var t = $("#" + this.newTitleId), d = $("#" + this.newDescriptionId);
+
+    if (t.val()){
+        this.sendNewData(t.val(), d.val(), this.newAddedUsersList)
+
+        //Clear data from modal ("reset" modal)
+        t.val("");
+        d.val("");
+        $(this.newAddedUsers).empty()
+        this.newAddedUsersList = [this.username,]
+
+    }
+    else{
+        alert("Your project needs a title.")
+    }
+
+}
+
 /* Collects data from new project modal
  * Clears the data so that another project can be created without refresh
  * Serializes data and sends POST request to /semantic_store/projects/
 */
-sc.ProjectManager.prototype.sendNewData = function (){
-    //Collect data
-    var t = $("#" + this.newTitleId), d = $("#" + this.newDescriptionId);
-    
+sc.ProjectManager.prototype.sendNewData = function (title, description, users){
+    //Create UUID for new project
+    var p = this.databroker.createUuid();
+
     var data = $.rdf.databank([], { namespaces: {
                                     ore: "http://www.openarchives.org/ore/terms/", 
                                     dc: "http://purl.org/dc/elements/1.1/", 
@@ -291,57 +321,49 @@ sc.ProjectManager.prototype.sendNewData = function (){
                                     rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
                                     dcmitype: "http://purl.org/dc/dcmitype/",
                                     perm: 'http://vocab.ox.ac.uk/perm#',
+                                    dm: 'http://dm.drew.edu/ns/',
+                                    foaf: 'http://xmlns.com/foaf/0.1/',
                                     }
                                   });
+    
+    console.log("users", users)
+    //Link user(s) and project
+    for (var i = 0; i < users.length; i++) {
+        var u = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, users[i], null);
+        data.add("<" + u + "> perm:hasPermissionOver <" + p + ">");
+        data.add("<" + u + "> rdf:type foaf:Agent")
+    };
 
-    //Create UUID for new project
-    var p = this.databroker.createUuid();
-    if(t.val()){
-        //Link user(s) and project
-        for (var i = 0; i < this.newAddedUsersList.length; i++) {
-            var u = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, this.newAddedUsersList[i], null);
-            data.add("<" + u + "> perm:hasPermissionOver <" + p + ">");
-        };
+    //Give project title
+    data.add('<' + p + '> dc:title "' + title + '"');
 
-        //Give project title
-        data.add('<' + p + '> dc:title "' + t.val() + '"');
-
-        //Give project description
-        data.add('<' + p + '> dcterms:description "' + d.val() + '"');
-
-        //Set types on project
-        data.add('<' + p + '> rdf:type dcmitype:Collection');
-        data.add('<' + p + '> rdf:type ore:Aggregation');
-
-        var postdata = data.dump({format: 'application/rdf+xml', 
-                                  serialize:true});
-        console.log("data:", postdata);
-
-        $.post('project_forward/', postdata);
-
-        //Clear data from create project form /reset it
-        t.val("");
-        d.val("");
-        $(this.newAddedUsers).empty()
-        this.newAddedUsersList = [this.username,]
-
-        // Add the new project's title to project dropdown
-        // Wrapped in timeout to avoid server errors from hitting database too quickly
-        setTimeout(function(){
-            var url = this.databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, this.username, null)
-            this.databroker.getDeferredResource(url).done(function(){
-                this.addAndSwitchToProject(p)
-            }.bind(this));
-        }.bind(this),3000)
-
-        // Add the new project to the databroker as a valid project
-        goog.global.databroker.addNewProject(p)
+    //Give project description if supplied
+    if (description){
+        data.add('<' + p + '> dcterms:description "' + description +'"')
     }
 
-    else{
-        alert("Your project needs a title.")
+    //Set types on project
+    data.add('<' + p + '> rdf:type dcmitype:Collection');
+    data.add('<' + p + '> rdf:type ore:Aggregation');
+    data.add('<' + p + '> rdf:type dm:Project')
 
-    }
+    var postdata = data.dump({format: 'application/rdf+xml', 
+                              serialize:true});
+    console.log("data:", postdata);
+
+    $.post('project_forward/', postdata);
+
+    // Add the new project's title to project dropdown
+    // Wrapped in timeout to avoid server errors from hitting database too quickly
+    setTimeout(function(){
+        var url = this.databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, this.username, null)
+        this.databroker.getDeferredResource(url).done(function(){
+            this.addAndSwitchToProject(p)
+        }.bind(this));
+    }.bind(this),3000)
+
+    // Add the new project to the databroker as a valid project
+    goog.global.databroker.addNewProject(p)
 }
 
 /* This function is copied from the Django documentation (although I wrapped it in a fcn)
