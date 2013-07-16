@@ -443,6 +443,9 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
                 allUris.addAll(this.dataModel.findManuscriptAggregationUris(manifestUri));
             }, this);
         }
+        else if (resource.hasAnyType('oa:SpecificResource')) {
+            allUris.add(resource.getOneProperty('oa:hasSource'));
+        }
     }
 
     uris = allUris.getValues();
