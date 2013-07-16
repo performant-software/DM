@@ -99,6 +99,11 @@ def complete_user_graph(name):
 
     return everything_graph
 
+def save_user_graph(username, path):
+    graph = complete_user_graph(username)
+
+    graph.serialize(os.path.join(path, "%s.ttl"%username),format="turtle")
+
 def multiprocess_export_all_users(path_to_export_folder):
     def with_username(username):
         def user_serialization_callback(g):
@@ -355,17 +360,18 @@ def parse_for_highlights(content, content_uri):
 
     soup = BeautifulSoup(content)
     for span in soup.find_all('span', class_=HIGHLIGHT_CLASS):
-        # Get uri of highlight
-        uri = get_mapped_uri(get_highlight_r_id_from_span(span))
+        # Get uri of highlight object, which serves as svg_selector uri so annos are 
+        #  linked correctly elsewhere
+        selector_uri = get_mapped_uri(get_highlight_r_id_from_span(span))
         text = span.get_text(strip=True)
+
+        # Create uri for highlight selector
+        uri = URIRef(uuid4().urn)
 
         # Modernize highlight span
         span['class'] = HIGHLIGHT_CLASS
-        span['about'] = uri
+        span['about'] =  selector_uri
         span['property'] = unicode(OA.exact)
-
-        # Create uri for highlight selector
-        selector_uri = URIRef(uuid4().urn)
                 
         # Add information about highlight
         graph.add((uri, OA['hasSource'], content_uri))
@@ -413,7 +419,6 @@ def handle_annos(user, parent_graph):
         if ((len(target_resources) > 0) and body):
             try:
                 body_resource = Resource.objects.get(r_id=body)
-
                 if body_resource.r_type == 'text':
                     text = Text.objects.get(r_id=body, valid=True, most_recent=True)
                     if text.purpose == 'anno' or text.purpose == 'notes':
@@ -422,6 +427,15 @@ def handle_annos(user, parent_graph):
                         graph.add((uri, OA.motivatedBy, OA.describing))
                     elif text.purpose == 'bib':
                         graph.add((uri, OA.motivatedBy, OA.bookmarking))
+            except ObjectDoesNotExist:
+                pass
+            else:
+                    
+                if body_resource.r_type in ['circle', 'polygon', 'polyline']:
+                    # re-map body to specific resource, 
+                    # subj of triple in 'constrained by'
+                    body = Triple.objects.get(pred='oac:constrainedBy', obj=body, most_recent=True, valid=True)
+                        
 
                 body_uri = get_mapped_uri(body)
 
@@ -430,12 +444,13 @@ def handle_annos(user, parent_graph):
                 graph.add((uri, RDF['type'], TYPE_URI['anno']))
 
                 for target_resource in target_resources:
-                    graph.add((uri, OA.hasTarget, get_mapped_uri(target_resource.r_id)))
+                    if target_resource.r_type in ['circle', 'polygon', 'polyline']:
+                        r_id = Triple.objects.get(pred='oac:constrainedBy', obj=target_resource.r_id, most_recent=True, valid=True).subj
+                        target_resource = Resource.objects.get(r_id=r_id)
+                    graph.add((uri, OA['hasTarget'], get_mapped_uri(target_resource.r_id)))
 
                 # Link anno to project
                 graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
-            except ObjectDoesNotExist:
-                pass
 
     return graph
 
