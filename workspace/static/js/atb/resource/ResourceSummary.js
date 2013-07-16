@@ -40,7 +40,6 @@ atb.resource.ResourceSummary = function (uri, viewer, clientApp, opt_domHelper, 
     this.viewer = viewer;
     this.clientApp = clientApp;
     if (clientApp) {
-        this.webService = clientApp.getWebService();
         this.databroker = clientApp.databroker;
         this.resource = this.databroker.getResource(this.uri);
     }
