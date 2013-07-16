@@ -143,14 +143,20 @@ var setupCurrentProject = function(clientApp, username) {
         for (var i=0; i<uris.length; i++) {
             db.allProjects.push(uris[i]);
         }
-        // Where we should check for "last worked on" triple
-        /*if (uris.length == 1) {
-            db.currentProject = uris[0];
 
-            workingResourcesViewer.loadManifest(uris[0]);
-        }*/
+        var pm = goog.global.projectManager;
 
-        goog.global.projectManager.addAllUserProjects(username)
+        var lastOpen = db.getResource(uri).getOneProperty('dm:lastOpenProject')
+        console.log("Last Open:", lastOpen)
+
+        if (lastOpen){
+           pm.selectThisProject(lastOpen) 
+        }
+        else{
+            pm.sendNewData("Default Project", null, [username,])
+        }
+
+        pm.addAllUserProjects(username)
     });
 }
 
