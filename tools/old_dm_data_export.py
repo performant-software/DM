@@ -26,6 +26,7 @@ SC    = Namespace("http://www.shared-canvas.org/ns/")
 RDF   = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 ORE   = Namespace("http://www.openarchives.org/ore/terms/")
 DC    = Namespace("http://purl.org/dc/elements/1.1/")
+DCTYPES = Namespace("http://purl.org/dc/dcmitype/")
 EXIF  = Namespace("http://www.w3.org/2003/12/exif/ns#")
 CNT   = Namespace("http://www.w3.org/2011/content#")
 PERM  = Namespace("http://vocab.ox.ac.uk/perm#")
@@ -36,17 +37,17 @@ DM    = Namespace("http://dm.drew.edu/ns/")
 INT     = "http://www.w3.org/2001/XMLSchema#integer"
 
 TYPE_URI = {
-    'text':URIRef('http://purl.org/dc/dcmitype/Text'),
-    'canvas':URIRef('http://www.shared-canvas.org/ns/Canvas'),
-    'anno':OA.Annotation,
-    'image':URIRef('http://purl.org/dc/dcmitype/Image'),
-    'SpecificResource':OA.SpecificResource,
-    'highlight':URIRef('http://www.openannotation.org/extension/Highlight'),
-    'collection':URIRef('http://purl.org/dc/dcmitype/Collection'),
-    'aggregation':URIRef('http://www.openarchives.org/ore/terms/Aggregation'),
-    'agent':URIRef('http://xmlns.com/foaf/0.1/Agent'),
-    'svg':OA.SvgSelector,
-    'contentastext':URIRef('http://www.w3.org/2011/content#ContentAsText'),
+    'text': DCTYPES.Text,
+    'canvas': SC.Canvas,
+    'anno': OA.Annotation,
+    'image': DCTYPES.Image,
+    'SpecificResource': OA.SpecificResource,
+    'highlight': URIRef('http://www.openannotation.org/extension/Highlight'),
+    'collection': URIRef('http://purl.org/dc/dcmitype/Collection'),
+    'aggregation': URIRef('http://www.openarchives.org/ore/terms/Aggregation'),
+    'agent': URIRef('http://xmlns.com/foaf/0.1/Agent'),
+    'svg': OA.SvgSelector,
+    'contentastext': URIRef('http://www.w3.org/2011/content#ContentAsText'),
 }
 
 # SVG strings with string formatting operators (%s) for each data value
@@ -384,7 +385,10 @@ def parse_for_highlights(content, content_uri):
 
     sanitize_html(soup)
 
-    graph.add((content_uri, CNT.chars, Literal(unicode(soup.find('body')))))
+    # contents = unicode(soup.find('body'))
+    contents = ''.join(unicode(s) for s in soup.find('body').contents)
+
+    graph.add((content_uri, CNT.chars, Literal(contents)))
 
     return graph
         
