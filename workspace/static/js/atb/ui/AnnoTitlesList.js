@@ -99,14 +99,18 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     var eventDispatcher = this.clientApp.getEventDispatcher();
     var resourceClickEvent = new atb.events.ResourceClick(resource.getUri(), eventDispatcher, this);
     if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
+        var deferredResource = this.databroker.getDeferredResource(uri);
 
         var viewerGrid = this.clientApp.viewerGrid;
         var container = new atb.viewer.ViewerContainer(this.domHelper);
         viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
         var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
         container.setViewer(viewer);
-        viewer.loadResourceByUri(uri);
-        container.autoResize();
+
+        deferredResource.done(function() {
+            viewer.loadResourceByUri(uri);
+            container.autoResize();
+        }.bind(this));
     }
 };
 
