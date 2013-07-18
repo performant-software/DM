@@ -188,7 +188,7 @@ def handle_circles(user):
             graph.add((uri, RDF['type'], TYPE_URI['contentastext']))
 
 
-            graph.add((uri, CNT['chars'], Literal(SVG['circle']%(circle.stroke_width, width * circle.cx, height * circle.cy, circle.radius))))
+            graph.add((uri, CNT['chars'], Literal(SVG['circle']%(circle.stroke_width, width * circle.cx, height * (1 - circle.cy), circle.radius))))
 
     return graph
 
