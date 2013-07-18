@@ -638,12 +638,12 @@ sc.data.QuadStore._hashCodeOrWildcard = function(str) {
  * @return {string}                          The index key to use.
  */
 sc.data.QuadStore.getIndexKeyForQuery = function(subject, predicate, object, context) {
-    var key = [];
+    var key = [
+        '_s:', sc.data.QuadStore._hashCodeOrWildcard(subject), ';',
+        '_p:', sc.data.QuadStore._hashCodeOrWildcard(predicate), ';',
+        '_o:', sc.data.QuadStore._hashCodeOrWildcard(object), ';',
+        '_c:', sc.data.QuadStore._hashCodeOrWildcard(context)
+    ];
 
-    key.push(['_s:', sc.data.QuadStore._hashCodeOrWildcard(subject)].join(''));
-    key.push(['_p:', sc.data.QuadStore._hashCodeOrWildcard(predicate)].join(''));
-    key.push(['_o:', sc.data.QuadStore._hashCodeOrWildcard(object)].join(''));
-    key.push(['_c:', sc.data.QuadStore._hashCodeOrWildcard(context)].join(''));
-
-    return key.join(';');
+    return key.join('');
 };
