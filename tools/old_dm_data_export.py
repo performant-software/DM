@@ -42,12 +42,11 @@ TYPE_URI = {
     'anno': OA.Annotation,
     'image': DCTYPES.Image,
     'SpecificResource': OA.SpecificResource,
-    'highlight': URIRef('http://www.openannotation.org/extension/Highlight'),
-    'collection': URIRef('http://purl.org/dc/dcmitype/Collection'),
-    'aggregation': URIRef('http://www.openarchives.org/ore/terms/Aggregation'),
-    'agent': URIRef('http://xmlns.com/foaf/0.1/Agent'),
+    'collection': DCTYPES.Collection,
+    'aggregation': ORE.Aggregation,
+    'agent': FOAF.Agent,
     'svg': OA.SvgSelector,
-    'contentastext': URIRef('http://www.w3.org/2011/content#ContentAsText'),
+    'contentastext': CNT.ContentAsText,
 }
 
 # SVG strings with string formatting operators (%s) for each data value
@@ -97,6 +96,8 @@ def complete_user_graph(name):
     # Annos are special because we need to check that there is information
     #  about them in the larger graph as well
     everything_graph += handle_annos(user, everything_graph)
+
+    correct_selector_annos(everything_graph)
 
     return everything_graph
 
@@ -363,21 +364,19 @@ def parse_for_highlights(content, content_uri):
     for span in soup.find_all('span', class_=HIGHLIGHT_CLASS):
         # Get uri of highlight object, which serves as svg_selector uri so annos are 
         #  linked correctly elsewhere
-        selector_uri = get_mapped_uri(get_highlight_r_id_from_span(span))
+        specific_resource_uri = get_mapped_uri(get_highlight_r_id_from_span(span))
+        selector_uri = URIRef(uuid4().urn)
         text = span.get_text(strip=True)
-
-        # Create uri for highlight selector
-        uri = URIRef(uuid4().urn)
 
         # Modernize highlight span
         span['class'] = HIGHLIGHT_CLASS
         span['about'] =  selector_uri
-        span['property'] = unicode(OA.exact)
+        span['property'] = str(OA.exact)
                 
         # Add information about highlight
-        graph.add((uri, OA['hasSource'], content_uri))
-        graph.add((uri, OA['hasSelector'], selector_uri))
-        graph.add((uri, RDF['type'], OA['SpecificResource']))
+        graph.add((specific_resource_uri, OA['hasSource'], content_uri))
+        graph.add((specific_resource_uri, OA['hasSelector'], selector_uri))
+        graph.add((specific_resource_uri, RDF['type'], OA['SpecificResource']))
 
         # Add information about selector
         graph.add((selector_uri, OA['exact'], Literal(text)))
@@ -385,7 +384,6 @@ def parse_for_highlights(content, content_uri):
 
     sanitize_html(soup)
 
-    # contents = unicode(soup.find('body'))
     contents = ''.join(unicode(s) for s in soup.find('body').contents)
 
     graph.add((content_uri, CNT.chars, Literal(contents)))
@@ -438,7 +436,7 @@ def handle_annos(user, parent_graph):
                 if body_resource.r_type in ['circle', 'polygon', 'polyline']:
                     # re-map body to specific resource, 
                     # subj of triple in 'constrained by'
-                    body = Triple.objects.get(pred='oac:constrainedBy', obj=body, most_recent=True, valid=True)
+                    body = Triple.objects.get(pred='oac:constrainedBy', obj=body, most_recent=True, valid=True).subj
                         
 
                 body_uri = get_mapped_uri(body)
@@ -454,9 +452,30 @@ def handle_annos(user, parent_graph):
                     graph.add((uri, OA['hasTarget'], get_mapped_uri(target_resource.r_id)))
 
                 # Link anno to project
-                graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
+                # graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
 
     return graph
+
+def correct_selector_annos(graph):
+    res = list(graph.query("""SELECT ?anno ?selector ?specific_resource WHERE {
+        ?anno a oa:Annotation .
+        ?anno oa:hasTarget ?selector .
+        ?selector a oa:SvgSelector .
+        ?specific_resource oa:hasSelector ?selector .
+    }""", initNs={'oa': OA}))
+    for anno, selector, specific_resource in res:
+        graph.remove((anno, OA.hasTarget, selector))
+        graph.add((anno, OA.hasTarget, specific_resource))
+
+    res = list(graph.query("""SELECT ?anno ?selector ?specific_resource WHERE {
+        ?anno a oa:Annotation .
+        ?anno oa:hasBody ?selector .
+        ?selector a oa:SvgSelector .
+        ?specific_resource oa:hasSelector ?selector .
+    }""", initNs={'oa': OA}))
+    for anno, selector, specific_resource in res:
+        graph.remove((anno, OA.hasBody, selector))
+        graph.add((anno, OA.hasBody, specific_resource))
 
 
 # Create the graph with data about a user and their default project
