@@ -811,12 +811,10 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRect = function(x, y, width, heig
     var canvas = this.canvas;
     var canvasSize = canvas.getSize();
 
-    var ratio = Math.min(
-        width * canvas.displayToActualSizeRatio / canvasSize.width,
-        height * canvas.displayToActualSizeRatio / canvasSize.height
-    );
-
-    // This implementation still might not be 100% correct
+    var rectSize = new goog.math.Size(width, height);
+    rectSize.scaleToFit(this.getDisplaySize());
+    var coord = this.canvasToLayerCoord(rectSize.width, rectSize.height);
+    var ratio = coord.x / width;
 
     this.zoomToRatio(ratio);
     this.centerOnCanvasCoord(x + width / 2, y + height / 2);

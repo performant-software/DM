@@ -28,7 +28,7 @@ atb.resource.ResourceSummaryFactory.createFromUri = function(uri, viewer, client
         }
     }
     
-    else if (resource.hasAnyType('dms:Canvas')) {
+    else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
         result = new atb.resource.CanvasSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
 

@@ -313,15 +313,29 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
 atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
+    var loadSpecificResource = function(uri) {
+        var specificResource = this.databroker.getResource(uri);
+
+        var sourceUri = specificResource.getOneProperty('oa:hasSource');
+        this.setCanvasByUri(sourceUri);
+
+        goog.events.listenOnce(this.viewer.marqueeViewport, 'canvasAdded', function(e) {
+            var feature = this.viewer.mainViewport.canvas.getFabricObjectByUri(specificResource.getOneProperty('oa:hasSelector'));
+            var boundingBox = this.viewer.mainViewport.canvas.getFeatureBoundingBox(feature);
+
+            this.viewer.mainViewport.zoomToRect(boundingBox);
+        }, false, this);
+    }.bind(this);
+
     if (resource.hasAnyType('dms:Canvas')) {
         this.setCanvasByUri(resource.getUri());
     }
     else if (resource.hasAnyType('oa:SpecificResource')) {
-        this.setCanvasByUri(resource.getOneProperty('oa:hasSource'));
+        loadSpecificResource(resource);
     }
     else if (resource.hasAnyType('oa:SvgSelector')) {
         var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(uri));
-        this.setCanvasByUri(specificResource.getOneProperty('oa:hasSource'));
+        loadSpecificResource(specificResource);
     }
 };
 

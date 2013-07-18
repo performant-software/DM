@@ -109,6 +109,9 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
 
         deferredResource.done(function() {
             viewer.loadResourceByUri(uri);
+            if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
+                if (viewer.makeUneditable) viewer.makeUneditable();
+            }
             container.autoResize();
         }.bind(this));
     }
@@ -190,7 +193,10 @@ atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderD
 
             if (summary) {
                 render(list, renderDiv);
-                summary.enableDelete();
+
+                if (this.viewer && this.viewer.isEditable && this.viewer.isEditable()) {
+                    summary.enableDelete();
+                }
             }
         }
     }
