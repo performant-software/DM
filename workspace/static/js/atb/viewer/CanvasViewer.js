@@ -120,7 +120,7 @@ atb.viewer.CanvasViewer.prototype.setupControlEventListeners = function() {
         panZoomControl.addEventListener(
             'panstop', function(event) {
                 this.isPanning = false;
-                this.setCursor(null);
+                this.viewer.mainViewport.setCursor(null);
             }, false, this);
     }
 
