@@ -50,9 +50,20 @@ atb.resource.MarkerSummary.prototype.decorate = function () {
 
     deferredCanvas.done(function(canvas) {
         var feature = canvas.getFabricObjectByUri(this.resource.getOneProperty('oa:hasSelector'));
+
+        canvas.hideMarkers();
+        canvas.showObject(feature);
+
         var boundingBox = canvas.getFeatureBoundingBox(feature);
 
-        this.viewport.zoomToRect(boundingBox);
+        var cx = boundingBox.x + boundingBox.width / 2;
+        var cy = boundingBox.y + boundingBox.height / 2;
+        var width = boundingBox.width * 2;
+        var height = boundingBox.height * 2;
+        var x = cx - width / 2;
+        var y = cy - height / 2;
+
+        this.viewport.zoomToRect(x, y, width, height);
         this.viewport.resumeRendering();
     }.bind(this));
     
