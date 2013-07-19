@@ -362,25 +362,26 @@ def parse_for_highlights(content, content_uri):
 
     soup = BeautifulSoup(content)
     for span in soup.find_all('span', class_=HIGHLIGHT_CLASS):
-        # Get uri of highlight object, which serves as svg_selector uri so annos are 
-        #  linked correctly elsewhere
-        specific_resource_uri = get_mapped_uri(get_highlight_r_id_from_span(span))
-        selector_uri = URIRef(uuid4().urn)
-        text = span.get_text(strip=True)
+        if span.get_text() != "":
+            # Get uri of highlight object, which serves as svg_selector uri so annos are 
+            #  linked correctly elsewhere
+            specific_resource_uri = get_mapped_uri(get_highlight_r_id_from_span(span))
+            selector_uri = URIRef(uuid4().urn)
+            text = span.get_text(strip=True)
 
-        # Modernize highlight span
-        span['class'] = HIGHLIGHT_CLASS
-        span['about'] =  selector_uri
-        span['property'] = str(OA.exact)
-                
-        # Add information about highlight
-        graph.add((specific_resource_uri, OA['hasSource'], content_uri))
-        graph.add((specific_resource_uri, OA['hasSelector'], selector_uri))
-        graph.add((specific_resource_uri, RDF['type'], OA['SpecificResource']))
+            # Modernize highlight span
+            span['class'] = HIGHLIGHT_CLASS
+            span['about'] =  selector_uri
+            span['property'] = str(OA.exact)
+                    
+            # Add information about highlight
+            graph.add((specific_resource_uri, OA['hasSource'], content_uri))
+            graph.add((specific_resource_uri, OA['hasSelector'], selector_uri))
+            graph.add((specific_resource_uri, RDF['type'], OA['SpecificResource']))
 
-        # Add information about selector
-        graph.add((selector_uri, OA['exact'], Literal(text)))
-        graph.add((selector_uri, RDF['type'], OA['TextQuoteSelector']))
+            # Add information about selector
+            graph.add((selector_uri, OA['exact'], Literal(text)))
+            graph.add((selector_uri, RDF['type'], OA['TextQuoteSelector']))
 
     sanitize_html(soup)
 
