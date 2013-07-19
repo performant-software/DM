@@ -95,6 +95,46 @@ atb.viewer.CanvasViewer.prototype.getUri = function() {
 
 atb.viewer.CanvasViewer.prototype.getResourceId = atb.viewer.CanvasViewer.prototype.getUri;
 
+atb.viewer.CanvasViewer.prototype.setupControlEventListeners = function() {
+    var panZoomControl = this.viewer.mainViewport.getControl('PanZoomGesturesControl');
+    if (panZoomControl) {
+        panZoomControl.addEventListener(
+            'activated', function(event) {
+                this.enableHoverMenus();
+            }, false, this);
+        panZoomControl.addEventListener(
+            'deactivated', function(event) {
+                this.disableHoverMenus();
+            }, false, this);
+        panZoomControl.addEventListener(
+            'panstart', function(event) {
+                if (this.hoverMenusEnabled) {
+                    this.disableHoverMenus();
+                    goog.events.listenOnce(panZoomControl, 'panstop', function(event) {
+                        this.enableHoverMenus();
+                    }, false, this);
+                }
+            }, false, this);
+    }
+
+    var zoomSlider = this.viewer.mainViewport.getControl('ZoomSliderControl');
+    if (zoomSlider) {
+        zoomSlider.addEventListener('slidestart', function(event) {
+            if (this.hoverMenusEnabled) {
+                this.disableHoverMenus();
+                goog.events.listenOnce(zoomSlider, 'slidestop', this.enableHoverMenus.bind(this));
+            }
+        }, false, this);
+
+        jQuery(zoomSlider.sliderDiv).mouseenter(function(e) {
+            if (this.hoverMenusEnabled) {
+                this.disableHoverMenus();
+                jQuery(zoomSlider.sliderDiv).one('mouseleave', this.enableHoverMenus.bind(this));
+            }
+        }.bind(this));
+    }
+};
+
 atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     var self = this;
     var viewport = this.viewer.mainViewport;
@@ -105,15 +145,8 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     viewport.addEventListener('mouseout', this.onFeatureMouseout, false, this);
     viewport.addEventListener('canvasAdded', this.onCanvasAdded, false, this);
 
-    var panZoomControl = this.viewer.toolbar.controls.panZoom;
-    panZoomControl.addEventListener(
-        'activated', function(event) {
-            this.enableHoverMenus();
-        }, false, this);
-    panZoomControl.addEventListener(
-        'deactivated', function(event) {
-            this.disableHoverMenus();
-        }, false, this);
+    this.setupControlEventListeners();
+
 /* SGB    
 */
     goog.events.listen(eventDispatcher, 'resource deleted', function (e) {
@@ -138,15 +171,7 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
     if (!this.isEditable()) {
         this.viewer.makeEditable();
 
-        var panZoomControl = this.viewer.toolbar.controls.panZoom;
-        panZoomControl.addEventListener(
-            'activated', function(event) {
-                this.enableHoverMenus();
-            }, false, this);
-        panZoomControl.addEventListener(
-            'deactivated', function(event) {
-                this.disableHoverMenus();
-            }, false, this);
+        this.setupControlEventListeners();
 
         this._isEditable = true;
     }
@@ -156,6 +181,7 @@ atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
         this.viewer.makeUneditable();
 
+        this.setupControlEventListeners();
         this.enableHoverMenus();
 
         this._isEditable = false;
