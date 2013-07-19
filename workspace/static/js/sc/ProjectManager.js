@@ -211,7 +211,6 @@ sc.ProjectManager.prototype.selectThisProject = function(uri){
     // Load new project
     this.viewerGrid.closeAllContainers()
     this.databroker.setCurrentProject(uri)
-    console.log(this.databroker.currentProject)
     this.setTitle()
     this.workingResources.loadManifest(uri)
 
@@ -329,7 +328,6 @@ sc.ProjectManager.prototype.sendNewData = function (title, description, users){
                                     }
                                   });
     
-    console.log("users", users)
     //Link user(s) and project
     for (var i = 0; i < users.length; i++) {
         var u = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, users[i], null);
@@ -757,10 +755,6 @@ sc.ProjectManager.prototype.isValidUser = function(username){
             }.bind(this)
         }
     })
-
-    setTimeout(function(){
-        console.log(this.isValid)
-    }.bind(this),50)
 
     // return this.isValid
 

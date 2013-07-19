@@ -149,7 +149,6 @@ var setupCurrentProject = function(clientApp, username) {
         var lastOpen = db.getResource(uri).getOneProperty('dm:lastOpenProject')
 
         if (lastOpen){
-            console.log("Last Open:", lastOpen)
             pm.selectThisProject(lastOpen) 
         }
         else{

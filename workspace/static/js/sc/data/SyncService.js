@@ -166,9 +166,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         var username = resource.uri.split("/").pop()
         url = this.restUrl(null, resType, username, null) + "/";
-
-        console.log(url)
-        // return;
     }
     else {
         console.error("Don't know how to sync resource " + resource);
