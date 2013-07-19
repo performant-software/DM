@@ -132,11 +132,15 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousedown = function(opts) {
     this.mouseDownY = event.pageY;
 
     jQuery(document.body).addClass('user-select-none');
+
+    this.dispatchEvent(new goog.events.Event('panstart', this));
 };
 
 sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {
     if (this.isDragging && this.viewport.canvas) {
         var event = opts.e;
+
+        this.viewport.registerHandledMouseEvent(event);
 
         var dx = event.pageX - this.lastPageX;
         var dy = event.pageY - this.lastPageY;
@@ -147,6 +151,8 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {
         this.viewport.panByPageCoords(dx, dy);
 
         event.preventDefault();
+
+        this.dispatchEvent(new goog.events.Event('pan', this));
     }
 };
 
@@ -165,6 +171,8 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMouseup = function(opts) {
     }
 
     jQuery(document.body).removeClass('user-select-none');
+
+    this.dispatchEvent(new goog.events.Event('panstop', this));
 };
 
 /**

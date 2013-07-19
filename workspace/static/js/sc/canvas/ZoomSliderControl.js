@@ -14,7 +14,13 @@ sc.canvas.ZoomSliderControl = function(viewport) {
         'orientation': 'vertical',
         'slide': jQuery.proxy(this.handleSlide, this),
         'animate': 200,
-        'step': 0.005
+        'step': 0.005,
+        'start': function(event, ui) {
+            this.dispatchEvent(event);
+        }.bind(this),
+        'stop': function(event, ui) {
+            this.dispatchEvent(event);
+        }.bind(this)
     });
 };
 goog.inherits(sc.canvas.ZoomSliderControl, sc.canvas.Control);
