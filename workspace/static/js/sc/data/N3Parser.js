@@ -60,15 +60,17 @@ sc.data.N3Parser.prototype.parseStandard = function(data, context, handler) {
 };
 
 sc.data.N3Parser.prototype._n3ParserHandler = function(error, triple, handler) {
-    if (triple) {
-        handler([this._tripleToQuad(triple)], false);
-    }
-    else if (error) {
-        handler([], false, error);
-    }
-    else {
-        handler([], true);
-    }
+    setTimeout(function() {
+        if (triple) {
+            handler([this._tripleToQuad(triple)], false);
+        }
+        else if (error) {
+            handler([], false, error);
+        }
+        else {
+            handler([], true);
+        }
+    }.bind(this), 1);
 };
 
 sc.data.N3Parser.prototype.parseThreaded = function(data, context, handler) {
