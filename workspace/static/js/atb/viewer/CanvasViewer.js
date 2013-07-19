@@ -108,12 +108,19 @@ atb.viewer.CanvasViewer.prototype.setupControlEventListeners = function() {
             }, false, this);
         panZoomControl.addEventListener(
             'panstart', function(event) {
+                this.isPanning = true;
+
                 if (this.hoverMenusEnabled) {
                     this.disableHoverMenus();
                     goog.events.listenOnce(panZoomControl, 'panstop', function(event) {
                         this.enableHoverMenus();
                     }, false, this);
                 }
+            }, false, this);
+        panZoomControl.addEventListener(
+            'panstop', function(event) {
+                this.isPanning = false;
+                this.setCursor(null);
             }, false, this);
     }
 
@@ -215,6 +222,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     var uri = event.uri;
     
     if (uri == null || feature.type == 'image') return;
+    if (this.isPanning) return;
     
     this.viewer.mainViewport.setCursor('pointer');
 
