@@ -7,7 +7,6 @@ goog.require("atb.util.ReferenceUtil");
 goog.require("atb.widgets.MenuUtil");
 goog.require("goog.dom");
 goog.require("atb.widgets.MenuButtonSet");
-goog.require('jquery.jQuery');
 
 //lolforce docs:
 /**

@@ -2,7 +2,6 @@ goog.provide('sc.util.Namespaces');
 
 goog.require('goog.structs.Map');
 goog.require('goog.string');
-goog.require('jquery.jQuery');
 
 sc.util.Namespaces = function (opt_namespacesDict) {
     this.uriByPrefix = new goog.structs.Map(sc.util.Namespaces.DEFAULT_NAMESPACES);

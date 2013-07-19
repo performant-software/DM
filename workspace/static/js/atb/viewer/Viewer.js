@@ -8,8 +8,6 @@ goog.require('goog.ui.Popup');
 goog.require('atb.widgets.Toolbar');
 goog.require('atb.ui.AnnoTitlesList');
 
-goog.require('jquery.jQuery');
-
 goog.require('goog.math.Coordinate');
 goog.require('goog.math.Size');
 goog.require('goog.events.EventTarget');

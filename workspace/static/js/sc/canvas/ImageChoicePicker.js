@@ -4,8 +4,6 @@ goog.require('goog.ui.Button');
 goog.require('goog.ui.CustomButton');
 goog.require('goog.structs.Set');
 
-goog.require('jquery.jQuery');
-
 sc.canvas.ImageChoicePicker = function(button, databroker, imageWidth) {
     this.databroker = databroker;
     this.imageWidth = imageWidth;

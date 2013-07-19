@@ -1,6 +1,5 @@
 goog.provide('sc.canvas.CanvasViewer');
 
-goog.require('jquery.jQuery');
 goog.require('goog.dom');
 goog.require('goog.math.Size');
 goog.require('goog.events');
@@ -94,6 +93,7 @@ sc.canvas.CanvasViewer.prototype.makeEditable = function() {
 
 sc.canvas.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
+        this.toolbar.unregisterControls();
         this.toolbar = new sc.canvas.CanvasToolbar(this, true);
         jQuery(this.toolbarDiv).replaceWith(this.toolbar.getElement());
         this.toolbarDiv = this.toolbar.getElement();

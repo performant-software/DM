@@ -3,7 +3,6 @@ goog.provide('atb.widgets.BreadCrumbs');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.structs.Map');
 goog.require('goog.array');
-goog.require('jquery.jQuery');
 
 /**
  * A UI representation of a history pathbar

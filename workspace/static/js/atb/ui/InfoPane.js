@@ -2,7 +2,6 @@ goog.provide('atb.ui.InfoPane');
 
 goog.require('atb.widgets.DialogWidget');
 goog.require('goog.dom.DomHelper');
-goog.require('jquery.jQuery');
 goog.require('goog.events');
 
 atb.ui.InfoPane = function (clientApp, resourceId, opt_domHelper) {

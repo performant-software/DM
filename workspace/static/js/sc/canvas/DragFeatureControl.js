@@ -16,6 +16,8 @@ sc.canvas.DragFeatureControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DragFeatureControl, sc.canvas.FeatureControl);
 
+sc.canvas.DragFeatureControl.prototype.controlName = 'DragFeatureControl';
+
 sc.canvas.DragFeatureControl.prototype.allowAllFeatures = function() {
     this.allowedFeatures = null;
 };

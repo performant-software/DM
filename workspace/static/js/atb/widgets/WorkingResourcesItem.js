@@ -4,7 +4,6 @@ goog.require('goog.dom.DomHelper');
 goog.require('goog.events');
 goog.require('goog.events.ActionEvent');
 goog.require('goog.events.EventTarget');
-goog.require('jquery.jQuery');
 
 atb.widgets.WorkingResourcesItem = function(databroker, uri, opt_domHelper) {
     goog.events.EventTarget.call(this);

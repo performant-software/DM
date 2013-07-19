@@ -1,7 +1,6 @@
 goog.provide("atb.widgets.ForegroundMenuDisplayer");
 
 goog.require("atb.widgets.GlassPane");
-goog.require("jquery.jQuery");
 
 goog.require("goog.events.EventType");
 

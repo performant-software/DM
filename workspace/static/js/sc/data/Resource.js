@@ -2,7 +2,6 @@ goog.provide('sc.data.Resource');
 
 goog.require('goog.structs.Set');
 goog.require('goog.array');
-goog.require('jquery.jQuery');
 goog.require('sc.data.Quad');
 goog.require('sc.util.Namespaces');
 

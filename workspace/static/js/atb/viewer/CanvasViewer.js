@@ -138,6 +138,16 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
     if (!this.isEditable()) {
         this.viewer.makeEditable();
 
+        var panZoomControl = this.viewer.toolbar.controls.panZoom;
+        panZoomControl.addEventListener(
+            'activated', function(event) {
+                this.enableHoverMenus();
+            }, false, this);
+        panZoomControl.addEventListener(
+            'deactivated', function(event) {
+                this.disableHoverMenus();
+            }, false, this);
+
         this._isEditable = true;
     }
 };
@@ -145,6 +155,8 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
 atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
         this.viewer.makeUneditable();
+
+        this.enableHoverMenus();
 
         this._isEditable = false;
     }
@@ -273,11 +285,10 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                     )
                 ];
             }
-            
+
             this.showHoverMenu(menuButtons, specificResourceUri);
         }
-    };
-    afterTimer = atb.Util.scopeAsyncHandler(afterTimer, this)
+    }.bind(this);
     window.setTimeout(afterTimer, atb.viewer.Viewer.HOVER_SHOW_DELAY);
 };
 

@@ -36,6 +36,8 @@ sc.canvas.DrawLineControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawLineControl, sc.canvas.DrawFeatureControl);
 
+sc.canvas.DrawLineControl.prototype.controlName = 'DrawLineControl';
+
 /**
  * @inheritDoc
  */

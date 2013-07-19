@@ -23,6 +23,8 @@ sc.canvas.DrawPolygonControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawPolygonControl, sc.canvas.DrawLineControl);
 
+sc.canvas.DrawPolygonControl.prototype.controlName = 'DrawPolygonControl';
+
 sc.canvas.DrawPolygonControl.prototype.createInitialLine = function(canvasCoord) {
     var viewportDiv = this.viewport.getElement();
     var canvas = this.viewport.canvas;

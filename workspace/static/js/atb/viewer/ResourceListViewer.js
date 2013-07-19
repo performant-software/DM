@@ -2,8 +2,6 @@ goog.provide('atb.viewer.ResourceListViewer');
 
 goog.require('atb.viewer.Viewer');
 
-goog.require('jquery.jQuery');
-
 goog.require('goog.dom');
 goog.require('goog.events');
 goog.require("atb.util.StyleUtil");

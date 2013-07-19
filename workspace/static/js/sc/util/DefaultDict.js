@@ -2,7 +2,6 @@ goog.provide('sc.util.DefaultDict');
 
 goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
-goog.require('jquery.jQuery');
 
 /**
  * @class

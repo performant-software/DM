@@ -26,8 +26,6 @@ goog.require('goog.string');
 goog.require('atb.viewer.Finder');
 goog.require('atb.viewer.Viewer');
 
-goog.require('jquery.jQuery');
-
 //begin radial menus test includes:
 goog.require('atb.Util');
 goog.require('atb.widgets.IMenu');

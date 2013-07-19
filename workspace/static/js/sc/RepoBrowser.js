@@ -3,7 +3,6 @@ goog.provide('sc.RepoBrowser');
 goog.require('goog.events.Event');
 goog.require('goog.events.EventTarget');
 
-goog.require('jquery.jQuery');
 goog.require('jquery.popout');
 goog.require('jquery.rdfquery');
 goog.require('sc.Array');

@@ -26,6 +26,8 @@ sc.canvas.DrawRectControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawRectControl, sc.canvas.DrawFeatureControl);
 
+sc.canvas.DrawRectControl.prototype.controlName = 'DrawRectControl';
+
 /**
  * @inheritDoc
  */

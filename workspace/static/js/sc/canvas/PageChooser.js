@@ -1,7 +1,6 @@
 goog.provide('sc.canvas.PageChooser');
 
 goog.require('goog.events.EventTarget');
-goog.require('jquery.jQuery');
 
 sc.canvas.PageChooser = function(button, databroker) {
     goog.events.EventTarget.call(this);

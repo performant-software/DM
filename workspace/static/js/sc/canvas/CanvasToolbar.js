@@ -9,7 +9,6 @@ goog.require('goog.ui.ToggleButton');
 goog.require('goog.ui.ToolbarSeparator');
 goog.require('goog.ui.Toolbar');
 goog.require('goog.ui.editor.ToolbarFactory');
-goog.require('jquery.jQuery');
 goog.require('sc.canvas.PanZoomGesturesControl');
 goog.require('sc.canvas.DrawEllipseControl');
 goog.require('sc.canvas.DrawRectControl');
@@ -71,6 +70,12 @@ sc.canvas.CanvasToolbar.prototype.deactivateMouseControls = function() {
     this.controls.drawRect.deactivate();
     this.controls.drawLine.deactivate();
     this.controls.drawPolygon.deactivate();
+};
+
+sc.canvas.CanvasToolbar.prototype.unregisterControls = function() {
+    goog.structs.forEach(this.controls, function(control) {
+        control.unregister();
+    }, this);
 };
 
 sc.canvas.CanvasToolbar.prototype.handleCanvasAdded = function(event) {

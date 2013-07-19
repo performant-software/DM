@@ -4,7 +4,6 @@ goog.provide('atb.resource.ResourceSummary');
 goog.require('goog.dom');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.object');
-goog.require('jquery.jQuery');
 goog.require('goog.events');
 goog.require('goog.events.EventTarget');
 
