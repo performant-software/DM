@@ -224,7 +224,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
     
     jQuery(this.noAnnosDiv).hide();
 
-    var deferredResource = this.databroker.getDeferredResource(uri);
+    // var deferredResource = this.databroker.getDeferredResource(uri);
 
     var withResource = function(resource) {
         var bodyAnnoResources = resource.getReferencingResources('oa:hasTarget');
@@ -246,7 +246,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
             }, this);
         }, this);
 
-        if (bodyUris.getCount() + targetUris.getCount() == 0 && deferredResource.state() == 'resolved') {
+        if (bodyUris.getCount() + targetUris.getCount() == 0/* && deferredResource.state() == 'resolved'*/) {
             jQuery(this.noAnnosDiv).show();
         }
         else if (bodyUris.getCount() + targetUris.getCount() > 0) {
@@ -289,5 +289,6 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
             }));
         }
     }.bind(this);
-    deferredResource.done(withResource);
+    // deferredResource.done(withResource);
+    withResource(this.databroker.getResource(uri));
 }; 
