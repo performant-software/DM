@@ -2,7 +2,6 @@ goog.provide('atb.viewer.AudioViewer');
 
 goog.require('atb.viewer.Viewer');
 
-goog.require('jquery.jQuery');
 goog.require('jquery.jPlayer');
 goog.require('goog.string');
 

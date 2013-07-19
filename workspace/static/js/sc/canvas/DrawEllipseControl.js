@@ -26,6 +26,8 @@ sc.canvas.DrawEllipseControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawEllipseControl, sc.canvas.DrawFeatureControl);
 
+sc.canvas.DrawEllipseControl.prototype.controlName = 'DrawEllipseControl';
+
 /**
  * @inheritDoc
  */

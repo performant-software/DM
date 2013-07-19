@@ -3,9 +3,6 @@ goog.provide("atb.ClientApp");
 goog.require("atb.util.StyleUtil"); //used for a giant hack
 goog.require("atb.util.ReferenceUtil");
 
-goog.require('jquery.jQuery');
-goog.require('jquery.animate_enhanced'); // converts jquery animations to css3 when possible, enabling hardware accelleration
-
 goog.require('goog.events.EventTarget');
 goog.require('goog.events');
 goog.require('goog.ui.Popup');

@@ -1,7 +1,5 @@
 goog.provide('sc.RepoBrowserItem');
 
-goog.require('jquery.jQuery');
-
 /**
  * UI for an entry in the sc.RepoBrowser
  *

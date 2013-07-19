@@ -2,9 +2,6 @@ goog.provide('sc.canvas.ZoomSliderControl');
 
 goog.require('sc.canvas.Control');
 
-goog.require('jquery.jQueryUI');
-goog.require('jquery.jQuery');
-
 sc.canvas.ZoomSliderControl = function(viewport) {
     sc.canvas.Control.call(this, viewport);
     
@@ -21,6 +18,8 @@ sc.canvas.ZoomSliderControl = function(viewport) {
     });
 };
 goog.inherits(sc.canvas.ZoomSliderControl, sc.canvas.Control);
+
+sc.canvas.ZoomSliderControl.prototype.controlName = 'ZoomSliderControl';
 
 sc.canvas.ZoomSliderControl.prototype.activate = function() {
     sc.canvas.Control.prototype.activate.call(this);

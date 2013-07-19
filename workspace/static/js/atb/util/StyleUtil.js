@@ -11,7 +11,6 @@ goog.require("atb.util.ReferenceUtil");
 goog.require('goog.dom.DomHelper');
 goog.require('goog.math.Coordinate');
 goog.require('goog.positioning.ClientPosition');
-goog.require('jquery.jQuery');
 
 /**
  * @namespace Provides some style-related functionality.

@@ -1,7 +1,6 @@
 goog.provide('atb.ui.Bezel');
 
 goog.require('goog.dom');
-goog.require('jquery.jQuery');
 goog.require('goog.math.Size');
 goog.require('goog.math.Coordinate');
 goog.require('atb.util.StyleUtil');

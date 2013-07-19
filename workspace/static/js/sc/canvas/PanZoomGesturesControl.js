@@ -2,7 +2,6 @@ goog.provide('sc.canvas.PanZoomGesturesControl');
 
 goog.require('goog.events');
 goog.require('jquery.event.drag');
-goog.require('jquery.jQuery');
 goog.require('jquery.mousewheel');
 goog.require('sc.canvas.Control');
 
@@ -33,6 +32,8 @@ sc.canvas.PanZoomGesturesControl = function(viewport) {
     this.proxiedHandleDblclick = this.handleDblclick.bind(this);
 };
 goog.inherits(sc.canvas.PanZoomGesturesControl, sc.canvas.Control);
+
+sc.canvas.PanZoomGesturesControl.prototype.controlName = 'PanZoomGesturesControl';
 
 /**
  * @inheritDoc

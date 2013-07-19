@@ -26,6 +26,8 @@ sc.canvas.DrawCircleControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawCircleControl, sc.canvas.DrawFeatureControl);
 
+sc.canvas.DrawCircleControl.prototype.controlName = 'DrawCircleControl';
+
 /**
  * @inheritDoc
  */

@@ -4,7 +4,6 @@ goog.require('fabric');
 goog.require('goog.object');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.Event');
-goog.require('jquery.jQuery');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.structs.Set');
 goog.require('goog.async.Throttle');
@@ -36,6 +35,7 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
 
     this.canvas = null;
 
+    this.controlsByName = new goog.structs.Map();
     this.activeControls = new goog.structs.Set();
     this.inactiveControls = new goog.structs.Set();
 
@@ -71,6 +71,30 @@ sc.canvas.FabricCanvasViewport.prototype.complainIfNoCanvas = function() {
     }
 };
 
+sc.canvas.FabricCanvasViewport.prototype._addControl = function(control) {
+    if (this.controlsByName.containsKey(control.controlName)) {
+        var e = new Error("A " + control.controlName + " control has already been registered for this canvas viewport");
+        e.control = control;
+        e.viewport = this;
+        throw e;
+    }
+
+    if (control.isActive) {
+        this.activeControls.add(control);
+    }
+    else {
+        this.inactiveControls.add(control);
+    }
+
+    this.controlsByName.set(control.controlName, control);
+};
+
+sc.canvas.FabricCanvasViewport.prototype._removeControl = function(control) {
+    this.inactiveControls.remove(control);
+    this.activeControls.remove(control);
+    this.controlsByName.remove(control.controlName);
+};
+
 sc.canvas.FabricCanvasViewport.prototype.getActiveControls = function() {
     return this.activeControls.getValues();
 };
@@ -81,6 +105,10 @@ sc.canvas.FabricCanvasViewport.prototype.getInactiveControls = function() {
 
 sc.canvas.FabricCanvasViewport.prototype.getControls = function() {
     return this.getActiveControls().concat(this.getInactiveControls());
+};
+
+sc.canvas.FabricCanvasViewport.prototype.getControl = function(name) {
+    return this.controlsByName.get(name);
 };
 
 /**

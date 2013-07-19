@@ -14,7 +14,6 @@ goog.require('goog.style');
 goog.require('goog.ui.Popup');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.Event');
-goog.require('jquery.jQuery');
 
 /**
  * @constructor

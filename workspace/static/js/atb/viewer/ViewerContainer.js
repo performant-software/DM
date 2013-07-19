@@ -2,7 +2,6 @@ goog.provide('atb.viewer.ViewerContainer');
 
 goog.require('goog.dom.DomHelper');
 goog.require('goog.events.EventTarget');
-goog.require('jquery.jQuery');
 
 atb.viewer.ViewerContainer = function(opt_domHelper) {
     goog.events.EventTarget.call(this);
