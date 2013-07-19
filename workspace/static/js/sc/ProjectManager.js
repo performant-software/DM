@@ -100,25 +100,28 @@ sc.ProjectManager.prototype.setTitle = function(){
     // Get current project
     var projectId = this.databroker.currentProject
 
-    /* On intial load, there is currently no project selected
-     * Therefore, we only need to manipulate the project when currentProject is defined
-    */
-    if (projectId){
-        this.titleButton.removeChild(this.titleSpan)
-        title = this.databroker.getResource(projectId).getOneProperty('dc:title')
-        this.titleSpan = goog.dom.createDom("span", {'style':'color:#999'}, title)
+    if (!(projectId)){
+        console.warn("There is no currently selected project.")
+
+        this.titleButton.appendChild(this.projectSpan)
+        this.titleButton.appendChild(this.titleSpan)
     }
+    else{
+        this.titleButton.removeChild(this.titleSpan)
+        this.databroker.getDeferredResource(projectId).done(function(resource){
+            var title = resource.getOneProperty('dc:title')
+            this.titleSpan = goog.dom.createDom("span", {style:'color:#999'}, title)
 
-    /* Add (which really replaces, as they are global variables) the data to the current
-     *  project button
-    */
-    this.titleButton.appendChild(this.projectSpan)
-    this.titleButton.appendChild(this.titleSpan)
+            this.titleButton.appendChild(this.projectSpan)
+            this.titleButton.appendChild(this.titleSpan)
 
-    /* Add the data about the current project to the edit modal
-     * This properly sources the data every time a new project is selected
-    */
-    this.prepareForEdit()
+        }.bind(this))
+
+        /* Add the data about the current project to the edit modal
+         * This properly sources the data every time a new project is selected
+        */
+        this.prepareForEdit()
+    }
 }
 
 /* Adds a project's title to the dropdown menu
@@ -204,10 +207,11 @@ sc.ProjectManager.prototype.selectProject = function(e){
  * A valid uri is supplied
  * Once a way to save the layout is configured, we would save that here
 */
-sc.ProjectManager.prototype.selectThisProject = function(uri){
+sc.ProjectManager.prototype.selectThisProject = function(uri){  
     // Load new project
     this.viewerGrid.closeAllContainers()
     this.databroker.setCurrentProject(uri)
+    console.log(this.databroker.currentProject)
     this.setTitle()
     this.workingResources.loadManifest(uri)
 
@@ -215,7 +219,6 @@ sc.ProjectManager.prototype.selectThisProject = function(uri){
     var wrap = sc.util.Namespaces.angleBracketWrap
     var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, this.username, null);
     var pred = this.databroker.namespaces.expand("dm", "lastOpenProject")
-    console.log(userUri, uri)
     this.databroker.getResource(userUri).setProperty(pred, wrap(uri))
 }
 

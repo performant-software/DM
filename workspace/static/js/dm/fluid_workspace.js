@@ -147,10 +147,10 @@ var setupCurrentProject = function(clientApp, username) {
         var pm = goog.global.projectManager;
 
         var lastOpen = db.getResource(uri).getOneProperty('dm:lastOpenProject')
-        console.log("Last Open:", lastOpen)
 
         if (lastOpen){
-           pm.selectThisProject(lastOpen) 
+            console.log("Last Open:", lastOpen)
+            pm.selectThisProject(lastOpen) 
         }
         else{
             pm.sendNewData("Default Project", null, [username,])

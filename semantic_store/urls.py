@@ -68,13 +68,18 @@ urlpatterns = patterns('',
         name="semantic_store_collection_annotations"),
 
 
+    url(r'^users(?:/(?P<username>.+))/remove_triples?/?$',
+        semantic_store.views.remove_user_triples,
+        name="semantic_store_user_remove_triples"),
+
+    url(r'^users(?:/(?P<username>.+)/)?/?$', 
+        semantic_store.views.users,
+        name="semantic_store_users_with_slash"),
+
     url(r'^users(?:/(?P<username>.+))?/?$', 
-        semantic_store.views.users, 
+        semantic_store.views.users,
         name="semantic_store_users"),
 
-    url(r'^users(?:/(?P<username>.+))?/remove_triples/?$', 
-        semantic_store.views.remove_user_triples, 
-        name="semantic_store_users_remove_triples"),
     
 
     url(r'^annotations(?:/(?P<anno_uri>.+))?/?$', 

@@ -82,9 +82,6 @@ def collections(request, uri=None):
 def collection_annotations(request, uri=None):
     pass
 
-def users(request, username=None):
-    pass
-
 def user_annotations(request, username=None):
     pass
 
@@ -283,7 +280,7 @@ def project_texts(request, project_uri, text_uri):
         return negotiated_graph_response(request, g)
 
 
-@login_required
+# @login_required
 def users(request, username=None):
     if request.method == 'GET':
         return read_user(request, username)
@@ -294,6 +291,6 @@ def users(request, username=None):
         return update_user(request, username)
 
 def remove_user_triples(request, username):
-    g = remove_triples_from_user(request, uri)
+    g = remove_triples_from_user(request, username)
 
     return negotiated_graph_response(request, g)

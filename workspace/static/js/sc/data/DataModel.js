@@ -524,6 +524,15 @@ sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project, opt_qu
     return quads;
 };
 
+sc.data.DataModel.prototype.findQuadsToSyncForUser = function(user, opt_quadStore){
+    user = this.databroker.getResource(user);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+
+    var quads = quadStore.query(user.bracketedUri, null, null, null);
+
+    return quads
+}
+
 sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
     canvasUri = sc.util.Namespaces.angleBracketWrap(canvasUri);

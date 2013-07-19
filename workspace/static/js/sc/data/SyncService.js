@@ -159,8 +159,19 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
         }
     }
+    else if (resource.hasType('foaf:Agent')){
+        resType = sc.data.SyncService.RESTYPE.user;
+        quadsToPost = dataModel.findQuadsToSyncForUser(resource)
+        quadsToRemove = dataModel.findQuadsToSyncForUser(resource, this.databroker.deletedQuadsStore)
+
+        var username = resource.uri.split("/").pop()
+        url = this.restUrl(null, resType, username, null) + "/";
+
+        console.log(url)
+        // return;
+    }
     else {
-        // console.error("Don't know how to sync resource " + resource);
+        console.error("Don't know how to sync resource " + resource);
         return;
     }
 
