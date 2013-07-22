@@ -4,6 +4,9 @@ settings_local.py
 runserver
 collectstatic
 
+#deployment specific files
+django.wsgi
+
 static/*
 
 #python specific
