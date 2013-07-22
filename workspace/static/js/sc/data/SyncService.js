@@ -155,6 +155,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
             quadsToPost = dataModel.findQuadsToSyncForProject(resource);
             quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
+            console.log(quadsToRemove)
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
         }
@@ -172,6 +173,15 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         return;
     }
 
+    if (quadsToRemove.length > 0)  {
+        this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
+            // Success
+            this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
+        }.bind(this), function() {
+            // Error
+        }.bind(this));
+    }
+
     if (quadsToPost.length > 0) {
         this.sendQuads(quadsToPost, url, method, null, function() {
             // Success
@@ -183,15 +193,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             }
         }.bind(this), function() {
             // Error handling here
-        }.bind(this));
-    }
-
-    if (quadsToRemove.length > 0)  {
-        this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
-            // Success
-            this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
-        }.bind(this), function() {
-            // Error
         }.bind(this));
     }
 };
