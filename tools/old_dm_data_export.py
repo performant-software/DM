@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup, Comment
 from multiprocessing import Process, Pool
 import os
 
-IMG_SRC = settings.BASE_URL + settings.MEDIA_URL + 'user_images/'
+IMG_SRC = settings.MEDIA_URL + 'user_images/'
 # URI of each type we are using in the project linked to simple string of type
 
 HIGHLIGHT_CLASS = 'atb-editor-textannotation'
@@ -280,7 +280,7 @@ def get_image_src(image):
         src = image.src_url
     else:
         src = IMG_SRC + image.r_id + '.jpg'
-    return src
+    return URIRef(src)
 
 # Gets all images owned by <user> and collects the data in a Graph
 def handle_images(user):
