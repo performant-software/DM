@@ -19,7 +19,7 @@ from .namespaces import bind_namespaces, ns
 from .validators import AnnotationValidator
 from .annotation_views import create_or_update_annotations, get_annotations, \
     search_annotations
-from .projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
+from .projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, save_project_user_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
 
@@ -36,6 +36,7 @@ from django.db import IntegrityError, transaction
 
 from django.db import connection
 
+from os import listdir
 
 def repositories(request, uri=None):
     pass
@@ -211,18 +212,15 @@ def import_old_data(request):
     # or serialize from a folder, where each file is one project/user graph
     else:
         i = 0
-        while True:
-            graph = Graph()
-            bind_namespaces(everything_graph)
+        for file_name in listdir("output/"):
             try:
-                graph.parse("output/%s.ttl"%(i))
-            except IOError:
-                break
-            else:   
+                everything_graph.parse("output/" + file_name, format="turtle")
+            except Exception as e:
+                print "Failed to decode file '%s' with error message '%s'"%(file_name, e.args[-1])
+            else:
                 add_all_users(everything_graph)
-                create_project(graph, host)
-                i += 1
-    
+                create_project(everything_graph, host)
+        
 
     return HttpResponse("I finished migrating data without errors.")
 
@@ -237,6 +235,7 @@ def add_all_users(graph):
                         WHERE {
                             ?user perm:hasPermissionOver ?project .
                             ?user foaf:mbox ?email .
+                            ?user rdf:type foaf:Agent
                         }""", initNs = ns)
 
     for q in query:
