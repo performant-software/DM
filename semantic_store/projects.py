@@ -37,8 +37,6 @@ def create_project(g, host):
 
     for uri, user in query:
         with transaction.commit_on_success():
-            username = user.split("/")[-1]
-
             project_uri = uris.uri('semantic_store_projects', uri=uri)
             project_g = Graph(store=rdfstore(), identifier=project_uri)
             bind_namespaces(project_g)
@@ -51,7 +49,9 @@ def create_project(g, host):
             # Deletes permissions triples, which should not be stored in project graph
             project_g.remove((None,NS.perm['hasPermissionOver'],uri))
 
-        save_project_user_graph(g, username, host)
+        username = user.split("/")[-1]
+        create_project_user_graph(host, username, uri)
+        # save_project_user_graph(g, username, uri)
 
 
 # Restructured read_project
@@ -125,6 +125,8 @@ def create_project_user_graph(host, user, project):
 
     g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
 
+    g.add((user_uri, NS.dm.lastOpenProject, project))
+
     save_project_user_graph(g, user, host)
 
 def save_project_user_graph(graph, username, host):
@@ -134,7 +136,6 @@ def save_project_user_graph(graph, username, host):
         bind_namespaces(user_graph)
 
         for t in graph.triples((user_uri, None, None)):
-            print t
             user_graph.add(t)
 
         for project in graph.triples((user_uri, NS.ore.hasPermissionOver, None)):
