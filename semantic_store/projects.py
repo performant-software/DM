@@ -51,7 +51,7 @@ def create_project(g, host):
             # Deletes permissions triples, which should not be stored in project graph
             project_g.remove((None,NS.perm['hasPermissionOver'],uri))
 
-        create_project_user_graph(host, username, uri)
+        save_project_user_graph(g, username, host)
 
 
 # Restructured read_project
@@ -109,23 +109,36 @@ def delete_project(request, uri):
 # The graph houses the uri of all of the user's projects and the url where more info
 #  can be found about each project
 def create_project_user_graph(host, user, project):
+    user_uri = uris.uri('semantic_store_users', username=user)
+    g = Graph()
+    bind_namespaces(g)
+    g.add((project, NS.ore['isDescribedBy'], uris.url(host, "semantic_store_projects", uri=project)))
+
+    # Permissions triple allows read-only permissions if/when necessary
+    # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
+    g.add((user_uri, NS.perm['hasPermissionOver'], project))
+    g.add((user_uri, NS.perm['mayRead'], project))
+    g.add((user_uri, NS.perm['mayUpdate'], project))
+    g.add((user_uri, NS.perm['mayDelete'], project))
+    g.add((user_uri, NS.perm['mayAugment'], project))
+    g.add((user_uri, NS.perm['mayAdminister'], project))
+
+    g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
+
+    save_project_user_graph(g, user, host)
+
+def save_project_user_graph(graph, username, host):
     with transaction.commit_on_success():
-        user_uri = uris.uri('semantic_store_users', username=user)
-        g = Graph(store=rdfstore(), identifier = user_uri)
-        bind_namespaces(g)
-        g.add((project, NS.ore['isDescribedBy'], uris.url(host, "semantic_store_projects", uri=project)))
+        user_uri = uris.uri('semantic_store_users', username=username)
+        user_graph = Graph(store=rdfstore(), identifier=user_uri)
+        bind_namespaces(user_graph)
 
-        # Permissions triple allows read-only permissions if/when necessary
-        # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
-        g.add((user_uri, NS.perm['hasPermissionOver'], project))
-        g.add((user_uri, NS.perm['mayRead'], project))
-        g.add((user_uri, NS.perm['mayUpdate'], project))
-        g.add((user_uri, NS.perm['mayDelete'], project))
-        g.add((user_uri, NS.perm['mayAugment'], project))
-        g.add((user_uri, NS.perm['mayAdminister'], project))
+        for t in graph.triples((user_uri, None, None)):
+            print t
+            user_graph.add(t)
 
-        g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
-        return g.serialize()
+        for project in graph.triples((user_uri, NS.ore.hasPermissionOver, None)):
+            user_graph.add((project, NS.ore.isDescribedBy, uris.url(host, "semantic_store_projects", uri=project)))
 
 
 def delete_triples_from_project(request, uri):

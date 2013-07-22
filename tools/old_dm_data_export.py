@@ -498,6 +498,7 @@ def handle_user(user):
     graph.add((user_uri, PERM['hasPermissionOver'], project_uri))
     graph.add((user_uri, RDF['type'], TYPE_URI['agent']))
     graph.add((user_uri, FOAF['mbox'], URIRef("mailto:"+user.email)))
+    graph.add((user_uri, DM.lastOpenProject, project_uri))
 
     return graph
 
