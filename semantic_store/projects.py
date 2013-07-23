@@ -10,6 +10,7 @@ from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 from semantic_store.utils import negotiated_graph_response, parse_into_graph
 from semantic_store.users import add_triple, remove_triple
+from semantic_store.project_texts import sanitized_content
 
 from datetime import datetime
 
@@ -36,6 +37,8 @@ def create_project(g, host):
                     }""", initNs = ns)
 
     for uri, user in query:
+        sanitize_texts(g)
+
         with transaction.commit_on_success():
             project_uri = uris.uri('semantic_store_projects', uri=uri)
             project_g = Graph(store=rdfstore(), identifier=project_uri)
@@ -51,15 +54,14 @@ def create_project(g, host):
 
         username = user.split("/")[-1]
         create_project_user_graph(host, username, uri)
-        # save_project_user_graph(g, username, uri)
 
 
 # Restructured read_project
 # Previously, when hitting multiple project urls in quick succession, a 500 
 #  error occurred occassionally since the graph with the information about
 #  all projects wasn't closed before the next url was hit
-def read_project(request, uri):
-    uri = uris.uri('semantic_store_projects', uri=uri)
+def read_project(request, project_uri):
+    uri = uris.uri('semantic_store_projects', uri=project_uri)
     store_g = Graph(store=rdfstore(), identifier=uri)
 
     # Work with a memory graph so triples can be removed
@@ -78,6 +80,9 @@ def read_project(request, uri):
     for text in project_g.subjects(NS.rdf['type'], NS.dcmitype.Text):
         for t in project_g.triples((text, NS.cnt.chars, None)):
             project_g.remove(t)
+        text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
+        print text_url
+        project_g.add((text, NS.ore.isDescribedBy, text_url))
     
     if len(project_g) >0:
         return negotiated_graph_response(request, project_g)
@@ -129,7 +134,8 @@ def create_project_user_graph(host, user, project):
     user_uri = uris.uri('semantic_store_users', username=user)
     g = Graph()
     bind_namespaces(g)
-    g.add((project, NS.ore['isDescribedBy'], uris.url(host, "semantic_store_projects", uri=project)))
+
+
 
     # Permissions triple allows read-only permissions if/when necessary
     # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
@@ -140,9 +146,9 @@ def create_project_user_graph(host, user, project):
     g.add((user_uri, NS.perm['mayAugment'], project))
     g.add((user_uri, NS.perm['mayAdminister'], project))
 
-    g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
-
     g.add((user_uri, NS.dm.lastOpenProject, project))
+
+    g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
 
     save_project_user_graph(g, user, host)
 
@@ -152,8 +158,12 @@ def save_project_user_graph(graph, username, host):
         user_graph = Graph(store=rdfstore(), identifier=user_uri)
         bind_namespaces(user_graph)
 
-        for t in graph.triples((user_uri, None, None)):
-            user_graph.add(t)
+        for s,p,o in graph.triples((user_uri, None, None)):
+            user_graph.add((s,p,o))
+
+            if p==NS.perm.hasPermissionOver:
+                url = uris.url(host, "semantic_store_projects", uri=o)
+                user_graph.add((o, NS.ore.isDescribedBy,url))
 
         for project in graph.triples((user_uri, NS.ore.hasPermissionOver, None)):
             user_graph.add((project, NS.ore.isDescribedBy, uris.url(host, "semantic_store_projects", uri=project)))
@@ -208,3 +218,10 @@ def create_project_graph(host, user, title, project):
     g.add((project, NS.dcterms['created'], Literal(datetime.utcnow())))
 
     user_uri = uris.uri('semantic_store_users', username=user)
+
+def sanitize_texts(graph):
+    for text in graph.subjects(NS.rdf.type, NS.dcmitype.Text):
+        for content in graph.objects(text, NS.cnt.chars):
+            graph.remove((text, NS.cnt.chars, content))
+
+            graph.add((text, NS.cnt.chars, Literal(sanitized_content(content))))
