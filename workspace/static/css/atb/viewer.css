@@ -29,9 +29,9 @@
 }
 
 .atb-hoverMenu {
-    -moz-box-shadow: 5px 5px 10px #888;
-    -webkit-box-shadow: 5px 5px 10px #888;
-    box-shadow: 5px 5px 10px #888;
+    -moz-box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+    -webkit-box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
     
     z-index: 100000;
 }
@@ -48,6 +48,12 @@
 }
 
 .atb-hoverMenu-calloutTriangle {
+    -moz-box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+    -webkit-box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
+
+    z-index: -1;
+
     width: 16px;
     height: 16px;
     position: absolute;
