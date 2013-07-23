@@ -586,10 +586,8 @@ atb.viewer.TextEditorAnnotate.prototype.getAllAnnotationTags = function () {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.getHighlightElementByUri = function (uri) {
-	var domHelper = this.viewer.fieldObject.getEditableDomHelper();
-
 	if (this.viewer.isEditable()) {
-		var domHelper = this.viewer.fieldObject.getEditableDomHelper();
+		var domHelper = this.viewer.field.getEditableDomHelper();
 		var editableDocument = domHelper.getDocument();
 
 		return jQuery('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '[about=\'' + uri + '\']', editableDocument).get(0);
