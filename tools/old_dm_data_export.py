@@ -382,6 +382,8 @@ def parse_for_highlights(content, content_uri):
             # Add information about selector
             graph.add((selector_uri, OA['exact'], Literal(text)))
             graph.add((selector_uri, RDF['type'], OA['TextQuoteSelector']))
+        else:
+            span.extract()
 
     sanitize_html(soup)
 
