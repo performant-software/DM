@@ -614,9 +614,10 @@ atb.viewer.TextEditor.prototype._addHighlightListenersWhenUneditable = function(
     if (!this.isEditable()) {
         var annotatePlugin = new atb.viewer.TextEditorAnnotate(this);
 
-        jQuery('#' + this.useID + ' .' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS).each(function(index, element) {
-            annotatePlugin.addListeners(element);
-        }.bind(this));
+        var highlights = annotatePlugin.getAllAnnotationTags();
+        for (var i=0, len=highlights.length; i<len; i++) {
+            annotatePlugin.addListeners(highlights[i]);
+        }
     }
 };
 
