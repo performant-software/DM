@@ -60,7 +60,24 @@ def create_project(g, host):
 #  all projects wasn't closed before the next url was hit
 def read_project(request, uri):
     uri = uris.uri('semantic_store_projects', uri=uri)
-    project_g = Graph(store=rdfstore(), identifier=uri)
+    store_g = Graph(store=rdfstore(), identifier=uri)
+
+    # Work with a memory graph so triples can be removed
+    project_g = Graph()
+    bind_namespaces(project_g)
+    project_g += store_g
+
+    # query = project_g.query("""SELECT ?t ?cnt
+    #                         WHERE {
+    #                             ?t cnt:chars ?cnt .
+    #                             ?t rdf:type dcmitype:Text .
+    #                         }""", initNs=ns)
+    # for text, cnt in query:
+    #     project_g.remove((text, NS.cnt['chars'], cnt))
+
+    for text in project_g.subjects(NS.rdf['type'], NS.dcmitype.Text):
+        for t in project_g.triples((text, NS.cnt.chars, None)):
+            project_g.remove(t)
     
     if len(project_g) >0:
         return negotiated_graph_response(request, project_g)
