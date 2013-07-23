@@ -21,6 +21,7 @@ sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResou
     // Span tags tags for the current project button
     this.projectSpan = goog.dom.createDom("span", {style:'color:#666;'},"project: ")
     this.titleSpan = goog.dom.createDom("span", {style:'color:#999;'}, ' (none)')
+    this.tempTitleSpan = goog.dom.createDom("span", {style:'color:#999'}, "loading...")
 
     // Variables needed for user tagging system
     this.newAddedUsersList = [username,];
@@ -99,6 +100,7 @@ sc.ProjectManager.prototype.createButtons = function(){
 sc.ProjectManager.prototype.setTitle = function(){
     // Get current project
     var projectId = this.databroker.currentProject
+    console.log(projectId)
 
     if (!(projectId)){
         console.warn("There is no currently selected project.")
@@ -108,9 +110,12 @@ sc.ProjectManager.prototype.setTitle = function(){
     }
     else{
         this.titleButton.removeChild(this.titleSpan)
+        this.titleButton.appendChild(this.tempTitleSpan)
+        
         this.databroker.getDeferredResource(projectId).done(function(resource){
             var title = resource.getOneProperty('dc:title')
             this.titleSpan = goog.dom.createDom("span", {style:'color:#999'}, title)
+            this.titleButton.removeChild(this.tempTitleSpan)
 
             this.titleButton.appendChild(this.projectSpan)
             this.titleButton.appendChild(this.titleSpan)
