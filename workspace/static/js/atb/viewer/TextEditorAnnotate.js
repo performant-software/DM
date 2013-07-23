@@ -424,7 +424,9 @@ atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(element) {
  * @return {true}
  */
 atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
-	goog.asserts.assert(this.isHighlightElement(object), 'attempting to add highlight event listeners to an element which is not a highlight', object);
+	if (!this.isHighlightElement(object)) {
+		console.error('attempting to add highlight event listeners to an element which is not a highlight', object);
+	}
 
 	var selector = this.getElementSelectorResource(object);
 	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(selector);
@@ -525,12 +527,12 @@ atb.viewer.TextEditorAnnotate.prototype.queryCommandValue = function(command) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function () {
-    var domHelper = this.fieldObject.getEditableDomHelper();
-    var annotations = domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
+    var annotations = this.getAllAnnotationTags();
 
     for(var i=0, len=annotations.length; i < len; i++) {
         var highlightTag = annotations[i];
-        this.addListeners(highlightTag);
+
+    	this.addListeners(highlightTag);
     }
 };
 
@@ -561,19 +563,40 @@ atb.viewer.TextEditorAnnotate.prototype.isHighlightElement = function(element) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.getAllAnnotationTags = function () {
-    var domHelper = this.viewer.field.getEditableDomHelper();
+	var annotation_class = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS;
 
-    var annotations = domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
+	if (this.viewer.isEditable()) {
+		var domHelper = this.fieldObject.getEditableDomHelper();
+		var spans = domHelper.getElementsByClass(annotation_class);
+	}
+	else {
+		var spans = jQuery('#' + this.viewer.useID + ' .' + annotation_class).toArray();
+	}
 
-    return annotations;
+	var highlights = [];
+
+	for (var i=0, len=spans.length; i<len; i++) {
+		var span = spans[i];
+		if (this.isHighlightElement(span)) {
+			highlights.push(span);
+		}
+	}
+
+	return highlights;
 };
 
 atb.viewer.TextEditorAnnotate.prototype.getHighlightElementByUri = function (uri) {
-	var domHelper = this.viewer.field.getEditableDomHelper();
-	var editableDocument = domHelper.getDocument();
-	console.log('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '[about=\'' + uri + '\']')
+	var domHelper = this.viewer.fieldObject.getEditableDomHelper();
 
-	return jQuery('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '[about=\'' + uri + '\']', editableDocument).get(0);
+	if (this.viewer.isEditable()) {
+		var domHelper = this.viewer.fieldObject.getEditableDomHelper();
+		var editableDocument = domHelper.getDocument();
+
+		return jQuery('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '[about=\'' + uri + '\']', editableDocument).get(0);
+	}
+	else {
+		return jQuery('#' + this.viewer.useID + ' .' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '[about=\'' + uri + '\']').get(0);
+	}
 };
 
 
@@ -635,9 +658,20 @@ atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.unselectAllHighlights = function() {
-    var domHelper = this.fieldObject.getEditableDomHelper();
+    var annotation_class = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER;
 
-    jQuery(this.getAllAnnotationTags()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
+    if (this.viewer.isEditable()) {
+    	var domHelper = this.fieldObject.getEditableDomHelper();
+    	var spans = domHelper.getElementsByClass(annotation_class);
+    	this.fieldObject.manipulateDom(function() {
+    		for (var i=0, len=spans.length; i<len; i++) {
+    			jQuery(spans[i]).removeClass(annotation_class);
+    		}
+    	}.bind(this));
+    }
+    else {
+    	jQuery('#' + this.viewer.useID + ' .' + annotation_class).removeClass(annotation_class);
+    }
 };
 
 
@@ -645,9 +679,20 @@ atb.viewer.TextEditorAnnotate.prototype.unselectAllHighlights = function() {
  * hoverAnnotationSpan()
  **/
 atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function (forSpan) {
-    var domHelper = goog.dom.getDomHelper(forSpan);
-    var annotationId = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(forSpan);
-    this.setHoverAnnotationHelper(annotationId,forSpan);
+	this.unselectAllHighlights();
+
+    var viewer = this.viewer;
+    var field = viewer.field;
+
+    if (field && viewer.isEditable()) {
+    	// Prevents firing of delayed change events
+    	field.manipulateDom(function() {
+    	    jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	}, true, this);
+    }
+    else {
+    	jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    }
 };
 
 
@@ -655,24 +700,17 @@ atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function (forSpan)
  * unhoverAnnotationSpan()
  **/
 atb.viewer.TextEditorAnnotate.prototype.unhoverAnnotationSpan = function(forSpan) {
-    this.setHoverAnnotationHelper(null,forSpan);
-};
-
-atb.viewer.TextEditorAnnotate.prototype.setHoverAnnotationHelper = function(hoverAnnotationId,forSpan) {
     var viewer = this.viewer;
     var field = viewer.field;
 
     if (field && viewer.isEditable()) {
     	// Prevents firing of delayed change events
     	field.manipulateDom(function() {
-    		var domHelper = this.fieldObject.getEditableDomHelper();
-    		jQuery('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER, domHelper.getDocument()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-    	    jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	    jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
     	}, true, this);
     }
     else {
-    	jQuery('#' + viewer.useID + ' .' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-    	jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
     }
 };
 
