@@ -97,7 +97,7 @@ sc.util.Namespaces.angleBracketWrap = function(str) {
 };
 
 sc.util.Namespaces._escapeLiteral = function(str) {
-    return str.replace(/("|\\|>|\^)/g, '\\$1').replace(/(\t)/g, '\\t');
+    return str.replace(/("|\\|\^)/g, '\\$1').replace(/(\t)/g, '\\t');
 };
 
 sc.util.Namespaces._unescapeLiteral = function(str) {
