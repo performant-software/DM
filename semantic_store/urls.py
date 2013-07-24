@@ -7,15 +7,6 @@ urlpatterns = patterns('',
         name="semantic_store_resources"),
 
 
-    url(r'^repositories(?:/(?P<uri>.+))?/?$', 
-        semantic_store.views.repositories, 
-        name="semantic_store_repositories"),
-
-    url(r'^repositories/(?P<uri>.+)/annotations/?$', 
-        semantic_store.views.repositories, 
-        name="semantic_store_repositories"),
-
-
     url(r'^projects/(?P<project_uri>.+)/annotations(?:/(?P<anno_uri>.+))?/?$', 
         semantic_store.views.project_annotations, 
         name="semantic_store_project_annotations"),
