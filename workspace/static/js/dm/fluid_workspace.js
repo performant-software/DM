@@ -217,7 +217,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     goog.global.databroker = clientApp.getDatabroker();
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
-    viewerGrid.setDimensions(2,2);
+    viewerGrid.setDimensions(1,2);
     viewerGrid.render(goog.dom.getElement('grid'));
 
     clientApp.viewerGrid = goog.global.viewerGrid;
@@ -233,6 +233,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
     
     setupWorkingResources(clientApp, username, wrContainerParent);
+
     goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username);
     setupCurrentProject(clientApp, username);
     

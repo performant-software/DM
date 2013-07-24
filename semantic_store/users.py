@@ -53,8 +53,6 @@ def update_user_graph(g, username):
         graph = Graph(store=rdfstore(), identifier=uri)
         bind_namespaces(graph)
 
-        # for t in 
-
         for triple in g:
             graph.add(triple)
 

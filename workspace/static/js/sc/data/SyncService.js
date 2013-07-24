@@ -155,7 +155,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
             quadsToPost = dataModel.findQuadsToSyncForProject(resource);
             quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
-            console.log(quadsToRemove)
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
         }
