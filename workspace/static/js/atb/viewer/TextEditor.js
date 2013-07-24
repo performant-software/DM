@@ -62,7 +62,7 @@ goog.require('atb.events.ResourceModified');
  * @param opt_initialTextContent {string=}
  * @param opt_annoBodyId {string=}
  **/
-atb.viewer.TextEditor = function(clientApp, opt_initialTextContent, opt_annoBodyId) {
+atb.viewer.TextEditor = function(clientApp, opt_initialTextContent) {
 	atb.viewer.Viewer.call(this, clientApp);
     
     this.viewerType = 'text editor';
@@ -71,30 +71,15 @@ atb.viewer.TextEditor = function(clientApp, opt_initialTextContent, opt_annoBody
 	
 	this.bDeleteHighlightMode = false;
 	
-	this.isAnnoText = false;
-	
 	this.useID = 'atb_ui_editor_' + goog.string.getRandomString();
 	
-	opt_initialTextContent = atb.util.ReferenceUtil.applyDefaultValue(opt_initialTextContent, null);
-	this._initialTextContent_ =opt_initialTextContent;//lolhack!//HACK
-
-    this.inAnnoMode = false;
-    if(opt_annoBodyId) {
-        this.setAnnotationBodyId(opt_annoBodyId);
-    }
-	
     this.purpose = 'other';
-    
-    this.scrollTop = 0;
-
-    var db = this.clientApp.databroker;
-
 };
 goog.inherits(atb.viewer.TextEditor, atb.viewer.Viewer);
 
 atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
 
-atb.viewer.TextEditor.prototype.autoSaveInterval = 5 * 1000;
+atb.viewer.TextEditor.prototype.autoSaveInterval = 3 * 1000;
 
 /**
  * getSanitizedHtml()
@@ -228,10 +213,6 @@ atb.viewer.TextEditor.prototype.scrollIntoViewByHighlightUri = function (resourc
     this.scrollIntoView(tag);
 };
 
-atb.viewer.TextEditor.prototype.toggleAnnotationMode = function(inAnnoMode) {
-    this.inAnnoMode = inAnnoMode;
-};
-
 atb.viewer.TextEditor.prototype.resize = function(width, height) {
     atb.viewer.Viewer.prototype.resize(width, height);
 	
@@ -282,9 +263,9 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.field.registerPlugin(new goog.editor.plugins.LinkBubble());
     this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
 
-    this._renderToolbar();
-
     this.field.makeEditable();
+
+    this._renderToolbar();
 
     var editorHtmlElement = this.field.getEditableDomHelper().getDocument().getElementsByTagName('html')[0];
     this.databroker.namespaces.bindNamespacesToHtmlElement(editorHtmlElement);
@@ -531,17 +512,11 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
 //                           }
 //                       }, false, this);
     
-    goog.events.listen(this.field, 'keydown', this.onKeyDown, false, this);
-    
     goog.events.listen(this.editorIframe, 'mousemove', function (e) {
                        var offset = jQuery(this.editorIframeElement).offset();
                        
                        this.mousePosition.x = e.clientX + offset.left;
                        this.mousePosition.y = e.clientY + offset.top;
-                       }, false, this);
-    
-    goog.events.listen(this.editorIframe, 'scroll', function (e) {
-                       this.scrollTop = jQuery(this.editorIframe).scrollTop();
                        }, false, this);
 };
 
@@ -693,7 +668,6 @@ atb.viewer.TextEditor.prototype.createNewTextBody = function () {
     var anno = databroker.dataModel.createAnno(body, this.resource);
 	
     var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
-    annoBodyEditor.toggleIsAnnoText(true);
     this.openRelatedViewer(annoBodyEditor);
     annoBodyEditor.loadResourceByUri(body.uri);
 };
@@ -716,14 +690,6 @@ atb.viewer.TextEditor.prototype.linkAnnotation = function (opt_myResourceId, opt
     this.highlightDocumentIcon();
 	
 	this.clientApp.createAnnoLink(this.resourceId, myAnnoId);
-};
-
-atb.viewer.TextEditor.prototype.toggleIsAnnoText = function (set_isAnnoText) {
-	this.isAnnoText = set_isAnnoText;
-};
-
-atb.viewer.TextEditor.prototype.getIsAnnoText = function () {
-	return this.isAnnoText;
 };
 
 /////////////////////////Filter Code:
@@ -1292,26 +1258,15 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
     this.timeOfLastChange = goog.now();
 };
 
-atb.viewer.TextEditor.prototype.onKeyDown = function (event) {
-    console.log(event);
-};
-
-atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 2.5 * 1000;
+atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 2 * 1000;
 
 atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
     var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
         (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
-    
+
     if (this.hasUnsavedChanges() && isNotStillTyping) {
         this.saveContents(null, null, opt_synchronously);
     }
-};
-
-atb.viewer.TextEditor.prototype.viewerHasEnteredBackground = function (event) {
-    atb.viewer.Viewer.prototype.viewerHasEnteredBackground.apply(this, arguments);
-    if (this.field != null && !this.field.isUneditable()) {
-		this.field.makeUneditable();
-	}
 };
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
@@ -1323,18 +1278,20 @@ atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
     
     var bodiesAndTargets = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
     goog.structs.forEach(bodiesAndTargets, function (uri) {
-       try {
-           var tag = highlightPlugin.getHighlightElementByUri(uri);
-           if (tag) {
-               highlightPlugin.flashSpanHighlight(tag);
-           }
-       } catch (error) {}
-       if (uri == this.resourceId) {
+        try {
+            var specificResource = this.databroker.getResource(uri);
+            var selectorUri = specificResource.getOneProperty('oa:hasSelector');
+            if (selectorUri) {
+                var tag = highlightPlugin.getHighlightElementByUri(uri);
+                if (tag) {
+                    highlightPlugin.flashSpanHighlight(tag);
+                }
+            }
+        } catch (error) {
+            console.error(error)
+        }
+        if (uri == this.uri) {
            this.flashDocumentIconHighlight();
-       }
+        }
    }, this);
-};
-
-atb.viewer.TextEditor.prototype.getResource = function () {
-    return this.textResource;
 };

@@ -122,7 +122,10 @@ var openText = function(uri) {
     var viewer = new atb.viewer.TextEditor(clientApp);
     viewerGrid.addViewerContainer(viewerContainer);
     viewerContainer.setViewer(viewer);
-    viewer.loadResourceByUri(textResource.uri);
+
+    textResource.defer().done(function() {
+        viewer.loadResourceByUri(textResource.uri);
+    });
 };
 
 var openBlankTextDocument = function() {
