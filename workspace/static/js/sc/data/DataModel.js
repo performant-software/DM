@@ -531,7 +531,25 @@ sc.data.DataModel.prototype.findQuadsToSyncForUser = function(user, opt_quadStor
     var quads = quadStore.query(user.bracketedUri, null, null, null);
 
     return quads
-}
+};
+
+sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStore) {
+    text = this.databroker.getResource(text);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+    var angleBracketWrap = this.databroker.namespaces.angleBracketWrap;
+    var expand = this.databroker.namespaces.expand;
+
+    var quads = quadStore.query(text.bracketedUri, null, null, null)
+    goog.structs.forEach(this.findSpecificResourcesInResource(text), function(specificResourceUri) {
+        quads = quads.concat(quadStore.query(angleBracketWrap(specificResourceUri), null, null, null));
+        var selectorUri = quadStore.objectsMatchingQuery(angleBracketWrap(specificResourceUri), expand('oa', 'hasSelector'), null, null)[0];
+        if (selectorUri) {
+            quads = quads.concat(quadStore.query(angleBracketWrap(selectorUri), null, null, null));
+        }
+    }, this);
+
+    return quads;
+};
 
 sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
@@ -544,6 +562,15 @@ sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     }, this);
 
     return resources.getValues();
+};
+
+sc.data.DataModel.prototype.findSpecificResourcesInResource = function(resource, opt_quadStore) {
+    resource = this.databroker.getResource(resource);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+    var expand = this.databroker.namespaces.expand;
+
+    var uris = quadStore.subjectsMatchingQuery(null, expand('oa', 'hasSource'), resource.bracketedUri, null);
+    return uris;
 };
 
 sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {

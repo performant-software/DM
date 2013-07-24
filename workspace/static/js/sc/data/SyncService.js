@@ -133,9 +133,9 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     if (resource.hasType('dctypes:Text')) {
         resType = sc.data.SyncService.RESTYPE.text;
 
-        quadsToPost = this.databroker.quadStore.query(resource.bracketedUri, null, null, null);
+        quadsToPost = this.databroker.dataModel.findQuadsToSyncForText(resource);
         // The back end just overwrites with new data for texts, so we can just ignore quad deletion
-        this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri);
+        this.databroker.deletedQuadsStore.removeQuads(quadsToPost);
 
         url = this.restUrl(this.databroker.currentProject, resType,
                            sc.util.Namespaces.angleBracketStrip(uri), null);
