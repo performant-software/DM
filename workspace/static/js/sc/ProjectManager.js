@@ -100,7 +100,6 @@ sc.ProjectManager.prototype.createButtons = function(){
 sc.ProjectManager.prototype.setTitle = function(){
     // Get current project
     var projectId = this.databroker.currentProject
-    console.log(projectId)
 
     if (!(projectId)){
         console.warn("There is no currently selected project.")
