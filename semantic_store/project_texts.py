@@ -127,19 +127,18 @@ def update_project_text(g, p_uri, t_uri):
     project_g = Graph(rdfstore(), identifier=project_uri)
     text_uri = URIRef(t_uri)
 
-    # Get content and title out of request
-    q = g.query("""SELECT ?content ?title
-                WHERE{
-                    ?t cnt:chars ?content .
-                    ?t dc:title ?title .
-                    ?t rdf:type dctypes:Text .
-                }""", initNs=ns, initBindings={'t': text_uri})
+    title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label)
+    content = g.value(text_uri, NS.cnt.chars)
+    project_g.set((text_uri, NS.dc.title, title))
+    project_g.set((text_uri, NS.rdfs.label, title))
+    project_g.set((text_uri, NS.cnt.chars, Literal(sanitized_content(unicode(content)))))
 
-    with transaction.commit_on_success():
-        for content, title in q:
-            # Replace content & title data in project graph
-            project_g.set((text_uri, NS.cnt['chars'], Literal(sanitized_content(content))))
-            project_g.set((text_uri, NS.dc['title'], Literal(title)))
+    for specific_resource in g.subjects(NS.oa.hasSource, text_uri):
+        for t in g.triples((specific_resource, None, None)):
+            project_g.add(t)
+        selector = g.value(specific_resource, NS.oa.hasSelector, None)
+        for t in g.triples((selector, None, None)):
+            project_g.set(t)
 
     # Return (updated) data about graph
     return read_project_text(p_uri, t_uri)
