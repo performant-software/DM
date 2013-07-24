@@ -617,6 +617,8 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
 
         var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
         textEditorAnnotate.addListenersToAllHighlights();
+
+        this.resource = resource;
     }
     else if (resource.hasType('oa:SpecificResource')) {
         var selector = resource.getOneResourceByProperty('oa:hasSelector');
@@ -630,12 +632,10 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
     }
     else {
         throw {
-            message: "atb.viewer.TextEditor cannot load this resource type",
+            message: "atb.viewer.TextEditor cannot load this resource type " + resource,
             uri: uri
         };
     }
-
-    this.resource = resource;
 
     return this;
 };
