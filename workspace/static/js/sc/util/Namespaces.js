@@ -319,8 +319,9 @@ sc.util.Namespaces.prototype.autoExpand = function (ns) {
 };
 
 sc.util.Namespaces.prototype.expand = function(prefix, postfix) {
-    if (this.uriByPrefix.containsKey(prefix)) {
-        return ['<', this.uriByPrefix.get(prefix), postfix, '>'].join('');
+    var expandedPrefix = this.uriByPrefix.get(prefix);
+    if (expandedPrefix) {
+        return ['<', expandedPrefix, postfix, '>'].join('');
     }
     else {
         throw "Prefix " + prefix + " is not in the registered namespaces";
