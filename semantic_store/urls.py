@@ -41,33 +41,6 @@ urlpatterns = patterns('',
         name="semantic_store_projects"),
 
 
-    url(r'^manuscripts(?:/(?P<uri>.+))?/?$', 
-        semantic_store.views.manuscripts, 
-        name="semantic_store_manuscripts"),
-
-    url(r'^manuscripts/(?P<uri>.+)/annotations/?$', 
-        semantic_store.views.manuscript_annotations, 
-        name="semantic_store_manuscripts"),
-
-
-    url(r'^manuscript_collections(?:/(?P<uri>.+))/?$', 
-        semantic_store.views.manuscript_collections, 
-        name="semantic_store_manuscript_collections"),
-
-    url(r'^manuscript_collections/(?P<uri>.+)/annotations/?$', 
-        semantic_store.views.manuscript_collection_annotations, 
-        name="semantic_store_manuscript_collection_annotations"),
-
-
-    url(r'^collections(?:/(?P<uri>.+))/?$', 
-        semantic_store.views.collections, 
-        name="semantic_store_collections"),
-
-    url(r'^collections/(?P<uri>.+)/annotations/?$', 
-        semantic_store.views.collection_annotations, 
-        name="semantic_store_collection_annotations"),
-
-
     url(r'^users(?:/(?P<username>.+))/remove_triples?/?$',
         semantic_store.views.remove_user_triples,
         name="semantic_store_user_remove_triples"),
@@ -79,7 +52,6 @@ urlpatterns = patterns('',
     url(r'^users(?:/(?P<username>.+))?/?$', 
         semantic_store.views.users,
         name="semantic_store_users"),
-
     
 
     url(r'^annotations(?:/(?P<anno_uri>.+))?/?$', 
