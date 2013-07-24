@@ -74,27 +74,34 @@ def remove_triples_from_user(request, username):
     uri = uris.uri('semantic_store_users', username=username)
     graph = Graph(store=rdfstore(), identifier=uri)
 
-    with transaction.commit_on_success():            
-        for t in g:
-            if t in graph:
-                graph.remove(t)
-                removed.add(t)
+    for s,p,o in g:
+        if(remove_triple(username, s,p,o)):
+            removed.add((s,p,o))
 
     return removed
 
 def add_triple(username, s, p, o, host):
-    # check permissions
+    # todo: check validity of username? (won't break anywhere)
+    # todo: check permissions
     with transaction.commit_on_success():
         uri = uris.uri('semantic_store_users', username=username)
         graph = Graph(store=rdfstore(), identifier=uri)
         graph.add((s,p,o))
-        graph.set((o, NS.ore['isDescribedBy'],uris.url(host, "semantic_store_projects", uri=o)))
 
-def remove_triple(username, s, p, o, host):
-    # check permissions
+        # If adding a project, you need to know where to find the project
+        # Using set prevents multiple isDescribedBy triples from forming
+        if p==NS.perm.hasPermissionOver:
+            graph.set((o, NS.ore['isDescribedBy'],uris.url(host, "semantic_store_projects", uri=o)))
+
+def remove_triple(username, s, p, o):
+    # todo: check validity of username? (will return false)
+    # todo: check permissions
     with transaction.commit_on_success():
         uri = uris.uri('semantic_store_users', username=username)
         graph = Graph(store=rdfstore(), identifier=uri)
-        graph.remove((s,p,o))
-        graph.remove((o, NS.ore['isDescribedBy'],uris.url(host, "semantic_store_projects", uri=o)))
+        if ((s,p,o)) in graph:
+            graph.remove((s,p,o))
+            return True
+
+    return False
 
