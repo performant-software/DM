@@ -1,10 +1,10 @@
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, \
-    HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, HttpResponseNotFound
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
 
 from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef
@@ -13,34 +13,15 @@ from semantic_store import collection
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, bind_namespaces
 from semantic_store.utils import negotiated_graph_response
-from .rdfstore import rdfstore, default_identifier
-
-from .namespaces import bind_namespaces, ns
-from .validators import AnnotationValidator
-from .annotation_views import create_or_update_annotations, get_annotations, \
-    search_annotations
-from .projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, save_project_user_graph
+from semantic_store.rdfstore import rdfstore, default_identifier
+from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
+from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
 
-from project_texts import (
-    create_project_text_from_request,
-    read_project_text,
-    update_project_text_from_request,
-    remove_project_text
-)
-
-
-from django.contrib.auth.models import User
-from django.db import IntegrityError, transaction
-
-from django.db import connection
+from project_texts import create_project_text_from_request, read_project_text, update_project_text_from_request, remove_project_text
 
 from os import listdir
-
-def repositories(request, uri=None):
-    pass
-
 
 @login_required
 def projects(request, uri=None):
@@ -76,6 +57,7 @@ def annotations(request, dest_graph_uri=None, anno_uri=None):
     elif request.method == 'PUT':
         return create_or_update_annotations(request, dest_graph_uri, anno_uri)
     elif request.method == 'DELETE':
+        # todo: implement delete annotations
         pass
     elif request.method == 'GET':
         if anno_uri:
@@ -100,7 +82,6 @@ def resources(request, uri, ext=None):
         perms = []
 
     uri = uri.rstrip('/')
-# try:
     store_g = Graph(store=rdfstore(), identifier=URIRef(uri))
     g = Graph()
     g += store_g
@@ -134,43 +115,6 @@ def resources(request, uri, ext=None):
             return negotiated_graph_response(request, g)
         else:
             return HttpResponseNotFound()
-    # except Exception as e:
-        # print e
-        #transaction.rollback_unless_managed()
-        # raise e
-
-
-def add_working_resource(request, uri):
-    if request.method == 'POST':
-        rdfstr = request.body
-        g = rdflib.Graph()
-        g.parse(data=rdfstr)
-        qres = collection.resource_url(uri, g)
-        if len(qres) > 0:
-            (manifest_url,) = list(qres)[0]
-            collection.fetch_and_parse(manifest_url, g)
-            collection.harvest_resource_triples(g, res_uri=uri, res_url=manifest_url)
-            for (s, p, o) in g:
-                graph.add((s, p, o))
-            return HttpResponse()
-        return HttpResponseBadRequest("Expected well-formed rdf as request body.")
-    elif request.method == 'GET':
-        return HttpResponseNotAllowed(['POST', 'GET'])
-    else:
-        return HttpResponseNotAllowed(['POST', 'GET'])
-
-def display_graph(request, identifier):
-    print identifier
-    g = Graph(store=rdfstore(), identifier = identifier)
-    print g #, g.serialize()
-    #output =allprojects_g.serialize()
-    print "serialized"
-    for t in g:
-        print t
-    #output = g.serialize()
-    #print output
-
-    return HttpResponse(output, mimetype="application/xhtml+xml")
 
 @csrf_exempt
 def import_old_data(request):
