@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseNotFound
+from django.contrib.auth.models import User
 
 from rdflib.graph import Graph
 from rdflib.exceptions import ParserError
@@ -14,7 +15,6 @@ from semantic_store.project_texts import sanitized_content
 
 from datetime import datetime
 
-
 def create_project_from_request(request):
     g = Graph()
     bind_namespaces(g)
@@ -27,6 +27,7 @@ def create_project_from_request(request):
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
     create_project(g, host)
+    return HttpResponse("Successfully created the project.")
 
 def create_project(g, host):
     bind_namespaces(g)
@@ -69,19 +70,10 @@ def read_project(request, project_uri):
     bind_namespaces(project_g)
     project_g += store_g
 
-    # query = project_g.query("""SELECT ?t ?cnt
-    #                         WHERE {
-    #                             ?t cnt:chars ?cnt .
-    #                             ?t rdf:type dcmitype:Text .
-    #                         }""", initNs=ns)
-    # for text, cnt in query:
-    #     project_g.remove((text, NS.cnt['chars'], cnt))
-
     for text in project_g.subjects(NS.rdf['type'], NS.dcmitype.Text):
         for t in project_g.triples((text, NS.cnt.chars, None)):
             project_g.remove(t)
         text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
-        print text_url
         project_g.add((text, NS.ore.isDescribedBy, text_url))
     
     if len(project_g) >0:
@@ -123,8 +115,18 @@ def update_project_graph(g, identifier, host):
         return project_g
 
 def delete_project(request, uri):
-    # Not implemented
-    return HttpResponse(status=501)
+    identifier = uris.uri("semantic_store_projects", project_uri=uri)
+    graph = Graph(store=rdfstore(), identifier=identifier)
+    for t in graph:
+        graph.remove()
+
+    # todo: consider other permissions
+    for user in User.objects.all():
+        username = user.username
+        user_uri = uris.uri("semantic_store_users", username=username)
+        remove_triple(username, user_uri, NS.perm.hasPermissionOver, uri)
+
+    return HttpResponse("Successfully deleted project with uri %s."%uri)
 
 # Creates a graph identified by user of the projects belonging to the user, which
 #  can be found at the descriptive url of the user (/store/user/<username>)
@@ -135,9 +137,8 @@ def create_project_user_graph(host, user, project):
     g = Graph()
     bind_namespaces(g)
 
-
-
-    # Permissions triple allows read-only permissions if/when necessary
+    # Permissions triples allow more specific permissions, but only hasPermissionOver
+    #  is being checked at the moment.
     # <http://vocab.ox.ac.uk/perm/index.rdf> for definitions
     g.add((user_uri, NS.perm['hasPermissionOver'], project))
     g.add((user_uri, NS.perm['mayRead'], project))
