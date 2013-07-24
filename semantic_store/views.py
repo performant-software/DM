@@ -11,7 +11,7 @@ from rdflib import URIRef
 
 from semantic_store import collection
 from semantic_store.models import ProjectPermission
-from semantic_store.namespaces import NS, bind_namespaces
+from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import negotiated_graph_response
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
