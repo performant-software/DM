@@ -608,15 +608,14 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri) {
             if (contents) {
                 this.setHtml(contents);
 
+                var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
+                textEditorAnnotate.addListenersToAllHighlights();
                 this._addHighlightListenersWhenUneditable();
             }
             else {
                 console.error(error);
             }
         }.bind(this));
-
-        var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
-        textEditorAnnotate.addListenersToAllHighlights();
 
         this.resource = resource;
     }
