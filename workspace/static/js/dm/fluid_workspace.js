@@ -141,7 +141,7 @@ var setupCurrentProject = function(clientApp, username) {
     var db = goog.global.databroker;
     var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
     var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
-    db.fetchRdf(url, function() {
+    db.getDeferredResource(url).done(function(resource){
         var uris = db.getResource(uri).getProperties('perm:hasPermissionOver');
         for (var i=0; i<uris.length; i++) {
             db.allProjects.push(uris[i]);
@@ -159,7 +159,9 @@ var setupCurrentProject = function(clientApp, username) {
         }
 
         pm.addAllUserProjects(username)
-    });
+    })
+    // db.fetchRdf(url, function() {
+    // });
 }
 
 var GRID_BOTTOM_MARGIN = 20;
@@ -230,11 +232,11 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
     
+    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username);
+    setupCurrentProject(clientApp, username);
+    
     setupWorkingResources(clientApp, username, wrContainerParent);
     setupRepoBrowser(clientApp, wrContainerParent);
-    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username);
-
-    setupCurrentProject(clientApp, username);
 }
 
 
