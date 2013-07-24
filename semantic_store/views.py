@@ -65,26 +65,6 @@ def projects(request, uri=None):
                                 content="Project delete request must specify URI.")
         return delete_project(request, uri)
 
-def manuscripts(request, uri=None):
-    pass
-
-def manuscript_annotations(request, uri=None):
-    pass
-
-def manuscript_collections(request, uri=None):
-    pass
-
-def manuscript_collection_annotations(request, uri=None):
-    pass
-
-def collections(request, uri=None):
-    pass
-
-def collection_annotations(request, uri=None):
-    pass
-
-def user_annotations(request, username=None):
-    pass
 
 @csrf_exempt
 def annotations(request, dest_graph_uri=None, anno_uri=None):
