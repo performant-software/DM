@@ -394,7 +394,7 @@ sc.data.Resource.prototype.dump = function() {
     return this.databroker.dumpResource(this.bracketedUri);
 };
 
-sc.data.Resource.prototype.getDeferred = function() {
+sc.data.Resource.prototype.defer = function() {
     return this.databroker.getDeferredResource(this);
 };
 

@@ -569,47 +569,30 @@ sc.data.DataModel.prototype.textContents = function(text, handler, opt_forceRelo
     window.setTimeout(function() {
         text = this.databroker.getResource(text);
 
-        var chars = text.getOneUnescapedProperty('cnt:chars');
-        if (chars) {
-            var content = sc.util.Namespaces.stripQuotesAndDatatype(chars);
+        var content = text.getOneProperty('cnt:chars')
+        if (content) {
             handler(content);
         }
         else {
-            var localContent = this.textContentByUri.get(text.uri);
-            if (!opt_forceReload && localContent) {
-                handler(localContent);
-            }
-            else {
-                jQuery.ajax(text.uri, {
-                    type: 'GET',
-                    success: this._handleTextContentLoad.bind(this, handler, text),
-                    error: this._handleTextContentError.bind(this, handler, text)
-                });
-            }
+            text.defer().done(function() {
+                var content = text.getOneProperty('cnt:chars')
+                if (content) {
+                    handler(content);
+                }
+                else {
+                    var error = new Error();
+                    error.message = "No text content for " + text;
+                    handler(null, error);
+                }
+            }.bind(this));
         }
     }.bind(this), 1);
-};
-
-sc.data.DataModel.prototype._handleTextContentLoad = function(handler, textResource, data, textStatus, jqXhr) {
-    handler(data);
-
-    this.textContentByUri.set(textResource.uri, data);
-};
-
-sc.data.DataModel.prototype._handleTextContentError = function(handler, textResource, jqXhr, textStatus, errorThrown) {
-    handler(null, jqXhr, textStatus, errorThrown);
 };
 
 sc.data.DataModel.prototype.setTextContent = function(text, content) {
     text = this.databroker.getResource(text);
 
-    // if (text.hasPredicate('cnt:chars')) {
-        text.setProperty('cnt:chars', sc.util.Namespaces.wrapLiteral(content));
-    // }
-    // else {
-    //     this.textContentByUri.set(text.uri, content);
-    //     this.modifiedTextUris.add(text.uri);
-    // }
+    text.setProperty('cnt:chars', sc.util.Namespaces.wrapLiteral(content));
 };
 
 sc.data.DataModel.prototype.getTitle = function(resource) {
