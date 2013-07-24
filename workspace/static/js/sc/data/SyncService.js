@@ -168,6 +168,9 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         var username = resource.uri.split("/").pop()
         url = this.restUrl(null, resType, username, null) + "/";
     }
+    else if (resource.hasAnyType('oa:SpecificResource', 'oa:TextQuoteSelector', 'oa:SvgSelector')) {
+        //pass, these should be synced with either texts or annotations
+    }
     else {
         console.error("Don't know how to sync resource " + resource);
         return;
