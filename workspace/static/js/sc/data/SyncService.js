@@ -135,7 +135,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         quadsToPost = this.databroker.dataModel.findQuadsToSyncForText(resource);
         // The back end just overwrites with new data for texts, so we can just ignore quad deletion
-        this.databroker.deletedQuadsStore.removeQuads(quadsToPost);
+        this.databroker.deletedQuadsStore.removeQuads(this.databroker.dataModel.findQuadsToSyncForText(resource, this.databroker.deletedQuadsStore));
 
         url = this.restUrl(this.databroker.currentProject, resType,
                            sc.util.Namespaces.angleBracketStrip(uri), null);
