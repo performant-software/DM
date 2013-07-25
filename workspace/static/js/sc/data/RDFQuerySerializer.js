@@ -50,7 +50,12 @@ sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, han
 };
 
 sc.data.RDFQuerySerializer.prototype.escapeForRdfquery = function(str) {
-    return str.replace(/"/g, '&quot;');
+    if (sc.util.Namespaces.isLiteral(str)) {
+        return str.replace(/\\"/g, '&quot;');
+    }
+    else {
+        return str;
+    }
 };
 
 sc.data.RDFQuerySerializer.prototype.quadTojQueryTriple = function(quad) {
