@@ -14,7 +14,3 @@ class TextAdmin(admin.ModelAdmin):
     list_filter = ('valid',)
     search_fields = ('title', 'content',)
 admin.site.register(Text, TextAdmin)
-
-# class NamespaceBindingAdmin(admin.ModelAdmin):
-#     list_display = ('prefix', 'uri',)
-# admin.site.register(NamespaceBinding, NamespaceBindingAdmin)

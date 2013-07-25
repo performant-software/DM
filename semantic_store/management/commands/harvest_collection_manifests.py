@@ -1,18 +1,12 @@
 from optparse import make_option
-import datetime
-import pprint
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+from django.core.management.base import BaseCommand
 from django.core.urlresolvers import reverse
-from django.db import transaction
 
-from rdflib.graph import Graph, ConjunctiveGraph
+from rdflib.graph import Graph
 from rdflib import URIRef, Literal
-from rdflib.namespace import Namespace
 
-from semantic_store import rdfstore
-from semantic_store import collection
+from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS
 from _harvest import harvest_collection, localize_describes
 
@@ -61,7 +55,7 @@ class Command(BaseCommand):
             exit(0)
         rep_uri = URIRef(rep_uri)
         col_uri = URIRef(col_uri)
-        rep_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(rep_uri))
+        rep_g = Graph(store=rdfstore(), identifier=URIRef(rep_uri))
         rep_g.add((rep_uri, NS.rdf['type'], NS.dms['Manifest']))
         rep_g.add((rep_uri, NS.rdf['type'], NS.ore['Aggregation']))
         rep_g.add((rep_uri, NS.dc['title'], Literal(rep_title)))

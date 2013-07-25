@@ -4,12 +4,12 @@ from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseNotFound
 
-from rdflib.graph import Graph, ConjunctiveGraph
+from rdflib.graph import Graph
 from rdflib import URIRef, Literal, BNode
 
-from .validators import AnnotationValidator
-from .rdfstore import rdfstore, default_identifier
-from .namespaces import NS, ns, bind_namespaces
+from semantic_store.validators import AnnotationValidator
+from semantic_store.rdfstore import rdfstore
+from semantic_store.namespaces import NS, bind_namespaces
 from semantic_store import uris
 from semantic_store import manuscripts
 from semantic_store.utils import negotiated_graph_response, parse_into_graph
@@ -82,8 +82,6 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     annotations_g = graph()
     try:
         parse_into_graph(annotations_g, data=request.body)
-#        print "annotations.g:"
-#        print annotations_g.serialize(initNs=ns)
     except:
         return HttpResponse(status=400, content="Unable to parse serialization.")
     anno_uris = annotation_uris(annotations_g)

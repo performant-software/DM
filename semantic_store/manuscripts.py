@@ -1,14 +1,8 @@
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.http import HttpResponse, HttpResponseNotFound
+from rdflib.graph import Graph
+from rdflib import URIRef
 
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, Literal, BNode
-
-from .validators import AnnotationValidator
-from .rdfstore import rdfstore, default_identifier
-from .namespaces import NS, ns, bind_namespaces
-from semantic_store import uris
+from semantic_store.rdfstore import rdfstore
+from semantic_store.namespaces import NS
 
 
 def canvases(uri):

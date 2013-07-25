@@ -1,11 +1,9 @@
 import os
-import urllib2
-import argparse
+from urllib2 import urlopen
+from argparse import ArgumentParser
 import pickle
-import rdflib
-from rdflib.graph import ConjunctiveGraph as Graph
-from rdflib.namespace import Namespace
-from rdflib.term import URIRef, Literal
+from rdflib.graph import ConjunctiveGraph
+from rdflib.term import URIRef
 from rdflib import RDF
 from semantic_store.namespaces import ns, bind_namespaces, update_old_namespaces
 from semantic_store.utils import parse_into_graph
@@ -149,7 +147,7 @@ def fetch_and_parse(url, g, manifest_file=None, fmt="xml", cache=None):
             parse_into_graph(g, source=manifest_file, format=fmt)
         else:
             print "fetching:", url
-            response = urllib2.urlopen(url)
+            response = urlopen(url)
             rdf_str = response.read()
             rdf_str = rdf_str.replace("rdf:nodeID=\"urn:uuid:", "rdf:nodeID=\"_") 
             parse_into_graph(g, data=rdf_str, format=fmt)
@@ -266,7 +264,7 @@ def pagination(g, collection_uri=None, pred=None, obj=None,
 
 def load_cache(cache_filename):
     cache = {'urls': set(),
-             'g': Graph()}
+             'g': ConjunctiveGraph()}
     if not cache_filename:
         return cache
     if not os.path.exists(cache_filename):
@@ -274,7 +272,7 @@ def load_cache(cache_filename):
     f = open(cache_filename, "rb")
     cache = pickle.load(f)
     g_serialized = cache['g']
-    g = Graph()
+    g = ConjunctiveGraph()
     g.parse(data=g_serialized)
     cache['g'] = g
     f.close()
@@ -299,7 +297,7 @@ def __col_manifest_url(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description="Utilities for working with resources in a collection.")
     parser.add_argument("--list", 
                         dest="uri",
