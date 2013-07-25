@@ -122,6 +122,8 @@ def read_project_text(project_uri, text_uri):
 # Uses different name for arguments so that (unchanged) arguments can be passed to the 
 #  read_project_text method to return the updated data
 def update_project_text(g, p_uri, t_uri):
+    print "Updating text %s in project %s"%(t_uri, p_uri)
+    print g.serialize(format="turtle")
     # Correctly format project uri and get project graph
     project_uri = uris.uri('semantic_store_projects', uri=p_uri)
     project_g = Graph(rdfstore(), identifier=project_uri)
@@ -129,16 +131,18 @@ def update_project_text(g, p_uri, t_uri):
 
     title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label)
     content = g.value(text_uri, NS.cnt.chars)
-    project_g.set((text_uri, NS.dc.title, title))
-    project_g.set((text_uri, NS.rdfs.label, title))
-    project_g.set((text_uri, NS.cnt.chars, Literal(sanitized_content(unicode(content)))))
 
-    for specific_resource in g.subjects(NS.oa.hasSource, text_uri):
-        for t in g.triples((specific_resource, None, None)):
-            project_g.add(t)
-        selector = g.value(specific_resource, NS.oa.hasSelector, None)
-        for t in g.triples((selector, None, None)):
-            project_g.set(t)
+    with transaction.commit_on_success():
+        project_g.set((text_uri, NS.dc.title, title))
+        project_g.set((text_uri, NS.rdfs.label, title))
+        project_g.set((text_uri, NS.cnt.chars, Literal(sanitized_content(unicode(content)))))
+
+        for specific_resource in g.subjects(NS.oa.hasSource, text_uri):
+            for t in g.triples((specific_resource, None, None)):
+                project_g.add(t)
+            selector = g.value(specific_resource, NS.oa.hasSelector, None)
+            for t in g.triples((selector, None, None)):
+                project_g.set(t)
 
     # Return (updated) data about graph
     return read_project_text(p_uri, t_uri)

@@ -62,10 +62,6 @@ def create_project(g, host):
         print "Successfully created project with uri " + uri
 
 
-# Restructured read_project
-# Previously, when hitting multiple project urls in quick succession, a 500 
-#  error occurred occassionally since the graph with the information about
-#  all projects wasn't closed before the next url was hit
 def read_project(request, project_uri):
     uri = uris.uri('semantic_store_projects', uri=project_uri)
     store_g = Graph(store=rdfstore(), identifier=uri)
@@ -109,10 +105,13 @@ def update_project_graph(g, identifier, host):
 
         g.remove((subj,predicate,obj))
 
+
     with transaction.commit_on_success():
         uri = uris.uri('semantic_store_projects', uri=identifier)
         project_g = Graph(store=rdfstore(), identifier=uri)
         bind_namespaces(project_g)
+
+        print "Updating project using graph identifier %s"%(uri)
 
         for triple in g:
             project_g.add(triple)
