@@ -101,8 +101,6 @@
 
 {% block init_scripts %}
 <script type="text/javascript" >
-  var usernames = {{ js_users|safe }};
-
   // Workspace setup code
   var staticUrl = "{{ STATIC_URL }}";
   var styleRoot = "{{ STATIC_URL }}css/";
@@ -111,10 +109,8 @@
   var wsSameOriginURI = "/";
 
   initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", 
-                styleRoot, staticUrl, usernames);
+                styleRoot, staticUrl);
   
-  // Add project titles to project dropdown
-  // setupProjects();
 
   $("#new_text_button").click(function(e) {
     openBlankTextDocument();

@@ -1,11 +1,8 @@
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls.defaults import patterns, url
 import accounts.views
 
 urlpatterns = patterns(
     '',
-    url(r'^projects(?:/(?P<identifier>.+))?/?$', 
-        accounts.views.manage_project, 
-        name="accounts_manage_project"),
     url(r'^login/$', 
         accounts.views.sign_in,
         name="accounts_sign_in"),

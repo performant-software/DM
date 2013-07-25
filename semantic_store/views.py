@@ -45,6 +45,8 @@ def projects(request, uri=None):
             return HttpResponse(status=400, 
                                 content="Project delete request must specify URI.")
         return delete_project(request, uri)
+    else:
+        return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
 
 @csrf_exempt
@@ -182,25 +184,24 @@ def add_all_users(graph):
 
 def remove_project_triples(request, uri):
     g = delete_triples_from_project(request, uri)
-
     return negotiated_graph_response(request, g)
+
 
 def project_texts(request, project_uri, text_uri):
     if request.method == 'POST':
         g = create_project_text_from_request(request, project_uri)
         return negotiated_graph_response(request, g)
-
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
         return negotiated_graph_response(request, g)
-
     elif request.method == 'PUT':
         g = update_project_text_from_request(request, project_uri, text_uri)
         return negotiated_graph_response(request, g)
-
     elif request.method == 'DELETE':
         g = remove_project_text(project_uri, text_uri)
         return negotiated_graph_response(request, g)
+    else:
+        return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
 
 # @login_required
@@ -210,10 +211,11 @@ def users(request, username=None):
     elif request.method == 'PUT':
         if not username:
             return HttpResponse(status=400, 
-                                content="User update request must specify URI.")
+                                content="User update request must specify username.")
         return update_user(request, username)
+    else:
+        return HttpResponseNotAllowed(['PUT', 'GET'])
 
 def remove_user_triples(request, username):
     g = remove_triples_from_user(request, username)
-
     return negotiated_graph_response(request, g)

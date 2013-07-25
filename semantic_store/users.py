@@ -46,7 +46,7 @@ def update_user(request, username):
     return negotiated_graph_response(request, graph, status=201)
 
 def update_user_graph(g, username):
-    # Check user logged has permissions to do this
+    # Check user has permissions to do this
     with transaction.commit_on_success():
         uri = uris.uri('semantic_store_users', username=username)
         print "Updating user using graph identifier %s" % uri

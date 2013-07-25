@@ -1,13 +1,12 @@
 from django.core.urlresolvers import reverse
 from django.db import transaction
 
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, RDF
-from rdflib.namespace import Namespace
+from rdflib.graph import Graph
+from rdflib import URIRef
 
 from semantic_store.rdfstore import rdfstore
 from semantic_store import collection
-from semantic_store.namespaces import NS, ns
+from semantic_store.namespaces import ns
 
 
 col_res_attributes = (ns['dc']['title'], 

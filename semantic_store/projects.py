@@ -15,6 +15,8 @@ from semantic_store.project_texts import sanitized_content
 
 from datetime import datetime
 
+PROJECT_TYPES = [NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project]
+
 def create_project_from_request(request):
     g = Graph()
     bind_namespaces(g)
@@ -22,20 +24,19 @@ def create_project_from_request(request):
     host = request.get_host()
 
     try:
-        parse_into_graph(g, data=request.body, format="turtle")
-    except:
+        parse_into_graph(g, data=request.body)
+    except Exception as e:
         return HttpResponse(status=400, content="Unable to parse serialization.")
 
     create_project(g, host)
     return HttpResponse("Successfully created the project.")
 
 def create_project(g, host):
-    bind_namespaces(g)
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
                         ?user rdf:type foaf:Agent .
-                    }""", initNs = ns)
+                    }""", initNs=ns)
 
     for uri, user in query:
         sanitize_texts(g)
@@ -50,11 +51,15 @@ def create_project(g, host):
             url = uris.url(host, 'semantic_store_projects', uri=uri)
             project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
-            # Deletes permissions triples, which should not be stored in project graph
-            project_g.remove((None,NS.perm['hasPermissionOver'],uri))
+            for t in g.triples((user, None, None)):
+                project_g.remove(t)
+
+            check_project_types(project_g, project_uri)
 
         username = user.split("/")[-1]
         create_project_user_graph(host, username, uri)
+
+        print "Successfully created project with uri " + uri
 
 
 # Restructured read_project
@@ -114,7 +119,7 @@ def update_project_graph(g, identifier, host):
 
         return project_g
 
-def delete_project(request, uri):
+def delete_project(uri):
     identifier = uris.uri("semantic_store_projects", project_uri=uri)
     graph = Graph(store=rdfstore(), identifier=identifier)
     for t in graph:
@@ -207,6 +212,8 @@ def delete_triples_from_project(request, uri):
 def create_project_graph(host, user, title, project):
     if not project:
         project = uris.uuid()
+    elif not (type(project) == URIRef):
+        project = URIRef(project)
     g = Graph()
     bind_namespaces(g)
     if not title:
@@ -220,9 +227,30 @@ def create_project_graph(host, user, title, project):
 
     user_uri = uris.uri('semantic_store_users', username=user)
 
+    g.add((user_uri, NS.perm['hasPermissionOver'], project))
+    g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
+
+    return g
+
 def sanitize_texts(graph):
     for text in graph.subjects(NS.rdf.type, NS.dcmitype.Text):
         for content in graph.objects(text, NS.cnt.chars):
             graph.remove((text, NS.cnt.chars, content))
 
             graph.add((text, NS.cnt.chars, Literal(sanitized_content(content))))
+
+def check_project_types(graph, project_uri):
+    if not type(project_uri) == URIRef:
+        project_uri = URIRef(project_uri)
+
+    types_to_add = PROJECT_TYPES
+
+    for s,p,o in graph.triples((project_uri, NS.rdf.type, None)):
+        if o not in PROJECT_TYPES:
+            graph.remove((s,p,o))
+        else:
+            types_to_add.remove(o)
+
+    for typ in types_to_add:
+        graph.add((project_uri, NS.rdf.type, typ))
+
