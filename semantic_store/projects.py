@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from rdflib.graph import Graph
 from rdflib.exceptions import ParserError
-from rdflib import Literal
+from rdflib import URIRef, Literal
 
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
