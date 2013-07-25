@@ -49,11 +49,15 @@ sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, han
     }.bind(this), 1);
 };
 
+sc.data.RDFQuerySerializer.prototype.escapeForRdfquery = function(str) {
+    return str.replace(/"/g, '&quot;');
+};
+
 sc.data.RDFQuerySerializer.prototype.quadTojQueryTriple = function(quad) {
     return new jQuery.rdf.triple(
-        quad.subject,
-        quad.predicate,
-        quad.object
+        this.escapeForRdfquery(quad.subject),
+        this.escapeForRdfquery(quad.predicate),
+        this.escapeForRdfquery(quad.object)
     );
 };
 
