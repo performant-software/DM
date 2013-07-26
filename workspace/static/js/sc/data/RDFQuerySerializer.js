@@ -44,16 +44,16 @@ sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, han
                     });
 
                     setTimeout(function() {
-                        handler(dump, null);
+                        handler(dump, null, opt_format || this.defaultFormat);
                     }.bind(this), 1);
                 }
                 catch (e) {
-                    handler(null, e);
+                    handler(null, e, opt_format || this.defaultFormat);
                 }
             }.bind(this), 1);
         }
         catch (e) {
-            handler(null, e);
+            handler(null, e, opt_format || this.defaultFormat);
         }
     }.bind(this), 1);
 };

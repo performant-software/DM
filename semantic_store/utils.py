@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from rdflib import Graph
 
-RDFQUERY_SERIALIZER_FORMATS = set((
+RDFLIB_SERIALIZER_FORMATS = set((
     'n3',
     'nquads',
     'nt',
@@ -28,13 +28,27 @@ def negotiated_graph_response(request, graph, **kwargs):
     for mimetype in mimetypes:
         format = mimetype[mimetype.rfind('/') + 1:].strip()
 
-        if format in RDFQUERY_SERIALIZER_FORMATS:
+        if format in RDFLIB_SERIALIZER_FORMATS:
             return HttpResponse(graph.serialize(format=format), mimetype=mimetype)
 
-    return HttpResponse(graph.serialize(format='xml'), mimetype='text/xml', **kwargs)
+    return HttpResponse(graph.serialize(format='turtle'), mimetype='text/turtle', **kwargs)
 
 def parse_into_graph(graph, **kwargs):
     temp_graph = Graph()
     temp_graph.parse(**kwargs)
     for triple in temp_graph:
         graph.add(triple)
+
+def parse_request_into_graph(request, graph):
+    mimetype = request.META['CONTENT_TYPE']
+
+    format = mimetype[mimetype.rfind('/') + 1:].strip()
+
+    index_of_semicolon = format.rfind(';')
+    if index_of_semicolon != -1:
+        format = format[:index_of_semicolon]
+
+    if format.startswith('rdf+'):
+        format = format[4:]
+
+    parse_into_graph(graph, format=format, data=request.body)
