@@ -203,8 +203,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, successHandler, errorHandler) {
     successHandler = successHandler || jQuery.noop;
     errorHandler = errorHandler || jQuery.noop;
-    format = format || 'application/rdf+xml';
-    this.databroker.serializeQuads(quads, format, function(data, error) {
+    format = format || 'text/turtle';
+    this.databroker.serializeQuads(quads, format, function(data, error, format) {
         if (data != null) {
             jQuery.ajax({
                 type: method,
