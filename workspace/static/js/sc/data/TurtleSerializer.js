@@ -17,6 +17,8 @@ sc.data.TurtleSerializer.prototype.serializableTypes = new goog.structs.Set([
 ]);
 
 sc.data.TurtleSerializer.prototype.serialize = function(quads, opt_format, handler) {
+    var format = opt_format || 'text/turtle';
+
     setTimeout(function() {
         var lines = [];
 
@@ -31,7 +33,9 @@ sc.data.TurtleSerializer.prototype.serialize = function(quads, opt_format, handl
             var data = lines.join('\n\n');
         }
 
-        handler(data, null);
+        setTimeout(function() {
+            handler(data, null, format);
+        }.bind(this), 1);
     }.bind(this), 1);
 };
 

@@ -8,6 +8,7 @@ from rdflib import Literal, URIRef
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
+from semantic_store.utils import parse_request_into_graph
 
 from datetime import datetime
 
@@ -22,7 +23,9 @@ def sanitized_content(content):
     for script in soup.find_all('script'):
         script.extract()
 
-    return unicode(soup)
+    content = ''.join(unicode(s) for s in soup.find('body').contents)
+
+    return content
 
 # Create project text using data in a properly-formatted graph
 # Can handle multiple texts, but only one project 
@@ -31,28 +34,11 @@ def create_project_text(g, project_uri):
     project_uri = uris.uri('semantic_store_projects', uri=project_uri)
     project_g = Graph(rdfstore(), identifier=project_uri)
 
-    # Get content and title out of request
-    q = g.query("""SELECT ?title ?content 
-                WHERE {
-                    ?t dc:title ?title .
-                    ?t cnt:chars ?content . 
-                    ?t rdf:type cnt:ContentAsText .
-                }""", initNs=ns)
-
-    # Create an empty graph and bind namespaces
-    return_graph = Graph()
-    bind_namespaces(return_graph)
+    text_uri = URIRef(uris.uuid())
 
     with transaction.commit_on_success():
-        # Using create_text_graph, add info to project graph and empty graph
-        for title, content in q:
-            content = sanitized_content(content)
-
-            project_g += create_text_graph(title, content)
-            return_graph += create_text_graph(title, content)
-
-        # Return graph of all added texts
-        return return_graph
+        project_g.add((text_uri, NS.dcterms.created, Literal(datetime.utcnow())))
+        return update_project_text(g, project_uri, text_uri)
 
 # Create a project from a (POST) request to a specified project
 # This function parses the data and then sends it to create_project_text which accepts a
@@ -64,38 +50,12 @@ def create_project_text_from_request(request, project_uri):
 
     # Parse body of request, catching ParserError which breaks request
     try:
-        g.parse(data=request.body)
-    except ParserError:
-        return HttpResponse(status=400, content="Unable to parse serialization.")
+        parse_request_into_graph(request, g)
+    except ParserError as e:
+        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
     else:
         # On successful parse, send to basic method
         return create_project_text(g, project_uri)
-
-# Abstraction of creating the triples about a text
-# Needs a title and content, but functions independently from a project since projects
-#  and texts are not directly linked (they are linked through annotations)
-def create_text_graph(title, content):
-    # Create text uri
-    text_uri=uris.uuid()
-
-    # Create an empty graph and bind namespaces
-    text_g = Graph()
-    bind_namespaces(text_g)
-
-    # Add text type(s)
-    text_g.add((text_uri, NS.rdf['type'], NS.dctypes['Text']))
-    text_g.add((text_uri, NS.rdf['type'], NS.cnt['ContentAsText']))
-
-    # Add specific text data
-    text_g.add((text_uri, NS.cnt['chars'], Literal(content)))
-    text_g.add((text_uri, NS.dc['title'], Literal(title)))
-    text_g.add((text_uri, NS.dcterms['created'], Literal(datetime.utcnow())))
-
-    # No need to link project and text directly
-    # Linking is handled via annotations
-
-    # Return graph with properly formatted data
-    return text_g
 
 # Returns serialized data about a given text in a given project
 # Although intended to be used with a GET request, works independent of a request
@@ -114,6 +74,14 @@ def read_project_text(project_uri, text_uri):
     # Add all triples with text as subject to graph
     for t in project_g.triples((text_uri,None, None)):
         text_g.add(t)
+
+    # Add specific resources
+    for specific_resource in project_g.subjects(NS.oa.hasSource, text_uri):
+        for t in project_g.triples((specific_resource, None, None)):
+            text_g.add(t)
+        selector = project_g.value(specific_resource, NS.oa.hasSelector, None)
+        for t in project_g.triples((selector, None, None)):
+            text_g.set(t)
 
     # Return graph about text
     return text_g
@@ -135,7 +103,7 @@ def update_project_text(g, p_uri, t_uri):
     with transaction.commit_on_success():
         project_g.set((text_uri, NS.dc.title, title))
         project_g.set((text_uri, NS.rdfs.label, title))
-        project_g.set((text_uri, NS.cnt.chars, Literal(sanitized_content(unicode(content)))))
+        project_g.set((text_uri, NS.cnt.chars, Literal(sanitized_content(content))))
 
         for specific_resource in g.subjects(NS.oa.hasSource, text_uri):
             for t in g.triples((specific_resource, None, None)):
@@ -157,7 +125,7 @@ def update_project_text_from_request(request, project_uri, text_uri):
 
     # Parse body of request, catching ParserError which breaks request
     try:
-        g.parse(data=request.body)
+        parse_request_into_graph(request, g)
     except ParserError:
         return HttpResponse(status=400, content="Unable to parse serialization.")
     else:
@@ -180,6 +148,15 @@ def remove_project_text(project_uri, text_uri):
     text_uri = URIRef(text_uri)
 
     with transaction.commit_on_success():
+        for specific_resource in project_g.subjects(NS.oa.hasSource, text_uri):
+            selector = g.value(specific_resource, NS.oa.hasSelector, None)
+            for t in project_g.triples((selector, None, None)):
+                deleted_g.add(t)
+                project_g.remove(t)
+            for t in project_g.triples((specific_resource, None, None)):
+                deleted_g.add(t)
+                project_g.remove(t)
+
         for t in project_g.triples((text_uri, None, None)):
             # Add triple about text to empty graph
             deleted_g.add(t)

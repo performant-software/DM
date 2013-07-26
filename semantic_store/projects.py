@@ -9,7 +9,7 @@ from rdflib import URIRef, Literal
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
-from semantic_store.utils import negotiated_graph_response, parse_into_graph
+from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
 from semantic_store.users import add_triple, remove_triple
 from semantic_store.project_texts import sanitized_content
 
@@ -24,9 +24,9 @@ def create_project_from_request(request):
     host = request.get_host()
 
     try:
-        parse_into_graph(g, data=request.body)
-    except Exception as e:
-        return HttpResponse(status=400, content="Unable to parse serialization.")
+        parse_request_into_graph(request, g)
+    except ParserError as e:
+        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     create_project(g, host)
     return HttpResponse("Successfully created the project.")
@@ -88,7 +88,7 @@ def update_project(request, uri):
     bind_namespaces(input_graph)
 
     try:
-        parse_into_graph(input_graph, data=request.body)
+        parse_request_into_graph(request, input_graph)
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
@@ -181,9 +181,9 @@ def delete_triples_from_project(request, uri):
     bind_namespaces(removed)
 
     try:
-        parse_into_graph(g, data=request.body)
-    except:
-        return HttpResponse(status=400, content="Unable to parse serialization.")
+        parse_request_into_graph(request, g)
+    except ParserError as e:
+        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     project_uri = uris.uri('semantic_store_projects', uri=uri)
     project_g = Graph(store=rdfstore(), identifier=project_uri)

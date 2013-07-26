@@ -536,11 +536,11 @@ atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function (
     }
 };
 
-atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(element, uri) {
-	var namespaces = this.databroker.namespaces;
+atb.viewer.TextEditorAnnotate.OA_EXACT_URI = 'http://www.w3.org/ns/oa#exact';
 
-    jQuery(element).attr('about', uri);
-    jQuery(element).attr('property', namespaces.expand('oa', 'exact'));
+atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(element, uri) {
+	jQuery(element).attr('about', uri);
+    jQuery(element).attr('property', atb.viewer.TextEditorAnnotate.OA_EXACT_URI);
 };
 
 
