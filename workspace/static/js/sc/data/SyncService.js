@@ -154,7 +154,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         if (goog.array.contains(this.databroker.allProjects, resource.uri)) {
             var resType = sc.data.SyncService.RESTYPE.project;
 
-            quadsToPost = dataModel.findQuadsToSyncForProject(resource);
+            quadsToPost = dataModel.findQuadsToSyncForProject(resource, this.databroker.newQuadStore);
             quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
@@ -162,7 +162,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     }
     else if (resource.hasType('foaf:Agent')){
         resType = sc.data.SyncService.RESTYPE.user;
-        quadsToPost = dataModel.findQuadsToSyncForUser(resource)
+        quadsToPost = dataModel.findQuadsToSyncForUser(resource, this.databroker.newQuadStore)
         quadsToRemove = dataModel.findQuadsToSyncForUser(resource, this.databroker.deletedQuadsStore)
 
         var username = resource.uri.split("/").pop()
@@ -175,7 +175,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         console.error("Don't know how to sync resource " + resource);
         return;
     }
-
     if (quadsToRemove.length > 0)  {
         this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
             // Success
@@ -184,6 +183,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             // Error
         }.bind(this));
     }
+    
 
     if (quadsToPost.length > 0) {
         this.sendQuads(quadsToPost, url, method, null, function() {
@@ -204,6 +204,7 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
     successHandler = successHandler || jQuery.noop;
     errorHandler = errorHandler || jQuery.noop;
     format = format || 'application/rdf+xml';
+
     this.databroker.serializeQuads(quads, format, function(data, error) {
         if (data != null) {
             jQuery.ajax({
