@@ -28,7 +28,7 @@ sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, han
         opt_format = 'application/json'
     }
 
-    window.setTimeout(function() {
+    setTimeout(function() {
         var rdf = jQuery.rdf();
         this.bindNamespaces(rdf);
 
@@ -36,12 +36,21 @@ sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, han
             for (var i=0, len=quads.length; i<len; i++) {
                 rdf.add(this.quadTojQueryTriple(quads[i]));
             }
-            
-            var dump = rdf.databank.dump({
-                format: opt_format || this.defaultFormat
-            });
 
-            handler(dump, null);
+            setTimeout(function() {
+                try {
+                    var dump = rdf.databank.dump({
+                        format: opt_format || this.defaultFormat
+                    });
+
+                    setTimeout(function() {
+                        handler(dump, null);
+                    }.bind(this), 1);
+                }
+                catch (e) {
+                    handler(null, e);
+                }
+            }.bind(this), 1);
         }
         catch (e) {
             handler(null, e);
@@ -51,7 +60,7 @@ sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, han
 
 sc.data.RDFQuerySerializer.prototype.escapeForRdfquery = function(str) {
     if (sc.util.Namespaces.isLiteral(str)) {
-        return str.replace(/\\"/g, '&quot;');
+        return str.replace(/[^\\]\\"/g, '&quot;');
     }
     else {
         return str;
