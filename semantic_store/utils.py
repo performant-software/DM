@@ -31,7 +31,7 @@ def negotiated_graph_response(request, graph, **kwargs):
         if format in RDFLIB_SERIALIZER_FORMATS:
             return HttpResponse(graph.serialize(format=format), mimetype=mimetype)
 
-    return HttpResponse(graph.serialize(format='xml'), mimetype='text/xml', **kwargs)
+    return HttpResponse(graph.serialize(format='turtle'), mimetype='text/turtle', **kwargs)
 
 def parse_into_graph(graph, **kwargs):
     temp_graph = Graph()
