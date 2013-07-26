@@ -8,11 +8,12 @@ from django.contrib.auth.models import User
 
 from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef
+from rdflib.util import guess_format
 
 from semantic_store import collection
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.utils import negotiated_graph_response
+from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
 from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
@@ -126,7 +127,7 @@ def import_old_data(request):
 
     # Either gather post data (must be one project/user graph at a time)
     if request.method == 'POST':
-        everything_graph.parse(data = request.body)
+        parse_request_into_graph(request, everything_graph)
 
         add_all_users(everything_graph)
 
@@ -140,7 +141,7 @@ def import_old_data(request):
         i = 0
         for file_name in listdir("output/"):
             try:
-                everything_graph.parse("output/" + file_name, format="turtle")
+                everything_graph.parse("output/" + file_name, format=guess_format(file_name) or 'turtle')
             except Exception as e:
                 print "Failed to decode file '%s' with error message '%s'"%(file_name, e.args[-1])
             else:

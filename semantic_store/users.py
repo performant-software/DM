@@ -9,7 +9,7 @@ from rdflib.exceptions import ParserError
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import bind_namespaces,NS
 from semantic_store import uris
-from semantic_store.utils import negotiated_graph_response, parse_into_graph
+from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
 
 def read_user(request, username=None):
     if username:
@@ -37,7 +37,7 @@ def update_user(request, username):
     bind_namespaces(input_graph)
 
     try:
-        parse_into_graph(input_graph, data=request.body)
+        parse_request_into_graph(request, input_graph)
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
@@ -65,9 +65,9 @@ def remove_triples_from_user(request, username):
     bind_namespaces(removed)
 
     try:
-        parse_into_graph(g, data=request.body)
-    except ParserError:
-        return HttpResponse(status=400, content="Unable to parse serialization.")
+        parse_request_into_graph(request, g)
+    except ParserError as e:
+        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     uri = uris.uri('semantic_store_users', username=username)
     graph = Graph(store=rdfstore(), identifier=uri)

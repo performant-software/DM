@@ -6,13 +6,14 @@ from django.http import HttpResponse, HttpResponseNotFound
 
 from rdflib.graph import Graph
 from rdflib import URIRef, Literal, BNode
+from rdflib.exceptions import ParserError
 
 from semantic_store.validators import AnnotationValidator
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, bind_namespaces
 from semantic_store import uris
 from semantic_store import manuscripts
-from semantic_store.utils import negotiated_graph_response, parse_into_graph
+from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
 
 def graph():
     g = Graph()
@@ -81,9 +82,9 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     dest_g = destination_graph(dest_graph_uri)
     annotations_g = graph()
     try:
-        parse_into_graph(annotations_g, data=request.body)
-    except:
-        return HttpResponse(status=400, content="Unable to parse serialization.")
+        parse_request_into_graph(request, annotations_g)
+    except ParserError as e:
+        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
     anno_uris = annotation_uris(annotations_g)
     if not anno_uris:
         return HttpResponse(status=400, 
