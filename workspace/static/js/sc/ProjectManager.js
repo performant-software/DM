@@ -55,7 +55,7 @@ sc.ProjectManager.prototype.decorate = function() {
     this.createEditProjectModal()
 
     // Set default project
-    this.setTitle()
+    this.setTitle(true)
 }
 
 /* Creates the button group for the toolbar
@@ -97,7 +97,7 @@ sc.ProjectManager.prototype.createButtons = function(){
 /* Set the title in the current project button
  * todo: Once last used project is defined, that info should be read/manipulated here
  */
-sc.ProjectManager.prototype.setTitle = function(){
+sc.ProjectManager.prototype.setTitle = function(useDeferredResource){
     // Get current project
     var projectId = this.databroker.currentProject
 
@@ -108,23 +108,36 @@ sc.ProjectManager.prototype.setTitle = function(){
         this.titleButton.appendChild(this.titleSpan)
     }
     else{
-        this.titleButton.removeChild(this.titleSpan)
-        this.titleButton.appendChild(this.tempTitleSpan)
-        
-        this.databroker.getDeferredResource(projectId).done(function(resource){
+        if (useDeferredResource){
+            this.titleButton.removeChild(this.titleSpan)
+            this.titleButton.appendChild(this.tempTitleSpan)
+            
+            this.databroker.getDeferredResource(projectId).done(function(resource){
+                var title = resource.getOneProperty('dc:title')
+                this.titleSpan = goog.dom.createDom("span", {style:'color:#999'}, title)
+                this.titleButton.removeChild(this.tempTitleSpan)
+    
+                this.titleButton.appendChild(this.projectSpan)
+                this.titleButton.appendChild(this.titleSpan)
+    
+            }.bind(this))
+
+            /* Add the data about the current project to the edit modal
+             * This properly sources the data every time a new project is selected
+            */
+            this.prepareForEdit()
+        }
+        // Only to be used with the edit modal
+        else{
+            this.titleButton.removeChild(this.titleSpan)
+            resource = this.databroker.getResource(projectId)
+
             var title = resource.getOneProperty('dc:title')
             this.titleSpan = goog.dom.createDom("span", {style:'color:#999'}, title)
-            this.titleButton.removeChild(this.tempTitleSpan)
 
             this.titleButton.appendChild(this.projectSpan)
             this.titleButton.appendChild(this.titleSpan)
-
-        }.bind(this))
-
-        /* Add the data about the current project to the edit modal
-         * This properly sources the data every time a new project is selected
-        */
-        this.prepareForEdit()
+        }
     }
 }
 
@@ -132,8 +145,21 @@ sc.ProjectManager.prototype.setTitle = function(){
  * When the title is clicked on, switches to that project
  * Used when the full list of projects is populated on initial load
 */
-sc.ProjectManager.prototype.addOneProject = function(uri){
-    this.databroker.getDeferredResource(uri).done(function (resource){
+sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource){
+    if (useDeferredResource){
+        this.databroker.getDeferredResource(uri).done(function (resource){
+            title = resource.getOneProperty('dc:title')
+            var projectLink = goog.dom.createDom("a",{id:uri},title)
+            // onClick refuses to be set when passed into above function
+            projectLink.setAttribute('onclick','projectManager.selectProject(this)')
+    
+            var li = goog.dom.createDom('li')
+            li.appendChild(projectLink)
+            $(this.dropdownMenu).append(li)
+        }.bind(this))
+    }
+    else{
+        resource = this.databroker.getResource(uri)
         title = resource.getOneProperty('dc:title')
         var projectLink = goog.dom.createDom("a",{id:uri},title)
         // onClick refuses to be set when passed into above function
@@ -142,7 +168,7 @@ sc.ProjectManager.prototype.addOneProject = function(uri){
         var li = goog.dom.createDom('li')
         li.appendChild(projectLink)
         $(this.dropdownMenu).append(li)
-    }.bind(this))
+    }
 }
 
 /* The function utilized when a new project is created
@@ -170,12 +196,15 @@ sc.ProjectManager.prototype.addAndSwitchToProject = function(uri){
  * Called on initial page load (in fluid_workspace.js), but can be called at any time to
  *  completely update the list of projects in the dropdown
 */
-sc.ProjectManager.prototype.addAllUserProjects = function(username){
+sc.ProjectManager.prototype.addAllUserProjects = function(user, useDeferredResource){
+    username = user || this.username
     var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     var projects = this.databroker.getResource(userUri).getProperties('perm:hasPermissionOver')
 
+    $(this.dropdownMenu).empty()
+    
     for (var i = 0; i < projects.length; i++) {
-        this.addOneProject(projects[i])
+        this.addOneProject(projects[i], useDeferredResource)
     };
 }
 
@@ -215,7 +244,7 @@ sc.ProjectManager.prototype.selectThisProject = function(uri){
     // Load new project
     this.viewerGrid.closeAllContainers()
     this.databroker.setCurrentProject(uri)
-    this.setTitle()
+    this.setTitle(true)
     this.workingResources.loadManifest(uri)
 
     // Set last opened project
@@ -223,6 +252,8 @@ sc.ProjectManager.prototype.selectThisProject = function(uri){
     var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, this.username, null);
     var pred = this.databroker.namespaces.expand("dm", "lastOpenProject")
     this.databroker.getResource(userUri).setProperty(pred, wrap(uri))
+
+    this.prepareForEdit()
 }
 
 /* Creates the modal which handles new project creation
@@ -632,42 +663,48 @@ sc.ProjectManager.prototype.prepareForEdit = function(){
     // Ensure there is a current project; currently no project selected on load
     var project = this.databroker.currentProject
     if (project){
-        projectResource = this.databroker.getResource(project)
+        this.databroker.getDeferredResource(project).done(function(projectResource){
+            // Display title
+            var title = $("#" + this.editTitleId)
+            title.val(projectResource.getOneProperty('dc:title'))
+            
+            // Display description
+            var description = $("#" + this.editDescriptionId)
+            description.val(projectResource.getOneProperty('dcterms:description'))
+            var wrap = sc.util.Namespaces.angleBracketWrap
+            var strip = sc.util.Namespaces.angleBracketStrip
 
-        // Display title
-        var title = $("#" + this.editTitleId)
-        title.val(projectResource.getOneProperty('dc:title'))
-        
-        // Display description
-        var description = $("#" + this.editDescriptionId)
-        description.val(projectResource.getOneProperty('dcterms:description'))
-        var wrap = sc.util.Namespaces.angleBracketWrap
-        var strip = sc.util.Namespaces.angleBracketStrip
+            
 
-        // Remove all users that were sitting in the modal/global data
-        var element = $(this.editAddedUsers);
-        element.empty()
+            this.editAddedUsersList = []
 
-        this.editAddedUsersList = []
+            // Add the correct users to the modal/global data
+            var url = this.databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user);
+            this.databroker.getDeferredResource(url).done(function(){
+                users = this.databroker.quadStore.subjectsMatchingQuery(null,this.databroker.namespaces.expand("perm","hasPermissionOver"),wrap(project))
 
-        // Add the correct users to the modal/global data
-        var url = this.databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user);
-        this.databroker.getDeferredResource(url).done(function(){
-            users = this.databroker.quadStore.subjectsMatchingQuery(null,this.databroker.namespaces.expand("perm","hasPermissionOver"),wrap(project))
+                // Remove all users that were sitting in the modal/global data
+                $(this.editAddedUsers).empty()
 
-            for (var i = 0; i < users.length; i++) {
-                var url = strip(users[i])
-                var username = url.split("/").pop()
+                for (var i = 0; i < users.length; i++) {
+                    var url = strip(users[i])
+                    var username = url.split("/").pop()
+                    // console.log(element.get(0))
 
-                this.editAddedUsersList.push(username);
 
-                var user = goog.dom.createDom("a",{id:username},username + "\xa0 \xa0")
-                // onClick refuses to be set when passed into above function
-                user.setAttribute('onclick','projectManager.clearEditUser(this)')
+                    this.editAddedUsersList.push(username);
 
-                this.editAddedUsers.appendChild(user)
-            };
+                    var user = goog.dom.createDom("a",{id:username},username + "\xa0 \xa0")
+                    // onClick refuses to be set when passed into above function
+                    user.setAttribute('onclick','projectManager.clearEditUser(this)')
+
+                    this.editAddedUsers.appendChild(user)
+                };
+            }.bind(this))
+
         }.bind(this))
+
+        
     }
 }
 
@@ -736,8 +773,13 @@ sc.ProjectManager.prototype.sendEditData = function(){
                 var r = this.databroker.getResource(wrap(uri))
 
                 r.addProperty(ns.expand('perm','hasPermissionOver'),wrap(projectId))
+                r.setProperty(ns.expand('rdf','type'), ns.expand('foaf','Agent'))
             };
         }.bind(this))
+
+        this.setTitle()
+        this.addAllUserProjects()
+        
     }
 
     else{

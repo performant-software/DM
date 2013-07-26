@@ -158,10 +158,8 @@ var setupCurrentProject = function(clientApp, username) {
             pm.sendNewData("Default Project", null, [username,])
         }
 
-        pm.addAllUserProjects(username)
+        pm.addAllUserProjects(username, true)
     })
-    // db.fetchRdf(url, function() {
-    // });
 }
 
 var GRID_BOTTOM_MARGIN = 20;
