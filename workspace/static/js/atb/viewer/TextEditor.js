@@ -701,7 +701,7 @@ atb.viewer.TextEditor.prototype.dumpTagSet_=function(toTag)//;
 		var nodeName = tag.nodeName;
 		if (seenTags.add(nodeName))
 		{
-			debugPrint(""+nodeName);
+			// debugPrint(""+nodeName);
 		}
 		jQuery(tag).children().each(function()
 		{
@@ -1093,14 +1093,14 @@ atb.viewer.TextEditor.prototype.applyFormattingRulesRecursively_ = function(toTa
 				
 				childTag = nd;
 				bSpan=false;
-				debugPrint("styledchild!");
+				// debugPrint("styledchild!");
 			}
 			else
 			{
 				//Move children of this child into their grandparent, the current node...
 				
 				//debugPrint("NOT-styledchild!");
-				debugPrint("NOT-styledchild! nodeName="+childTagName);
+				// debugPrint("NOT-styledchild! nodeName="+childTagName);
 				//jQuery(this).contents().each(function(){toTag.appendChild(this)});
 				var afterNode = childTag.nextSibling;
 				
@@ -1135,7 +1135,7 @@ atb.viewer.TextEditor.prototype.applyFormattingRulesRecursively_ = function(toTa
 				//childTagName=childTagName.toLowerCase();
 		
 				{
-					debugPrint("adding a br...");
+					// debugPrint("adding a br...");
 					var newBr = this.domHelpercreateElement("br");
 					if (afterSibling == null)
 					{
@@ -1214,7 +1214,7 @@ atb.viewer.TextEditor.prototype.applyFormattingRulesRecursively_ = function(toTa
 			if (childTag.childNodes.length < 1)
 			{
 				//debugPrint("removing empty tag: '"+childTagName+"'");
-				debugPrint("empty tag!");
+				// debugPrint("empty tag!");
 				if (childTag.parentNode != null)
 				{
 					childTag.parentNode.removeChild(childTag);
