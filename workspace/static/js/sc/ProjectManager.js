@@ -3,7 +3,9 @@ goog.provide("sc.ProjectManager")
 goog.require("goog.dom")
 goog.require("sc.util.Namespaces")
 
-/* Creates two modals and a project select dropdown menu
+/**
+ * @author lmoss1@drew.edu (Lucy Moss)
+ * Creates two modals and a project select dropdown menu
  * Handles the manipulation of all data related to projects
  * * Switching projects by selecting the title in a dropdown menu
  * * Editing projects by clicking on the button for the current project

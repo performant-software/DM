@@ -2,6 +2,11 @@ goog.provide('sc.data.SyncService');
 
 goog.require('goog.net.Cookies');
 
+/**
+ * @author sbradsha@drew.edu (Shannon Bradshaw)
+ * @author tandres@drew.edu (Tim Andres)
+ * @author lmoss1@drew.edu (Lucy Moss)
+ */
 sc.data.SyncService = function(databroker, options) {
     this.databroker = databroker;
 
