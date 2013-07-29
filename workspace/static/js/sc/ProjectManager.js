@@ -26,7 +26,7 @@ sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResou
     this.tempTitleSpan = goog.dom.createDom("span", {style:'color:#999'}, "loading...")
 
     // Variables needed for user tagging system
-    this.newAddedUsersList = [username,];
+    this.newAddedUsersList = [username];
     this.editAddedUsersList = [];
     this.shift = false;
 
@@ -224,15 +224,8 @@ sc.ProjectManager.prototype.selectProject = function(e){
     }
 
     else{
-        // Prompts to reload current project when it is selected
-        if (this.databroker.currentProject == e.id){
-            if(confirm("You have selected the current project!\nWould you like to reload it? Doing so will close all resources.")){
-                this.selectThisProject(e.id)
-            }
-        } 
-
         // Warns that changing projects closes all resources
-        else if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
+        if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
             this.selectThisProject(e.id)
         }
     }
