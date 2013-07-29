@@ -792,7 +792,7 @@ sc.data.Databroker.FILE_EXTENSION_RE = /^(.*)\.(\w+)$/;
  */
 sc.data.Databroker.prototype.guessResourceUrls = function(uri) {
     var appendExtensions = function(uri) {
-        if (sc.data.Databroker.FILE_EXTENSION_RE.exec(uri)) {
+        if (sc.data.Databroker.FILE_EXTENSION_RE.test(uri) || goog.string.endsWith(uri, '/')) {
             return [uri];
         }
         else {
