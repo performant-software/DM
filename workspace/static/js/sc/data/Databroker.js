@@ -652,7 +652,14 @@ sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
 
     var serializer = new sc.data.TurtleSerializer(this);
     serializer.compact = false;
-    return serializer.getTriplesString(quads);
+    var str = serializer.getTriplesString(quads);
+
+    if (str) {
+        return str;
+    }
+    else {
+        return sc.util.Namespaces.angleBracketWrap(resource.uri) + '\n  # No data\n  .';
+    }
 };
 
 sc.data.Databroker.prototype.getResource = function(uri) {
