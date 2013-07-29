@@ -96,17 +96,17 @@
                value="{{ image_path }}">
         <div id="login-text-fields">
           <div class="control-group">
-            <label class="control-label" for="id_username">Username</label>
+            <!-- <label class="control-label" for="id_username">Username</label> -->
             <div class="controls">
               <input type="text" id="id_username" name="username" 
-                     placeholder="Username">
+                     placeholder="Username" autofocus />
             </div>
           </div>
           <div class="control-group">
-            <label class="control-label" for="id_password">Password</label>
+            <!-- <label class="control-label" for="id_password">Password</label> -->
             <div class="controls">
               <input type="password" id="id_password" name="password" 
-                     placeholder="Password">
+                     placeholder="Password" />
             </div>
           </div>
         </div>
@@ -117,10 +117,10 @@
         </div>
       </form>
       {% if error %}
-      <script>
+      <script type="text/javascript">
       $('#login-text-fields').popover({
           title: "Login Failed",
-          content: "Username / password combination not recognized",
+          content: "Invalid username or password.",
           placement: 'right',
           trigger: 'manual'
       });
