@@ -24,6 +24,8 @@ goog.require('goog.events.KeyCodes');
  * @constructor
  * @abstract
  *
+ * @author tandres@drew.edu (Tim Andres)
+ *
  * @extends {goog.events.EventTarget}
  *
  * @param clientApp {atb.ClientApp};
