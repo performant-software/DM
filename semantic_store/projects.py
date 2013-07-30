@@ -61,8 +61,7 @@ def create_project(g, host):
 
         print "Successfully created project with uri " + uri
 
-
-def read_project(request, project_uri):
+def get_project_graph_for_response(request, project_uri):
     uri = uris.uri('semantic_store_projects', uri=project_uri)
     store_g = Graph(store=rdfstore(), identifier=uri)
 
@@ -76,6 +75,11 @@ def read_project(request, project_uri):
             project_g.remove(t)
         text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
         project_g.add((text, NS.ore.isDescribedBy, text_url))
+
+    return project_g
+
+def read_project(request, project_uri):
+    project_g = get_project_graph_for_response(request, project_uri)
     
     if len(project_g) >0:
         return negotiated_graph_response(request, project_g)
@@ -92,9 +96,9 @@ def update_project(request, uri):
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-    project_graph = update_project_graph(input_graph, uri,request.get_host())
+    update_project_graph(input_graph, uri,request.get_host())
 
-    return negotiated_graph_response(request, project_graph, status=200)
+    return HttpResponse(status=200)
 
 def update_project_graph(g, identifier, host):
     predicate = NS.perm['hasPermissionOver']
