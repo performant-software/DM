@@ -139,9 +139,8 @@ var openBlankTextDocument = function() {
 
 var setupCurrentProject = function(clientApp, username) {
     var db = goog.global.databroker;
-    var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
     var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
-    db.getDeferredResource(url).done(function(resource){
+    db.getDeferredResource(uri).done(function(resource){
         var uris = db.getResource(uri).getProperties('perm:hasPermissionOver');
         for (var i=0; i<uris.length; i++) {
             db.allProjects.push(uris[i]);
@@ -152,7 +151,7 @@ var setupCurrentProject = function(clientApp, username) {
         var lastOpen = db.getResource(uri).getOneProperty('dm:lastOpenProject')
 
         if (lastOpen){
-            pm.selectThisProject(lastOpen) 
+            pm.selectProject(lastOpen) 
         }
         else{
             pm.sendNewData("Default Project", null, [username,])
@@ -213,6 +212,10 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     goog.global.clientApp.renderLinkCreationUI();
 
     goog.global.databroker = clientApp.getDatabroker();
+
+    var userResource = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
+    var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
+    userResource.addProperty('ore:isDescribedBy', sc.util.Namespaces.angleBracketWrap(userUrl));
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
     viewerGrid.setDimensions(1,2);
