@@ -610,7 +610,7 @@ sc.data.DataModel.prototype.getTitle = function(resource) {
 sc.data.DataModel.prototype.setTitle = function(resource, title) {
     resource = this.databroker.getResource(resource);
 
-    var wrappedTitle = sc.data.Literal(title);
+    var wrappedTitle = new sc.data.Literal(title);
 
     resource.setProperty('dc:title', wrappedTitle);
     resource.setProperty('rdfs:label', wrappedTitle);
