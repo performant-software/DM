@@ -99,7 +99,12 @@ sc.data.Term.wrapUri = function(str) {
 };
 
 sc.data.Term._escapeLiteral = function(str) {
-    return str.replace(/("|\\|\^)/g, '\\$1').replace(/(\t)/g, '\\t');
+    if (str == null) {
+        return ''
+    }
+    else {
+        return str.replace(/("|\\|\^)/g, '\\$1').replace(/(\t)/g, '\\t');
+    }
 };
 
 sc.data.Term._unescapeLiteral = function(str) {
