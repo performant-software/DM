@@ -43,7 +43,7 @@ def update_user(request, username):
 
     graph = update_user_graph(input_graph, username)
 
-    return negotiated_graph_response(request, graph, status=201)
+    return negotiated_graph_response(request, graph, status=200)
 
 def update_user_graph(g, username):
     # Check user has permissions to do this
