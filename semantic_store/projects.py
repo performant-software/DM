@@ -94,7 +94,7 @@ def update_project(request, uri):
 
     project_graph = update_project_graph(input_graph, uri,request.get_host())
 
-    return negotiated_graph_response(request, project_graph, status=201)
+    return negotiated_graph_response(request, project_graph, status=200)
 
 def update_project_graph(g, identifier, host):
     predicate = NS.perm['hasPermissionOver']
