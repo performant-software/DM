@@ -370,7 +370,7 @@ sc.ProjectManager.prototype.sendNewData = function (title, description, users){
     project.addProperty('rdf:type', 'foaf:Project');
 
     // Add the new project to the databroker as a valid project
-    goog.global.databroker.addNewProject(p);
+    goog.global.databroker.addNewProject(project.uri);
 
     this.addAndSwitchToProject(project.uri);
 }
