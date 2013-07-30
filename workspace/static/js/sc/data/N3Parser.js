@@ -2,7 +2,6 @@ goog.provide('sc.data.N3Parser');
 
 goog.require('sc.data.Parser');
 goog.require('n3.parser');
-goog.require('sc.util.Namespaces');
 goog.require('goog.asserts');
 
 /**
@@ -114,7 +113,7 @@ sc.data.N3Parser.prototype._n3WorkerParserHandler = function(error, triple, hand
 };
 
 sc.data.N3Parser._termWrapper = function(str) {
-    /* Not using sc.util.Namespaces utilities here since we can make more efficient assumptions with this parser */
+    /* Not using sc.data.Term utilities here since we can make more efficient assumptions with this parser */
     if (str[0] != '"'  && str.substring(0, 2) != '_:') {
         return ['<', str.replace(/>/g, '\\>'), '>'].join('');
     }

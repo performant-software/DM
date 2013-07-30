@@ -144,7 +144,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         this.databroker.deletedQuadsStore.removeQuads(this.databroker.dataModel.findQuadsToSyncForText(resource, this.databroker.deletedQuadsStore));
 
         url = this.restUrl(this.databroker.currentProject, resType,
-                           sc.util.Namespaces.angleBracketStrip(uri), null);
+                           sc.data.Term.unwrapUri(uri), null);
     }
     else if (resource.hasType('oa:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.annotation;

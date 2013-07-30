@@ -179,7 +179,7 @@ atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
 atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
 	var highlight = this.databroker.getResource(highlightUri);
     highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
-    highlight.addProperty('oa:exact', sc.util.Namespaces.quoteWrap(range.getText()));
+    highlight.addProperty('oa:exact', sc.data.Term.wrapLiteral(range.getText()));
     // Need a solution for keeping this up to date
     // TODO
     // highlight.addProperty('oa:prefix')
@@ -214,7 +214,7 @@ atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function()
     	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element);
     	var highlightResource = this.databroker.getResource(highlightUri);
 
-    	highlightResource.setProperty('oa:exact', sc.util.Namespaces.quoteWrap(jQuery(element).text()));
+    	highlightResource.setProperty('oa:exact', sc.data.Term.wrapLiteral(jQuery(element).text()));
     }, this);
 };
 

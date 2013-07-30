@@ -82,22 +82,25 @@ sc.data.TurtleSerializer.prototype.getPrefixesString = function(namespaces) {
     var lines = [];
 
     goog.structs.forEach(namespaces.uriByPrefix, function(uri, prefix) {
-        lines.push(['@prefix ', prefix, ': ', sc.util.Namespaces.angleBracketWrap(uri), ' .'].join(''));
+        lines.push(['@prefix ', prefix, ': ', sc.data.Term.wrapUri(uri), ' .'].join(''));
     }, this);
 
     return lines.join('\n');
 };
 
 sc.data.TurtleSerializer.prototype.formatValue = function(value) {
-    if (sc.util.Namespaces.isAngleBracketWrapped(value)) {
-        if (value == '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
+    if (sc.data.Term.isWrappedUri(value)) {
+        if (value instanceof sc.data.Uri && value.equals('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')) {
+            return 'a';
+        }
+        else if (value == '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
             return 'a';
         }
         else {
             return this.databroker.namespaces.prefix(value);
         }
     }
-    else if (sc.util.Namespaces.isLiteral(value)) {
+    else if (sc.data.Term.isLiteral(value)) {
         var lastIndexOfQuote = value.lastIndexOf('"')
         var literalSegment = value.substring(1, lastIndexOfQuote);
         var typeSegment =  lastIndexOfQuote != value.length - 1 ? value.substring(lastIndexOfQuote + 1, value.length) : '';

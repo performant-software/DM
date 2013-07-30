@@ -3,7 +3,6 @@ goog.provide('sc.data.Resource');
 goog.require('goog.structs.Set');
 goog.require('goog.array');
 goog.require('sc.data.Quad');
-goog.require('sc.util.Namespaces');
 
 /**
  * A convenient wrapper around the databroker methods for querying information
@@ -21,7 +20,7 @@ goog.require('sc.util.Namespaces');
 sc.data.Resource = function(databroker, uri) {
     this.databroker = databroker;
     this.uri = uri;
-    this.bracketedUri = sc.util.Namespaces.angleBracketWrap(uri);
+    this.bracketedUri = sc.data.Term.wrapUri(uri);
 };
 
 sc.data.Resource.prototype.toString = function() {
@@ -87,11 +86,11 @@ sc.data.Resource.prototype.getUnescapedProperties = function(predicate) {
 
 sc.data.Resource.prototype.escapeProperty = function(property) {
     var escaper = function(property) {
-        if (sc.util.Namespaces.isWrappedUri(property)) {
-            return sc.util.Namespaces.unwrapUri(property);
+        if (sc.data.Term.isWrappedUri(property)) {
+            return sc.data.Term.unwrapUri(property);
         }
-        else if (sc.util.Namespaces.isLiteral(property)) {
-            return sc.util.Namespaces.unwrapLiteral(property);
+        else if (sc.data.Term.isLiteral(property)) {
+            return sc.data.Term.unwrapLiteral(property);
         }
         else {
             return property;
@@ -199,7 +198,7 @@ sc.data.Resource.prototype.setProperty = function(predicate, object) {
 };
 
 sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
-    var safePredicate = sc.util.Namespaces.angleBracketWrap(this.databroker.namespaces.autoExpand(predicate));
+    var safePredicate = sc.data.Term.wrapUri(this.databroker.namespaces.autoExpand(predicate));
     var safeObject = opt_object ? this.databroker.namespaces.autoExpand(opt_object) : null;
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
