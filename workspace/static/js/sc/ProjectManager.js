@@ -364,7 +364,7 @@ sc.ProjectManager.prototype.sendNewData = function (title, description, users){
 
     project.setProperty('dcterms:description', new sc.data.Literal(description));
     this.databroker.dataModel.setTitle(project, title);
-    project.addProperty('rdf:type', 'dcmitype:Collection');
+    project.addProperty('rdf:type', 'dctypes:Collection');
     project.addProperty('rdf:type', 'ore:Aggregation');
     project.addProperty('rdf:type', 'dm:Project');
     project.addProperty('rdf:type', 'foaf:Project');
