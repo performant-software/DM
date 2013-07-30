@@ -109,7 +109,7 @@ def update_project_graph(g, identifier, host):
     with transaction.commit_on_success():
         uri = uris.uri('semantic_store_projects', uri=identifier)
         project_g = Graph(store=rdfstore(), identifier=uri)
-        bind_namespaces(project_g)
+        # bind_namespaces(project_g) # This was causing a database error
 
         print "Updating project using graph identifier %s"%(uri)
 
