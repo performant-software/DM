@@ -319,9 +319,6 @@ sc.canvas.CanvasViewer.prototype.addDeferredCanvas = function(deferred) {
     };
     
     deferred.progress(withCanvas).done(withCanvas);
-    deferred.fail(function() {
-        this.hideLoadingSpinner();
-    }.bind(this));
     
     return deferred;
 };
