@@ -15,7 +15,7 @@ goog.require('goog.ui.Dialog');
 goog.require('atb.viewer.ViewerGrid');
 goog.require('atb.viewer.ViewerContainer');
 
-goog.require("sc.ProjectManager")
+goog.require("sc.ProjectManager");
 
 
 var clientApp = null;
@@ -215,7 +215,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 
     var userResource = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
     var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
-    userResource.addProperty('ore:isDescribedBy', sc.util.Namespaces.angleBracketWrap(userUrl));
+    userResource.addProperty('ore:isDescribedBy', new sc.data.Uri(userUrl));
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
     viewerGrid.setDimensions(1,2);

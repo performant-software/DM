@@ -1,7 +1,6 @@
 goog.provide("sc.ProjectManager")
 
 goog.require("goog.dom")
-goog.require("sc.util.Namespaces")
 
 /**
  * @author lmoss1@drew.edu (Lucy Moss)
@@ -40,7 +39,6 @@ sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResou
 
     // General setup/preparation methods
     this.decorate();
-    this.setupPost();
 }
 
 /* Creates visual elements of project manipulation
@@ -75,10 +73,21 @@ sc.ProjectManager.prototype.createButtons = function(){
     // Create 'global' variable for the dropdown
     this.dropdownMenu = goog.dom.createDom("ul",{"class":"dropdown-menu"})
     // Create 'global' variable for the button for current project (toggles edit modal)
-    this.titleButton = goog.dom.createDom("a", {href:'#editProjectModal',"class":"btn btn-inverse",'data-toggle':'modal',style:"display:inline-block;padding: 6px;margin-bottom: 3px;"})
+    this.titleButton = goog.dom.createDom("a", {
+        "href": '#editProjectModal',
+        "class": "btn btn-inverse",
+        'data-toggle': 'modal',
+        "style": "display: inline-block; padding: 6px; margin-bottom: 3px;",
+        "title": "Edit this project"
+    });
 
     // Create local (static) variables to fold into buttonElement
-    var dropdownToggle = goog.dom.createDom("button", {"class":"btn dropdown-toggle btn-inverse", "data-toggle":"dropdown",style:"display:inline-block;padding: 6px;margin-bottom: 3px;"})
+    var dropdownToggle = goog.dom.createDom("button", {
+        "class": "btn dropdown-toggle btn-inverse",
+        "data-toggle": "dropdown",
+        "style": "display: inline-block; padding: 6px; margin-bottom: 3px;",
+        "title": "Switch to another project, or create a new one"
+    });
     var caret = goog.dom.createDom("span", {"class":"caret", style:'border-bottom-color:#999; border-top-color:#999;'})
     var newProjectSelect = goog.dom.createDom("li")
 
@@ -147,29 +156,34 @@ sc.ProjectManager.prototype.setTitle = function(useDeferredResource){
  * When the title is clicked on, switches to that project
  * Used when the full list of projects is populated on initial load
 */
-sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource){
+sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource, onComplete){
+    onComplete = onComplete || jQuery.noop;
+    var resource = this.databroker.getResource(uri);
+    var createElements = function() {
+        title = resource.getOneProperty('dc:title')
+        var projectLink = goog.dom.createDom("a", {
+            'about': uri,
+            'property': this.databroker.namespaces.expand('dc', 'title'),
+            'title': 'Switch projects to "' + title + '"',
+            'href': '#'
+        }, title);
+        // onClick refuses to be set when passed into above function
+        jQuery(projectLink).click(function(event) {
+            this.confirmSelectProject(uri);
+        }.bind(this));
+        
+        var li = goog.dom.createDom('li');
+        li.appendChild(projectLink);
+        $(this.dropdownMenu).append(li);
+
+        onComplete();
+    }.bind(this);
+
     if (useDeferredResource){
-        this.databroker.getDeferredResource(uri).done(function (resource){
-            title = resource.getOneProperty('dc:title')
-            var projectLink = goog.dom.createDom("a",{id:uri},title)
-            // onClick refuses to be set when passed into above function
-            projectLink.setAttribute('onclick','projectManager.selectProject(this)')
-    
-            var li = goog.dom.createDom('li')
-            li.appendChild(projectLink)
-            $(this.dropdownMenu).append(li)
-        }.bind(this))
+        this.databroker.getDeferredResource(uri).done(createElements)
     }
     else{
-        resource = this.databroker.getResource(uri)
-        title = resource.getOneProperty('dc:title')
-        var projectLink = goog.dom.createDom("a",{id:uri},title)
-        // onClick refuses to be set when passed into above function
-        projectLink.setAttribute('onclick','projectManager.selectProject(this)')
-
-        var li = goog.dom.createDom('li')
-        li.appendChild(projectLink)
-        $(this.dropdownMenu).append(li)
+        createElements();
     }
 }
 
@@ -180,17 +194,9 @@ sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource){
  *  element, and returning the link element in addOneProject is causing difficulties
 */
 sc.ProjectManager.prototype.addAndSwitchToProject = function(uri){
-    this.databroker.getDeferredResource(uri).done(function(resource){
-        title = resource.getOneProperty('dc:title')
-        var projectLink = goog.dom.createDom("a",{id:uri},title)
-        // onClick refuses to be set when passed into above function
-        projectLink.setAttribute('onClick','projectManager.selectProject(this)')
-
-        var li = goog.dom.createDom("li")
-        li.appendChild(projectLink)
-        $(this.dropdownMenu).append(li)
-        this.selectProject(projectLink)
-    }.bind(this))
+    this.addOneProject(uri, false, function() {
+        this.selectProject(uri);
+    }.bind(this));
 }
 
 /* Gathers all projects over which the current user has permissions and adds them to the
@@ -199,11 +205,15 @@ sc.ProjectManager.prototype.addAndSwitchToProject = function(uri){
  *  completely update the list of projects in the dropdown
 */
 sc.ProjectManager.prototype.addAllUserProjects = function(user, useDeferredResource){
-    username = user || this.username
-    var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
+    var username = user || this.username
+    var userUri = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     var projects = this.databroker.getResource(userUri).getProperties('perm:hasPermissionOver')
 
-    $(this.dropdownMenu).empty()
+    $(this.dropdownMenu).empty();
+
+    var newProjectSelect = goog.dom.createDom("li");
+    newProjectSelect.appendChild(goog.dom.createDom("a",{href:'#newProjectModal',role:'button', 'data-toggle':'modal'}, "Create New Project"))
+    $(this.dropdownMenu).append(newProjectSelect).append(goog.dom.createDom("li", {"class":"divider"}));
     
     for (var i = 0; i < projects.length; i++) {
         this.addOneProject(projects[i], useDeferredResource)
@@ -217,16 +227,16 @@ sc.ProjectManager.prototype.addAllUserProjects = function(user, useDeferredResou
  * Confirms that switching projects will close all resources
  * When current project is selected, prompts to reload the current project
 */
-sc.ProjectManager.prototype.selectProject = function(e){
+sc.ProjectManager.prototype.confirmSelectProject = function(uri){
     // If no open resources, does not need to warn about closing them!
     if (this.viewerGrid.isEmpty()){
-        this.selectThisProject(e.id)
+        this.selectThisProject(uri)
     }
 
     else{
         // Warns that changing projects closes all resources
-        if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
-            this.selectThisProject(e.id)
+        if (confirm("Selecting another will close all open resources.\nContinue?")){
+            this.selectThisProject(uri)
         }
     }
 }
@@ -235,7 +245,7 @@ sc.ProjectManager.prototype.selectProject = function(e){
  * A valid uri is supplied
  * Once a way to save the layout is configured, we would save that here
 */
-sc.ProjectManager.prototype.selectThisProject = function(uri){  
+sc.ProjectManager.prototype.selectProject = function(uri){  
     // Load new project
     this.viewerGrid.closeAllContainers()
     this.databroker.setCurrentProject(uri)
@@ -243,7 +253,7 @@ sc.ProjectManager.prototype.selectThisProject = function(uri){
     this.workingResources.loadManifest(uri)
 
     // Set last opened project
-    var wrap = sc.util.Namespaces.angleBracketWrap
+    var wrap = sc.data.Term.wrapUri
     var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, this.username, null);
     var pred = this.databroker.namespaces.expand("dm", "lastOpenProject")
     this.databroker.getResource(userUri).setProperty(pred, wrap(uri))
@@ -344,93 +354,25 @@ sc.ProjectManager.prototype.sendNewDataFromModal = function(){
 */
 sc.ProjectManager.prototype.sendNewData = function (title, description, users){
     //Create UUID for new project
-    var p = this.databroker.createUuid();
+    var project = this.databroker.createResource();
 
-    var data = $.rdf.databank([], { namespaces: {
-                                    ore: "http://www.openarchives.org/ore/terms/", 
-                                    dc: "http://purl.org/dc/elements/1.1/", 
-                                    dcterms: "http://purl.org/dc/terms/",
-                                    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
-                                    dcmitype: "http://purl.org/dc/dcmitype/",
-                                    perm: 'http://vocab.ox.ac.uk/perm#',
-                                    dm: 'http://dm.drew.edu/ns/',
-                                    foaf: 'http://xmlns.com/foaf/0.1/',
-                                    }
-                                  });
-    
-    //Link user(s) and project
-    for (var i = 0; i < users.length; i++) {
-        var u = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, users[i], null);
-        data.add("<" + u + "> perm:hasPermissionOver <" + p + ">");
-        data.add("<" + u + "> rdf:type foaf:Agent")
-    };
+    goog.structs.forEach(users, function(userUri) {
+        var user = this.databroker.getResource(userUri);
+        user.addProperty('perm:hasPermissionOver', project);
+        user.addProperty('rdf:type', 'foaf:Agent');
+    }, this);
 
-    //Give project title
-    data.add('<' + p + '> dc:title "' + title + '"');
-
-    //Give project description if supplied
-    if (description){
-        data.add('<' + p + '> dcterms:description "' + description +'"')
-    }
-
-    //Set types on project
-    data.add('<' + p + '> rdf:type dcmitype:Collection');
-    data.add('<' + p + '> rdf:type ore:Aggregation');
-    data.add('<' + p + '> rdf:type dm:Project')
-
-    var postdata = data.dump({format: 'application/rdf+xml', 
-                              serialize:true});
-    console.log("data:", postdata);
-
-    $.post('project_forward/', postdata);
-
-    // Add the new project's title to project dropdown
-    // Wrapped in timeout to avoid server errors from hitting database too quickly
-    setTimeout(function(){
-        var url = this.databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, this.username, null)
-        this.databroker.getDeferredResource(url).done(function(){
-            this.addAndSwitchToProject(p)
-        }.bind(this));
-    }.bind(this),3000)
+    project.setProperty('dcterms:description', new sc.data.Literal(description));
+    this.databroker.dataModel.setTitle(project, title);
+    project.addProperty('rdf:type', 'dcmitype:Collection');
+    project.addProperty('rdf:type', 'ore:Aggregation');
+    project.addProperty('rdf:type', 'dm:Project');
+    project.addProperty('rdf:type', 'foaf:Project');
 
     // Add the new project to the databroker as a valid project
-    goog.global.databroker.addNewProject(p)
-}
+    goog.global.databroker.addNewProject(p);
 
-/* This function is copied from the Django documentation (although I wrapped it in a fcn)
- * Necessary to avoid 403 errors when using $.ajax to POST data
- * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-*/
-sc.ProjectManager.prototype.setupPost = function(){
-    $.ajaxSetup({
-        crossDomain: false,
-        beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type)) {
-                xhr.setRequestHeader("X-CSRFToken", 
-                                     getCookie("csrftoken"));
-            }
-        }
-    });
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    };
-
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
+    this.addAndSwitchToProject(project.uri);
 }
 
 /* Removes the specified user from the speicified array of users
@@ -666,8 +608,8 @@ sc.ProjectManager.prototype.prepareForEdit = function(){
             // Display description
             var description = $("#" + this.editDescriptionId)
             description.val(projectResource.getOneProperty('dcterms:description'))
-            var wrap = sc.util.Namespaces.angleBracketWrap
-            var strip = sc.util.Namespaces.angleBracketStrip
+            var wrap = sc.data.Term.wrapUri
+            var strip = sc.data.Term.unwrapUri
 
             
 
@@ -715,9 +657,9 @@ sc.ProjectManager.prototype.sendEditData = function(){
     if(t.val() != ""){
         var projectId = this.databroker.currentProject
         var resource = this.databroker.getResource(projectId)
-        var qwrap = sc.util.Namespaces.quoteWrap
-        var wrap = sc.util.Namespaces.angleBracketWrap;
-        var strip = sc.util.Namespaces.angleBracketStrip;
+        var qwrap = sc.data.Term.wrapLiteral
+        var wrap = sc.data.Term.wrapUri;
+        var strip = sc.data.Term.unwrapUri;
         var ns = this.databroker.namespaces;
 
         // Set the new values of title & description

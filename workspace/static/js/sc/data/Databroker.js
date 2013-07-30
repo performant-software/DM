@@ -18,7 +18,8 @@ goog.require('sc.data.TurtleSerializer');
 
 goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
-goog.require('sc.util.Namespaces');
+goog.require('sc.data.NamespaceManager');
+goog.require('sc.data.Term');
 
 
 /**
@@ -34,7 +35,7 @@ sc.data.Databroker = function(options) {
 
     this.corsEnabledDomains = new goog.structs.Set(this.options.corsEnabledDomains);
 
-    this.namespaces = this.options.namespaces || new sc.util.Namespaces();
+    this.namespaces = this.options.namespaces || new sc.data.NamespaceManager();
     this.quadStore = this.options.quadStore || new sc.data.QuadStore();
     this.syncService = this.options.syncService || new sc.data.SyncService(this);
 
@@ -175,9 +176,9 @@ sc.data.Databroker.prototype.shouldProxy = function(url) {
 };
 
 /**
- * @return {sc.util.namespaces} The namespace utility object associated with the data store.
+ * @return {sc.data.NamespaceManager} The namespace utility object associated with the data store.
  */
-sc.data.Databroker.prototype.getNamespaces = function() {
+sc.data.Databroker.prototype.getNamespaceManager = function() {
     return this.namespaces;
 };
 
@@ -254,49 +255,18 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
 sc.data.Databroker.prototype.getBNodeHandledQuad = function(quad, bNodeMapping) {
     var modifiedQuad = quad.clone();
 
-    if (sc.util.Namespaces.isBNode(quad.subject)) {
-        if (bNodeMapping.containsKey(quad.subject)) {
-            modifiedQuad.subject = bNodeMapping.get(quad.subject);
+    goog.structs.forEach(['subject', 'predicate', 'object', 'context'], function(prop) {
+        if (sc.data.Term.isBNode(quad[prop])) {
+            if (bNodeMapping.containsKey(quad[prop])) {
+                modifiedQuad[prop] = bNodeMapping.get(quad[prop]);
+            }
+            else {
+                var newBNode = this.quadStore.getNextBNode();
+                modifiedQuad[prop] = newBNode;
+                bNodeMapping.set(quad[prop], newBNode);
+            }
         }
-        else {
-            var newBNode = this.quadStore.getNextBNode();
-            modifiedQuad.subject = newBNode;
-            bNodeMapping.set(quad.subject, newBNode);
-        }
-    }
-
-    if (sc.util.Namespaces.isBNode(quad.predicate)) {
-        if (bNodeMapping.containsKey(quad.predicate)) {
-            modifiedQuad.predicate = bNodeMapping.get(quad.predicate);
-        }
-        else {
-            var newBNode = this.quadStore.getNextBNode();
-            modifiedQuad.predicate = newBNode;
-            bNodeMapping.set(quad.predicate, newBNode);
-        }
-    }
-
-    if (sc.util.Namespaces.isBNode(quad.object)) {
-        if (bNodeMapping.containsKey(quad.object)) {
-            modifiedQuad.object = bNodeMapping.get(quad.object);
-        }
-        else {
-            var newBNode = this.quadStore.getNextBNode();
-            modifiedQuad.object = newBNode;
-            bNodeMapping.set(quad.object, newBNode);
-        }
-    }
-
-    if (sc.util.Namespaces.isBNode(quad.context)) {
-        if (bNodeMapping.containsKey(quad.context)) {
-            modifiedQuad.context = bNodeMapping.get(quad.context);
-        }
-        else {
-            var newBNode = this.quadStore.getNextBNode();
-            modifiedQuad.context = newBNode;
-            bNodeMapping.set(quad.context, newBNode);
-        }
-    }
+    }, this);
 
     return modifiedQuad;
 };
@@ -507,7 +477,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToReque
         uri = uri.uri;
     }
     else {
-        uri = sc.util.Namespaces.angleBracketStrip(uri);
+        uri = sc.data.Term.unwrapUri(uri);
     }
 
     var deferredResource = jQuery.Deferred();
@@ -617,14 +587,14 @@ sc.data.Databroker.prototype.dumpResource = function(uri) {
     });
     
     for (var i=0, len=equivalentUris.length; i<len; i++) {
-        var equivalentUri = sc.util.Namespaces.angleBracketWrap(equivalentUris[i]);
+        var equivalentUri = sc.data.Term.wrapUri(equivalentUris[i]);
 
         this.quadStore.forEachQuadMatchingQuery(
             equivalentUri, null, null, null,
             function(quad) {
                 ddict.get('__context__:' + (quad.context == null ? '__global__' : quad.context)).
                     get(this.namespaces.prefix(quad.predicate)).
-                    add(sc.util.Namespaces.isUri(quad.object) ? this.namespaces.prefix(quad.object) : quad.object);
+                    add(sc.data.Term.isUri(quad.object) ? this.namespaces.prefix(quad.object) : quad.object);
             }, this
         );
     }
@@ -645,7 +615,7 @@ sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
     var resource = this.getResource(r);
     var quads = [];
     goog.structs.forEach(this.getEquivalentUris(resource.uri), function(uri) {
-        this.quadStore.forEachQuadMatchingQuery(sc.util.Namespaces.angleBracketWrap(uri), null, null, null, function(quad) {
+        this.quadStore.forEachQuadMatchingQuery(new sc.data.Uri(uri), null, null, null, function(quad) {
             quads.push(quad);
         }.bind(this));
     }, this);
@@ -658,7 +628,7 @@ sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
         return str;
     }
     else {
-        return sc.util.Namespaces.angleBracketWrap(resource.uri) + '\n  # No data\n  .';
+        return new sc.data.Uri(resource.uri) + '\n  # No data\n  .';
     }
 };
 
@@ -669,7 +639,7 @@ sc.data.Databroker.prototype.getResource = function(uri) {
         return new sc.data.Resource(this, uri.uri);
     }
     else {
-        uri = sc.util.Namespaces.angleBracketStrip(uri);
+        uri = sc.data.Term.unwrapUri(uri);
         return new sc.data.Resource(this, uri);
     }
 };
@@ -702,11 +672,11 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
     
     for (var i=0, len=uris.length; i<len; i++) {
         var uri = uris[i];
-        uri = sc.util.Namespaces.angleBracketWrap(uri);
+        uri = sc.data.Term.wrapUri(uri);
         
         sameUris.add(uri);
         
-        if (!sc.util.Namespaces.isUri(uri)) {
+        if (!sc.data.Term.isUri(uri)) {
             continue
         }
 
@@ -716,17 +686,17 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
             uri, this.namespaces.expand('owl', 'sameAs'), null, null));
     }
     
-    if (sc.util.Namespaces.isAngleBracketWrapped(uris[0])) {
+    if (sc.data.Term.isWrappedUri(uris[0])) {
         return sameUris.getValues();
     }
     else {
-        return sc.util.Namespaces.angleBracketStrip(sameUris.getValues());
+        return sc.data.Term.unwrapUri(sameUris.getValues());
     }
 };
 
 sc.data.Databroker.prototype.areEquivalentUris = function(uriA, uriB) {
-    uriA = sc.util.Namespaces.angleBracketWrap(uriA);
-    uriB = sc.util.Namespaces.angleBracketWrap(uriB);
+    uriA = sc.data.Term.wrapUri(uriA);
+    uriB = sc.data.Term.wrapUri(uriB);
     
     if (uriA == uriB) {
         return true;
@@ -759,7 +729,7 @@ sc.data.Databroker.prototype.getUrisSetWithProperty = function(predicate, object
 sc.data.Databroker.prototype.getUrisWithProperty = function(predicate, object) {
     var uris = this.getUrisSetWithProperty(predicate, object);
     
-    return sc.util.Namespaces.angleBracketStrip(uris.getValues());
+    return sc.data.Term.unwrapUri(uris.getValues());
 };
 
 sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predicate) {
@@ -771,7 +741,7 @@ sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predica
         var equivalentUri = equivalentUris[i];
 
         properties.addAll(this.quadStore.objectsSetMatchingQuery(
-            sc.util.Namespaces.angleBracketWrap(equivalentUri),
+            sc.data.Term.wrapUri(equivalentUri),
             this.namespaces.autoExpand(predicate),
             null,
             null));
@@ -783,11 +753,11 @@ sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predica
 sc.data.Databroker.prototype.getPropertiesForResource = function(uri, predicate) {
     var properties = this.getPropertiesSetForResource(uri, predicate);
     
-    if (sc.util.Namespaces.isAngleBracketWrapped(uri)) {
+    if (sc.data.Term.isWrappedUri(uri)) {
         return properties.getValues();
     }
     else {
-        return sc.util.Namespaces.angleBracketStrip(properties.getValues());
+        return sc.data.Term.unwrapUri(properties.getValues());
     }
 };
 
@@ -836,7 +806,7 @@ sc.data.Databroker.prototype.guessResourceUrls = function(uri) {
         var guess = guesses[i];
 
         if (! this.failedUrls.contains(guess) &&
-            sc.util.Namespaces.isUri(guess)) {
+            sc.data.Term.isUri(guess)) {
             filteredGuesses.push(guess);
         }
     }
@@ -845,18 +815,18 @@ sc.data.Databroker.prototype.guessResourceUrls = function(uri) {
 };
 
 sc.data.Databroker.prototype.getResourceDescribers = function(uri) {
-    uri = sc.util.Namespaces.angleBracketWrap(uri);
+    uri = sc.data.Term.wrapUri(uri);
     
     var describerUrls = this.getPropertiesSetForResource(uri, 'ore:isDescribedBy');
     if (describerUrls.getCount() == 0) {
         describerUrls.addAll(this.getUrisSetWithProperty('ore:describes', uri));
     }
     
-    return sc.util.Namespaces.angleBracketStrip(describerUrls.getValues());
+    return sc.data.Term.unwrapUri(describerUrls.getValues());
 };
 
 sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
-    url = sc.util.Namespaces.angleBracketWrap(url);
+    url = sc.data.Term.wrapUri(url);
 
     var uris = new goog.structs.Set();
 
@@ -871,7 +841,7 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
         url,
         null));
     
-    return sc.util.Namespaces.angleBracketStrip(uris.getValues());
+    return sc.data.Term.unwrapUri(uris.getValues());
 };
 
 /**
@@ -943,10 +913,13 @@ sc.data.Databroker.getUri = function(obj) {
         return null;
     }
     else if (goog.isString(obj)) {
-        return sc.util.Namespaces.angleBracketStrip(obj);
+        return sc.data.Term.unwrapUri(obj);
     }
     else if (goog.isFunction(obj.getUri)) {
         return obj.getUri();
+    }
+    else if (obj instanceof sc.data.Uri) {
+        return obj.unwrapped();
     }
 }
 

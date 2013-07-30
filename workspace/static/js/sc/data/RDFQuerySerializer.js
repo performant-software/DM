@@ -59,7 +59,7 @@ sc.data.RDFQuerySerializer.prototype.serialize = function(quads, opt_format, han
 };
 
 sc.data.RDFQuerySerializer.prototype.escapeForRdfquery = function(str) {
-    if (sc.util.Namespaces.isLiteral(str)) {
+    if (sc.data.Term.isLiteral(str)) {
         return str.replace(/[^\\]\\"/g, '&quot;');
     }
     else {
