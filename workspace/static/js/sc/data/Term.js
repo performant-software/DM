@@ -3,11 +3,26 @@ goog.provide('sc.data.Term');
 goog.require('goog.string');
 
 /**
- * @class
+ * @fileoverview
  * @author tandres@drew.edu (Tim Andres)
+ *
+ * These classes and utility functions wrap strings for the n3 format used in the
+ * quad store.
+ * The class structure is designed to mimic Python's rdflib, and the class instances can be
+ * used interchangeably with wrapped strings.
+ */
+
+/**
+ * @class
  * @abstract
  */
 sc.data.Term = function(str) {
+    // This pattern allows omission of the `new` javascript keyword, just in case this
+    // pattern feels so rdflib-like that we forget language syntax
+    if (!(this instanceof sc.data.Term)) {
+        return new sc.data.Term(str);
+    }
+
     this.__setStr(str);
     this.unwrappedStr = str;
 };
@@ -30,7 +45,9 @@ sc.data.Term.prototype.toString = function() {
     return this.str;
 };
 
-sc.data.Term.prototype.n3 = sc.data.Term.prototype.toString;
+sc.data.Term.prototype.n3 = function() {
+    return this.toString();
+};
 
 sc.data.Term.prototype.unwrapped = function() {
     return this.unwrappedStr;
@@ -260,6 +277,10 @@ sc.data.Term.fromString = function(str) {
 
 goog.provide('sc.data.Uri');
 sc.data.Uri = function(str) {
+    if (!(this instanceof sc.data.Uri)) {
+        return new sc.data.Uri(str);
+    }
+
     this.__setStr(sc.data.Term.wrapUri(str))
     this.unwrappedStr = str;
 };
@@ -267,6 +288,10 @@ goog.inherits(sc.data.Uri, sc.data.Term);
 
 goog.provide('sc.data.Literal');
 sc.data.Literal = function(str, opt_type) {
+    if (!(this instanceof sc.data.Literal)) {
+        return new sc.data.Literal(str, opt_type);
+    }
+
     if (opt_type) {
         this.__setStr(['"', sc.data.Term._escapeLiteral(str), '"',
             '^^<', opt_type.replace(/>/g, '\\>'), '>'].join(''));
@@ -281,6 +306,10 @@ goog.inherits(sc.data.Literal, sc.data.Term);
 
 goog.provide('sc.data.BNode');
 sc.data.BNode = function(str) {
+    if (!(this instanceof sc.data.BNode)) {
+        return new sc.data.BNode(str);
+    }
+
     if (str) {
         this.__setStr(['_:b', str].join(''));
     }
