@@ -615,3 +615,10 @@ sc.data.DataModel.prototype.setTitle = function(resource, title) {
     resource.setProperty('dc:title', wrappedTitle);
     resource.setProperty('rdfs:label', wrappedTitle);
 };
+
+sc.data.DataModel.prototype.removeResourceFromProject = function(project, resource) {
+    project = this.databroker.getResource(project);
+    resource = this.databroker.getResource(resource);
+
+    project.deleteProperty('ore:aggregates', resource);
+};
