@@ -733,7 +733,6 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
     var anno = databroker.dataModel.createAnno(body, specificResourceUri);
 	
     var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
-    annoBodyEditor.toggleIsAnnoText(true);
     this.viewer.openRelatedViewer(annoBodyEditor);
     annoBodyEditor.loadResourceByUri(body.uri);
 };

@@ -490,7 +490,6 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     
     var textEditor = new atb.viewer.TextEditor(this.clientApp);
     textEditor.setPurpose('anno');
-    textEditor.toggleIsAnnoText(true);
     this.openRelatedViewer(textEditor);
     textEditor.loadResourceByUri(body.uri);
 };
