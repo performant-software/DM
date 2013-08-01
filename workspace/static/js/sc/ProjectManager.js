@@ -229,13 +229,13 @@ sc.ProjectManager.prototype.addAllUserProjects = function(user, useDeferredResou
 sc.ProjectManager.prototype.confirmSelectProject = function(uri){
     // If no open resources, does not need to warn about closing them!
     if (this.viewerGrid.isEmpty()){
-        this.selectThisProject(uri)
+        this.selectProject(uri)
     }
 
     else{
         // Warns that changing projects closes all resources
         if (confirm("Selecting another will close all open resources.\nContinue?")){
-            this.selectThisProject(uri)
+            this.selectProject(uri)
         }
     }
 }
