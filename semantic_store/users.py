@@ -51,7 +51,7 @@ def update_user_graph(g, username):
         uri = uris.uri('semantic_store_users', username=username)
         print "Updating user using graph identifier %s" % uri
         graph = Graph(store=rdfstore(), identifier=uri)
-        bind_namespaces(graph)
+        # bind_namespaces(graph)
 
         for triple in g:
             graph.add(triple)
@@ -60,9 +60,9 @@ def update_user_graph(g, username):
 
 def remove_triples_from_user(request, username):
     g = Graph()
-    bind_namespaces(g)
+    # bind_namespaces(g)
     removed = Graph()
-    bind_namespaces(removed)
+    # bind_namespaces(removed)
 
     try:
         parse_request_into_graph(request, g)
