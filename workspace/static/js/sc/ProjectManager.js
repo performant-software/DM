@@ -10,7 +10,7 @@ goog.require("goog.dom")
  * * Editing projects by clicking on the button for the current project
  * * Creating projects by selecting the "Create New Project" link in dropdown
  */
-sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResources, body, username){
+sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResources, body, username) {
     // Supplied data
     this.databroker = databroker;
     this.buttonElement = buttonElement;
@@ -39,7 +39,7 @@ sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResou
 
     // General setup/preparation methods
     this.decorate();
-}
+};
 
 /* Creates visual elements of project manipulation
  * * Creates the button/dropdown within the supplied element
@@ -167,7 +167,6 @@ sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource, o
             'title': 'Switch projects to "' + title + '"',
             'href': '#'
         }, title);
-        // onClick refuses to be set when passed into above function
         jQuery(projectLink).click(function(event) {
             this.confirmSelectProject(uri);
         }.bind(this));
@@ -298,7 +297,7 @@ sc.ProjectManager.prototype.createNewProjectModal = function(){
     this.newUsers = goog.dom.createDom("input",{type:'text',style:"width:430px;margin-right:0px"})
     this.newHelp = goog.dom.createDom("span",{'class':'help-block'})
     // Add all user area parts to body
-    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project. If you want to remove a user, click on the username."))
+    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project."))
     body.appendChild(goog.dom.createDom("label",{style:'display:inline-block;width:80px'},"Add Users:"))
     body.appendChild(this.newUsers)
     body.appendChild(this.newHelp)
@@ -310,8 +309,9 @@ sc.ProjectManager.prototype.createNewProjectModal = function(){
     footer.appendChild(goog.dom.createDom("a",{href:'#newProjectModal','class':'btn','data-toggle':'modal'}, "Cancel"))
     // Create -- default button -- creates new project
     var saveButton = goog.dom.createDom('a',{href:'#newProjectModal','class':'btn btn-primary','data-toggle':'modal'},"Create New Project")
-    // onClick refuses to be set when passed into above function
-    saveButton.setAttribute('onclick','projectManager.sendNewDataFromModal()')
+    $(saveButton).click(function(event) {
+        this.sendNewDataFromModal();
+    }.bind(this));
     footer.appendChild(saveButton)
 
     // Add to modal
@@ -339,7 +339,7 @@ sc.ProjectManager.prototype.sendNewDataFromModal = function(){
         t.val("");
         d.val("");
         $(this.newAddedUsers).empty()
-        this.newAddedUsersList = [this.username,]
+        this.newAddedUsersList = [this.username]
 
     }
     else{
@@ -370,7 +370,7 @@ sc.ProjectManager.prototype.sendNewData = function (title, description, users){
     project.addProperty('rdf:type', 'foaf:Project');
 
     // Add the new project to the databroker as a valid project
-    goog.global.databroker.addNewProject(project.uri);
+    this.databroker.addNewProject(project.uri);
 
     this.addAndSwitchToProject(project.uri);
 }
@@ -379,36 +379,21 @@ sc.ProjectManager.prototype.sendNewData = function (title, description, users){
  * Removes the "tag" displaying the username
  * Used by both project edit & create modals, so functions independently of either
 */
-sc.ProjectManager.prototype.clearUser = function(userElement, userList){
-    for (var i = 0; i < userList.length; i++) {
-        if (userList[i] == userElement.id) {
-            userList.splice(i,1)
-            break;
-        }
-    };
-
-    userElement.remove()
-}
-
-/* Function which removes a user supplied in the new project modal
- * Although a simple function, must be declared so it can be set as onClick property of
- *  usernames in the 'tagging' system for the new project modal.
- */
-sc.ProjectManager.prototype.clearNewUser = function(userElement){
-    this.clearUser(userElement, this.newAddedUsersList)
-}
+sc.ProjectManager.prototype.clearUser = function(userList, username) {
+    return goog.array.remove(userList, username);
+};
 
 /* Function which removes a user supplied in the edit project modal
  * Although a simple function, must be declared so it can be set as onClick property of
  *  usernames in the 'tagging' system for the edit project modal.
  * Also ensure the current user is always a part of a project
  */
-sc.ProjectManager.prototype.clearEditUser = function(userElement){
-    if (userElement.id == this.username){
+sc.ProjectManager.prototype.clearEditUser = function(username){
+    if (username == this.username){
         $(this.editHelp).text("You cannot delete yourself from a project.")
     }
     else{
-        this.clearUser(userElement, this.editAddedUsersList)
+        this.clearUser(this.editAddedUsersList, username);
     }
 }
 
@@ -443,15 +428,15 @@ sc.ProjectManager.prototype.newUserTagSystem = function(){
         if (e.which == 13&&this.shift){
             var val = $(this.newUsers).val();
 
-            this.isValidUser(val)
-            // Wrapped in timeout bc the error code isn't breaking things the way I want
-            setTimeout(function(){
-                if (this.isValid){
+            this.isValidUser(val, function(isValid) {
+                if (isValid){
                     if (this.newAddedUsersList.indexOf(val) == -1){
                         // "\xa0" is non-breaking whitespace for this library
                         var user = goog.dom.createDom("a",{id:val},val + "\xa0 \xa0")
-                        // onClick refuses to be set when passed into above function
-                        user.setAttribute('onclick','projectManager.clearNewUser(this)')
+                        $(user).click(function(event) {
+                            this.clearUser(val);
+                            $(user).detach();
+                        }.bind(this));
                         this.newAddedUsers.appendChild(user)
                         this.newAddedUsersList.push(val);
 
@@ -464,7 +449,7 @@ sc.ProjectManager.prototype.newUserTagSystem = function(){
                 else{
                     $(this.newHelp).text("This is not a valid user.");
                 }
-            }.bind(this), 75)
+            }.bind(this));
         }
         else if (e.which == 16) this.shift = false;
     }.bind(this))
@@ -501,16 +486,19 @@ sc.ProjectManager.prototype.editUserTagSystem = function(){
         if (e.which == 13&&this.shift){
             var val = usr.val();
 
-            this.isValidUser(val)
-
-            // Wrapped in timeout bc the error code isn't breaking things the way I want
-            setTimeout(function(){
-                if (this.isValid){
+            this.isValidUser(val, function(isValid) {
+                if (isValid){
                     if (this.editAddedUsersList.indexOf(val) == -1){
                         // "\xa0" is non-breaking whitespace for this library
-                        var user = goog.dom.createDom("a",{id:usr.val()},usr.val() + "\xa0 \xa0")
-                        // onClick refuses to be set when passed into above function
-                        user.setAttribute('onclick','projectManager.clearEditUser(this)')
+                        var clearButton = goog.dom.createDom('span', {
+                            'title': 'Remove ' + val + ' from the project',
+                            'style': 'cursor: pointer;'
+                        }, '\u2715');
+                        var user = goog.dom.createDom("span", {id:val}, val, clearButton, "\xa0 \xa0")
+                        jQuery(clearButton).click(function(event) {
+                            this.clearEditUser(val);
+                            jQuery(user).detach();
+                        }.bind(this));
                         this.editAddedUsers.appendChild(user)
                         this.editAddedUsersList.push(val);
 
@@ -523,7 +511,7 @@ sc.ProjectManager.prototype.editUserTagSystem = function(){
                 else{
                     $(this.editHelp).text("This is not a valid user.");
                 }
-            }.bind(this), 75)
+            }.bind(this));
         }
         else if (e.which == 16) this.shift = false;
     }.bind(this))
@@ -559,7 +547,7 @@ sc.ProjectManager.prototype.createEditProjectModal = function(){
     this.editUsers = goog.dom.createDom("input",{type:'text',style:"width:430px;margin-right:0px"})
     this.editHelp = goog.dom.createDom("span",{'class':'help-block'})
     // Add all user area parts to body
-    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project. If you want to remove a user, click on the username."))
+    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project."))
     body.appendChild(goog.dom.createDom("label",{style:'display:inline-block;width:80px'},"Add Users:"))
     body.appendChild(this.editUsers)
     body.appendChild(this.editHelp)
@@ -568,14 +556,24 @@ sc.ProjectManager.prototype.createEditProjectModal = function(){
 
     var footer = goog.dom.createDom("div",{'class':'modal-footer'})
     // Cancel -- does not remove data from modal
-    var cancelButton = goog.dom.createDom("a",{href:'#editProjectModal','class':'btn','data-toggle':'modal'}, "Discard Changes")
-    // onClick refuses to be set when passed into above function
-    cancelButton.setAttribute('onclick','projectManager.prepareForEdit()')
+    var cancelButton = goog.dom.createDom("a", {
+        'href': '#editProjectModal',
+        'class': 'btn',
+        'data-toggle': 'modal'
+    }, "Discard Changes");
+    jQuery(cancelButton).click(function(event) {
+        this.prepareForEdit();
+    }.bind(this));
     footer.appendChild(cancelButton)
     // Create -- default button -- creates new project
-    var saveButton = goog.dom.createDom('a',{href:'#editProjectModal','class':'btn btn-primary','data-toggle':'modal'},"Save Changes")
-    // onClick refuses to be set when passed into above function
-    saveButton.setAttribute('onclick','projectManager.sendEditData()')
+    var saveButton = goog.dom.createDom('a', {
+        'href': '#editProjectModal',
+        'class': 'btn btn-primary',
+        'data-toggle': 'modal'
+    },"Save Changes");
+    $(saveButton).click(function(event) {
+        this.sendEditData();
+    }.bind(this));
     footer.appendChild(saveButton)
 
     // Add to modal
@@ -631,11 +629,22 @@ sc.ProjectManager.prototype.prepareForEdit = function(){
 
                     this.editAddedUsersList.push(username);
 
-                    var user = goog.dom.createDom("a",{id:username},username + "\xa0 \xa0")
-                    // onClick refuses to be set when passed into above function
-                    user.setAttribute('onclick','projectManager.clearEditUser(this)')
-
-                    this.editAddedUsers.appendChild(user)
+                    if (username == this.username) {
+                        var user = goog.dom.createDom("span", {id:username}, username, "\xa0 \xa0");
+                        this.editAddedUsers.appendChild(user);
+                    }
+                    else {
+                        var clearButton = goog.dom.createDom('span', {
+                            'title': 'Remove ' + username + ' from the project',
+                            'style': 'cursor: pointer;'
+                        }, '\u2715');
+                        var user = goog.dom.createDom("span", {id:username}, username, clearButton, "\xa0 \xa0")
+                        jQuery(clearButton).click(function(event) {
+                            this.clearEditUser(username);
+                            jQuery(user).detach();
+                        }.bind(this));
+                        this.editAddedUsers.appendChild(user);
+                    }
                 };
             }.bind(this))
 
@@ -725,21 +734,15 @@ sc.ProjectManager.prototype.sendEditData = function(){
     }
 }
 
-sc.ProjectManager.prototype.isValidUser = function(username){
-    this.isValid = true;
-    var url = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null)
-
+sc.ProjectManager.prototype.isValidUser = function(username, handler){
     $.ajax({
         type: "GET",
-        url: url,
-        statusCode: {
-            404: function(){
-                this.isValid = false
-            }.bind(this)
+        url: databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null),
+        success: function() {
+            handler(true);
+        },
+        error: function() {
+            handler(false);
         }
-    })
-
-    // return this.isValid
-
-    
-}
+    });
+};
