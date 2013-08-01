@@ -363,11 +363,20 @@ atb.widgets.WorkingResources.prototype.handleItemAction = function(event) {
     }
 };
 
+atb.widgets.WorkingResources.prototype.handleItemRemove = function(event) {
+    var uri = event.target.getUri();
+    var resource = this.databroker.getResource(uri);
+    var item = event.target;
+
+    this.removeItemByUri(uri);
+    this.databroker.dataModel.removeResourceFromProject(this.uri, uri);
+};
+
 atb.widgets.WorkingResources.prototype.addListenersToItem = function(item) {
     var resource = this.databroker.getResource(item.getUri());
 
-    goog.events.listen(item, 'action', this.handleItemAction,
-                       false, this);
+    goog.events.listen(item, 'action', this.handleItemAction, false, this);
+    goog.events.listen(item, 'remove-click', this.handleItemRemove, false, this);
 
     if (! resource.hasAnyType(sc.data.DataModel.VOCABULARY.manifestTypes)) {
         goog.events.listen(item.getElement(), 'click', function(event) {
@@ -392,7 +401,13 @@ atb.widgets.WorkingResources.prototype.removeItemByUri = function(uri) {
     }
     else {
         var elem = item.getElement();
-        jQuery(elem).detach();
+        jQuery(elem).animate({
+            left: '100%',
+            opacity: 0.0,
+            height: 0
+        }, 300, function() {
+            jQuery(this).detach();
+        });
 
         this.itemsByUri.remove(uri);
 

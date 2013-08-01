@@ -38,6 +38,12 @@ atb.widgets.WorkingResourcesItem.prototype.setupLayout_ = function() {
         'class': 'atb-WorkingResourcesItem-attributes'
     });
 
+    this.removeButton = this.domHelper.createDom('div', {
+        'class': 'atb-WorkingResourcesItem-remove icon-minus-sign',
+        'title': 'Remove this resource from the project'
+    });
+    goog.events.listen(this.removeButton, 'click', this.handleRemoveClick, false, this);
+
     this.clearDiv = this.domHelper.createDom('div', {
         'style': 'clear: both;'
     });
@@ -45,6 +51,7 @@ atb.widgets.WorkingResourcesItem.prototype.setupLayout_ = function() {
     this.div.appendChild(this.thumbnailDiv);
     this.div.appendChild(this.titleDiv);
     this.div.appendChild(this.attributesDiv);
+    this.div.appendChild(this.removeButton);
 
     this.div.appendChild(this.clearDiv);
 };
@@ -53,6 +60,12 @@ atb.widgets.WorkingResourcesItem.prototype.handleClick = function(event) {
     var actionEvent = new goog.events.ActionEvent(event);
     actionEvent.target = this;
     this.dispatchEvent(actionEvent);
+};
+
+atb.widgets.WorkingResourcesItem.prototype.handleRemoveClick = function(event) {
+    event.stopPropagation();
+    var removeEvent = new goog.events.Event('remove-click', this);
+    this.dispatchEvent(removeEvent);
 };
 
 atb.widgets.WorkingResourcesItem.prototype.render = function(div) {
