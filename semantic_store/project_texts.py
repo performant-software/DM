@@ -97,8 +97,8 @@ def update_project_text(g, p_uri, t_uri):
     project_g = Graph(rdfstore(), identifier=project_uri)
     text_uri = URIRef(t_uri)
 
-    title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label)
-    content = g.value(text_uri, NS.cnt.chars)
+    title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or Literal("")
+    content = g.value(text_uri, NS.cnt.chars) or Literal("")
 
     with transaction.commit_on_success():
         project_g.set((text_uri, NS.dc.title, title))
