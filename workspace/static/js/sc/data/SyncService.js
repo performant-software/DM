@@ -76,9 +76,10 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
         url += "/";
     }
     else if (resType == sc.data.SyncService.RESTYPE.project) {
-        // url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
-        // url += "/";
+        url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
+        url += "/";
     }
+
     if (resUri != null) {
         url += resUri;
     } 
@@ -163,6 +164,9 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
+            if (method == 'POST') {
+                method = 'PUT'
+            }
         }
     }
     else if (resource.hasType('foaf:Agent')){
