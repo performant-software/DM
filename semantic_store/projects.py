@@ -59,7 +59,7 @@ def create_project(g, host):
         username = user.split("/")[-1]
         create_project_user_graph(host, username, uri)
 
-        print "Successfully created project with uri " + uri
+        project_g.close()
 
 def get_project_graph_for_response(request, project_uri):
     uri = uris.uri('semantic_store_projects', uri=project_uri)
@@ -76,14 +76,17 @@ def get_project_graph_for_response(request, project_uri):
         text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
         project_g.add((text, NS.ore.isDescribedBy, text_url))
 
+    store_g.close()
+
     return project_g
 
 def read_project(request, project_uri):
     project_g = get_project_graph_for_response(request, project_uri)
     
     if len(project_g) >0:
-        return negotiated_graph_response(request, project_g)
+        return negotiated_graph_response(request, project_g, close_graph=True)
     else:
+        project_g.close()
         return HttpResponseNotFound()
 
 
@@ -96,7 +99,10 @@ def update_project(request, uri):
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-    update_project_graph(input_graph, uri,request.get_host())
+    project_graph = update_project_graph(input_graph, uri,request.get_host())
+    project_graph.close()
+
+    input_graph.close()
 
     return HttpResponse(status=200)
 
@@ -134,7 +140,9 @@ def delete_project(uri):
         user_uri = uris.uri("semantic_store_users", username=username)
         remove_triple(username, user_uri, NS.perm.hasPermissionOver, uri)
 
-    return HttpResponse("Successfully deleted project with uri %s."%uri)
+    graph.close()
+
+    return HttpResponse("Successfully deleted project with uri %s."%uri, status=200)
 
 # Creates a graph identified by user of the projects belonging to the user, which
 #  can be found at the descriptive url of the user (/store/user/<username>)
@@ -161,6 +169,8 @@ def create_project_user_graph(host, user, project):
 
     save_project_user_graph(g, user, host)
 
+    g.close()
+
 def save_project_user_graph(graph, username, host):
     with transaction.commit_on_success():
         user_uri = uris.uri('semantic_store_users', username=username)
@@ -176,6 +186,8 @@ def save_project_user_graph(graph, username, host):
 
         for project in graph.triples((user_uri, NS.ore.hasPermissionOver, None)):
             user_graph.add((project, NS.ore.isDescribedBy, uris.url(host, "semantic_store_projects", uri=project)))
+
+    user_graph.close()
 
 
 def delete_triples_from_project(request, uri):
@@ -205,6 +217,8 @@ def delete_triples_from_project(request, uri):
             if t in project_g:
                 project_g.remove(t)
                 removed.add(t)
+
+    project_g.close()
 
     return removed
 

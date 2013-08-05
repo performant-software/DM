@@ -38,7 +38,8 @@ def create_project_text(g, project_uri):
 
     with transaction.commit_on_success():
         project_g.add((text_uri, NS.dcterms.created, Literal(datetime.utcnow())))
-        return update_project_text(g, project_uri, text_uri)
+        update_project_text(g, project_uri, text_uri)
+        return read_project_text(project_uri, text_uri)
 
 # Create a project from a (POST) request to a specified project
 # This function parses the data and then sends it to create_project_text which accepts a
@@ -83,6 +84,8 @@ def read_project_text(project_uri, text_uri):
         for t in project_g.triples((selector, None, None)):
             text_g.set(t)
 
+    project_g.close()
+
     # Return graph about text
     return text_g
 
@@ -112,8 +115,7 @@ def update_project_text(g, p_uri, t_uri):
             for t in g.triples((selector, None, None)):
                 project_g.set(t)
 
-    # Return (updated) data about graph
-    return read_project_text(p_uri, t_uri)
+    project_g.close()
 
 # Updates a project's text to match data in a (PUT) request
 # This function parses the data and then sends it to update_project_text which accepts a
@@ -130,7 +132,8 @@ def update_project_text_from_request(request, project_uri, text_uri):
         return HttpResponse(status=400, content="Unable to parse serialization.")
     else:
         # On successful parse, send to basic method
-        return update_project_text(g, project_uri, text_uri)
+        update_project_text(g, project_uri, text_uri)
+        return read_project_text(project_uri, text_uri)
 
 
 # Removes all data from a given project about a given text
@@ -164,8 +167,8 @@ def remove_project_text(project_uri, text_uri):
             # Delete triple about text from project graph
             project_g.remove(t)
 
-        # Return serialized graph with triples removed 
-        return deleted_g
+    project_g.close()
+    deleted_g.close()
 
 
 
