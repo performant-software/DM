@@ -22,7 +22,7 @@ def accept_mimetypes(accept_string):
         yield format
 
 
-def negotiated_graph_response(request, graph, close_graph=False **kwargs):
+def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
     mimetypes = accept_mimetypes(request.META['HTTP_ACCEPT'])
 
     for mimetype in mimetypes:
