@@ -34,7 +34,7 @@ def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
             if close_graph:
                 graph.close()
 
-            return HttpResponse(serialization, mimetype=mimetype)
+            return HttpResponse(serialization, mimetype=mimetype, **kwargs)
 
     serialization = graph.serialize(format='turtle')
 
