@@ -16,6 +16,10 @@ DATABASES = {
     },
 }
 
+RDFLIB_DB_URI = 'mysql://username:password@hostname:port/database-name?other-parameter'
+RDFLIB_DB_URI = 'sqlite:////absolute/path/to/foo.db'
+RDFLIB_DB_URI = 'postgresql+psycopg2://user:pasword@hostname:port/database'
+
 sys.path.insert(0, '/Users/shannon/python_lib/dm/')
 
 #DIRNAME = os.path.dirname(__file__)
