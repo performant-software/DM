@@ -219,7 +219,6 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
                     successHandler.apply(this, arguments);
                 }.bind(this),
                 error: function() {
-                    console.error('unsuccessful sync', arguments);
                     errorHandler.apply(this, arguments);
                 },
                 data: data,
