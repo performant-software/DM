@@ -22,16 +22,26 @@ def accept_mimetypes(accept_string):
         yield format
 
 
-def negotiated_graph_response(request, graph, **kwargs):
+def negotiated_graph_response(request, graph, close_graph=False **kwargs):
     mimetypes = accept_mimetypes(request.META['HTTP_ACCEPT'])
 
     for mimetype in mimetypes:
         format = mimetype[mimetype.rfind('/') + 1:].strip()
 
         if format in RDFLIB_SERIALIZER_FORMATS:
-            return HttpResponse(graph.serialize(format=format), mimetype=mimetype)
+            serialization = graph.serialize(format=format)
 
-    return HttpResponse(graph.serialize(format='turtle'), mimetype='text/turtle', **kwargs)
+            if close_graph:
+                graph.close()
+
+            return HttpResponse(serialization, mimetype=mimetype)
+
+    serialization = graph.serialize(format='turtle')
+
+    if close_graph:
+        graph.close()
+
+    return HttpResponse(serialization, mimetype='text/turtle', **kwargs)
 
 def parse_into_graph(graph, **kwargs):
     temp_graph = Graph()

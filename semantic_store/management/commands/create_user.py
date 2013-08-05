@@ -71,4 +71,6 @@ class Command(BaseCommand):
             user_g.add((user_identifier, NS.rdf['type'], NS.foaf['Agent']))
             user_g.add((user_identifier, NS.ore['isDescribedBy'], user_url))
 
+            user_g.close()
+
                 
