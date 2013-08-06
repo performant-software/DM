@@ -46,6 +46,13 @@ sc.canvas.CanvasViewer = function(options) {
     this.mainViewportDiv = this.mainViewport.getElement();
     this.marqueeViewportDiv = this.marqueeViewport.getElement();
     jQuery(this.marqueeViewportDiv).addClass('sc-CanvasViewer-marquee');
+    jQuery(this.marqueeViewportDiv).hover(function(event) {
+        jQuery(this.marqueeViewportDiv).finish();
+        jQuery(this.marqueeViewportDiv).animate({'opacity': 1.0}, {'duration': 200});
+    }.bind(this), function(event) {
+        jQuery(this.marqueeViewportDiv).finish();
+        jQuery(this.marqueeViewportDiv).animate({'opacity': 0.8}, {'duration': 200});
+    }.bind(this));
 
     this.toolbar.render(this.baseDiv);
 
