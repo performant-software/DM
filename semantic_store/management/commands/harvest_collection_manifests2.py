@@ -92,5 +92,9 @@ class Command(BaseCommand):
                         self.localize_describes(page_uri, page_url, res_g)
                 self.localize_describes(res_uri, res_url, res_g)
                 self.localize_describes(res_uri, res_url, col_g)
+
+                res_g.close()
+
+            col_g.close()
         
                 
