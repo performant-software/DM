@@ -211,10 +211,15 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     var successHandler = function(data, textStatus, jqXhr) {
         self.receivedUrls.add(url);
 
-        self.processResponse(data, url, jqXhr, function() {
-            handler.apply(this, arguments);
-            deferred.resolveWith(this, arguments);
-        });
+        if (data) {
+            self.processResponse(data, url, jqXhr, function() {
+                handler.apply(this, arguments);
+                deferred.resolveWith(this, arguments);
+            });
+        }
+        else {
+            // Received a successful response with no data, such as a 204
+        }
     };
 
     var errorHandler = function(jqXhr, textStatus, errorThrown) {
