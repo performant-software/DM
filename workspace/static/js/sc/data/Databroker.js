@@ -56,6 +56,8 @@ sc.data.Databroker = function(options) {
     this.currentProject = null
     this.allProjects = [];
 
+    this.user = this.options.user;
+
     this.newResourceUris = new goog.structs.Set();
 
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
@@ -97,7 +99,8 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
 
         return url;
     },
-    corsEnabledDomains: []
+    corsEnabledDomains: [],
+    user: null
 };
 
 // Note: ordering here matters for preferred formats
@@ -121,7 +124,7 @@ sc.data.Databroker.prototype._setupParsersAndSerializers = function() {
     else {
         goog.structs.forEach(this.options.parsers, this.registerParser, this);
     }
-    
+
     if (this.options.serializers == null) {
         goog.structs.forEach(sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES, function(cls) {
             var serializer = new cls(this);

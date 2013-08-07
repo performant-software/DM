@@ -218,15 +218,16 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 	goog.global.clientApp = new atb.ClientApp(
 		null, 
         username,
-        styleRoot
+        styleRoot,
+        {}
     );
     goog.global.clientApp.renderLinkCreationUI();
 
     goog.global.databroker = clientApp.getDatabroker();
 
-    var userResource = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
+    databroker.user = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
     var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
-    userResource.addProperty('ore:isDescribedBy', new sc.data.Uri(userUrl));
+    databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
     viewerGrid.setDimensions(1,2);
