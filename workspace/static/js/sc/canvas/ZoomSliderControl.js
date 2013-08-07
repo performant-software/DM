@@ -84,7 +84,7 @@ function(value) {
     
     this.viewport.zoomToRatio(ratio);
     
-    this.updateTooltip();
+    this.updateZoomLevelDisplay();
 };
 
 sc.canvas.ZoomSliderControl.prototype.handleBoundsChanged = function(event) {
@@ -94,21 +94,23 @@ sc.canvas.ZoomSliderControl.prototype.handleBoundsChanged = function(event) {
     
     jQuery(this.sliderDiv).slider('value', Math.log(displaySize.getShortest()));
     
-    this.updateTooltip();
+    this.updateZoomLevelDisplay();
 };
 
 sc.canvas.ZoomSliderControl.prototype.handleCanvasAdded = function(event) {
     this.updateRange();
 };
 
-sc.canvas.ZoomSliderControl.prototype.updateTooltip = function() {
+sc.canvas.ZoomSliderControl.prototype.getZoomPercentage = function() {
+    return Math.round(this.viewport.canvas.getDisplayToActualSizeRatio() * 100);
+};
+
+sc.canvas.ZoomSliderControl.prototype.updateZoomLevelDisplay = function() {
     if (this.viewport.canvas) {
-        var zoomPercentage = Math.round(
-            this.viewport.canvas.getDisplayToActualSizeRatio() * 100);
-        
         jQuery(this.sliderDiv).attr('title', 'Zoomed to ' +
-            zoomPercentage + '%.\n' +
+            this.getZoomPercentage() + '%.\n' +
             'Slide to adjust the zoom level.');
+        jQuery(this.sliderDiv).find('.ui-slider-handle').text(this.getZoomPercentage());
     }
 };
 

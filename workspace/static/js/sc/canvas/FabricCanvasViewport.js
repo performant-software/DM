@@ -729,7 +729,7 @@ sc.canvas.FabricCanvasViewport.MIN_CANVAS_DISPLAY_SIZE = 50;
  * Effectively limits how far the user can zoom in.
  * @const
  */
-sc.canvas.FabricCanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO = 25;
+sc.canvas.FabricCanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO = 5;
 
 /**
  * Returns whether the canvas will meet the minimum and maximum size constraints
