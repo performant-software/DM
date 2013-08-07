@@ -43,7 +43,8 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
 };
 
 atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
-    jQuery(this.documentIcon).unbind('mouseover').unbind('mouseout');
+    goog.events.removeAll(this.documentIcon, 'mouseover');
+    goog.events.removeAll(this.documentIcon, 'mouseout');
 
     var self = this;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
@@ -76,8 +77,7 @@ atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
         var menuButtons = [];
     }
 
-    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons,
-                                        jQuery.proxy(this.getResourceId, this));
+    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons, this.getUri.bind(this));
 };
 
 atb.viewer.CanvasViewer.prototype.handleDocumentIconClick_ = function(event) {
@@ -146,6 +146,8 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     var self = this;
     var viewport = this.viewer.mainViewport;
     var eventDispatcher = this.clientApp.getEventDispatcher();
+
+    this._addDocumentIconListeners();
     
     viewport.addEventListener('mouseup', this.onResourceClick, false, this);
     viewport.addEventListener('mouseover', this.onFeatureHover, false, this);
@@ -181,6 +183,8 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
         this.setupControlEventListeners();
 
         this._isEditable = true;
+
+        this._addDocumentIconListeners();
     }
 };
 
@@ -192,6 +196,8 @@ atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
         this.enableHoverMenus();
 
         this._isEditable = false;
+
+        this._addDocumentIconListeners();
     }
 };
 
@@ -226,7 +232,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     this.viewer.mainViewport.setCursor('pointer');
 
-    this.mouseIsOverFloatingMenuParent = true;
+    this.mouseOverUri = uri;
     
     var id = uri;
     var self = this;
@@ -234,7 +240,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
-        if (this.mouseIsOverFloatingMenuParent) {
+        if (this.mouseOverUri && this.mouseOverUri == uri) {
             if (this.isEditable()) {
                 var menuButtons = [
                     // new atb.widgets.MenuItem(
@@ -329,7 +335,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
 atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
     this.viewer.mainViewport.setCursor(null);
 
-    this.mouseIsOverFloatingMenuParent = false;
+    this.mouseOverUri = null;
     this.maybeHideHoverMenu();
 };
 
