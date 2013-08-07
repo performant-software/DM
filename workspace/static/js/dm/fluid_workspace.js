@@ -26,6 +26,14 @@ var viewerGrid = null;
 var cookies = null;
 
 
+var scrollIntoView = function(element) {
+    var offsetTop = $(element).offset().top;
+    offsetTop -= $("#main-nav").outerHeight();
+    if (offsetTop < 0) offsetTop = 0;
+
+    $(window).scrollTop(offsetTop);
+};
+
 
 var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var databroker = clientApp.getDatabroker();
@@ -112,6 +120,7 @@ var openCanvas = function(uri, urisInOrder, index) {
     var viewer = new atb.viewer.CanvasViewer(clientApp);
     viewerContainer.setViewer(viewer);
     viewerGrid.addViewerContainer(viewerContainer);
+    scrollIntoView(viewerContainer.getElement());
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
@@ -122,6 +131,8 @@ var openText = function(uri) {
     var viewer = new atb.viewer.TextEditor(clientApp);
     viewerGrid.addViewerContainer(viewerContainer);
     viewerContainer.setViewer(viewer);
+
+    scrollIntoView(viewerContainer.getElement());
 
     textResource.defer().done(function() {
         viewer.loadResourceByUri(textResource.uri);
