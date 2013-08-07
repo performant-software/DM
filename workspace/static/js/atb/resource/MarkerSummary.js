@@ -48,22 +48,33 @@ atb.resource.MarkerSummary.prototype.decorate = function () {
     this.viewport.addDeferredCanvas(deferredCanvas);
     this.viewport.render(this.imageDiv);
 
-    deferredCanvas.done(function(canvas) {
+    deferredCanvas.always(function(canvas) {
         var feature = canvas.getFabricObjectByUri(this.resource.getOneProperty('oa:hasSelector'));
 
-        canvas.hideMarkers();
-        canvas.showObject(feature);
+        if (feature) {
+            canvas.hideMarkers();
+            canvas.showObject(feature);
 
-        var boundingBox = canvas.getFeatureBoundingBox(feature);
+            var boundingBox = canvas.getFeatureBoundingBox(feature);
 
-        var cx = boundingBox.x + boundingBox.width / 2;
-        var cy = boundingBox.y + boundingBox.height / 2;
-        var width = boundingBox.width * 2;
-        var height = boundingBox.height * 2;
-        var x = cx - width / 2;
-        var y = cy - height / 2;
+            if (feature.type == 'circle' && feature.getRadiusX() == 7) {
+                // This is almost certainly an old dm 'point', so zoom out more
+                var zoomOutFactor = 5;
+            }
+            else {
+                var zoomOutFactor = 2;
+            }
 
-        this.viewport.zoomToRect(x, y, width, height);
+            var cx = boundingBox.x + boundingBox.width / 2;
+            var cy = boundingBox.y + boundingBox.height / 2;
+            var width = boundingBox.width * zoomOutFactor;
+            var height = boundingBox.height * zoomOutFactor;
+            var x = cx - width / 2;
+            var y = cy - height / 2;
+
+            this.viewport.zoomToRect(x, y, width, height);
+        }
+
         this.viewport.resumeRendering();
     }.bind(this));
     
