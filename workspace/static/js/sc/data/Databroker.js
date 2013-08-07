@@ -39,30 +39,7 @@ sc.data.Databroker = function(options) {
     this.quadStore = this.options.quadStore || new sc.data.QuadStore();
     this.syncService = this.options.syncService || new sc.data.SyncService(this);
 
-    this.parsers = [];
-    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-    this.parseableTypes = new goog.structs.Set();
-    this.serializers = [];
-    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-
-    if (this.options.parsers == null) {
-        goog.structs.forEach(sc.data.Databroker.DEFAULT_PARSER_CLASSES, function(cls) {
-            var parser = new cls(this);
-            this.registerParser(parser);
-        }, this);
-    }
-    else {
-        goog.structs.forEach(this.options.parsers, this.registerParser, this);
-    }
-    if (this.options.serializers == null) {
-        goog.structs.forEach(sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES, function(cls) {
-            var serializer = new cls(this);
-            this.registerSerializer(serializer);
-        }, this);
-    }
-    else {
-        goog.structs.forEach(this.options.serializers, this.registerSerializer, this);
-    }
+    this._setupParsersAndSerializers();
 
     this.requestedUrls = new goog.structs.Set();
     this.receivedUrls = new goog.structs.Set();
@@ -126,6 +103,35 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
 // Note: ordering here matters for preferred formats
 sc.data.Databroker.DEFAULT_PARSER_CLASSES = [sc.data.N3Parser, sc.data.RDFQueryParser];
 sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES = [sc.data.RDFQuerySerializer, sc.data.TurtleSerializer];
+
+sc.data.Databroker.prototype._setupParsersAndSerializers = function() {
+    this.parsers = [];
+    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+    this.parseableTypes = new goog.structs.Set();
+
+    this.serializers = [];
+    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+
+    if (this.options.parsers == null) {
+        goog.structs.forEach(sc.data.Databroker.DEFAULT_PARSER_CLASSES, function(cls) {
+            var parser = new cls(this);
+            this.registerParser(parser);
+        }, this);
+    }
+    else {
+        goog.structs.forEach(this.options.parsers, this.registerParser, this);
+    }
+    
+    if (this.options.serializers == null) {
+        goog.structs.forEach(sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES, function(cls) {
+            var serializer = new cls(this);
+            this.registerSerializer(serializer);
+        }, this);
+    }
+    else {
+        goog.structs.forEach(this.options.serializers, this.registerSerializer, this);
+    }
+};
 
 
 /**
