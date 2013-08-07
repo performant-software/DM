@@ -231,7 +231,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     
     this.rootDiv.appendChild(this.toolbarDiv);
     
-    this.renderPropertiesPane();
+    // this.renderPropertiesPane();
     
     this.rootDiv.appendChild(this.editorDiv);
     
@@ -281,7 +281,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
     this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
     
-    this.finishRenderPropertiesPane();
+    // this.finishRenderPropertiesPane();
     
     this.addGlobalEventListeners();
 
@@ -406,87 +406,87 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 
         myToolbar.addChildAt(annotateButton, 0, true);
         
-        this.propertiesButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
-            'properties',
-            'Edit this document\'s properties',
-            '',
-            'icon-info-sign'
-        );
-        goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
-        myToolbar.addChild(this.propertiesButton, true);
+        // this.propertiesButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
+        //     'properties',
+        //     'Edit this document\'s properties',
+        //     '',
+        //     'icon-info-sign'
+        // );
+        // goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
+        // myToolbar.addChild(this.propertiesButton, true);
     }
 
     // Hook the toolbar into the field.
     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
 };
 
-atb.viewer.TextEditor.prototype.renderPropertiesPane = function () {
-    this.propertiesPaneDiv = this.domHelper.createDom('div');
-    jQuery(this.propertiesPaneDiv).hide();
+// atb.viewer.TextEditor.prototype.renderPropertiesPane = function () {
+//     this.propertiesPaneDiv = this.domHelper.createDom('div');
+//     jQuery(this.propertiesPaneDiv).hide();
     
-    this.rootDiv.appendChild(this.propertiesPaneDiv);
+//     this.rootDiv.appendChild(this.propertiesPaneDiv);
     
-    this.propertiesPane = new atb.viewer.TextEditorProperties(this);
-};
+//     this.propertiesPane = new atb.viewer.TextEditorProperties(this);
+// };
 
-atb.viewer.TextEditor.prototype.finishRenderPropertiesPane = function () {
-    this.propertiesPane.render(this.propertiesPaneDiv);
-};
+// atb.viewer.TextEditor.prototype.finishRenderPropertiesPane = function () {
+//     this.propertiesPane.render(this.propertiesPaneDiv);
+// };
 
-atb.viewer.TextEditor.prototype.updateAllPropertiesFromPane = function () {
-    var properties = this.propertiesPane.getUnescapedProperties();
+// atb.viewer.TextEditor.prototype.updateAllPropertiesFromPane = function () {
+//     var properties = this.propertiesPane.getUnescapedProperties();
     
-    this.setProperties(properties);
-};
+//     this.setProperties(properties);
+// };
 
-atb.viewer.TextEditor.prototype.updatePropertiesPaneContents = function () {
-    var properties = {
-        'purpose': this.purpose
-    };
+// atb.viewer.TextEditor.prototype.updatePropertiesPaneContents = function () {
+//     var properties = {
+//         'purpose': this.purpose
+//     };
     
-    this.propertiesPane.setProperties(properties);
-};
+//     this.propertiesPane.setProperties(properties);
+// };
 
-atb.viewer.TextEditor.prototype.setProperties = function (properties) {
-    if (properties.purpose) {
-        this.setPurpose(properties.purpose);
-    }
-};
+// atb.viewer.TextEditor.prototype.setProperties = function (properties) {
+//     if (properties.purpose) {
+//         this.setPurpose(properties.purpose);
+//     }
+// };
 
-atb.viewer.TextEditor.prototype.showPropertiesPane = function () {
-    this.updatePropertiesPaneContents();
+// atb.viewer.TextEditor.prototype.showPropertiesPane = function () {
+//     this.updatePropertiesPaneContents();
     
-    var self = this;
-    jQuery(this.field.getElement()).fadeOut(300);
-    jQuery(this.propertiesPaneDiv).fadeIn(300);
-    jQuery(this.documentIcon).fadeOut(300);
+//     var self = this;
+//     jQuery(this.field.getElement()).fadeOut(300);
+//     jQuery(this.propertiesPaneDiv).fadeIn(300);
+//     jQuery(this.documentIcon).fadeOut(300);
     
-    this.propertiesPanelVisible = true;
+//     this.propertiesPanelVisible = true;
     
-    this.propertiesButton.setChecked(true);
-};
+//     this.propertiesButton.setChecked(true);
+// };
 
-atb.viewer.TextEditor.prototype.hidePropertiesPane = function () {
-    var self = this;
-    jQuery(this.propertiesPaneDiv).fadeOut(300);
-    jQuery(this.field.getElement()).fadeIn(300);
-    jQuery(this.documentIcon).fadeIn(300);
+// atb.viewer.TextEditor.prototype.hidePropertiesPane = function () {
+//     var self = this;
+//     jQuery(this.propertiesPaneDiv).fadeOut(300);
+//     jQuery(this.field.getElement()).fadeIn(300);
+//     jQuery(this.documentIcon).fadeIn(300);
     
-    this.propertiesPanelVisible = false;
+//     this.propertiesPanelVisible = false;
     
-    this.updateAllPropertiesFromPane();
+//     this.updateAllPropertiesFromPane();
     
-    this.propertiesButton.setChecked(false);
-};
+//     this.propertiesButton.setChecked(false);
+// };
 
-atb.viewer.TextEditor.prototype.handlePropertiesButtonClick_ = function (e) {
-    if (this.propertiesPanelVisible) {
-        this.hidePropertiesPane();
-    }
-    else {
-        this.showPropertiesPane();
-    }
-};
+// atb.viewer.TextEditor.prototype.handlePropertiesButtonClick_ = function (e) {
+//     if (this.propertiesPanelVisible) {
+//         this.hidePropertiesPane();
+//     }
+//     else {
+//         this.showPropertiesPane();
+//     }
+// };
 
 atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
     this.purpose = purpose;
