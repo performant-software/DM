@@ -44,39 +44,26 @@ atb.resource.MarkerSummary.prototype.decorate = function () {
     this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
     this.viewport.resize(this.size.width, this.size.height);
     var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getOneProperty('oa:hasSource'), this.databroker);
-    this.viewport.pauseRendering();
     this.viewport.addDeferredCanvas(deferredCanvas);
     this.viewport.render(this.imageDiv);
 
-    deferredCanvas.always(function(canvas) {
-        var feature = canvas.getFabricObjectByUri(this.resource.getOneProperty('oa:hasSelector'));
+    var showFeature = function(canvas) {
+        var featureUri = this.resource.getOneProperty('oa:hasSelector');
+        var feature = canvas.getFabricObjectByUri(featureUri);
 
         if (feature) {
+            this.viewport.pauseRendering();
+
             canvas.hideMarkers();
             canvas.showObject(feature);
 
-            var boundingBox = canvas.getFeatureBoundingBox(feature);
+            this.viewport.zoomToFeatureByUri(featureUri);
 
-            if (feature.type == 'circle' && feature.getRadiusX() == 7) {
-                // This is almost certainly an old dm 'point', so zoom out more
-                var zoomOutFactor = 5;
-            }
-            else {
-                var zoomOutFactor = 2;
-            }
-
-            var cx = boundingBox.x + boundingBox.width / 2;
-            var cy = boundingBox.y + boundingBox.height / 2;
-            var width = boundingBox.width * zoomOutFactor;
-            var height = boundingBox.height * zoomOutFactor;
-            var x = cx - width / 2;
-            var y = cy - height / 2;
-
-            this.viewport.zoomToRect(x, y, width, height);
+            this.viewport.resumeRendering();
         }
+    }.bind(this);
 
-        this.viewport.resumeRendering();
-    }.bind(this));
+    deferredCanvas.progress(showFeature).always(showFeature);
     
     this.div.appendChild(this.imageDiv);
 };

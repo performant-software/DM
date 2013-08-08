@@ -20,6 +20,8 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
     this.domHelper = new goog.dom.DomHelper(this.options.doc);
     var domHelper = new goog.dom.DomHelper(this.options.doc);
 
+    this.size = new goog.math.Size(0, 0);
+
     this.baseDiv = domHelper.createDom('div', {'class': 'sc-CanvasViewport'});
     var canvasElement = domHelper.createDom('canvas');
     this.fabricCanvas = new fabric.Canvas(canvasElement, {
@@ -818,6 +820,20 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToFit = function() {
     return this;
 };
 
+sc.canvas.FabricCanvasViewport.prototype.calculateRatioForBox = function(width, height) {
+    if (height == null) {
+        height = width.height;
+        width = width.width;
+    }
+
+    var rectSize = new goog.math.Size(width, height);
+    rectSize.scaleToFit(this.getDisplaySize());
+    var coord = this.canvasToLayerCoord(rectSize.width, rectSize.height);
+    var ratio = coord.x / width;
+
+    return ratio;
+};
+
 /**
  * Zooms the viewer so that the specified rectangle is completely visible
  *
@@ -836,23 +852,37 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRect = function(x, y, width, heig
 
     this.complainIfNoCanvas();
 
-    var canvas = this.canvas;
-    var canvasSize = canvas.getSize();
-
-    var rectSize = new goog.math.Size(width, height);
-    rectSize.scaleToFit(this.getDisplaySize());
-    var coord = this.canvasToLayerCoord(rectSize.width, rectSize.height);
-    var ratio = coord.x / width;
-
-    this.zoomToRatio(ratio);
+    this.zoomToRatio(this.calculateRatioForBox(width, height));
     this.centerOnCanvasCoord(x + width / 2, y + height / 2);
 };
 
+sc.canvas.FabricCanvasViewport.prototype.zoomToFeatureByUri = function(uri) {
+    this.complainIfNoCanvas();
+
+    var feature = this.canvas.getFabricObjectByUri(uri);
+    var boundingBox = this.canvas.getFeatureBoundingBox(feature);
+
+    if (feature.type == 'circle' && feature.getRadiusX() == 7) {
+        // This is almost certainly an old dm 'point', so zoom out more
+        var zoomOutFactor = 5;
+    }
+    else {
+        var zoomOutFactor = 2;
+    }
+
+    var cx = boundingBox.x + boundingBox.width / 2;
+    var cy = boundingBox.y + boundingBox.height / 2;
+    var width = boundingBox.width * zoomOutFactor;
+    var height = boundingBox.height * zoomOutFactor;
+
+    var ratio = this.calculateRatioForBox(width, height);
+
+    this.zoomToRatio(ratio > 1 ? 1 : ratio);
+    this.centerOnCanvasCoord(cx, cy);
+};
+
 sc.canvas.FabricCanvasViewport.prototype.getDisplaySize = function() {
-    return new goog.math.Size(
-        this.fabricCanvas.getWidth(),
-        this.fabricCanvas.getHeight()
-    );
+    return this.size.clone();
 };
 
 sc.canvas.FabricCanvasViewport.prototype.getSize = sc.canvas.FabricCanvasViewport.prototype.getDisplaySize;
