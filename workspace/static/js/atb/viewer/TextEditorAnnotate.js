@@ -435,7 +435,9 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	
 	// Check for click listeners so that they aren't fired multiple times
 	if(!goog.events.hasListener(object, goog.events.EventType.CLICK)) {
-		goog.events.listen(object, goog.events.EventType.CLICK, function( mouseEvent ){
+		goog.events.listen(object, goog.events.EventType.CLICK, function(mouseEvent) {
+			event.stopPropagation();
+
             this.selectAnnotationSpan(object, mouseEvent);
 			return this.handleHighlightClick(object, mouseEvent);
 		}, false, this);
