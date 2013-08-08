@@ -826,10 +826,12 @@ sc.canvas.FabricCanvasViewport.prototype.calculateRatioForBox = function(width, 
         width = width.width;
     }
 
+    this.complainIfNoCanvas();
+
     var rectSize = new goog.math.Size(width, height);
-    rectSize.scaleToFit(this.getDisplaySize());
-    var coord = this.canvasToLayerCoord(rectSize.width, rectSize.height);
-    var ratio = coord.x / width;
+    rectSize.scaleToFit(this.size);
+
+    var ratio = rectSize.width / width;
 
     return ratio;
 };
