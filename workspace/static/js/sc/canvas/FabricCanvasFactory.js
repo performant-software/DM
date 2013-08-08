@@ -102,17 +102,17 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
 
             canvas.pauseRendering();
 
-            setTimeout(function() {
+            // setTimeout(function() {
                 sc.canvas.FabricCanvasFactory.findAndAddImages(canvas);
 
-            setTimeout(function() {
+            // setTimeout(function() {
                 sc.canvas.FabricCanvasFactory.findAndAddSegments(canvas);
 
-            setTimeout(function() {
+            // setTimeout(function() {
                 sc.canvas.FabricCanvasFactory.findAndAddSelectors(canvas);
                 // sc.canvas.FabricCanvasFactory.findAndAddComments(canvas);
 
-            setTimeout(function() {
+            // setTimeout(function() {
                 canvas.resumeRendering();
 
                 if (deferredResource.state() == 'resolved') {
@@ -124,10 +124,10 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
                 else {
                     deferredCanvas.notifyWith(canvas, [canvas]);
                 }
-            }, 1);
-            }, 1)
-            }, 1);
-            }, 1);
+            // }, 1);
+            // }, 1)
+            // }, 1);
+            // }, 1);
         }
     }
     deferredResource.progress(withResource).done(withResource).fail(withResource);
