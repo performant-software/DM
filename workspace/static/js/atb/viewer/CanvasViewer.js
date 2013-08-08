@@ -364,7 +364,7 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
 atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
-    if (resource.hasAnyType('dms:Canvas')) {
+    if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
         this.setCanvasByUri(resource.getUri());
     }
     else if (resource.hasAnyType('oa:SpecificResource')) {
@@ -372,7 +372,7 @@ atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
     }
     else if (resource.hasAnyType('oa:SvgSelector')) {
         var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(uri));
-        loadSpecificResource(specificResource);
+        this.loadSpecificResource(specificResource);
     }
 };
 
