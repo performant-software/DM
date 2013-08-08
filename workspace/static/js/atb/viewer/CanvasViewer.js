@@ -380,43 +380,21 @@ atb.viewer.CanvasViewer.prototype.loadSpecificResource = function(specificResour
     specificResource = this.databroker.getResource(specificResource);
 
     var sourceUri = specificResource.getOneProperty('oa:hasSource');
-    this.setCanvasByUri(sourceUri);
-    this.viewer.mainViewport.pauseRendering();
-    this.viewer.marqueeViewport.pauseRendering();
+    var deferredCanvas = this.setCanvasByUri(sourceUri);
 
-    goog.events.listenOnce(this.viewer.marqueeViewport, 'canvasAdded', function(e) {
+    var zoomToFeature = function() {
+        this.viewer.mainViewport.pauseRendering();
+        this.viewer.marqueeViewport.pauseRendering();
+
         var canvas = this.viewer.mainViewport.canvas;
-        var feature = canvas.getFabricObjectByUri(specificResource.getOneProperty('oa:hasSelector'));
+        var featureUri = specificResource.getOneProperty('oa:hasSelector')
+        var feature = canvas.getFabricObjectByUri(featureUri);
 
         if (feature) {
             canvas.hideMarkers();
             canvas.showObject(feature);
 
-            var boundingBox = canvas.getFeatureBoundingBox(feature);
-
-            if (feature.type == 'circle' && feature.getRadiusX() == 7) {
-                // This is almost certainly an old dm 'point', so zoom out more
-                var zoomOutFactor = 5;
-            }
-            else {
-                var zoomOutFactor = 2;
-            }
-
-            var cx = boundingBox.x + boundingBox.width / 2;
-            var cy = boundingBox.y + boundingBox.height / 2;
-            var width = boundingBox.width * zoomOutFactor;
-            var height = boundingBox.height * zoomOutFactor;
-            var x = cx - width / 2;
-            var y = cy - height / 2;
-
-            this.viewer.mainViewport.zoomToRect(x, y, width, height);
-
-            if (canvas.getDisplayToActualSizeRatio() > 1) {
-                // But don't ever zoom past 100%
-                // (This actually isn't inefficient, because only simple math is being done until canvas rendering is resumed)
-                this.viewer.mainViewport.zoomToRatio(1);
-                this.viewer.mainViewport.centerOnCanvasCoord(cx, cy);
-            }
+            this.viewer.mainViewport.zoomToFeatureByUri(featureUri);
         }
         else {
             console.error('Specific Resource', specificResource.uri, 'not found on canvas', canvas.getUri());
@@ -424,7 +402,9 @@ atb.viewer.CanvasViewer.prototype.loadSpecificResource = function(specificResour
 
         this.viewer.mainViewport.resumeRendering();
         this.viewer.marqueeViewport.resumeRendering();
-    }, false, this);
+    }.bind(this);
+
+    deferredCanvas.progress(zoomToFeature).always(zoomToFeature);
 };
 
 atb.viewer.CanvasViewer.prototype.setCanvasByUri =
@@ -449,6 +429,8 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     });
     
     this.viewer.addDeferredCanvas(deferredCanvas);
+
+    return deferredCanvas;
 };
 
 atb.viewer.CanvasViewer.prototype.setCanvasById =
