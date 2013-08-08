@@ -35,7 +35,7 @@ atb.resource.MarkerSummary.prototype.decorate = function () {
     this.imageDiv = this.domHelper.createDom(
         'div',
         {
-            'class' : 'atb-markersummary-thumb'
+            'class' : 'atb-markersummary-thumb atb-markersummary-loadingSpinner'
         }
     );
     jQuery(this.imageDiv).width(this.size.width);
