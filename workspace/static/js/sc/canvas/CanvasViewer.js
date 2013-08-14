@@ -192,6 +192,8 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     this.mainViewport.setCanvas(canvas);
     this.mainViewport.zoomToFit();
 
+    this.mainViewport.canvas.hideMarkers();
+
     var deferredMarqueeCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
         canvas.getUri(),
         this.databroker,

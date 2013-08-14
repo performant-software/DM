@@ -218,11 +218,11 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         this.handleToggleMarkers
     );
     this.addButton(toggleMarkersButton);
-    toggleMarkersButton.setChecked(true);
+    toggleMarkersButton.setChecked(false);
     this.viewer.mainViewport.addEventListener(
         'canvasAdded',
         function(event) {
-            toggleMarkersButton.setChecked(true);
+            toggleMarkersButton.setChecked(false);
         });
     for (var name in this.controls) {
         if (this.controls.hasOwnProperty(name)) {
