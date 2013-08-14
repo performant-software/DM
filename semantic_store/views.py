@@ -140,6 +140,9 @@ def import_old_data(request):
     else:
         i = 0
         for file_name in listdir("output/"):
+            if file_name.startswith('.'):
+                continue
+
             try:
                 everything_graph.parse("output/" + file_name, format=guess_format(file_name) or 'turtle')
             except Exception as e:
