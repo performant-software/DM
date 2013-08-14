@@ -39,30 +39,7 @@ sc.data.Databroker = function(options) {
     this.quadStore = this.options.quadStore || new sc.data.QuadStore();
     this.syncService = this.options.syncService || new sc.data.SyncService(this);
 
-    this.parsers = [];
-    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-    this.parseableTypes = new goog.structs.Set();
-    this.serializers = [];
-    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-
-    if (this.options.parsers == null) {
-        goog.structs.forEach(sc.data.Databroker.DEFAULT_PARSER_CLASSES, function(cls) {
-            var parser = new cls(this);
-            this.registerParser(parser);
-        }, this);
-    }
-    else {
-        goog.structs.forEach(this.options.parsers, this.registerParser, this);
-    }
-    if (this.options.serializers == null) {
-        goog.structs.forEach(sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES, function(cls) {
-            var serializer = new cls(this);
-            this.registerSerializer(serializer);
-        }, this);
-    }
-    else {
-        goog.structs.forEach(this.options.serializers, this.registerSerializer, this);
-    }
+    this._setupParsersAndSerializers();
 
     this.requestedUrls = new goog.structs.Set();
     this.receivedUrls = new goog.structs.Set();
@@ -78,6 +55,8 @@ sc.data.Databroker = function(options) {
 
     this.currentProject = null
     this.allProjects = [];
+
+    this.user = this.options.user;
 
     this.newResourceUris = new goog.structs.Set();
 
@@ -120,12 +99,42 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
 
         return url;
     },
-    corsEnabledDomains: []
+    corsEnabledDomains: [],
+    user: null
 };
 
 // Note: ordering here matters for preferred formats
 sc.data.Databroker.DEFAULT_PARSER_CLASSES = [sc.data.N3Parser, sc.data.RDFQueryParser];
 sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES = [sc.data.RDFQuerySerializer, sc.data.TurtleSerializer];
+
+sc.data.Databroker.prototype._setupParsersAndSerializers = function() {
+    this.parsers = [];
+    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+    this.parseableTypes = new goog.structs.Set();
+
+    this.serializers = [];
+    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+
+    if (this.options.parsers == null) {
+        goog.structs.forEach(sc.data.Databroker.DEFAULT_PARSER_CLASSES, function(cls) {
+            var parser = new cls(this);
+            this.registerParser(parser);
+        }, this);
+    }
+    else {
+        goog.structs.forEach(this.options.parsers, this.registerParser, this);
+    }
+
+    if (this.options.serializers == null) {
+        goog.structs.forEach(sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES, function(cls) {
+            var serializer = new cls(this);
+            this.registerSerializer(serializer);
+        }, this);
+    }
+    else {
+        goog.structs.forEach(this.options.serializers, this.registerSerializer, this);
+    }
+};
 
 
 /**
@@ -211,10 +220,15 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     var successHandler = function(data, textStatus, jqXhr) {
         self.receivedUrls.add(url);
 
-        self.processResponse(data, url, jqXhr, function() {
-            handler.apply(this, arguments);
-            deferred.resolveWith(this, arguments);
-        });
+        if (data) {
+            self.processResponse(data, url, jqXhr, function() {
+                handler.apply(this, arguments);
+                deferred.resolveWith(this, arguments);
+            });
+        }
+        else {
+            // Received a successful response with no data, such as a 204
+        }
     };
 
     var errorHandler = function(jqXhr, textStatus, errorThrown) {

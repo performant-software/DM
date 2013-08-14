@@ -26,6 +26,14 @@ var viewerGrid = null;
 var cookies = null;
 
 
+var scrollIntoView = function(element) {
+    var offsetTop = $(element).offset().top;
+    offsetTop -= $("#main-nav").outerHeight();
+    if (offsetTop < 0) offsetTop = 0;
+
+    $(window).scrollTop(offsetTop);
+};
+
 
 var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var databroker = clientApp.getDatabroker();
@@ -112,6 +120,7 @@ var openCanvas = function(uri, urisInOrder, index) {
     var viewer = new atb.viewer.CanvasViewer(clientApp);
     viewerContainer.setViewer(viewer);
     viewerGrid.addViewerContainer(viewerContainer);
+    scrollIntoView(viewerContainer.getElement());
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
@@ -122,6 +131,8 @@ var openText = function(uri) {
     var viewer = new atb.viewer.TextEditor(clientApp);
     viewerGrid.addViewerContainer(viewerContainer);
     viewerContainer.setViewer(viewer);
+
+    scrollIntoView(viewerContainer.getElement());
 
     textResource.defer().done(function() {
         viewer.loadResourceByUri(textResource.uri);
@@ -207,15 +218,16 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 	goog.global.clientApp = new atb.ClientApp(
 		null, 
         username,
-        styleRoot
+        styleRoot,
+        {}
     );
     goog.global.clientApp.renderLinkCreationUI();
 
     goog.global.databroker = clientApp.getDatabroker();
 
-    var userResource = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
+    databroker.user = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
     var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
-    userResource.addProperty('ore:isDescribedBy', new sc.data.Uri(userUrl));
+    databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
     viewerGrid.setDimensions(1,2);

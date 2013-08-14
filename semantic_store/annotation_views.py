@@ -102,7 +102,10 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
 
     return negotiated_graph_response(request, stored_g, close_graph=True, status=201)
 
-def get_annotations(request, graph_uri, anno_uris=[]):
+def get_annotations(request, graph_uri, anno_uris=None):
+    if anno_uris is None:
+        anno_uris = []
+
     result_g = graph()
     g = destination_graph(graph_uri)
     num_anno_uris = len(anno_uris)
@@ -136,7 +139,7 @@ def get_annotations(request, graph_uri, anno_uris=[]):
         return negotiated_graph_response(request, result_g, close_graph=True, status=200)
     else:
         result_g.close()
-        return HttpResponseNotFound()
+        return HttpResponse(status=204) # Not really a 404, just no content
 
 def search_annotations(request, graph_uri, search_uri):
     g = destination_graph(graph_uri)
@@ -150,7 +153,7 @@ def search_annotations(request, graph_uri, search_uri):
     anno_uris = list(anno_uris)
     g.close()
     if not anno_uris:
-        return HttpResponseNotFound()
+        return HttpResponse(status=204) # Not really a 404, just no content
     else:
         return get_annotations(request, graph_uri, anno_uris)
 
