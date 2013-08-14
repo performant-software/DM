@@ -169,6 +169,22 @@ sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function() {
     this.marqueeViewport.requestFrameRender();
 };
 
+sc.canvas.CanvasViewer.prototype.addDeferredCanvas = function(deferred) {
+    var self = this;
+    var _canvas = null;
+    
+    var withCanvas = function(canvas) {
+        if (! _canvas) {
+            _canvas = canvas;
+            self.setCanvas(canvas);
+        }
+    };
+    
+    deferred.progress(withCanvas).done(withCanvas);
+    
+    return deferred;
+};
+
 sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     this.mainViewport.clear();
     this.marqueeViewport.clear();
@@ -333,20 +349,4 @@ sc.canvas.CanvasViewer.prototype.updateMarqueeBox = function() {
 sc.canvas.CanvasViewer.prototype.requestFrameRender = function() {
     this.mainViewport.requestFrameRender();
     this.marqueeViewport.requestFrameRender();
-};
-
-sc.canvas.CanvasViewer.prototype.addDeferredCanvas = function(deferred) {
-    var self = this;
-    var _canvas = null;
-    
-    var withCanvas = function(canvas) {
-        if (! _canvas) {
-            _canvas = canvas;
-            self.setCanvas(canvas);
-        }
-    };
-    
-    deferred.progress(withCanvas).done(withCanvas);
-    
-    return deferred;
 };
