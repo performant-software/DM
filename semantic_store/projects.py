@@ -48,7 +48,7 @@ def create_project(g, host):
             project_g.set((project_uri, NS.dcterms.created, Literal(datetime.utcnow())))
 
             for t in g.triples((user, None, None)):
-                project_g.remote(t)
+                project_g.remove(t)
 
             check_project_types(project_g, project_uri)
 
