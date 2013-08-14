@@ -144,8 +144,8 @@ sc.canvas.CanvasViewer.prototype.getDisplaySize = function() {
 sc.canvas.CanvasViewer.prototype.getSize =
 sc.canvas.CanvasViewer.prototype.getDisplaySize;
 
-sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY = 0.6;
-sc.canvas.CanvasViewer.MARQUEE_MARKER_HIDDEN_OPACITY = 0.4;
+sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY = 1.0;
+sc.canvas.CanvasViewer.MARQUEE_MARKER_HIDDEN_OPACITY = 1.0;
 
 sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function() {
     var marqueeCanvas = this.marqueeViewport.canvas;
