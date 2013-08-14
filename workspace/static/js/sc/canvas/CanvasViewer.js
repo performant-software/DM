@@ -170,15 +170,16 @@ sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function() {
 };
 
 sc.canvas.CanvasViewer.prototype.addDeferredCanvas = function(deferred) {
-    var self = this;
     var _canvas = null;
     
     var withCanvas = function(canvas) {
         if (! _canvas) {
             _canvas = canvas;
-            self.setCanvas(canvas);
+            this.setCanvas(canvas);
         }
-    };
+
+        this.mainViewport.canvas.hideMarkers();
+    }.bind(this);
     
     deferred.progress(withCanvas).done(withCanvas);
     
