@@ -32,6 +32,8 @@ def create_project_from_request(request):
     return HttpResponse("Successfully created the project.")
 
 def create_project(g, host):
+    sanitize_texts(g)
+    
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
@@ -39,8 +41,6 @@ def create_project(g, host):
                     }""", initNs=ns)
 
     for uri, user in query:
-        sanitize_texts(g)
-
         with transaction.commit_on_success():
             project_uri = uris.uri('semantic_store_projects', uri=uri)
             project_g = Graph(store=rdfstore(), identifier=project_uri)
@@ -59,7 +59,7 @@ def create_project(g, host):
         username = user.split("/")[-1]
         create_project_user_graph(host, username, uri)
 
-        project_g.close()
+    project_g.close()
 
 def get_project_graph_for_response(request, project_uri):
     uri = uris.uri('semantic_store_projects', uri=project_uri)
