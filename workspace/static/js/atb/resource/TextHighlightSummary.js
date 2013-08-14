@@ -60,18 +60,26 @@ atb.resource.TextHighlightSummary.prototype.decorate = function (opt_label) {
     } else {
         opt_label = opt_label + " ";
     }
-    
-    this.textBody = this.domHelper.createElement('div');
-    jQuery(this.textBody).html(opt_label);
-    this.textBodySpan = this.domHelper.createElement('span');
-    jQuery(this.textBodySpan).addClass('atb-resourcesummary-textbody');
-    this.textBody.appendChild(this.textBodySpan);
-    jQuery(this.textBodySpan).html(truncHtml)
-    var textTitleText = this.domHelper.createTextNode(" in " + this.databroker.dataModel.getTitle(this.parentResource));
-    jQuery(this.textBody).append(textTitleText);
-    jQuery(this.div).append(this.textBody);
+
+    if (exactText == 'Previous' || exactText == 'Next') {
+        this.textBody = this.domHelper.createElement('div');
+        var textTitleText = this.domHelper.createTextNode(this.databroker.dataModel.getTitle(this.parentResource));
+        jQuery(this.textBody).append(textTitleText);
+        jQuery(this.div).append(this.textBody);
+    }
+    else {
+        this.textBody = this.domHelper.createElement('div');
+        jQuery(this.textBody).html(opt_label);
+        this.textBodySpan = this.domHelper.createElement('span');
+        jQuery(this.textBodySpan).addClass('atb-resourcesummary-textbody');
+        this.textBody.appendChild(this.textBodySpan);
+        jQuery(this.textBodySpan).html(truncHtml)
+        var textTitleText = this.domHelper.createTextNode(" in " + this.databroker.dataModel.getTitle(this.parentResource));
+        jQuery(this.textBody).append(textTitleText);
+        jQuery(this.div).append(this.textBody);
+    }
 	
-    jQuery(this.div).append('<div class="atb-resourcesummary-user">added by ' + this.user + '</div>');
+    // jQuery(this.div).append('<div class="atb-resourcesummary-user">added by ' + this.user + '</div>');
 };
 
 atb.resource.TextHighlightSummary.prototype.determineCutoff = function (text, limit) {
