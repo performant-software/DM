@@ -34,27 +34,28 @@ def create_project_from_request(request):
 def create_project(g, host):
     sanitize_texts(g)
 
-    for user in g.subjects(NS.rdf.type, NS.foaf.Agent):
-        username = user.split("/")[-1]
+    with transaction.commit_on_success():
+        for user in g.subjects(NS.rdf.type, NS.foaf.Agent):
+            username = user.split("/")[-1]
 
-        for project in g.objects(user, NS.perm.hasPermissionOver):
-            project_uri = uris.uri('semantic_store_projects', uri=project)
-            project_g = Graph(store=rdfstore(), identifier=project_uri)
-            bind_namespaces(project_g)
+            for project in g.objects(user, NS.perm.hasPermissionOver):
+                project_uri = uris.uri('semantic_store_projects', uri=project)
+                project_g = Graph(store=rdfstore(), identifier=project_uri)
+                bind_namespaces(project_g)
 
-            project_g += g
+                project_g += g
 
-            url = uris.url(host, 'semantic_store_projects', uri=project)
-            project_g.set((project_uri, NS.dcterms.created, Literal(datetime.utcnow())))
+                url = uris.url(host, 'semantic_store_projects', uri=project)
+                project_g.set((project_uri, NS.dcterms.created, Literal(datetime.utcnow())))
 
-            for t in g.triples((user, None, None)):
-                project_g.remove(t)
+                for t in g.triples((user, None, None)):
+                    project_g.remove(t)
 
-            check_project_types(project_g, project_uri)
+                check_project_types(project_g, project_uri)
 
-            create_project_user_graph(host, username, project_uri)
+                create_project_user_graph(host, username, project_uri)
 
-            project_g.close()
+                project_g.close()
 
 def get_project_graph_for_response(request, project_uri):
     uri = uris.uri('semantic_store_projects', uri=project_uri)
