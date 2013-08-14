@@ -53,7 +53,7 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
 
     this.setupDefaultButtons();
 
-    this.setupImageChoices();
+    // this.setupImageChoices();
 
     this.viewer.mainViewport.addEventListener(
         'canvasAdded', this.handleCanvasAdded,
@@ -124,41 +124,41 @@ sc.canvas.CanvasToolbar.prototype.createButton = function(
 sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     this.buttonsByName = {};
 
-    var leftButton = this.createButton(
-        'previousPage',
-        'Go to the previous canvas in this sequence',
-        '',
-        'icon-chevron-left',
-        this.handlePreviousClick
-    );
-    this.addButton(leftButton);
+    // var leftButton = this.createButton(
+    //     'previousPage',
+    //     'Go to the previous canvas in this sequence',
+    //     '',
+    //     'icon-chevron-left',
+    //     this.handlePreviousClick
+    // );
+    // this.addButton(leftButton);
 
-    var pageChooserButton = this.createButton(
-        'pageChooser',
-        'Pick another folia from this manuscript to view',
-        '',
-        'icon-list',
-        this.handlePageChooserClick
-    );
-    this.setupPageChooser();
-    this.addButton(pageChooserButton);
+    // var pageChooserButton = this.createButton(
+    //     'pageChooser',
+    //     'Pick another folia from this manuscript to view',
+    //     '',
+    //     'icon-list',
+    //     this.handlePageChooserClick
+    // );
+    // this.setupPageChooser();
+    // this.addButton(pageChooserButton);
 
-    var rightButton = this.createButton(
-        'nextPage',
-        'Go to the next canvas in this sequence',
-        '',
-        'icon-chevron-right',
-        this.handleNextClick
-    );
-    this.addButton(rightButton);
+    // var rightButton = this.createButton(
+    //     'nextPage',
+    //     'Go to the next canvas in this sequence',
+    //     '',
+    //     'icon-chevron-right',
+    //     this.handleNextClick
+    // );
+    // this.addButton(rightButton);
 
-    this.autoEnableNavButtons();
-    this.viewer.mainViewport.addEventListener(
-        'canvasAdded',
-        this.autoEnableNavButtons,
-        false, this);
+    // this.autoEnableNavButtons();
+    // this.viewer.mainViewport.addEventListener(
+    //     'canvasAdded',
+    //     this.autoEnableNavButtons,
+    //     false, this);
 
-    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+    // this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
     if (!this.forReadOnly) {
         var panZoomButton = this.createButton(
@@ -234,32 +234,32 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         }
     }
 
-    var transcriptionsButton = this.createButton(
-        'transcriptions',
-        'Show and hide transcriptions',
-        '',
-        'icon-font',
-        this.handleTranscriptionsClick
-    );
-    transcriptionsButton.setChecked(true);
-    transcriptionsButton.addEventListener('enter', function(event) {
-        if (this.viewer.mainViewport.canvas) {
-            this.viewer.mainViewport.canvas.fadeTextAnnosToOpacity(0.7);
-        }
-    }, false, this);
-    transcriptionsButton.addEventListener('leave',
-        this.handleTranscriptionsClick,
-        false, this);
-    this.addButton(transcriptionsButton);
+    // var transcriptionsButton = this.createButton(
+    //     'transcriptions',
+    //     'Show and hide transcriptions',
+    //     '',
+    //     'icon-font',
+    //     this.handleTranscriptionsClick
+    // );
+    // transcriptionsButton.setChecked(true);
+    // transcriptionsButton.addEventListener('enter', function(event) {
+    //     if (this.viewer.mainViewport.canvas) {
+    //         this.viewer.mainViewport.canvas.fadeTextAnnosToOpacity(0.7);
+    //     }
+    // }, false, this);
+    // transcriptionsButton.addEventListener('leave',
+    //     this.handleTranscriptionsClick,
+    //     false, this);
+    // this.addButton(transcriptionsButton);
     
-    var imageChoicesButton = this.createButton(
-        'imageChoices',
-        'Show alternate image choices',
-        '',
-        'icon-picture',
-        this.handleImageChoicesClick
-    );
-    this.addButton(imageChoicesButton);
+    // var imageChoicesButton = this.createButton(
+    //     'imageChoices',
+    //     'Show alternate image choices',
+    //     '',
+    //     'icon-picture',
+    //     this.handleImageChoicesClick
+    // );
+    // this.addButton(imageChoicesButton);
 };
 
 sc.canvas.CanvasToolbar.prototype.setupPageChooser = function() {
@@ -304,19 +304,19 @@ sc.canvas.CanvasToolbar.prototype.updatePageChooser = function() {
 };
 
 sc.canvas.CanvasToolbar.prototype.handleToggleMarkers = function(event) {
-    var canvas = this.viewer.mainViewport.canvas;
-    var button = this.buttonsByName['toggle-markers'];
+    // var canvas = this.viewer.mainViewport.canvas;
+    // var button = this.buttonsByName['toggle-markers'];
 
-    if (canvas) {
-        if (button.isChecked()) {
-            canvas.showMarkers();
-            button.setChecked(true);
-        }
-        else {
-            canvas.hideMarkers();
-            button.setChecked(false);
-        }
-    }
+    // if (canvas) {
+    //     if (button.isChecked()) {
+    //         canvas.showMarkers();
+    //         button.setChecked(true);
+    //     }
+    //     else {
+    //         canvas.hideMarkers();
+    //         button.setChecked(false);
+    //     }
+    // }
 };
 
 sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
@@ -531,29 +531,29 @@ sc.canvas.CanvasToolbar.prototype.handleDrawBoxClick = function(event) {
 };
 
 sc.canvas.CanvasToolbar.prototype.handleTranscriptionsClick = function(event) {
-    var button = this.buttonsByName['transcriptions'];
+    // var button = this.buttonsByName['transcriptions'];
 
-    var canvas = this.viewer.mainViewport.canvas;
-    var marqueeCanvas = this.viewer.marqueeViewport.canvas;
+    // var canvas = this.viewer.mainViewport.canvas;
+    // var marqueeCanvas = this.viewer.marqueeViewport.canvas;
 
-    if (! canvas) {
-        return;
-    }
+    // if (! canvas) {
+    //     return;
+    // }
 
-    if (button.isChecked()) {
-        canvas.showTextAnnos();
+    // if (button.isChecked()) {
+    //     canvas.showTextAnnos();
         
-        if (marqueeCanvas) {
-            marqueeCanvas.showTextAnnos();
-        }
-    }
-    else {
-        canvas.hideTextAnnos();
+    //     if (marqueeCanvas) {
+    //         marqueeCanvas.showTextAnnos();
+    //     }
+    // }
+    // else {
+    //     canvas.hideTextAnnos();
         
-        if (marqueeCanvas) {
-            marqueeCanvas.hideTextAnnos();
-        }
-    }
+    //     if (marqueeCanvas) {
+    //         marqueeCanvas.hideTextAnnos();
+    //     }
+    // }
 };
 
 sc.canvas.CanvasToolbar.prototype.setCanvasByUri = function(uri, urisInOrder,
