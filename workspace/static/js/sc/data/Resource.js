@@ -115,7 +115,7 @@ sc.data.Resource.prototype.getProperties = function(predicate) {
     properties = this.escapeProperties(properties);
     
     return properties;
-}
+};
 
 sc.data.Resource.prototype.getOneUnescapedProperty = function(predicate) {
     var properties = this.getUnescapedProperties(predicate);
@@ -137,6 +137,19 @@ sc.data.Resource.prototype.getOneProperty = function(predicate) {
     else {
         return null;
     }
+};
+
+sc.data.Resource.prototype.hasProperty = function(predicate, object) {
+    predicate = this.databroker.namespaces.autoExpand(predicate);
+    object = this.databroker.namespaces.autoExpand(object);
+
+    var numQuads = 0;
+
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        numQuads += this.databroker.quadStore.numQuadsMatchingQuery(sc.data.Term.wrapUri(uri), predicate, object);
+    }, this);
+
+    return numQuads > 0;
 };
 
 sc.data.Resource.prototype.getResourcesByProperty = function(predicate) {

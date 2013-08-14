@@ -47,8 +47,8 @@ atb.viewer.Viewer = function (clientApp) {
     /** @type {goog.math.Coordinate} */
     this.mousePosition = new goog.math.Coordinate(0,0);
     
+    this.mouseOverUri = null;
     this.mouseIsOverFloatingMenu = false;
-    this.mouseIsOverFloatingMenuParent = false;
     
     /** @type {boolean} */
     this.hoverMenusEnabled = true;
@@ -372,7 +372,7 @@ atb.viewer.Viewer.prototype.isEditable = function() {
  * Shows a self hiding hover menu with the given buttons
  *
  * If an element is provided, appropriate event listeners will be added to it;
- * otherwise, this.mouseIsOverFloatingMenuParent should be set with appropriate
+ * otherwise, this.mouseOverUri should be set with appropriate
  * event listeners manually
  *
  * @param menuButtons {Array}
@@ -489,7 +489,7 @@ atb.viewer.Viewer.prototype.maybeHideHoverMenu = function () {
         this.cancelMaybeHideHoverMenuCommand();
         
         if (! (this.mouseIsOverFloatingMenu ||
-               this.mouseIsOverFloatingMenuParent)) {
+               this.mouseOverUri)) {
             this.hideHoverMenu();
         }
     };
@@ -519,26 +519,31 @@ atb.viewer.Viewer.prototype.cancelMaybeHideHoverMenuCommand = function () {
 atb.viewer.Viewer.prototype.addHoverMenuListenersToElement =
 function(element, menuButtons, fReturnsResourceId) {
     var onHover = function (e) {
-        this.mouseIsOverFloatingMenuParent = true;
+        if (goog.isFunction(fReturnsResourceId)) {
+            this.mouseOverUri = fReturnsResourceId();
+        }
+        else {
+            this.mouseOverUri = fReturnsResourceId;
+        }
         
         var afterTimer = function () {
-            if (this.mouseIsOverFloatingMenuParent) {
-                var resourceId;
+            if (this.mouseOverUri) {
                 if (goog.isFunction(fReturnsResourceId))
-                    resourceId = fReturnsResourceId();
+                    var uri = fReturnsResourceId();
                 else
-                    resourceId = fReturnsResourceId;
-                
-                this.showHoverMenu(menuButtons, resourceId);
+                    var uri = fReturnsResourceId;
+
+                if (this.mouseOverUri == uri) {
+                    this.showHoverMenu(menuButtons, uri);
+                }
             }
-        };
-        afterTimer = jQuery.proxy(afterTimer, this);
+        }.bind(this);
         window.setTimeout(afterTimer, atb.viewer.Viewer.HOVER_SHOW_DELAY);
     };
     goog.events.listen(element, 'mouseover', onHover, false, this);
     
     var onUnHover = function (e) {
-        this.mouseIsOverFloatingMenuParent = false;
+        this.mouseOverUri = null;
         
         this.maybeHideHoverMenu();
     };

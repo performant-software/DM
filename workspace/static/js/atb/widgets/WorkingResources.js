@@ -136,6 +136,12 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
     }
 
     if (item) {
+        if (this.databroker.user) {
+            if (this.databroker.user.hasProperty('perm:mayUpdate', sc.data.Term.wrapUri(this.uri))) {
+                item.showRemoveButton();
+            }
+        }
+
         this.updateItem(item);
     }
 

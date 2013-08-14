@@ -236,11 +236,15 @@ sc.canvas.FabricCanvas.MARKER_TYPES = new goog.structs.Set([
 ]);
 
 sc.canvas.FabricCanvas.prototype.showObject = function(obj) {
-    obj.set('opacity', 1);
+    obj.set('visible', true);
+
+    this.fireShownFeature(obj, this.getFabricObjectUri(obj));
 };
 
 sc.canvas.FabricCanvas.prototype.hideObject = function(obj) {
-    obj.set('opacity', 0);
+    obj.set('visible', false);
+
+    this.fireHiddenFeature(obj, this.getFabricObjectUri(obj));
 };
 
 sc.canvas.FabricCanvas.prototype.showMarkers = function() {
@@ -266,7 +270,7 @@ sc.canvas.FabricCanvas.prototype.hideMarkers = function() {
 sc.canvas.FabricCanvas.prototype.isHidingAllMarkers = function() {
     return goog.structs.every(this.objectsByUri, function(obj, uri) {
         if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && 
-            obj.get('opacity') != 0) {
+            obj.get('visible') === true) {
             return false;
         }
         else {

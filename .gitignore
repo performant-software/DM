@@ -29,3 +29,4 @@ manage_command_examples_local.sh
 
 # locally saved data exported from old version
 output/*
+*backup.sql

@@ -24,6 +24,7 @@ atb.widgets.WorkingResourcesText.prototype.setupLayout_ = function() {
         'class': 'atb-WorkingResourcesItem-remove icon-minus-sign',
         'title': 'Remove this resource from the project'
     });
+    jQuery(this.removeButton).hide();
     goog.events.listen(this.removeButton, 'click', this.handleRemoveClick, false, this);
 
     this.clearDiv = this.domHelper.createDom('div', {

@@ -46,6 +46,13 @@ sc.canvas.CanvasViewer = function(options) {
     this.mainViewportDiv = this.mainViewport.getElement();
     this.marqueeViewportDiv = this.marqueeViewport.getElement();
     jQuery(this.marqueeViewportDiv).addClass('sc-CanvasViewer-marquee');
+    jQuery(this.marqueeViewportDiv).hover(function(event) {
+        jQuery(this.marqueeViewportDiv).finish();
+        jQuery(this.marqueeViewportDiv).animate({'opacity': 1.0}, {'duration': 200});
+    }.bind(this), function(event) {
+        jQuery(this.marqueeViewportDiv).finish();
+        jQuery(this.marqueeViewportDiv).animate({'opacity': 0.8}, {'duration': 200});
+    }.bind(this));
 
     this.toolbar.render(this.baseDiv);
 
@@ -137,13 +144,29 @@ sc.canvas.CanvasViewer.prototype.getDisplaySize = function() {
 sc.canvas.CanvasViewer.prototype.getSize =
 sc.canvas.CanvasViewer.prototype.getDisplaySize;
 
-sc.canvas.CanvasViewer.MARQUEE_BOX_STYLE = {
-    'fill': '#0F6CD6',
-    'fill-opacity': 0.4,
-    'stroke': '#0F6CD6',
-    'stroke-opacity': 0.75,
-    'stroke-width': '15%',
-    'cursor': 'move'
+sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY = 0.6;
+sc.canvas.CanvasViewer.MARQUEE_MARKER_HIDDEN_OPACITY = 0.4;
+
+sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function() {
+    var marqueeCanvas = this.marqueeViewport.canvas;
+
+    goog.structs.forEach(marqueeCanvas.objectsByUri, function(obj, uri) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type)) {
+            var mainObject = this.mainViewport.canvas.getFabricObjectByUri(uri);
+            if (mainObject.visible === true) {
+                obj.set('opacity', sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY);
+            }
+            else {
+                obj.set('opacity', sc.canvas.CanvasViewer.MARQUEE_MARKER_HIDDEN_OPACITY);
+            }
+        }
+    }, this);
+
+    if (this.marqueeBox) {
+        this.marqueeBox.set('opacity', 1);
+    }
+
+    this.marqueeViewport.requestFrameRender();
 };
 
 sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
@@ -160,10 +183,13 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     );
     
     deferredMarqueeCanvas.done(function (marqueeCanvas) {
+        this._adjustMarqueeFeatureStyles();
+
         canvas.addEventListener(
             ['featureAdded', 'featureModified', 'featureRemoved'],
             function(event) {
                 sc.canvas.FabricCanvasFactory.findAndAddSelectors(marqueeCanvas);
+                this._adjustMarqueeFeatureStyles();
             },
             false,
             this
@@ -171,7 +197,8 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
         canvas.addEventListener(
             'featureShown',
             function(event) {
-                marqueeCanvas.showFeatureByUri(event.uri);
+                var obj = marqueeCanvas.getFabricObjectByUri(event.uri);
+                obj.set('opacity', sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY);
             },
             false,
             this
@@ -179,7 +206,8 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
         canvas.addEventListener(
             'featureHidden',
             function(event) {
-                marqueeCanvas.hideFeatureByUri(event.uri);
+                var obj = marqueeCanvas.getFabricObjectByUri(event.uri);
+                obj.set('opacity', sc.canvas.CanvasViewer.MARQUEE_MARKER_HIDDEN_OPACITY);
             },
             false,
             this
@@ -190,9 +218,9 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     this.marqueeBox = new fabric.Rect({
         left: 0,
         top: 0,
-        fill: 'rgba(15,108,214,0.4)',
-        stroke: 'rgba(15,108,214,0.8)',
-        strokeWidth: 1,
+        fill: 'rgba(15,108,214,0.6)',
+        stroke: 'rgba(15,108,214,0.9)',
+        strokeWidth: 2,
         selectable: false
     });
     
