@@ -33,33 +33,28 @@ def create_project_from_request(request):
 
 def create_project(g, host):
     sanitize_texts(g)
-    
-    query = g.query("""SELECT ?uri ?user
-                    WHERE {
-                        ?user perm:hasPermissionOver ?uri .
-                        ?user rdf:type foaf:Agent .
-                    }""", initNs=ns)
 
-    for uri, user in query:
-        with transaction.commit_on_success():
-            project_uri = uris.uri('semantic_store_projects', uri=uri)
+    for user in g.subjects(NS.rdf.type, NS.foaf.Agent):
+        username = user.split("/")[-1]
+
+        for project in g.objects(user, NS.perm.hasPermissionOver):
+            project_uri = uris.uri('semantic_store_projects', uri=project)
             project_g = Graph(store=rdfstore(), identifier=project_uri)
             bind_namespaces(project_g)
 
             project_g += g
 
-            url = uris.url(host, 'semantic_store_projects', uri=uri)
-            project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
+            url = uris.url(host, 'semantic_store_projects', uri=project)
+            project_g.set((uri, NS.dcterms.created, Literal(datetime.utcnow())))
 
             for t in g.triples((user, None, None)):
-                project_g.remove(t)
+                project_g.remote(t)
 
             check_project_types(project_g, project_uri)
 
-        username = user.split("/")[-1]
-        create_project_user_graph(host, username, uri)
+            create_project_user_graph(host, username, uri)
 
-    project_g.close()
+            project_g.close()
 
 def get_project_graph_for_response(request, project_uri):
     uri = uris.uri('semantic_store_projects', uri=project_uri)
