@@ -304,19 +304,19 @@ sc.canvas.CanvasToolbar.prototype.updatePageChooser = function() {
 };
 
 sc.canvas.CanvasToolbar.prototype.handleToggleMarkers = function(event) {
-    // var canvas = this.viewer.mainViewport.canvas;
-    // var button = this.buttonsByName['toggle-markers'];
+    var canvas = this.viewer.mainViewport.canvas;
+    var button = this.buttonsByName['toggle-markers'];
 
-    // if (canvas) {
-    //     if (button.isChecked()) {
-    //         canvas.showMarkers();
-    //         button.setChecked(true);
-    //     }
-    //     else {
-    //         canvas.hideMarkers();
-    //         button.setChecked(false);
-    //     }
-    // }
+    if (canvas) {
+        if (button.isChecked()) {
+            canvas.showMarkers();
+            button.setChecked(true);
+        }
+        else {
+            canvas.hideMarkers();
+            button.setChecked(false);
+        }
+    }
 };
 
 sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
