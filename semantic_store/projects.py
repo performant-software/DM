@@ -45,14 +45,14 @@ def create_project(g, host):
             project_g += g
 
             url = uris.url(host, 'semantic_store_projects', uri=project)
-            project_g.set((uri, NS.dcterms.created, Literal(datetime.utcnow())))
+            project_g.set((project_uri, NS.dcterms.created, Literal(datetime.utcnow())))
 
             for t in g.triples((user, None, None)):
                 project_g.remote(t)
 
             check_project_types(project_g, project_uri)
 
-            create_project_user_graph(host, username, uri)
+            create_project_user_graph(host, username, project_uri)
 
             project_g.close()
 
