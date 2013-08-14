@@ -621,16 +621,17 @@ def map_users():
 def instantiate_graph():
     g = Graph()
 
-    g.bind('rdf',    RDF)
-    g.bind('ore',    ORE)
-    g.bind('dc',     DC)
-    g.bind('exif',   EXIF)
-    g.bind('cnt',    CNT)
-    g.bind('perm',   PERM)
-    g.bind('oa',     OA)
-    g.bind('foaf',   FOAF)
-    g.bind('sc',     SC)
-    g.bind('dm_img', IMG_SRC)
-    g.bind('dm',     DM)
+    g.bind('rdf',     RDF)
+    g.bind('ore',     ORE)
+    g.bind('dc',      DC)
+    g.bind('exif',    EXIF)
+    g.bind('cnt',     CNT)
+    g.bind('perm',    PERM)
+    g.bind('oa',      OA)
+    g.bind('foaf',    FOAF)
+    g.bind('sc',      SC)
+    g.bind('dm_img',  IMG_SRC)
+    g.bind('dm',      DM)
+    g.bind('dctypes', DCTYPES)
 
     return g
