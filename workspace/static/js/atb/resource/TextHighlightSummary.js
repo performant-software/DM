@@ -90,23 +90,6 @@ atb.resource.TextHighlightSummary.prototype.determineCutoff = function (text, li
     }
 };
 
-atb.resource.TextHighlightSummary.prototype.generateTitle = function () {
-    var result = '';
-
-    var exactText = this.highlightResource.getOneProperty('oa:exact');
-    
-    var cutoff = this.determineCutoff(exactText, 45);
-    
-    result += '"' + exactText.substring(0, cutoff);
-    
-    if (cutoff != exactText.length)
-        result += '...';
-    
-    result += '" in ' + this.databroker.dataModel.getTitle(this.parentResource);
-    
-    return result;
-};
-
 atb.resource.TextHighlightSummary.prototype.getSortTitle = function() {
     return this.highlightResource.getOneProperty('oa:exact') + this.databroker.dataModel.getTitle(this.parentResource);
 };
