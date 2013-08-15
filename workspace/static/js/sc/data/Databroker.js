@@ -72,6 +72,10 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
         return url;
     },
     imageSourceGenerator: function(url, opt_width, opt_height) {
+        if (url.indexOf('https://stacks-test.stanford.edu') != -1) {
+            url = url.replace('https://stacks-test.stanford.edu', 'https://stacks.stanford.edu');
+        }
+
         if (url.indexOf('stacks.stanford.edu') != -1) {
             url = url.replace('http://', 'https://');
 
