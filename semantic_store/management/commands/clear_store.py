@@ -12,3 +12,5 @@ class Command(BaseCommand):
                                           identifier=default_identifier)
             for t in main_graph.triples((None, None, None)):
                 main_graph.remove(t)
+
+            main_graph.close()

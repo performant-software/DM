@@ -97,9 +97,15 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
         for i in anno_uris:
             stored_g = update_annotation(request, dest_g, annotations_g, i)
 
-    return negotiated_graph_response(request, stored_g, status=201)
+    dest_g.close()
+    annotations_g.close()
 
-def get_annotations(request, graph_uri, anno_uris=[]):
+    return negotiated_graph_response(request, stored_g, close_graph=True, status=201)
+
+def get_annotations(request, graph_uri, anno_uris=None):
+    if anno_uris is None:
+        anno_uris = []
+
     result_g = graph()
     g = destination_graph(graph_uri)
     num_anno_uris = len(anno_uris)
@@ -126,10 +132,14 @@ def get_annotations(request, graph_uri, anno_uris=[]):
             url = "http://dm.drew.edu" + url
             result_g.add((URIRef(i), NS.ore['isDescribedBy'], URIRef(url)))
 
+    g.close()
+    anno_g.close()
+
     if len(result_g) > 0:
-        return negotiated_graph_response(request, result_g, status=200)
+        return negotiated_graph_response(request, result_g, close_graph=True, status=200)
     else:
-        return HttpResponseNotFound()
+        result_g.close()
+        return HttpResponse(status=204) # Not really a 404, just no content
 
 def search_annotations(request, graph_uri, search_uri):
     g = destination_graph(graph_uri)
@@ -141,7 +151,9 @@ def search_annotations(request, graph_uri, search_uri):
             canvas_anno_uris = set(annotation_ancestors(g, i))
             anno_uris = anno_uris | canvas_anno_uris
     anno_uris = list(anno_uris)
+    g.close()
     if not anno_uris:
-        return HttpResponseNotFound()
-    return get_annotations(request, graph_uri, anno_uris)
+        return HttpResponse(status=204) # Not really a 404, just no content
+    else:
+        return get_annotations(request, graph_uri, anno_uris)
 

@@ -2,8 +2,15 @@ goog.provide('sc.data.N3Parser');
 
 goog.require('sc.data.Parser');
 goog.require('n3.parser');
-goog.require('sc.util.Namespaces');
 goog.require('goog.asserts');
+
+/**
+ * @author tandres@drew.edu (Tim Andres)
+ *
+ * Uses a version of node-n3 by Ruben Verborgh slightly modified to run in the browser as the parsing engine.
+ *
+ * When available, a WebWorker is launched to process the turtle data asynchronously in a separate process.
+ */
 
 sc.data.N3Parser = function(databroker) {
     sc.data.Parser.call(this, databroker);
@@ -40,13 +47,7 @@ sc.data.N3Parser.prototype.parseableTypes = new goog.structs.Set([
 
 sc.data.N3Parser.prototype.parse = function(data, context, handler) {
     if (this.webWorkerEnabled) {
-        try {
-            this.parseThreaded(data, context, handler);
-        }
-        catch (e) {
-            console.warn('Web worker parsing failed', e, 'reverting to standard implementation');
-            this.parseStandard(data, context, handler);
-        }
+        this.parseInWorker(data, context, handler);
     }
     else {
         this.parseStandard(data, context, handler);
@@ -73,15 +74,21 @@ sc.data.N3Parser.prototype._n3ParserHandler = function(error, triple, handler) {
     }.bind(this), 1);
 };
 
-sc.data.N3Parser.prototype.parseThreaded = function(data, context, handler) {
+sc.data.N3Parser.prototype.parseInWorker = function(data, context, handler) {
     var worker = new Worker(this.workerBlobUrl);
+
+    worker.addEventListener('error', function(e) {
+        console.warn('Web worker parsing failed', e, 'reverting to standard implementation');
+        worker.terminate();
+        this.parseStandard(data, context, handler);
+    }.bind(this));
 
     worker.addEventListener('message', function(e) {
         var o = e.data;
         var error = o.error;
         var triple = o.triple;
 
-        this._n3ParserHandler(error, triple, handler);
+        this._n3WorkerParserHandler(error, triple, handler);
 
         if (!triple && !error) {
             worker.terminate();
@@ -91,9 +98,24 @@ sc.data.N3Parser.prototype.parseThreaded = function(data, context, handler) {
     worker.postMessage(data);
 };
 
+sc.data.N3Parser.prototype._n3WorkerParserHandler = function(error, triple, handler) {
+    setTimeout(function() {
+        if (triple) {
+            handler([new sc.data.Quad(triple.subject, triple.predicate, triple.object)], false);
+        }
+        else if (error) {
+            handler([], false, error);
+        }
+        else {
+            handler([], true);
+        }
+    }.bind(this), 1);
+};
+
 sc.data.N3Parser._termWrapper = function(str) {
-    if (!sc.util.Namespaces.isQuoteWrapped(str)) {
-        return sc.util.Namespaces.angleBracketWrap(str);
+    /* Not using sc.data.Term utilities here since we can make more efficient assumptions with this parser */
+    if (str[0] != '"'  && str.substring(0, 2) != '_:') {
+        return ['<', str.replace(/>/g, '\\>'), '>'].join('');
     }
     else {
         return str;

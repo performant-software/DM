@@ -22,13 +22,15 @@ def read_user(request, username=None):
             user_graph_identifier = uris.uri('semantic_store_users', username=username)
             print "reading info on user with identifier %s"%user_graph_identifier
             g = Graph(store=rdfstore(), identifier=user_graph_identifier)
-            return negotiated_graph_response(request, g)
+            return negotiated_graph_response(request, g, close_graph=True)
     else:
         g = Graph()
         bind_namespaces(g)
         for u in User.objects.filter():
             user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
-            g += Graph(store=rdfstore(), identifier=user_graph_identifier)
+            user_graph = Graph(store=rdfstore(), identifier=user_graph_identifier)
+            g += user_graph
+            user_graph.close()
 
         return negotiated_graph_response(request, g)
 
@@ -43,7 +45,7 @@ def update_user(request, username):
 
     graph = update_user_graph(input_graph, username)
 
-    return negotiated_graph_response(request, graph, status=201)
+    return negotiated_graph_response(request, graph, status=200, close_graph=True)
 
 def update_user_graph(g, username):
     # Check user has permissions to do this
@@ -51,7 +53,7 @@ def update_user_graph(g, username):
         uri = uris.uri('semantic_store_users', username=username)
         print "Updating user using graph identifier %s" % uri
         graph = Graph(store=rdfstore(), identifier=uri)
-        bind_namespaces(graph)
+        # bind_namespaces(graph)
 
         for triple in g:
             graph.add(triple)
@@ -60,9 +62,9 @@ def update_user_graph(g, username):
 
 def remove_triples_from_user(request, username):
     g = Graph()
-    bind_namespaces(g)
+    # bind_namespaces(g)
     removed = Graph()
-    bind_namespaces(removed)
+    # bind_namespaces(removed)
 
     try:
         parse_request_into_graph(request, g)
@@ -75,6 +77,9 @@ def remove_triples_from_user(request, username):
     for s,p,o in g:
         if(remove_triple(username, s,p,o)):
             removed.add((s,p,o))
+
+    graph.close()
+    g.close()
 
     return removed
 
@@ -91,6 +96,8 @@ def add_triple(username, s, p, o, host):
         if p==NS.perm.hasPermissionOver:
             graph.set((o, NS.ore['isDescribedBy'],uris.url(host, "semantic_store_projects", uri=o)))
 
+        graph.close()
+
 def remove_triple(username, s, p, o):
     # todo: check validity of username? (will return false)
     # todo: check permissions
@@ -99,7 +106,8 @@ def remove_triple(username, s, p, o):
         graph = Graph(store=rdfstore(), identifier=uri)
         if ((s,p,o)) in graph:
             graph.remove((s,p,o))
+            graph.close()
             return True
-
+    graph.close()
     return False
 

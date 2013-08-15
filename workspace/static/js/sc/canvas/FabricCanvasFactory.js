@@ -102,22 +102,32 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
 
             canvas.pauseRendering();
 
-            sc.canvas.FabricCanvasFactory.findAndAddImages(canvas);
-            sc.canvas.FabricCanvasFactory.findAndAddSegments(canvas);
-            sc.canvas.FabricCanvasFactory.findAndAddSelectors(canvas);
-            sc.canvas.FabricCanvasFactory.findAndAddComments(canvas);
+            // setTimeout(function() {
+                sc.canvas.FabricCanvasFactory.findAndAddImages(canvas);
 
-            canvas.resumeRendering();
+            // setTimeout(function() {
+                sc.canvas.FabricCanvasFactory.findAndAddSegments(canvas);
 
-            if (deferredResource.state() == 'resolved') {
-                deferredCanvas.resolveWith(canvas, [canvas]);
-            }
-            else if (deferredResource.state() == 'rejected') {
-                deferredCanvas.rejectWith(canvas, [canvas]);
-            }
-            else {
-                deferredCanvas.notifyWith(canvas, [canvas]);
-            }
+            // setTimeout(function() {
+                sc.canvas.FabricCanvasFactory.findAndAddSelectors(canvas);
+                // sc.canvas.FabricCanvasFactory.findAndAddComments(canvas);
+
+            // setTimeout(function() {
+                canvas.resumeRendering();
+
+                if (deferredResource.state() == 'resolved') {
+                    deferredCanvas.resolveWith(canvas, [canvas]);
+                }
+                else if (deferredResource.state() == 'rejected') {
+                    deferredCanvas.rejectWith(canvas, [canvas]);
+                }
+                else {
+                    deferredCanvas.notifyWith(canvas, [canvas]);
+                }
+            // }, 1);
+            // }, 1)
+            // }, 1);
+            // }, 1);
         }
     }
     deferredResource.progress(withResource).done(withResource).fail(withResource);

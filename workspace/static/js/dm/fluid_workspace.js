@@ -15,7 +15,7 @@ goog.require('goog.ui.Dialog');
 goog.require('atb.viewer.ViewerGrid');
 goog.require('atb.viewer.ViewerContainer');
 
-goog.require("sc.ProjectManager")
+goog.require("sc.ProjectManager");
 
 
 var clientApp = null;
@@ -25,6 +25,14 @@ var repoBrowser = null;
 var viewerGrid = null;
 var cookies = null;
 
+
+var scrollIntoView = function(element) {
+    var offsetTop = $(element).offset().top;
+    offsetTop -= $("#main-nav").outerHeight();
+    if (offsetTop < 0) offsetTop = 0;
+
+    $(window).scrollTop(offsetTop);
+};
 
 
 var setupWorkingResources = function (clientApp, username, wrContainerParent) {
@@ -112,6 +120,7 @@ var openCanvas = function(uri, urisInOrder, index) {
     var viewer = new atb.viewer.CanvasViewer(clientApp);
     viewerContainer.setViewer(viewer);
     viewerGrid.addViewerContainer(viewerContainer);
+    scrollIntoView(viewerContainer.getElement());
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
@@ -122,6 +131,8 @@ var openText = function(uri) {
     var viewer = new atb.viewer.TextEditor(clientApp);
     viewerGrid.addViewerContainer(viewerContainer);
     viewerContainer.setViewer(viewer);
+
+    scrollIntoView(viewerContainer.getElement());
 
     textResource.defer().done(function() {
         viewer.loadResourceByUri(textResource.uri);
@@ -139,9 +150,8 @@ var openBlankTextDocument = function() {
 
 var setupCurrentProject = function(clientApp, username) {
     var db = goog.global.databroker;
-    var url = db.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
     var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
-    db.getDeferredResource(url).done(function(resource){
+    db.getDeferredResource(uri).done(function(resource){
         var uris = db.getResource(uri).getProperties('perm:hasPermissionOver');
         for (var i=0; i<uris.length; i++) {
             db.allProjects.push(uris[i]);
@@ -152,7 +162,7 @@ var setupCurrentProject = function(clientApp, username) {
         var lastOpen = db.getResource(uri).getOneProperty('dm:lastOpenProject')
 
         if (lastOpen){
-            pm.selectThisProject(lastOpen) 
+            pm.selectProject(lastOpen) 
         }
         else{
             pm.sendNewData("Default Project", null, [username,])
@@ -208,11 +218,16 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 	goog.global.clientApp = new atb.ClientApp(
 		null, 
         username,
-        styleRoot
+        styleRoot,
+        {}
     );
     goog.global.clientApp.renderLinkCreationUI();
 
     goog.global.databroker = clientApp.getDatabroker();
+
+    databroker.user = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
+    var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
+    databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
     viewerGrid.setDimensions(1,2);

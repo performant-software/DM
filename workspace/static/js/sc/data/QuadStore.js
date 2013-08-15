@@ -2,6 +2,7 @@ goog.provide('sc.data.QuadStore');
 
 goog.require('goog.structs.Set');
 goog.require('sc.util.DefaultDict');
+goog.require('sc.data.BNode');
 
 /**
  * An indexed store of {sc.data.Quad} Quads (triples with a context),
@@ -286,7 +287,7 @@ sc.data.QuadStore.prototype.contextsMatchingQuery = function(subject, predicate,
 };
 
 sc.data.QuadStore.prototype.getNextBNode = function() {
-    var node = '_:b' + this._bNodeCounter;
+    var node = new sc.data.BNode(this._bNodeCounter);
     this._bNodeCounter ++;
     return node;
 };
@@ -624,7 +625,7 @@ sc.data.QuadStore._hashCodeOrWildcard = function(str) {
         return sc.data.QuadStore.WILDCARD;
     }
     else {
-        return str;
+        return str.toString();
     }
 };
 

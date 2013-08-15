@@ -2,8 +2,6 @@ goog.provide('sc.data.DataModel');
 
 goog.require('goog.structs.Set');
 goog.require('goog.structs.Map');
-goog.require('goog.storage.Storage');
-goog.require('goog.storage.mechanism.mechanismfactory');
 
 /**
  * @author  tandres@drew.edu (Tim Andres)
@@ -75,12 +73,12 @@ sc.data.DataModel.prototype.findAnnosReferencingResource = function(resourceUri,
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(resourceUri, opt_annoType) {
-    resourceUri = sc.util.Namespaces.angleBracketWrap(resourceUri);
+    resourceUri = sc.data.Term.wrapUri(resourceUri);
     
     var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.hasTarget, resourceUri);
 
     if (! opt_annoType) {
-        return sc.util.Namespaces.angleBracketStrip(annoIds.getValues());
+        return sc.data.Term.unwrapUri(annoIds.getValues());
     }
     else {
         var typeCheckedAnnoIds = [];
@@ -104,7 +102,7 @@ sc.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(reso
  * @return {Array.<string>}
  */
 sc.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resourceUri, opt_annoType) {
-    resourceUri = sc.util.Namespaces.angleBracketWrap(resourceUri);
+    resourceUri = sc.data.Term.wrapUri(resourceUri);
     
     var annoIds = this.databroker.getUrisSetWithProperty(sc.data.DataModel.VOCABULARY.hasBody, resourceUri);
 
@@ -138,7 +136,7 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
 
     for (var i = 0, len = annoIds.length; i < len; i++) {
         var annoId = annoIds[i];
-        annoId = sc.util.Namespaces.angleBracketWrap(annoId);
+        annoId = sc.data.Term.wrapUri(annoId);
 
         var bodyUris = this.databroker.getPropertiesForResource(annoId, sc.data.DataModel.VOCABULARY.hasBody);
         for (var j = 0, lenj = bodyUris.length; j < lenj; j++) {
@@ -157,13 +155,13 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
         imageUris.addAll(bodyUris);
     }
 
-    return sc.util.Namespaces.angleBracketStrip(imageUris.getValues());
+    return sc.data.Term.unwrapUri(imageUris.getValues());
 };
 
 sc.data.DataModel.prototype.getResourcePartUris = function(uri) {
-    uri = sc.util.Namespaces.angleBracketWrap(uri);
+    uri = sc.data.Term.wrapUri(uri);
     
-    return sc.util.Namespaces.angleBracketStrip(
+    return sc.data.Term.unwrapUri(
         this.databroker.getUrisWithProperty(sc.data.DataModel.VOCABULARY.isPartOf, uri)
     );
 };
@@ -195,26 +193,6 @@ sc.data.DataModel.prototype.findConstraintUrisOnResource = function(uri) {
     }, this);
 
     return bodyUris;
-};
-
-//Note(tandres): I can't find this used anywhere, maybe should be deprecated
-sc.data.DataModel.prototype.findConstraintValuesOnResource = function(uri) {
-    var constraintIds = this.findConstraintUrisOnResource(uri);
-
-    var values = new goog.structs.Set();
-    for (var i = 0, len = constraintIds.length; i < len; i++) {
-        var constraintId = constraintIds[i];
-
-        var constraintNodeIds = this.databroker.getPropertiesForResource(constraintId, sc.data.DataModel.VOCABULARY.constrainedBy);
-        for (var j = 0, lenj = constraintNodeIds.length; j < lenj; j++) {
-            var constraintNodeId = constraintNodeIds[j];
-            var constraintValues = this.databroker.getPropertiesForResource(constraintNodeId, 'cnt:chars');
-
-            values.addAll(constraintValues);
-        }
-    }
-
-    return sc.util.Namespaces.stripWrappingQuotes(values.getValues());
 };
 
 /**
@@ -259,7 +237,7 @@ sc.data.DataModel.prototype.findManuscriptAggregationUris = function(manifestUri
         }
     }
 
-    return sc.util.Namespaces.angleBracketStrip(uris.getValues());
+    return sc.data.Term.unwrapUri(uris.getValues());
 };
 
 sc.data.DataModel.prototype.findManuscriptSequenceUris = function(manifestUri) {
@@ -314,7 +292,7 @@ sc.data.DataModel.prototype.findManuscriptImageAnnoUris = function(manifestUri) 
 };
 
 sc.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) {
-    canvasUri = sc.util.Namespaces.angleBracketWrap(canvasUri);
+    canvasUri = sc.data.Term.wrapUri(canvasUri);
 
     var manifestUris = new goog.structs.Set();
 
@@ -492,7 +470,7 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri, opt_quadStore
         if (target.hasType('oa:SpecificResource')) {
             goog.structs.forEach(target.getProperties('oa:hasSelector'), function(selectorUri) {
                 quadsToPost.addAll(quadStore.queryReturningSet(
-                    sc.util.Namespaces.angleBracketWrap(selectorUri), null, null, null));
+                    sc.data.Term.wrapUri(selectorUri), null, null, null));
             }, this);
         }
     }
@@ -539,13 +517,13 @@ sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStor
 
     var quads = quadStore.query(text.bracketedUri, null, null, null)
     goog.structs.forEach(this.findSpecificResourcesInResource(text), function(specificResourceUri) {
-        specificResourceUri = sc.util.Namespaces.angleBracketWrap(specificResourceUri);
+        specificResourceUri = sc.data.Term.wrapUri(specificResourceUri);
 
         quads = quads.concat(quadStore.query(specificResourceUri, null, null, null));
 
         var selectorUri = quadStore.objectsMatchingQuery(specificResourceUri, this.databroker.namespaces.expand('oa', 'hasSelector'), null, null)[0];
         if (selectorUri) {
-            selectorUri = sc.util.Namespaces.angleBracketWrap(selectorUri)
+            selectorUri = sc.data.Term.wrapUri(selectorUri)
             quads = quads.concat(quadStore.query(selectorUri, null, null, null));
         }
     }, this);
@@ -555,10 +533,10 @@ sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStor
 
 sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
-    canvasUri = sc.util.Namespaces.angleBracketWrap(canvasUri);
+    canvasUri = sc.data.Term.wrapUri(canvasUri);
 
     goog.structs.forEach(sc.data.DataModel.VOCABULARY.forCanvasPredicates, function(forCanvasPredicate) {
-        resources.addAll(sc.util.Namespaces.angleBracketStrip(
+        resources.addAll(sc.data.Term.unwrapUri(
             this.databroker.getUrisWithProperty(forCanvasPredicate, canvasUri)
         ));
     }, this);
@@ -584,7 +562,7 @@ sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
     }
 
     if (opt_content) {
-        text.addProperty('cnt:chars', sc.util.Namespaces.quoteWrap(opt_content));
+        this.setTextContent(text, opt_content);
     }
     else {
         text.addProperty('cnt:chars', '""');
@@ -620,7 +598,7 @@ sc.data.DataModel.prototype.textContents = function(text, handler, opt_forceRelo
 sc.data.DataModel.prototype.setTextContent = function(text, content) {
     text = this.databroker.getResource(text);
 
-    text.setProperty('cnt:chars', sc.util.Namespaces.wrapLiteral(content));
+    text.setProperty('cnt:chars', new sc.data.Literal(content));
 };
 
 sc.data.DataModel.prototype.getTitle = function(resource) {
@@ -632,8 +610,15 @@ sc.data.DataModel.prototype.getTitle = function(resource) {
 sc.data.DataModel.prototype.setTitle = function(resource, title) {
     resource = this.databroker.getResource(resource);
 
-    var wrappedTitle = sc.util.Namespaces.wrapLiteral(title);
+    var wrappedTitle = new sc.data.Literal(title);
 
     resource.setProperty('dc:title', wrappedTitle);
     resource.setProperty('rdfs:label', wrappedTitle);
+};
+
+sc.data.DataModel.prototype.removeResourceFromProject = function(project, resource) {
+    project = this.databroker.getResource(project);
+    resource = this.databroker.getResource(resource);
+
+    project.deleteProperty('ore:aggregates', resource);
 };

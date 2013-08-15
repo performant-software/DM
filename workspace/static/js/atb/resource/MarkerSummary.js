@@ -35,7 +35,7 @@ atb.resource.MarkerSummary.prototype.decorate = function () {
     this.imageDiv = this.domHelper.createDom(
         'div',
         {
-            'class' : 'atb-markersummary-thumb'
+            'class' : 'atb-markersummary-thumb atb-markersummary-loadingSpinner'
         }
     );
     jQuery(this.imageDiv).width(this.size.width);
@@ -44,28 +44,26 @@ atb.resource.MarkerSummary.prototype.decorate = function () {
     this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
     this.viewport.resize(this.size.width, this.size.height);
     var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getOneProperty('oa:hasSource'), this.databroker);
-    this.viewport.pauseRendering();
     this.viewport.addDeferredCanvas(deferredCanvas);
     this.viewport.render(this.imageDiv);
 
-    deferredCanvas.done(function(canvas) {
-        var feature = canvas.getFabricObjectByUri(this.resource.getOneProperty('oa:hasSelector'));
+    var showFeature = function(canvas) {
+        var featureUri = this.resource.getOneProperty('oa:hasSelector');
+        var feature = canvas.getFabricObjectByUri(featureUri);
 
-        canvas.hideMarkers();
-        canvas.showObject(feature);
+        if (feature) {
+            this.viewport.pauseRendering();
 
-        var boundingBox = canvas.getFeatureBoundingBox(feature);
+            canvas.hideMarkers();
+            canvas.showObject(feature);
 
-        var cx = boundingBox.x + boundingBox.width / 2;
-        var cy = boundingBox.y + boundingBox.height / 2;
-        var width = boundingBox.width * 2;
-        var height = boundingBox.height * 2;
-        var x = cx - width / 2;
-        var y = cy - height / 2;
+            this.viewport.zoomToFeatureByUri(featureUri);
 
-        this.viewport.zoomToRect(x, y, width, height);
-        this.viewport.resumeRendering();
-    }.bind(this));
+            this.viewport.resumeRendering();
+        }
+    }.bind(this);
+
+    deferredCanvas.progress(showFeature).always(showFeature);
     
     this.div.appendChild(this.imageDiv);
 };

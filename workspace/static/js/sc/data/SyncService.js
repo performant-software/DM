@@ -2,6 +2,11 @@ goog.provide('sc.data.SyncService');
 
 goog.require('goog.net.Cookies');
 
+/**
+ * @author sbradsha@drew.edu (Shannon Bradshaw)
+ * @author tandres@drew.edu (Tim Andres)
+ * @author lmoss1@drew.edu (Lucy Moss)
+ */
 sc.data.SyncService = function(databroker, options) {
     this.databroker = databroker;
 
@@ -71,9 +76,10 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
         url += "/";
     }
     else if (resType == sc.data.SyncService.RESTYPE.project) {
-        // url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
-        // url += "/";
+        url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
+        url += "/";
     }
+
     if (resUri != null) {
         url += resUri;
     } 
@@ -139,7 +145,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         this.databroker.deletedQuadsStore.removeQuads(this.databroker.dataModel.findQuadsToSyncForText(resource, this.databroker.deletedQuadsStore));
 
         url = this.restUrl(this.databroker.currentProject, resType,
-                           sc.util.Namespaces.angleBracketStrip(uri), null);
+                           sc.data.Term.unwrapUri(uri), null);
     }
     else if (resource.hasType('oa:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.annotation;
@@ -158,6 +164,9 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
 
             url = this.restUrl(this.databroker.currentProject, resType, null, null);
+            if (method == 'POST') {
+                method = 'PUT'
+            }
         }
     }
     else if (resource.hasType('foaf:Agent')){
@@ -203,7 +212,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, successHandler, errorHandler) {
     successHandler = successHandler || jQuery.noop;
     errorHandler = errorHandler || jQuery.noop;
-    format = format || 'application/rdf+xml';
+    format = format || 'text/turtle';
 
     this.databroker.serializeQuads(quads, format, function(data, error) {
         if (data != null) {
@@ -214,7 +223,6 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
                     successHandler.apply(this, arguments);
                 }.bind(this),
                 error: function() {
-                    console.error('unsuccessful sync', arguments);
                     errorHandler.apply(this, arguments);
                 },
                 data: data,

@@ -71,5 +71,7 @@ class Command(BaseCommand):
             agg_uris_urls = collection.aggregated_uris_urls(rep_uri, rep_g)
             for agg_uri, agg_url in agg_uris_urls:
                 self.localize_describes(agg_uri, agg_url, rep_g)
+
+            rep_g.close()
         
                 

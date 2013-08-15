@@ -140,6 +140,9 @@ def import_old_data(request):
     else:
         i = 0
         for file_name in listdir("output/"):
+            if file_name.startswith('.'):
+                continue
+
             try:
                 everything_graph.parse("output/" + file_name, format=guess_format(file_name) or 'turtle')
             except Exception as e:
@@ -185,22 +188,25 @@ def add_all_users(graph):
 
 def remove_project_triples(request, uri):
     g = delete_triples_from_project(request, uri)
-    return negotiated_graph_response(request, g)
+    return negotiated_graph_response(request, g, close_graph=True)
 
 
 def project_texts(request, project_uri, text_uri):
     if request.method == 'POST':
-        g = create_project_text_from_request(request, project_uri)
-        return negotiated_graph_response(request, g)
+        create_project_text_from_request(request, project_uri)
+        g = read_project_text(project_uri, text_uri)
+        return negotiated_graph_response(request, g, close_graph=True)
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g)
+        return negotiated_graph_response(request, g, close_graph=True)
     elif request.method == 'PUT':
-        g = update_project_text_from_request(request, project_uri, text_uri)
-        return negotiated_graph_response(request, g)
+        update_project_text_from_request(request, project_uri, text_uri)
+        g = read_project_text(project_uri, text_uri)
+        return negotiated_graph_response(request, g, close_graph=True)
     elif request.method == 'DELETE':
-        g = remove_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g)
+        remove_project_text(project_uri, text_uri)
+        g = read_project_text(project_uri, text_uri)
+        return negotiated_graph_response(request, g, close_graph=True)
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
