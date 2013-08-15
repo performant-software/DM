@@ -43,7 +43,8 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
 };
 
 atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
-    jQuery(this.documentIcon).unbind('mouseover').unbind('mouseout');
+    goog.events.removeAll(this.documentIcon, 'mouseover');
+    goog.events.removeAll(this.documentIcon, 'mouseout');
 
     var self = this;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
@@ -76,8 +77,7 @@ atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
         var menuButtons = [];
     }
 
-    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons,
-                                        jQuery.proxy(this.getResourceId, this));
+    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons, this.getUri.bind(this));
 };
 
 atb.viewer.CanvasViewer.prototype.handleDocumentIconClick_ = function(event) {
@@ -146,6 +146,8 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     var self = this;
     var viewport = this.viewer.mainViewport;
     var eventDispatcher = this.clientApp.getEventDispatcher();
+
+    this._addDocumentIconListeners();
     
     viewport.addEventListener('mouseup', this.onResourceClick, false, this);
     viewport.addEventListener('mouseover', this.onFeatureHover, false, this);
@@ -181,6 +183,8 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
         this.setupControlEventListeners();
 
         this._isEditable = true;
+
+        this._addDocumentIconListeners();
     }
 };
 
@@ -192,6 +196,8 @@ atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
         this.enableHoverMenus();
 
         this._isEditable = false;
+
+        this._addDocumentIconListeners();
     }
 };
 
@@ -226,7 +232,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     
     this.viewer.mainViewport.setCursor('pointer');
 
-    this.mouseIsOverFloatingMenuParent = true;
+    this.mouseOverUri = uri;
     
     var id = uri;
     var self = this;
@@ -234,7 +240,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
-        if (this.mouseIsOverFloatingMenuParent) {
+        if (this.mouseOverUri && this.mouseOverUri == uri) {
             if (this.isEditable()) {
                 var menuButtons = [
                     // new atb.widgets.MenuItem(
@@ -329,7 +335,7 @@ atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
 atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
     this.viewer.mainViewport.setCursor(null);
 
-    this.mouseIsOverFloatingMenuParent = false;
+    this.mouseOverUri = null;
     this.maybeHideHoverMenu();
 };
 
@@ -358,42 +364,47 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
 atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
-    var loadSpecificResource = function(uri) {
-        var specificResource = this.databroker.getResource(uri);
-
-        var sourceUri = specificResource.getOneProperty('oa:hasSource');
-        this.setCanvasByUri(sourceUri);
-
-        goog.events.listenOnce(this.viewer.marqueeViewport, 'canvasAdded', function(e) {
-            var feature = this.viewer.mainViewport.canvas.getFabricObjectByUri(specificResource.getOneProperty('oa:hasSelector'));
-            var canvas = this.viewer.mainViewport.canvas;
-
-            canvas.hideMarkers();
-            canvas.showObject(feature);
-
-            var boundingBox = canvas.getFeatureBoundingBox(feature);
-
-            var cx = boundingBox.x + boundingBox.width / 2;
-            var cy = boundingBox.y + boundingBox.height / 2;
-            var width = boundingBox.width * 2;
-            var height = boundingBox.height * 2;
-            var x = cx - width / 2;
-            var y = cy - height / 2;
-
-            this.viewer.mainViewport.zoomToRect(x, y, width, height);
-        }, false, this);
-    }.bind(this);
-
-    if (resource.hasAnyType('dms:Canvas')) {
+    if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
         this.setCanvasByUri(resource.getUri());
     }
     else if (resource.hasAnyType('oa:SpecificResource')) {
-        loadSpecificResource(resource);
+        this.loadSpecificResource(resource);
     }
     else if (resource.hasAnyType('oa:SvgSelector')) {
         var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(uri));
-        loadSpecificResource(specificResource);
+        this.loadSpecificResource(specificResource);
     }
+};
+
+atb.viewer.CanvasViewer.prototype.loadSpecificResource = function(specificResource) {
+    specificResource = this.databroker.getResource(specificResource);
+
+    var sourceUri = specificResource.getOneProperty('oa:hasSource');
+    var deferredCanvas = this.setCanvasByUri(sourceUri);
+
+    var zoomToFeature = function() {
+        this.viewer.mainViewport.pauseRendering();
+        this.viewer.marqueeViewport.pauseRendering();
+
+        var canvas = this.viewer.mainViewport.canvas;
+        var featureUri = specificResource.getOneProperty('oa:hasSelector')
+        var feature = canvas.getFabricObjectByUri(featureUri);
+
+        if (feature) {
+            canvas.hideMarkers();
+            canvas.showObject(feature);
+
+            this.viewer.mainViewport.zoomToFeatureByUri(featureUri);
+        }
+        else {
+            console.error('Specific Resource', specificResource.uri, 'not found on canvas', canvas.getUri());
+        }
+
+        this.viewer.mainViewport.resumeRendering();
+        this.viewer.marqueeViewport.resumeRendering();
+    }.bind(this);
+
+    deferredCanvas.progress(zoomToFeature).always(zoomToFeature);
 };
 
 atb.viewer.CanvasViewer.prototype.setCanvasByUri =
@@ -418,6 +429,8 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     });
     
     this.viewer.addDeferredCanvas(deferredCanvas);
+
+    return deferredCanvas;
 };
 
 atb.viewer.CanvasViewer.prototype.setCanvasById =
@@ -490,7 +503,6 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     
     var textEditor = new atb.viewer.TextEditor(this.clientApp);
     textEditor.setPurpose('anno');
-    textEditor.toggleIsAnnoText(true);
     this.openRelatedViewer(textEditor);
     textEditor.loadResourceByUri(body.uri);
 };

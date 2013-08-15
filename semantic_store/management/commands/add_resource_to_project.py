@@ -49,6 +49,8 @@ class Command(BaseCommand):
                 for title in titles:
                     projectsByTitle[unicode(title)].append(row[0])
 
+        project_graph.close()
+
         return projectsByTitle
 
     def handle(self, *args, **options):
@@ -64,6 +66,7 @@ class Command(BaseCommand):
         # Project title data is stored in the named graph for that project, so we need
         # to query those graphs rather than just the user graph
         projectsByTitle = self.project_uris_by_title(user_g, user_uri)
+        user_g.close()
         print "projectsByTitle: %s" % projectsByTitle.items()
         
         if project_title not in projectsByTitle:
@@ -90,6 +93,7 @@ class Command(BaseCommand):
                     project_g.add(t)
                 for t in main_g.triples((URIRef(res_uri), NS.rdf['type'], None)):
                     project_g.add(t)
+                project_g.close()
                 
 
 

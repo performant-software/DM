@@ -1,15 +1,16 @@
 goog.provide("sc.ProjectManager")
 
 goog.require("goog.dom")
-goog.require("sc.util.Namespaces")
 
-/* Creates two modals and a project select dropdown menu
+/**
+ * @author lmoss1@drew.edu (Lucy Moss)
+ * Creates two modals and a project select dropdown menu
  * Handles the manipulation of all data related to projects
  * * Switching projects by selecting the title in a dropdown menu
  * * Editing projects by clicking on the button for the current project
  * * Creating projects by selecting the "Create New Project" link in dropdown
  */
-sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResources, body, username){
+sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResources, body, username) {
     // Supplied data
     this.databroker = databroker;
     this.buttonElement = buttonElement;
@@ -24,7 +25,7 @@ sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResou
     this.tempTitleSpan = goog.dom.createDom("span", {style:'color:#999'}, "loading...")
 
     // Variables needed for user tagging system
-    this.newAddedUsersList = [username,];
+    this.newAddedUsersList = [username];
     this.editAddedUsersList = [];
     this.shift = false;
 
@@ -38,8 +39,7 @@ sc.ProjectManager = function(databroker, buttonElement, viewerGrid, workingResou
 
     // General setup/preparation methods
     this.decorate();
-    this.setupPost();
-}
+};
 
 /* Creates visual elements of project manipulation
  * * Creates the button/dropdown within the supplied element
@@ -73,10 +73,21 @@ sc.ProjectManager.prototype.createButtons = function(){
     // Create 'global' variable for the dropdown
     this.dropdownMenu = goog.dom.createDom("ul",{"class":"dropdown-menu"})
     // Create 'global' variable for the button for current project (toggles edit modal)
-    this.titleButton = goog.dom.createDom("a", {href:'#editProjectModal',"class":"btn btn-inverse",'data-toggle':'modal',style:"display:inline-block;padding: 6px;margin-bottom: 3px;"})
+    this.titleButton = goog.dom.createDom("a", {
+        "href": '#editProjectModal',
+        "class": "btn btn-inverse",
+        'data-toggle': 'modal',
+        "style": "display: inline-block; padding: 6px; margin-bottom: 3px;",
+        "title": "Edit this project"
+    });
 
     // Create local (static) variables to fold into buttonElement
-    var dropdownToggle = goog.dom.createDom("button", {"class":"btn dropdown-toggle btn-inverse", "data-toggle":"dropdown",style:"display:inline-block;padding: 6px;margin-bottom: 3px;"})
+    var dropdownToggle = goog.dom.createDom("button", {
+        "class": "btn dropdown-toggle btn-inverse",
+        "data-toggle": "dropdown",
+        "style": "display: inline-block; padding: 6px; margin-bottom: 3px;",
+        "title": "Switch to another project, or create a new one"
+    });
     var caret = goog.dom.createDom("span", {"class":"caret", style:'border-bottom-color:#999; border-top-color:#999;'})
     var newProjectSelect = goog.dom.createDom("li")
 
@@ -145,29 +156,33 @@ sc.ProjectManager.prototype.setTitle = function(useDeferredResource){
  * When the title is clicked on, switches to that project
  * Used when the full list of projects is populated on initial load
 */
-sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource){
+sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource, onComplete){
+    onComplete = onComplete || jQuery.noop;
+    var resource = this.databroker.getResource(uri);
+    var createElements = function() {
+        title = resource.getOneProperty('dc:title')
+        var projectLink = goog.dom.createDom("a", {
+            'about': uri,
+            'property': this.databroker.namespaces.expand('dc', 'title'),
+            'title': 'Switch projects to "' + title + '"',
+            'href': '#'
+        }, title);
+        jQuery(projectLink).click(function(event) {
+            this.confirmSelectProject(uri);
+        }.bind(this));
+        
+        var li = goog.dom.createDom('li');
+        li.appendChild(projectLink);
+        $(this.dropdownMenu).append(li);
+
+        onComplete();
+    }.bind(this);
+
     if (useDeferredResource){
-        this.databroker.getDeferredResource(uri).done(function (resource){
-            title = resource.getOneProperty('dc:title')
-            var projectLink = goog.dom.createDom("a",{id:uri},title)
-            // onClick refuses to be set when passed into above function
-            projectLink.setAttribute('onclick','projectManager.selectProject(this)')
-    
-            var li = goog.dom.createDom('li')
-            li.appendChild(projectLink)
-            $(this.dropdownMenu).append(li)
-        }.bind(this))
+        this.databroker.getDeferredResource(uri).done(createElements)
     }
     else{
-        resource = this.databroker.getResource(uri)
-        title = resource.getOneProperty('dc:title')
-        var projectLink = goog.dom.createDom("a",{id:uri},title)
-        // onClick refuses to be set when passed into above function
-        projectLink.setAttribute('onclick','projectManager.selectProject(this)')
-
-        var li = goog.dom.createDom('li')
-        li.appendChild(projectLink)
-        $(this.dropdownMenu).append(li)
+        createElements();
     }
 }
 
@@ -178,17 +193,9 @@ sc.ProjectManager.prototype.addOneProject = function(uri, useDeferredResource){
  *  element, and returning the link element in addOneProject is causing difficulties
 */
 sc.ProjectManager.prototype.addAndSwitchToProject = function(uri){
-    this.databroker.getDeferredResource(uri).done(function(resource){
-        title = resource.getOneProperty('dc:title')
-        var projectLink = goog.dom.createDom("a",{id:uri},title)
-        // onClick refuses to be set when passed into above function
-        projectLink.setAttribute('onClick','projectManager.selectProject(this)')
-
-        var li = goog.dom.createDom("li")
-        li.appendChild(projectLink)
-        $(this.dropdownMenu).append(li)
-        this.selectProject(projectLink)
-    }.bind(this))
+    this.addOneProject(uri, false, function() {
+        this.selectProject(uri);
+    }.bind(this));
 }
 
 /* Gathers all projects over which the current user has permissions and adds them to the
@@ -197,11 +204,15 @@ sc.ProjectManager.prototype.addAndSwitchToProject = function(uri){
  *  completely update the list of projects in the dropdown
 */
 sc.ProjectManager.prototype.addAllUserProjects = function(user, useDeferredResource){
-    username = user || this.username
-    var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
+    var username = user || this.username
+    var userUri = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     var projects = this.databroker.getResource(userUri).getProperties('perm:hasPermissionOver')
 
-    $(this.dropdownMenu).empty()
+    $(this.dropdownMenu).empty();
+
+    var newProjectSelect = goog.dom.createDom("li");
+    newProjectSelect.appendChild(goog.dom.createDom("a",{href:'#newProjectModal',role:'button', 'data-toggle':'modal'}, "Create New Project"))
+    $(this.dropdownMenu).append(newProjectSelect).append(goog.dom.createDom("li", {"class":"divider"}));
     
     for (var i = 0; i < projects.length; i++) {
         this.addOneProject(projects[i], useDeferredResource)
@@ -215,23 +226,16 @@ sc.ProjectManager.prototype.addAllUserProjects = function(user, useDeferredResou
  * Confirms that switching projects will close all resources
  * When current project is selected, prompts to reload the current project
 */
-sc.ProjectManager.prototype.selectProject = function(e){
+sc.ProjectManager.prototype.confirmSelectProject = function(uri){
     // If no open resources, does not need to warn about closing them!
     if (this.viewerGrid.isEmpty()){
-        this.selectThisProject(e.id)
+        this.selectProject(uri)
     }
 
     else{
-        // Prompts to reload current project when it is selected
-        if (this.databroker.currentProject == e.id){
-            if(confirm("You have selected the current project!\nWould you like to reload it? Doing so will close all resources.")){
-                this.selectThisProject(e.id)
-            }
-        } 
-
         // Warns that changing projects closes all resources
-        else if (confirm("Selecting a new project will close all resources.\nIs this OK?")){
-            this.selectThisProject(e.id)
+        if (confirm("Selecting another will close all open resources.\nContinue?")){
+            this.selectProject(uri)
         }
     }
 }
@@ -240,7 +244,7 @@ sc.ProjectManager.prototype.selectProject = function(e){
  * A valid uri is supplied
  * Once a way to save the layout is configured, we would save that here
 */
-sc.ProjectManager.prototype.selectThisProject = function(uri){  
+sc.ProjectManager.prototype.selectProject = function(uri){  
     // Load new project
     this.viewerGrid.closeAllContainers()
     this.databroker.setCurrentProject(uri)
@@ -248,7 +252,7 @@ sc.ProjectManager.prototype.selectThisProject = function(uri){
     this.workingResources.loadManifest(uri)
 
     // Set last opened project
-    var wrap = sc.util.Namespaces.angleBracketWrap
+    var wrap = sc.data.Term.wrapUri
     var userUri = databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, this.username, null);
     var pred = this.databroker.namespaces.expand("dm", "lastOpenProject")
     this.databroker.getResource(userUri).setProperty(pred, wrap(uri))
@@ -293,7 +297,7 @@ sc.ProjectManager.prototype.createNewProjectModal = function(){
     this.newUsers = goog.dom.createDom("input",{type:'text',style:"width:430px;margin-right:0px"})
     this.newHelp = goog.dom.createDom("span",{'class':'help-block'})
     // Add all user area parts to body
-    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project. If you want to remove a user, click on the username."))
+    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project."))
     body.appendChild(goog.dom.createDom("label",{style:'display:inline-block;width:80px'},"Add Users:"))
     body.appendChild(this.newUsers)
     body.appendChild(this.newHelp)
@@ -305,8 +309,9 @@ sc.ProjectManager.prototype.createNewProjectModal = function(){
     footer.appendChild(goog.dom.createDom("a",{href:'#newProjectModal','class':'btn','data-toggle':'modal'}, "Cancel"))
     // Create -- default button -- creates new project
     var saveButton = goog.dom.createDom('a',{href:'#newProjectModal','class':'btn btn-primary','data-toggle':'modal'},"Create New Project")
-    // onClick refuses to be set when passed into above function
-    saveButton.setAttribute('onclick','projectManager.sendNewDataFromModal()')
+    $(saveButton).click(function(event) {
+        this.sendNewDataFromModal();
+    }.bind(this));
     footer.appendChild(saveButton)
 
     // Add to modal
@@ -334,7 +339,7 @@ sc.ProjectManager.prototype.sendNewDataFromModal = function(){
         t.val("");
         d.val("");
         $(this.newAddedUsers).empty()
-        this.newAddedUsersList = [this.username,]
+        this.newAddedUsersList = [this.username]
 
     }
     else{
@@ -349,129 +354,46 @@ sc.ProjectManager.prototype.sendNewDataFromModal = function(){
 */
 sc.ProjectManager.prototype.sendNewData = function (title, description, users){
     //Create UUID for new project
-    var p = this.databroker.createUuid();
+    var project = this.databroker.createResource();
 
-    var data = $.rdf.databank([], { namespaces: {
-                                    ore: "http://www.openarchives.org/ore/terms/", 
-                                    dc: "http://purl.org/dc/elements/1.1/", 
-                                    dcterms: "http://purl.org/dc/terms/",
-                                    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
-                                    dcmitype: "http://purl.org/dc/dcmitype/",
-                                    perm: 'http://vocab.ox.ac.uk/perm#',
-                                    dm: 'http://dm.drew.edu/ns/',
-                                    foaf: 'http://xmlns.com/foaf/0.1/',
-                                    }
-                                  });
-    
-    //Link user(s) and project
-    for (var i = 0; i < users.length; i++) {
-        var u = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, users[i], null);
-        data.add("<" + u + "> perm:hasPermissionOver <" + p + ">");
-        data.add("<" + u + "> rdf:type foaf:Agent")
-    };
+    goog.structs.forEach(users, function(userUri) {
+        var user = this.databroker.getResource(userUri);
+        user.addProperty('perm:hasPermissionOver', project);
+        user.addProperty('rdf:type', 'foaf:Agent');
+    }, this);
 
-    //Give project title
-    data.add('<' + p + '> dc:title "' + title + '"');
-
-    //Give project description if supplied
-    if (description){
-        data.add('<' + p + '> dcterms:description "' + description +'"')
-    }
-
-    //Set types on project
-    data.add('<' + p + '> rdf:type dcmitype:Collection');
-    data.add('<' + p + '> rdf:type ore:Aggregation');
-    data.add('<' + p + '> rdf:type dm:Project')
-
-    var postdata = data.dump({format: 'application/rdf+xml', 
-                              serialize:true});
-    console.log("data:", postdata);
-
-    $.post('project_forward/', postdata);
-
-    // Add the new project's title to project dropdown
-    // Wrapped in timeout to avoid server errors from hitting database too quickly
-    setTimeout(function(){
-        var url = this.databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, this.username, null)
-        this.databroker.getDeferredResource(url).done(function(){
-            this.addAndSwitchToProject(p)
-        }.bind(this));
-    }.bind(this),3000)
+    project.setProperty('dcterms:description', new sc.data.Literal(description));
+    this.databroker.dataModel.setTitle(project, title);
+    project.addProperty('rdf:type', 'dctypes:Collection');
+    project.addProperty('rdf:type', 'ore:Aggregation');
+    project.addProperty('rdf:type', 'dm:Project');
+    project.addProperty('rdf:type', 'foaf:Project');
 
     // Add the new project to the databroker as a valid project
-    goog.global.databroker.addNewProject(p)
-}
+    this.databroker.addNewProject(project.uri);
 
-/* This function is copied from the Django documentation (although I wrapped it in a fcn)
- * Necessary to avoid 403 errors when using $.ajax to POST data
- * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-*/
-sc.ProjectManager.prototype.setupPost = function(){
-    $.ajaxSetup({
-        crossDomain: false,
-        beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type)) {
-                xhr.setRequestHeader("X-CSRFToken", 
-                                     getCookie("csrftoken"));
-            }
-        }
-    });
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    };
-
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
+    this.addAndSwitchToProject(project.uri);
 }
 
 /* Removes the specified user from the speicified array of users
  * Removes the "tag" displaying the username
  * Used by both project edit & create modals, so functions independently of either
 */
-sc.ProjectManager.prototype.clearUser = function(userElement, userList){
-    for (var i = 0; i < userList.length; i++) {
-        if (userList[i] == userElement.id) {
-            userList.splice(i,1)
-            break;
-        }
-    };
-
-    userElement.remove()
-}
-
-/* Function which removes a user supplied in the new project modal
- * Although a simple function, must be declared so it can be set as onClick property of
- *  usernames in the 'tagging' system for the new project modal.
- */
-sc.ProjectManager.prototype.clearNewUser = function(userElement){
-    this.clearUser(userElement, this.newAddedUsersList)
-}
+sc.ProjectManager.prototype.clearUser = function(userList, username) {
+    return goog.array.remove(userList, username);
+};
 
 /* Function which removes a user supplied in the edit project modal
  * Although a simple function, must be declared so it can be set as onClick property of
  *  usernames in the 'tagging' system for the edit project modal.
  * Also ensure the current user is always a part of a project
  */
-sc.ProjectManager.prototype.clearEditUser = function(userElement){
-    if (userElement.id == this.username){
+sc.ProjectManager.prototype.clearEditUser = function(username){
+    if (username == this.username){
         $(this.editHelp).text("You cannot delete yourself from a project.")
     }
     else{
-        this.clearUser(userElement, this.editAddedUsersList)
+        this.clearUser(this.editAddedUsersList, username);
     }
 }
 
@@ -506,15 +428,15 @@ sc.ProjectManager.prototype.newUserTagSystem = function(){
         if (e.which == 13&&this.shift){
             var val = $(this.newUsers).val();
 
-            this.isValidUser(val)
-            // Wrapped in timeout bc the error code isn't breaking things the way I want
-            setTimeout(function(){
-                if (this.isValid){
+            this.isValidUser(val, function(isValid) {
+                if (isValid){
                     if (this.newAddedUsersList.indexOf(val) == -1){
                         // "\xa0" is non-breaking whitespace for this library
                         var user = goog.dom.createDom("a",{id:val},val + "\xa0 \xa0")
-                        // onClick refuses to be set when passed into above function
-                        user.setAttribute('onclick','projectManager.clearNewUser(this)')
+                        $(user).click(function(event) {
+                            this.clearUser(val);
+                            $(user).detach();
+                        }.bind(this));
                         this.newAddedUsers.appendChild(user)
                         this.newAddedUsersList.push(val);
 
@@ -527,7 +449,7 @@ sc.ProjectManager.prototype.newUserTagSystem = function(){
                 else{
                     $(this.newHelp).text("This is not a valid user.");
                 }
-            }.bind(this), 75)
+            }.bind(this));
         }
         else if (e.which == 16) this.shift = false;
     }.bind(this))
@@ -564,16 +486,19 @@ sc.ProjectManager.prototype.editUserTagSystem = function(){
         if (e.which == 13&&this.shift){
             var val = usr.val();
 
-            this.isValidUser(val)
-
-            // Wrapped in timeout bc the error code isn't breaking things the way I want
-            setTimeout(function(){
-                if (this.isValid){
+            this.isValidUser(val, function(isValid) {
+                if (isValid){
                     if (this.editAddedUsersList.indexOf(val) == -1){
                         // "\xa0" is non-breaking whitespace for this library
-                        var user = goog.dom.createDom("a",{id:usr.val()},usr.val() + "\xa0 \xa0")
-                        // onClick refuses to be set when passed into above function
-                        user.setAttribute('onclick','projectManager.clearEditUser(this)')
+                        var clearButton = goog.dom.createDom('span', {
+                            'title': 'Remove ' + val + ' from the project',
+                            'style': 'cursor: pointer;'
+                        }, '\u2715');
+                        var user = goog.dom.createDom("span", {id:val}, val, clearButton, "\xa0 \xa0")
+                        jQuery(clearButton).click(function(event) {
+                            this.clearEditUser(val);
+                            jQuery(user).detach();
+                        }.bind(this));
                         this.editAddedUsers.appendChild(user)
                         this.editAddedUsersList.push(val);
 
@@ -586,7 +511,7 @@ sc.ProjectManager.prototype.editUserTagSystem = function(){
                 else{
                     $(this.editHelp).text("This is not a valid user.");
                 }
-            }.bind(this), 75)
+            }.bind(this));
         }
         else if (e.which == 16) this.shift = false;
     }.bind(this))
@@ -622,7 +547,7 @@ sc.ProjectManager.prototype.createEditProjectModal = function(){
     this.editUsers = goog.dom.createDom("input",{type:'text',style:"width:430px;margin-right:0px"})
     this.editHelp = goog.dom.createDom("span",{'class':'help-block'})
     // Add all user area parts to body
-    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project. If you want to remove a user, click on the username."))
+    body.appendChild(goog.dom.createDom("p",{"class":"help-block"}, "Type a username, and then hit shift+enter to add that user to your project."))
     body.appendChild(goog.dom.createDom("label",{style:'display:inline-block;width:80px'},"Add Users:"))
     body.appendChild(this.editUsers)
     body.appendChild(this.editHelp)
@@ -631,14 +556,24 @@ sc.ProjectManager.prototype.createEditProjectModal = function(){
 
     var footer = goog.dom.createDom("div",{'class':'modal-footer'})
     // Cancel -- does not remove data from modal
-    var cancelButton = goog.dom.createDom("a",{href:'#editProjectModal','class':'btn','data-toggle':'modal'}, "Discard Changes")
-    // onClick refuses to be set when passed into above function
-    cancelButton.setAttribute('onclick','projectManager.prepareForEdit()')
+    var cancelButton = goog.dom.createDom("a", {
+        'href': '#editProjectModal',
+        'class': 'btn',
+        'data-toggle': 'modal'
+    }, "Discard Changes");
+    jQuery(cancelButton).click(function(event) {
+        this.prepareForEdit();
+    }.bind(this));
     footer.appendChild(cancelButton)
     // Create -- default button -- creates new project
-    var saveButton = goog.dom.createDom('a',{href:'#editProjectModal','class':'btn btn-primary','data-toggle':'modal'},"Save Changes")
-    // onClick refuses to be set when passed into above function
-    saveButton.setAttribute('onclick','projectManager.sendEditData()')
+    var saveButton = goog.dom.createDom('a', {
+        'href': '#editProjectModal',
+        'class': 'btn btn-primary',
+        'data-toggle': 'modal'
+    },"Save Changes");
+    $(saveButton).click(function(event) {
+        this.sendEditData();
+    }.bind(this));
     footer.appendChild(saveButton)
 
     // Add to modal
@@ -671,8 +606,8 @@ sc.ProjectManager.prototype.prepareForEdit = function(){
             // Display description
             var description = $("#" + this.editDescriptionId)
             description.val(projectResource.getOneProperty('dcterms:description'))
-            var wrap = sc.util.Namespaces.angleBracketWrap
-            var strip = sc.util.Namespaces.angleBracketStrip
+            var wrap = sc.data.Term.wrapUri
+            var strip = sc.data.Term.unwrapUri
 
             
 
@@ -694,11 +629,22 @@ sc.ProjectManager.prototype.prepareForEdit = function(){
 
                     this.editAddedUsersList.push(username);
 
-                    var user = goog.dom.createDom("a",{id:username},username + "\xa0 \xa0")
-                    // onClick refuses to be set when passed into above function
-                    user.setAttribute('onclick','projectManager.clearEditUser(this)')
-
-                    this.editAddedUsers.appendChild(user)
+                    if (username == this.username) {
+                        var user = goog.dom.createDom("span", {id:username}, username, "\xa0 \xa0");
+                        this.editAddedUsers.appendChild(user);
+                    }
+                    else {
+                        var clearButton = goog.dom.createDom('span', {
+                            'title': 'Remove ' + username + ' from the project',
+                            'style': 'cursor: pointer;'
+                        }, '\u2715');
+                        var user = goog.dom.createDom("span", {id:username}, username, clearButton, "\xa0 \xa0")
+                        jQuery(clearButton).click(function(event) {
+                            this.clearEditUser(username);
+                            jQuery(user).detach();
+                        }.bind(this));
+                        this.editAddedUsers.appendChild(user);
+                    }
                 };
             }.bind(this))
 
@@ -720,9 +666,9 @@ sc.ProjectManager.prototype.sendEditData = function(){
     if(t.val() != ""){
         var projectId = this.databroker.currentProject
         var resource = this.databroker.getResource(projectId)
-        var qwrap = sc.util.Namespaces.quoteWrap
-        var wrap = sc.util.Namespaces.angleBracketWrap;
-        var strip = sc.util.Namespaces.angleBracketStrip;
+        var qwrap = sc.data.Term.wrapLiteral
+        var wrap = sc.data.Term.wrapUri;
+        var strip = sc.data.Term.unwrapUri;
         var ns = this.databroker.namespaces;
 
         // Set the new values of title & description
@@ -788,21 +734,15 @@ sc.ProjectManager.prototype.sendEditData = function(){
     }
 }
 
-sc.ProjectManager.prototype.isValidUser = function(username){
-    this.isValid = true;
-    var url = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null)
-
+sc.ProjectManager.prototype.isValidUser = function(username, handler){
     $.ajax({
         type: "GET",
-        url: url,
-        statusCode: {
-            404: function(){
-                this.isValid = false
-            }.bind(this)
+        url: databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null),
+        success: function() {
+            handler(true);
+        },
+        error: function() {
+            handler(false);
         }
-    })
-
-    // return this.isValid
-
-    
-}
+    });
+};

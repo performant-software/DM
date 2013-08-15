@@ -104,6 +104,9 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
         var viewerGrid = this.clientApp.viewerGrid;
         var container = new atb.viewer.ViewerContainer(this.domHelper);
         viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
+
+        if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+
         var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
         container.setViewer(viewer);
 

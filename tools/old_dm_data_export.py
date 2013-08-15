@@ -362,7 +362,7 @@ def parse_for_highlights(content, content_uri):
 
     soup = BeautifulSoup(content)
     for span in soup.find_all('span', class_=HIGHLIGHT_CLASS):
-        if span.get_text() != "":
+        if span.get_text().strip() != "":
             # Get uri of highlight object, which serves as svg_selector uri so annos are 
             #  linked correctly elsewhere
             specific_resource_uri = get_mapped_uri(get_highlight_r_id_from_span(span))
@@ -383,7 +383,8 @@ def parse_for_highlights(content, content_uri):
             graph.add((selector_uri, OA['exact'], Literal(text)))
             graph.add((selector_uri, RDF['type'], OA['TextQuoteSelector']))
         else:
-            span.extract()
+            span_contents = ''.join(unicode(s) for s in span.contents)
+            span.replace_with(span_contents)
 
     sanitize_html(soup)
 
@@ -413,49 +414,45 @@ def handle_annos(user, parent_graph):
             except ObjectDoesNotExist:
                 pass
 
-        try:
-            body = Triple.objects.get(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True).obj
-        except ObjectDoesNotExist:
-            pass
-        except MultipleObjectsReturned:
-            body = Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True)[0].obj
-            print 'Warning: with user="%s", anno %s has multiple bodies' % (user.username, r_id)
-
-        if ((len(target_resources) > 0) and body):
+        body_resources = []
+        for body in Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True):
             try:
-                body_resource = Resource.objects.get(r_id=body)
-                if body_resource.r_type == 'text':
-                    text = Text.objects.get(r_id=body, valid=True, most_recent=True)
-                    if text.purpose == 'anno' or text.purpose == 'notes':
-                        graph.add((uri, OA.motivatedBy, OA.commenting))
-                    elif text.purpose == 'trans':
-                        graph.add((uri, OA.motivatedBy, OA.describing))
-                    elif text.purpose == 'bib':
-                        graph.add((uri, OA.motivatedBy, OA.bookmarking))
+                body_resources.append(Resource.objects.get(r_id=body.obj))
             except ObjectDoesNotExist:
                 pass
-            else:
-                    
-                if body_resource.r_type in ['circle', 'polygon', 'polyline']:
+
+        if (len(target_resources) > 0) and (len(body_resources) > 0):
+            graph.add((uri, RDF.type, OA.Annotation))
+
+            for body_resource in body_resources:
+                if body_resource.r_type == 'text':
+                    try:
+                        text = Text.objects.get(r_id=body_resource.r_id, valid=True, most_recent=True)
+                        if text.purpose == 'anno' or text.purpose == 'notes':
+                            graph.add((uri, OA.motivatedBy, OA.commenting))
+                        elif text.purpose == 'trans':
+                            graph.add((uri, OA.motivatedBy, OA.describing))
+                        elif text.purpose == 'bib':
+                            graph.add((uri, OA.motivatedBy, OA.bookmarking))
+                    except ObjectDoesNotExist:
+                        pass
+
+                if body_resource.r_type in ('circle', 'polygon', 'polyline'):
                     # re-map body to specific resource, 
                     # subj of triple in 'constrained by'
-                    body = Triple.objects.get(pred='oac:constrainedBy', obj=body, most_recent=True, valid=True).subj
-                        
+                    body_uri = get_mapped_uri(Triple.objects.get(pred='oac:constrainedBy', obj=body_resource.r_id, most_recent=True, valid=True).subj)
+                else:
+                    body_uri = get_mapped_uri(body_resource.r_id)
 
-                body_uri = get_mapped_uri(body)
+                graph.add((uri, OA.hasBody, body_uri))
 
-                # Add information about anno
-                graph.add((uri, OA['hasBody'], body_uri))
-                graph.add((uri, RDF['type'], TYPE_URI['anno']))
+            for target_resource in target_resources:
+                if target_resource.r_type in ('circle', 'polygon', 'polyline'):
+                    target_uri = get_mapped_uri(Triple.objects.get(pred='oac:constrainedBy', obj=target_resource.r_id, most_recent=True, valid=True).subj)
+                else:
+                    target_uri = get_mapped_uri(target_resource.r_id)
 
-                for target_resource in target_resources:
-                    if target_resource.r_type in ['circle', 'polygon', 'polyline']:
-                        r_id = Triple.objects.get(pred='oac:constrainedBy', obj=target_resource.r_id, most_recent=True, valid=True).subj
-                        target_resource = Resource.objects.get(r_id=r_id)
-                    graph.add((uri, OA['hasTarget'], get_mapped_uri(target_resource.r_id)))
-
-                # Link anno to project
-                # graph.add((get_mapped_user_default_project(user), ORE['aggregates'], uri))
+                graph.add((uri, OA.hasTarget, target_uri))
 
     return graph
 
@@ -624,16 +621,17 @@ def map_users():
 def instantiate_graph():
     g = Graph()
 
-    g.bind('rdf',    RDF)
-    g.bind('ore',    ORE)
-    g.bind('dc',     DC)
-    g.bind('exif',   EXIF)
-    g.bind('cnt',    CNT)
-    g.bind('perm',   PERM)
-    g.bind('oa',     OA)
-    g.bind('foaf',   FOAF)
-    g.bind('sc',     SC)
-    g.bind('dm_img', IMG_SRC)
-    g.bind('dm',     DM)
+    g.bind('rdf',     RDF)
+    g.bind('ore',     ORE)
+    g.bind('dc',      DC)
+    g.bind('exif',    EXIF)
+    g.bind('cnt',     CNT)
+    g.bind('perm',    PERM)
+    g.bind('oa',      OA)
+    g.bind('foaf',    FOAF)
+    g.bind('sc',      SC)
+    g.bind('dm_img',  IMG_SRC)
+    g.bind('dm',      DM)
+    g.bind('dctypes', DCTYPES)
 
     return g
