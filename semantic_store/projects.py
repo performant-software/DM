@@ -46,7 +46,8 @@ def create_project(g, host):
             project_g = Graph(store=rdfstore(), identifier=project_uri)
             bind_namespaces(project_g)
 
-            project_g += g
+            for t in g:
+                project_g.add(t)
 
             url = uris.url(host, 'semantic_store_projects', uri=uri)
             project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
