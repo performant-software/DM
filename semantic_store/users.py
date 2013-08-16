@@ -9,7 +9,7 @@ from rdflib.exceptions import ParserError
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import bind_namespaces,NS
 from semantic_store import uris
-from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
+from semantic_store.utils import negotiated_graph_response, parse_request_into_graph, METADATA_PREDICATES
 
 def read_user(request, username=None):
     if username:
@@ -22,7 +22,21 @@ def read_user(request, username=None):
             user_graph_identifier = uris.uri('semantic_store_users', username=username)
             print "reading info on user with identifier %s"%user_graph_identifier
             g = Graph(store=rdfstore(), identifier=user_graph_identifier)
-            return negotiated_graph_response(request, g, close_graph=True)
+
+            memory_graph = Graph()
+            for t in g:
+                memory_graph.add(t)
+
+            # Add metadata info about projects
+            for project in g.objects(None, NS.perm.hasPermissionOver):
+                project_graph_identifier = uris.uri('semantic_store_projects', uri=project)
+                project_graph = Graph(store=rdfstore(), identifier=project_graph_identifier)
+
+                for predicate in METADATA_PREDICATES:
+                    for t in project_graph.triples((project, predicate, None)):
+                        memory_graph.add(t)
+
+            return negotiated_graph_response(request, memory_graph, close_graph=True)
     else:
         g = Graph()
         bind_namespaces(g)

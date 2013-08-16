@@ -1,5 +1,16 @@
 from django.http import HttpResponse
 from rdflib import Graph
+from semantic_store.namespaces import NS
+
+METADATA_PREDICATES = (
+    NS.rdf.type,
+    NS.ore.isDescribedBy,
+    NS.rdfs.label,
+    NS.dc.title,
+    NS.exif.width,
+    NS.exif.height,
+    NS.oa.exact
+)
 
 RDFLIB_SERIALIZER_FORMATS = set((
     'n3',
