@@ -374,7 +374,10 @@ sc.data.Resource.prototype.getReferencingResources = function(predicate) {
  * spec.
  */
 sc.data.Resource.prototype.isSameAs = function(other) {
-    if (other.uri) {
+    if (other == null) {
+        return false;
+    }
+    else if (other.uri) {
         var uri = other.uri;
     }
     else {
