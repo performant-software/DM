@@ -43,7 +43,7 @@ var setupWorkingResources = function (clientApp, username, wrContainerParent) {
     var wrContainer = jQuery('#workingResourcesModal .modal-body').get(0);
 
     jQuery('#my_resources_button').on('click', function(event) {
-        workingResourcesViewer.refreshCurrentItems();
+        workingResourcesViewer.updateCurrentItems();
     });
 
     workingResourcesViewer.render(wrContainer);
