@@ -66,15 +66,19 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
             var resourceUris = aggregateUris;
         }
 
+        var items = [];
+
         for (var i = 0, len = resourceUris.length; i < len; i++) {
             var resourceUri = resourceUris[i];
 
             var item = this.createItem(resourceUri);
 
             if (item) {
-                this.addItem(item);
+                items.push(item);
             }
         }
+
+        this.addItems(items);
     };
     withManifest = jQuery.proxy(withManifest, this);
 
@@ -397,6 +401,20 @@ atb.widgets.WorkingResources.prototype.addItem = function(item) {
     this.addListenersToItem(item);
 
     item.render(this.scrollingDiv);
+};
+
+atb.widgets.WorkingResources.prototype.addItems = function(items) {
+    var fragment = this.domHelper.getDocument().createDocumentFragment();
+
+    goog.structs.forEach(items, function(item) {
+        this.itemsByUri.set(item.getUri(), item);
+
+        this.addListenersToItem(item);
+
+        item.render(fragment);
+    }, this);
+
+    this.scrollingDiv.appendChild(fragment);
 };
 
 atb.widgets.WorkingResources.prototype.removeItemByUri = function(uri) {
