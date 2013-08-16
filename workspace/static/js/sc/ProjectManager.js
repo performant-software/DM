@@ -115,13 +115,12 @@ sc.ProjectManager.prototype.setTitle = function(useDeferredResource){
     if (!(projectId)){
         console.warn("There is no currently selected project.")
 
-        this.titleButton.appendChild(this.projectSpan)
-        this.titleButton.appendChild(this.titleSpan)
+        $(this.titleButton).append(this.projectSpan).append(this.titleSpan);
     }
     else{
         if (useDeferredResource){
-            this.titleButton.removeChild(this.titleSpan)
-            this.titleButton.appendChild(this.tempTitleSpan)
+            $(this.titleSpan).detach();
+            $(this.titleButton).append(this.tempTitleSpan);
             
             this.databroker.getDeferredResource(projectId).done(function(resource){
                 var title = resource.getOneProperty('dc:title')
