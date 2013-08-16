@@ -20,6 +20,7 @@ goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
 goog.require('sc.data.NamespaceManager');
 goog.require('sc.data.Term');
+goog.require('sc.data.ProjectModel');
 
 
 /**
@@ -63,6 +64,7 @@ sc.data.Databroker = function(options) {
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
 
     this.dataModel = new sc.data.DataModel(this);
+    this.projectModel = new sc.data.ProjectModel(this);
 };
 
 sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
@@ -654,7 +656,7 @@ sc.data.Databroker.prototype.getResource = function(uri) {
     goog.asserts.assert(uri != null, 'uri passed to sc.data.Databroker#getResource is null or undefined');
 
     if (uri instanceof sc.data.Resource) {
-        return new sc.data.Resource(this, uri.uri);
+        return uri;
     }
     else {
         uri = sc.data.Term.unwrapUri(uri);
