@@ -20,7 +20,7 @@ goog.require('sc.util.DefaultDict');
 goog.require('sc.util.DeferredCollection');
 goog.require('sc.data.NamespaceManager');
 goog.require('sc.data.Term');
-goog.require('sc.data.ProjectModel');
+goog.require('sc.data.ProjectController');
 
 
 /**
@@ -64,7 +64,7 @@ sc.data.Databroker = function(options) {
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
 
     this.dataModel = new sc.data.DataModel(this);
-    this.projectModel = new sc.data.ProjectModel(this);
+    this.projectController = new sc.data.ProjectController(this);
 };
 
 sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
