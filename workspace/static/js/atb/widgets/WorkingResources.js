@@ -189,6 +189,12 @@ atb.widgets.WorkingResources.prototype.updateItemAttrs = function(item) {
 
 atb.widgets.WorkingResources.THUMB_SIZE = new goog.math.Size(75, 75);
 
+atb.widgets.WorkingResources.prototype.updateCurrentItems = function() {
+    goog.structs.forEach(this.itemsByUri, function(item, uri) {
+        this.updateItem(item);
+    }, this);
+};
+
 atb.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLoaded) {
     var uri = item.getUri();
     var resource = this.databroker.getResource(uri);
