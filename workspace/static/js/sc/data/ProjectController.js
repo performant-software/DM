@@ -98,3 +98,18 @@ sc.data.ProjectController.prototype.userHasPermissionOverProject = function(user
 
     return user.hasProperty(permission, project);
 };
+
+sc.data.ProjectController.prototype.findProjectContents = function(project) {
+    project = this.databroker.getResource(project || this.databroker.currentProject);
+
+    var contentsInOrder = this.databroker.getListUrisInOrder(project);
+
+    if (contentsInOrder.length > 0) {
+        return contentsInOrder;
+    }
+    else {
+        contentsInOrder = project.getProperties('ore:aggregates');
+        this.databroker.sortUrisByTitle(contentsInOrder);
+        return contentsInOrder;
+    }
+};

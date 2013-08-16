@@ -55,16 +55,7 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
     var withManifest = function(manifest) {
         this.clear();
 
-        var aggregateUris = this.databroker.dataModel.findAggregationContentsUris(uri);
-        var aggregateUrisInOrder = this.databroker.getListUrisInOrder(uri);
-
-        if (aggregateUrisInOrder.length > 0) {
-            var resourceUris = aggregateUrisInOrder;
-        }
-        else {
-            this.databroker.sortUrisByTitle(aggregateUris);
-            var resourceUris = aggregateUris;
-        }
+        var resourceUris = this.databroker.projectController.findProjectContents(uri);
 
         var items = [];
 
