@@ -151,8 +151,6 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
                 imageUris.addAll(optionUris);
             }
         }
-
-        imageUris.addAll(bodyUris);
     }
 
     return sc.data.Term.unwrapUri(imageUris.getValues());
