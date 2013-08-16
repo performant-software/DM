@@ -141,8 +141,8 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
 
     if (item) {
         if (this.databroker.user) {
-            if (this.databroker.projectModel.userHasPermissionOverProject(
-                    this.databroker.user, this.uri, sc.data.ProjectModel.PERMISSIONS.update)) {
+            if (this.databroker.projectController.userHasPermissionOverProject(
+                    this.databroker.user, this.uri, sc.data.ProjectController.PERMISSIONS.update)) {
                 item.showRemoveButton();
             }
         }

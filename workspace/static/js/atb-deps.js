@@ -106,11 +106,11 @@ goog.addDependency('../../../sc/canvas/PageChooser.js', ['sc.canvas.PageChooser'
 goog.addDependency('../../../sc/canvas/PanZoomGesturesControl.js', ['sc.canvas.PanZoomGesturesControl'], ['goog.events', 'jquery.event.drag', 'jquery.mousewheel', 'sc.canvas.Control']);
 goog.addDependency('../../../sc/canvas/ZoomSliderControl.js', ['sc.canvas.ZoomSliderControl'], ['sc.canvas.Control']);
 goog.addDependency('../../../sc/data/DataModel.js', ['sc.data.DataModel'], ['goog.structs.Map', 'goog.structs.Set']);
-goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.DataModel', 'sc.data.N3Parser', 'sc.data.NamespaceManager', 'sc.data.ProjectModel', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SyncService', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict', 'sc.util.DeferredCollection']);
+goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.DataModel', 'sc.data.N3Parser', 'sc.data.NamespaceManager', 'sc.data.ProjectController', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SyncService', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict', 'sc.util.DeferredCollection']);
 goog.addDependency('../../../sc/data/N3Parser.js', ['sc.data.N3Parser'], ['goog.asserts', 'n3.parser', 'sc.data.Parser']);
 goog.addDependency('../../../sc/data/NamespaceManager.js', ['sc.data.NamespaceManager'], ['goog.string', 'goog.structs.Map']);
 goog.addDependency('../../../sc/data/Parser.js', ['sc.data.ParseError', 'sc.data.Parser'], ['goog.debug.Error', 'sc.data.Quad']);
-goog.addDependency('../../../sc/data/ProjectModel.js', ['sc.data.ProjectModel'], ['goog.structs']);
+goog.addDependency('../../../sc/data/ProjectController.js', ['sc.data.ProjectController'], ['goog.structs']);
 goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], ['jquery.rdfquery']);
 goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.structs.Set', 'sc.data.BNode', 'sc.util.DefaultDict']);
 goog.addDependency('../../../sc/data/RDFQueryParser.js', ['sc.data.RDFQueryParser'], ['jquery.rdfquery', 'sc.data.Parser']);
