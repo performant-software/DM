@@ -33,7 +33,8 @@ sc.ProjectViewer.prototype._buildButtonGroup = function() {
         'title': 'View and edit this project'
     });
     goog.events.listen(this.projectTitleButton, 'click', this._handleProjectButtonClick, false, this);
-    var projectLabel = this.domHelper.createDom('div', {'class': 'sc-ProjectViewer-projectLabel'}, 'project:');
+    var projectLabel = this.domHelper.createDom('div', {'class': 'sc-ProjectViewer-projectLabel'},
+        this.domHelper.createDom('span', {'class': 'icon-book'}), 'Project:');
     this.projectButtonTitleElement = this.domHelper.createDom('div', {'class': 'sc-ProjectViewer-projectButtonTitle'});
     this.projectTitleButton.appendChild(projectLabel);
     this.projectTitleButton.appendChild(this.projectButtonTitleElement);
