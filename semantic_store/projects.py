@@ -77,6 +77,17 @@ def read_project(request, project_uri):
             project_g.remove(t)
         text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
         project_g.add((text, NS.ore.isDescribedBy, text_url))
+
+    # Add info about users which have permissions over the project
+    # This should be indexed in the future for scalability
+    for u in User.objects.filter():
+        user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
+        user_graph = Graph(store=rdfstore(), identifier=user_graph_identifier)
+
+        if len(list(user_graph.triples((URIRef(user_graph_identifier), NS.perm.hasPermissionOver, URIRef(project_uri))))) > 0:
+            project_g += user_graph
+
+        user_graph.close()
     
     if len(project_g) >0:
         return negotiated_graph_response(request, project_g)
