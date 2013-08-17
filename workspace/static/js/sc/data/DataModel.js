@@ -44,6 +44,12 @@ sc.data.DataModel.VOCABULARY = {
     imageTypes: ['<http://dms.stanford.edu/ns/Image>', '<http://dms.stanford.edu/ns/ImageBody>', '<http://purl.org/dc/dcmitype/Image>'],
     imageChoiceTypes: ['<http://dms.stanford.edu/ns/ImageChoice>'],
     textTypes: ['<http://purl.org/dc/dcmitype/Text>'],
+    projectTypes: [
+        '<http://www.openarchives.org/ore/terms/Aggregation>',
+        '<http://purl.org/dc/dcmitype/Collection>',
+        '<http://dm.drew.edu/ns/Project>',
+        '<http://xmlns.com/foaf/0.1/Project>'
+    ],
     option: '<http://dms.stanford.edu/ns/option>',
     metadataPredicates: [
         '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',

@@ -246,7 +246,7 @@ sc.ProjectManager.prototype.confirmSelectProject = function(uri){
 sc.ProjectManager.prototype.selectProject = function(uri){  
     // Load new project
     this.viewerGrid.closeAllContainers()
-    this.databroker.setCurrentProject(uri)
+    this.databroker.projectController.selectProject(uri)
     this.setTitle(true)
     this.workingResources.loadManifest(uri)
 

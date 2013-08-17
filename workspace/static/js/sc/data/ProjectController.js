@@ -1,10 +1,14 @@
 goog.provide('sc.data.ProjectController');
 
+goog.require('goog.events.EventTarget');
 goog.require('goog.structs');
 
 sc.data.ProjectController = function(databroker) {
+    goog.events.EventTarget.call(this);
+
     this.databroker = databroker;
 };
+goog.inherits(sc.data.ProjectController, goog.events.EventTarget);
 
 sc.data.ProjectController.PERMISSIONS = {
     'permission': '<http://vocab.ox.ac.uk/perm#hasPermissionOver>',
@@ -29,7 +33,7 @@ sc.data.ProjectController.prototype.findProjects = function(user) {
 
 sc.data.ProjectController.prototype.findUsersInProject = function(project) {
     if (project == null) {
-        project = this.databroker.getResource(this.databroker.currentProject);
+        project = this.currentProject;
     }
     else {
         project = this.databroker.getResource(project);
@@ -46,7 +50,7 @@ sc.data.ProjectController.prototype.findUsersInProject = function(project) {
 
 sc.data.ProjectController.prototype.grantPermissionsToUser = function(user, project, permissions) {
     user = this.databroker.getResource(user || this.databroker.user);
-    project = this.databroker.getResource(project || this.databroker.currentProject);
+    project = this.databroker.getResource(project || this.currentProject);
 
     goog.structs.forEach(permissions, function(permission) {
         user.addProperty(permission, project);
@@ -63,7 +67,7 @@ sc.data.ProjectController.prototype.grantAllPermissionsToUser = function(user, p
 
 sc.data.ProjectController.prototype.revokePermissionsFromUser = function(user, project, permissions) {
     user = this.databroker.getResource(user || this.databroker.user);
-    project = this.databroker.getResource(project || this.databroker.currentProject);
+    project = this.databroker.getResource(project || this.currentProject);
 
     goog.structs.forEach(permissions, function(permission) {
         user.deleteProperty(permission, project);
@@ -83,7 +87,7 @@ sc.data.ProjectController.prototype.revokePermissionsFromUser = function(user, p
 
 sc.data.ProjectController.prototype.revokeAllPermissionsFromUser = function(user, project) {
     user = this.databroker.getResource(user || this.databroker.user);
-    project = this.databroker.getResource(project || this.databroker.currentProject);
+    project = this.databroker.getResource(project || this.currentProject);
 
     goog.structs.forEach(sc.data.ProjectController.PERMISSIONS, function(permission) {
         user.deleteProperty(permission, project);
@@ -92,7 +96,7 @@ sc.data.ProjectController.prototype.revokeAllPermissionsFromUser = function(user
 
 sc.data.ProjectController.prototype.userHasPermissionOverProject = function(user, project, opt_permission) {
     user = this.databroker.getResource(user || this.databroker.user);
-    project = this.databroker.getResource(project || this.databroker.currentProject);
+    project = this.databroker.getResource(project || this.currentProject);
 
     var permission = opt_permission || sc.data.ProjectController.PERMISSIONS.permission;
 
@@ -100,7 +104,7 @@ sc.data.ProjectController.prototype.userHasPermissionOverProject = function(user
 };
 
 sc.data.ProjectController.prototype.findProjectContents = function(project) {
-    project = this.databroker.getResource(project || this.databroker.currentProject);
+    project = this.databroker.getResource(project || this.currentProject);
 
     var contentsInOrder = this.databroker.getListUrisInOrder(project);
 
@@ -112,4 +116,56 @@ sc.data.ProjectController.prototype.findProjectContents = function(project) {
         this.databroker.sortUrisByTitle(contentsInOrder);
         return contentsInOrder;
     }
+};
+
+sc.data.ProjectController.prototype.selectProject = function(project) {
+    project = this.databroker.getResource(project);
+
+    if (!project.equals(this.currentProject)) {
+        this.currentProject = project;
+        this.databroker.user.setProperty('dm:lastOpenProject', this.currentProject.bracketedUri);
+        this.fireProjectSelected();
+        return true;
+    }
+    else {
+        return false;
+    }
+};
+
+sc.data.ProjectController.prototype.autoSelectProject = function(user) {
+    user = this.databroker.getResource(user || this.databroker.user);
+
+    var lastOpened = user.getOneProperty('dm:lastOpenProject');
+    if (lastOpened) {
+        this.selectProject(lastOpened);
+        return true;
+    }
+    else {
+        return false;
+    }
+};
+
+sc.data.ProjectController.prototype.fireProjectSelected = function() {
+    var event = new goog.events.Event('projectSelected', this);
+    event.project = this.currentProject;
+    this.dispatchEvent(event);
+};
+
+sc.data.ProjectController.prototype.addResourceToProject = function(resource, project) {
+    project = this.databroker.getResource(project || this.currentProject);
+    resource = this.databroker.getResource(resource);
+
+    project.addProperty('ore:aggregates', resource.bracketedUri);
+};
+
+sc.data.ProjectController.prototype.createProject = function(uri) {
+    var project = this.databroker.createResource(uri);
+
+    goog.structs.forEach(sc.data.DataModel.VOCABULARY.projectTypes, function(type) {
+        project.addType(type);
+    }, this);
+
+    this.grantAllPermissionsToUser(this.databroker.user, project);
+
+    return project;
 };

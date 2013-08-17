@@ -144,7 +144,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         this.databroker.newQuadStore.removeQuads(this.databroker.dataModel.findQuadsToSyncForText(resource, this.databroker.newQuadStore));
         this.databroker.deletedQuadsStore.removeQuads(this.databroker.dataModel.findQuadsToSyncForText(resource, this.databroker.deletedQuadsStore));
 
-        url = this.restUrl(this.databroker.currentProject, resType,
+        url = this.restUrl(this.databroker.projectController.currentProject.uri, resType,
                            sc.data.Term.unwrapUri(uri), null);
     }
     else if (resource.hasType('oa:Annotation')) {
@@ -154,19 +154,18 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         // The back end just overwrites with new data for texts, so we can just ignore quad deletion
         this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri, null, null, null);
 
-        url = this.restUrl(this.databroker.currentProject, resType, null, null);
+        url = this.restUrl(this.projectController.currentProject.uri, resType, null, null);
     }
-    else if (resource.hasType('ore:Aggregation')) {
-        if (goog.array.contains(this.databroker.allProjects, resource.uri)) {
-            var resType = sc.data.SyncService.RESTYPE.project;
+    else if (resource.hasType('ore:Aggregation') &&
+        this.databroker.projectController.userHasPermissionOverProject(null, resource, sc.data.ProjectController.PERMISSIONS.update)) {
+        var resType = sc.data.SyncService.RESTYPE.project;
 
-            quadsToPost = dataModel.findQuadsToSyncForProject(resource, this.databroker.newQuadStore);
-            quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
+        quadsToPost = dataModel.findQuadsToSyncForProject(resource, this.databroker.newQuadStore);
+        quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
 
-            url = this.restUrl(this.databroker.currentProject, resType, null, null);
-            if (method == 'POST') {
-                method = 'PUT'
-            }
+        url = this.restUrl(this.databroker.projectController.currentProject.uri, resType, null, null);
+        if (method == 'POST') {
+            method = 'PUT'
         }
     }
     else if (resource.hasType('foaf:Agent')){

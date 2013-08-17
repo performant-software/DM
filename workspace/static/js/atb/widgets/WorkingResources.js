@@ -49,7 +49,7 @@ goog.inherits(atb.widgets.WorkingResources, goog.events.EventTarget);
  * @param {string} uri The uri of the manifest.
  * @param {?Function} opt_doAfter An optional function to call after the manifest has loaded.
  */
-atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter) {
+atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_deferred, opt_doAfter) {
     this.uri = uri;
 
     var withManifest = function(manifest) {
@@ -70,12 +70,23 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
         }
 
         this.addItems(items);
-    };
-    withManifest = jQuery.proxy(withManifest, this);
 
-    var deferredManifest = this.databroker.getDeferredResource(uri);
-    // deferredManifest.progress(withManifest).done(withManifest);
-    deferredManifest.done(withManifest);
+        if (goog.isFunction(opt_doAfter)) {
+            opt_doAfter();
+        }
+    }.bind(this);
+
+    if (opt_deferred) {
+        var deferredManifest = this.databroker.getDeferredResource(uri);
+        // deferredManifest.progress(withManifest).done(withManifest);
+        deferredManifest.done(withManifest);
+    }
+    else {
+        withManifest();
+        if (goog.isFunction(opt_doAfter)) {
+            opt_doAfter();
+        }
+    }
 };
 
 atb.widgets.WorkingResources.prototype.clear = function() {
