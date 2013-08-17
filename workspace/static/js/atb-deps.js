@@ -81,6 +81,7 @@ goog.addDependency('../../../n3/n3store.js', ['n3.store'], []);
 goog.addDependency('../../../sc/BreadCrumbs.js', ['sc.BreadCrumbs'], []);
 goog.addDependency('../../../sc/CommentViewer.js', ['sc.CommentViewer'], ['goog.dom.DomHelper', 'goog.events.EventTarget', 'goog.structs.Map', 'goog.ui.AnimatedZippy']);
 goog.addDependency('../../../sc/ProjectManager.js', ['sc.ProjectManager'], ['goog.dom']);
+goog.addDependency('../../../sc/ProjectViewer.js', ['sc.ProjectViewer'], ['goog.dom.DomHelper', 'goog.string']);
 goog.addDependency('../../../sc/RepoBrowser.js', ['sc.RepoBrowser'], ['goog.events.Event', 'goog.events.EventTarget', 'jquery.popout', 'jquery.rdfquery', 'sc.Array', 'sc.BreadCrumbs', 'sc.RepoBrowserFolio', 'sc.RepoBrowserItem', 'sc.RepoBrowserManuscript', 'sc.data.Databroker']);
 goog.addDependency('../../../sc/RepoBrowserFolio.js', ['sc.RepoBrowserFolio'], ['sc.RepoBrowserItem']);
 goog.addDependency('../../../sc/RepoBrowserItem.js', ['sc.RepoBrowserItem'], []);

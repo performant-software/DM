@@ -22,6 +22,7 @@
 @import url("sc/BreadCrumbs.css");
 @import url("sc/RepoBrowser.css");
 @import url("sc/CanvasViewer.css");
+@import url("sc/ProjectViewer.css");
 
 .atb-ui-viewer-simplemarkereditor-popupdiv
 {

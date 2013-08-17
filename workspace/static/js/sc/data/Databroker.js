@@ -54,9 +54,6 @@ sc.data.Databroker = function(options) {
     this.newQuadStore = new sc.data.QuadStore();
     this.deletedQuadsStore = new sc.data.QuadStore();
 
-    this.currentProject = null
-    this.allProjects = [];
-
     this.user = this.options.user;
 
     this.newResourceUris = new goog.structs.Set();
@@ -941,55 +938,6 @@ sc.data.Databroker.getUri = function(obj) {
     else if (obj instanceof sc.data.Uri) {
         return obj.unwrapped();
     }
-}
-
-/* Setter & getter methods for current project
- * * (variable already existed)
- * Also created ability to add projects to "allProjects"
- * * (allows cross-check that project is valid in setCurrentProject)
- * * Method should be added to newProject modal's project creation
-*/
-sc.data.Databroker.prototype.getCurrentProject = function() {
-    return this.currentProject;
 };
-
-/* Sets the current project to the supplied uri
- * Returns "false" if invalid project uri
-*/
-sc.data.Databroker.prototype.setCurrentProject = function(uri) {
-    // var isValid = false
-    // for (var i = 0; i < this.allProjects.length; i++) {
-    //     if (this.allProjects[i] == uri) isValid = true;
-    // };
-    
-    // if (isValid) this.currentProject = uri;
-    
-    // return isValid;
-    this.currentProject = uri;
-};
-
-sc.data.Databroker.prototype.getAllProjects = function() {
-    return this.allProjects;
-};
-
-sc.data.Databroker.prototype.addNewProject = function(uri) {
-    var isNewProject = true;
-    for (var i = 0; i < this.allProjects.length; i++) {
-        if (this.allProjects[i] == uri) isNewProject = false;
-    };
-
-    if (isNewProject) this.allProjects.push(uri);
-
-    return isNewProject;
-};
-
-sc.data.Databroker.prototype.addResourceToCurrentProject = function(resource) {
-    goog.asserts.assert(this.currentProject != null, 'The current project is null');
-
-    var project = this.getResource(this.currentProject);
-    project.addProperty('ore:aggregates', resource);
-};
-
-
 
     
