@@ -37,9 +37,15 @@
 
 {% block header_buttons %}
   <li id="projectViewerButtons"></li>
-  <li id="repositories_button" title="Show resources available on the internet"><a href="#repoBrowserModal" role="button" data-toggle="modal">External Repositories</a></li>
+  <li id="repositories_button" title="Show resources available on the internet">
+    <a href="#repoBrowserModal" role="button" data-toggle="modal">
+      <span class="icon-globe"></span>
+      External Repositories
+    </a>
+  </li>
   <li class="dropdown" title="Change how many viewers are shown at a time">
     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+      <span class="icon-th"></span>
       Layout
       <b class="caret"></b>
     </a>
