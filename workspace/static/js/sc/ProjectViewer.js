@@ -119,14 +119,16 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     this.modalHeader.appendChild(closeButton);
     this.modalHeader.appendChild(this.modalTitle);
     var nav = this.domHelper.createDom('ul', {'class': 'nav nav-pills'});
-    var editButtonLi = this.domHelper.createDom('li', {}, 
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'}, 'Edit Project Info'));
-    goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
-    nav.appendChild(editButtonLi);
     var newTextButtonLi = this.domHelper.createDom('li', {},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'}, 'New Text Document'));
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+            this.domHelper.createDom('span', {'class': 'icon-pencil'}), ' New Text Document'));
     goog.events.listen(newTextButtonLi, 'click', this._handleNewTextButtonClick, false, this);
     nav.appendChild(newTextButtonLi);
+    var editButtonLi = this.domHelper.createDom('li', {}, 
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+        this.domHelper.createDom('span', {'class': 'icon-cog'}), ' Edit Project Info and Sharing'));
+    goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
+    nav.appendChild(editButtonLi);
     this.modalHeader.appendChild(nav);
     this.modalElement.appendChild(this.modalHeader);
 
