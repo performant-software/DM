@@ -1,7 +1,6 @@
 goog.provide('sc.canvas.DragFeatureControl');
 
 goog.require('sc.canvas.FeatureControl');
-goog.require('Raphael');
 
 /**
  * Allows features on a canvas to be dragged with the mouse.
@@ -16,6 +15,8 @@ sc.canvas.DragFeatureControl = function(viewport, databroker) {
     this.allowedFeatures = null;
 };
 goog.inherits(sc.canvas.DragFeatureControl, sc.canvas.FeatureControl);
+
+sc.canvas.DragFeatureControl.prototype.controlName = 'DragFeatureControl';
 
 sc.canvas.DragFeatureControl.prototype.allowAllFeatures = function() {
     this.allowedFeatures = null;

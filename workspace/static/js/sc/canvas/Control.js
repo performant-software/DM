@@ -21,9 +21,11 @@ sc.canvas.Control = function(viewport) {
     this.viewport = viewport;
     this.isActive = false;
 
-    this.viewport.inactiveControls.add(this);
+    this.viewport._addControl(this);
 };
 goog.inherits(sc.canvas.Control, goog.events.EventTarget);
+
+sc.canvas.Control.prototype.controlName = 'abstract control';
 
 /**
  * This method will be called to activate the control. Any event listeners and
@@ -54,4 +56,9 @@ sc.canvas.Control.prototype.deactivate = function() {
 
     var event = new goog.events.Event('deactivated', this);
     this.dispatchEvent(event);
+};
+
+sc.canvas.Control.prototype.unregister = function() {
+    this.deactivate();
+    this.viewport._removeControl(this);
 };

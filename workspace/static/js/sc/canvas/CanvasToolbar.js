@@ -9,7 +9,6 @@ goog.require('goog.ui.ToggleButton');
 goog.require('goog.ui.ToolbarSeparator');
 goog.require('goog.ui.Toolbar');
 goog.require('goog.ui.editor.ToolbarFactory');
-goog.require('jquery.jQuery');
 goog.require('sc.canvas.PanZoomGesturesControl');
 goog.require('sc.canvas.DrawEllipseControl');
 goog.require('sc.canvas.DrawRectControl');
@@ -18,9 +17,11 @@ goog.require('sc.canvas.DrawPolygonControl');
 goog.require('sc.canvas.DragFeatureControl');
 goog.require('sc.canvas.DrawCircleControl');
 
-sc.canvas.CanvasToolbar = function(viewer) {
+sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
     this.viewer = viewer;
     this.databroker = viewer.databroker;
+
+    this.forReadOnly = opt_forReadOnly || false;
     
     this.boundsByUri = new goog.structs.Map();
 
@@ -69,6 +70,12 @@ sc.canvas.CanvasToolbar.prototype.deactivateMouseControls = function() {
     this.controls.drawRect.deactivate();
     this.controls.drawLine.deactivate();
     this.controls.drawPolygon.deactivate();
+};
+
+sc.canvas.CanvasToolbar.prototype.unregisterControls = function() {
+    goog.structs.forEach(this.controls, function(control) {
+        control.unregister();
+    }, this);
 };
 
 sc.canvas.CanvasToolbar.prototype.handleCanvasAdded = function(event) {
@@ -121,29 +128,29 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'previousPage',
         'Go to the previous canvas in this sequence',
         '',
-        'sc-CanvasToolbar-previous',
+        'icon-chevron-left',
         this.handlePreviousClick
     );
     this.addButton(leftButton);
+
+    var pageChooserButton = this.createButton(
+        'pageChooser',
+        'Pick another folia from this manuscript to view',
+        '',
+        'icon-list',
+        this.handlePageChooserClick
+    );
+    this.setupPageChooser();
+    this.addButton(pageChooserButton);
 
     var rightButton = this.createButton(
         'nextPage',
         'Go to the next canvas in this sequence',
         '',
-        'sc-CanvasToolbar-next',
+        'icon-chevron-right',
         this.handleNextClick
     );
     this.addButton(rightButton);
-
-    var pageChooserButton = this.createButton(
-        'pageChooser',
-        'Pick another folia from this manuscript to view',
-        '\u25BC',
-        '',
-        this.handlePageChooserClick
-    );
-    this.setupPageChooser();
-    this.addButton(pageChooserButton);
 
     this.autoEnableNavButtons();
     this.viewer.mainViewport.addEventListener(
@@ -153,59 +160,61 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
     this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
-    var panZoomButton = this.createButton(
-        'pan-zoom',
-        'Pan and zoom the canvas',
-        '',
-        'sc-CanvasToolbar-panZoomIcon',
-        this.handlePanZoomClick
-    );
-    this.selectButton(panZoomButton);
-    this.addButton(panZoomButton);
+    if (!this.forReadOnly) {
+        var panZoomButton = this.createButton(
+            'pan-zoom',
+            'Pan and zoom the canvas',
+            '',
+            'icon-hand-up',
+            this.handlePanZoomClick
+        );
+        this.selectButton(panZoomButton);
+        this.addButton(panZoomButton);
 
-    var drawCircleButton = this.createButton(
-        'draw-circle',
-        'Draw circles and ellipses on the canvas',
-        '',
-        'sc-CanvasToolbar-drawCircleIcon',
-        this.handleDrawCircleClick
-    );
-    this.addButton(drawCircleButton);
+        var drawLineButton = this.createButton(
+            'draw-line',
+            'Draw lines and polylines on the canvas',
+            '',
+            'sc-CanvasToolbar-drawLineIcon',
+            this.handleDrawLineClick
+        );
+        this.addButton(drawLineButton);
 
-    var drawLineButton = this.createButton(
-        'draw-line',
-        'Draw lines and polylines on the canvas',
-        '',
-        'sc-CanvasToolbar-drawLineIcon',
-        this.handleDrawLineClick
-    );
-    this.addButton(drawLineButton);
+        var drawBoxButton = this.createButton(
+            'draw-box',
+            'Draw rectangles on the canvas',
+            '',
+            'sc-CanvasToolbar-drawBoxIcon',
+            this.handleDrawBoxClick
+        );
+        this.addButton(drawBoxButton);
 
-    var drawPolygonButton = this.createButton(
-        'draw-polygon',
-        'Draw polygons on the canvas',
-        '',
-        'sc-CanvasToolbar-drawPolygonIcon',
-        this.handleDrawPolygonClick
-    );
-    this.addButton(drawPolygonButton);
+        var drawCircleButton = this.createButton(
+            'draw-circle',
+            'Draw circles and ellipses on the canvas',
+            '',
+            'sc-CanvasToolbar-drawCircleIcon',
+            this.handleDrawCircleClick
+        );
+        this.addButton(drawCircleButton);
 
-    var drawBoxButton = this.createButton(
-        'draw-box',
-        'Draw rectangles on the canvas',
-        '',
-        'sc-CanvasToolbar-drawBoxIcon',
-        this.handleDrawBoxClick
-    );
-    this.addButton(drawBoxButton);
+        var drawPolygonButton = this.createButton(
+            'draw-polygon',
+            'Draw polygons on the canvas',
+            '',
+            'sc-CanvasToolbar-drawPolygonIcon',
+            this.handleDrawPolygonClick
+        );
+        this.addButton(drawPolygonButton);
 
-    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+        this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+    }
 
     var toggleMarkersButton = this.createButton(
         'toggle-markers',
         'Toggle the visibility of markers on the canvas',
         '',
-        'sc-CanvasToolbar-toggleMarkersIcon',
+        'icon-eye-close',
         this.handleToggleMarkers
     );
     this.addButton(toggleMarkersButton);
@@ -229,7 +238,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'transcriptions',
         'Show and hide transcriptions',
         '',
-        'sc-CanvasToolbar-transcriptionsIcon',
+        'icon-font',
         this.handleTranscriptionsClick
     );
     transcriptionsButton.setChecked(true);
@@ -246,8 +255,8 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     var imageChoicesButton = this.createButton(
         'imageChoices',
         'Show alternate image choices',
-        'Image choices...',
         '',
+        'icon-picture',
         this.handleImageChoicesClick
     );
     this.addButton(imageChoicesButton);
@@ -258,8 +267,7 @@ sc.canvas.CanvasToolbar.prototype.setupPageChooser = function() {
     
     this.pageChooser = new sc.canvas.PageChooser(
         this.buttonsByName['pageChooser'],
-        this.databroker,
-        100
+        this.databroker
     );
     this.updatePageChooser();
     goog.events.listen(this.viewer.mainViewport, 'canvasAdded', this.updatePageChooser,
@@ -332,7 +340,7 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
             
             var leftUri = urisInOrder[currentIndex - 1];
             var leftResource = this.databroker.getResource(leftUri);
-            var leftTitle = leftResource.getOneProperty('dc:title');
+            var leftTitle = this.databroker.dataModel.getTitle(leftResource);
             
             if (leftTitle) {
                 leftButton.setTooltip('Go to ' + leftTitle);
@@ -353,7 +361,7 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
             
             var rightUri = urisInOrder[currentIndex + 1];
             var rightResource = this.databroker.getResource(rightUri);
-            var rightTitle = rightResource.getOneProperty('dc:title');
+            var rightTitle = this.databroker.dataModel.getTitle(rightResource);
             
             if (rightTitle) {
                 rightButton.setTooltip('Go to ' + rightTitle);

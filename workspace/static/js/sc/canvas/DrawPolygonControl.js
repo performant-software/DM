@@ -23,16 +23,7 @@ sc.canvas.DrawPolygonControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawPolygonControl, sc.canvas.DrawLineControl);
 
-/**
- * Overrides the line control path command creator so that polygons are drawn
- * rather than polylines.
- *
- * @override
- */
-sc.canvas.DrawPolygonControl.prototype.createPathCommandsFromPoints = function(
-                                                                       points) {
-    return this.viewport.canvas.createPathCommandsFromPoints(points, true);
-};
+sc.canvas.DrawPolygonControl.prototype.controlName = 'DrawPolygonControl';
 
 sc.canvas.DrawPolygonControl.prototype.createInitialLine = function(canvasCoord) {
     var viewportDiv = this.viewport.getElement();
@@ -42,29 +33,81 @@ sc.canvas.DrawPolygonControl.prototype.createInitialLine = function(canvasCoord)
 
     this.points.push(canvasCoord);
     
-    this.feature = canvas.addPolygon([canvasCoord], this.uri);
+    this.feature = canvas.addPath([], this.uri);
     this.feature.set({
-        top: canvasCoord.y - canvas.group.get('height') / 2,
-        left: canvasCoord.x - canvas.group.get('width') / 2
+        top: canvasCoord.y * canvas.displayToActualSizeRatio + canvas.offset.x,
+        left: canvasCoord.x * canvas.displayToActualSizeRatio + canvas.offset.y,
+        scaleX: canvas.displayToActualSizeRatio,
+        scaleY: canvas.displayToActualSizeRatio
     });
+    this.updateFeatureCoords();
+};
+
+sc.canvas.DrawPolygonControl.prototype.updateLine = function(points) {
+    var boundingBox = this.getLayerBoundingBox(points);
+
+    var canvas = this.viewport.canvas;
+    this.feature = canvas.updatePath(
+        this.feature,
+        sc.canvas.FabricCanvas.convertPointsToSVGPathCommands(
+            this.normalizePoints(points),
+            null,
+            boundingBox,
+            true
+        )
+    );
+
+    this.feature.set({
+        left: boundingBox.x1 + (boundingBox.width / 2),
+        top: boundingBox.y1 + (boundingBox.height / 2)
+    });
+
+    this.updateFeature();
 };
 
 sc.canvas.DrawPolygonControl.prototype.normalizePoints = function(points) {
+    var boundingBox = sc.canvas.FabricCanvas.getPointsBoundingBox(points);
+
     var newPoints = [];
 
-    var initialPoint = this.points[0];
+    var initialPoint = new fabric.Point(boundingBox.x1, boundingBox.y1);
 
     for (var i=0, len=points.length; i<len; i++) {
-        var point = {
-            x: points[i].x,
-            y: points[i].y
-        };
+        var point = new fabric.Point(
+            points[i].x - initialPoint.x,
+            points[i].y - initialPoint.y
+        );
 
-        point.x -= initialPoint.x;
-        point.y -= initialPoint.y;
-
-        newPoints.push(point)
+        newPoints.push(point);
     }
 
     return newPoints;
+};
+
+/**
+ * @inheritDoc
+ */
+sc.canvas.DrawPolygonControl.prototype.finishDrawFeature = function() {
+    var boundingBox = this.getLayerBoundingBox(this.points);
+
+    var canvas = this.viewport.canvas;
+    canvas.removeFabricObject(this.feature, true);
+    this.feature = canvas.addPolygon(this.normalizePoints(this.points), this.uri);
+    this.feature.set({
+        left: boundingBox.x1 + (boundingBox.width / 2),
+        top: boundingBox.y1 + (boundingBox.height / 2)
+    });
+
+    this.updateFeature();
+
+    sc.canvas.DrawFeatureControl.prototype.finishDrawFeature.call(this);
+
+    var viewportDiv = this.viewport.getElement();
+
+    this.points = [];
+    jQuery(viewportDiv).unbind('mousemove', this.proxiedHandleMousemove);
+
+    if (! this.freehandMode) {
+        this.useDragToDraw = false;
+    }
 };

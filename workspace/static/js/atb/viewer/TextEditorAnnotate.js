@@ -5,9 +5,8 @@ goog.require('goog.dom.TagName');
 goog.require('goog.editor.Plugin');
 goog.require('atb.viewer.ResourceListViewer');
 goog.require('atb.ui.Bezel');
-goog.require('atb.events.ResourceClicked');
-goog.require('atb.resource.TextHighlightResource');
-goog.require('atb.resource.ResourceFactory');
+goog.require('atb.events.ResourceClick');
+goog.require('goog.userAgent.product');
 
 goog.require("atb.widgets.ForegroundMenuDisplayer");
 goog.require("atb.util.DomTraverser");//lolhack!
@@ -17,12 +16,11 @@ goog.require("atb.util.DomTraverser");//lolhack!
  * @constructor
  * @extends {goog.editor.Plugin}
  */
-atb.viewer.TextEditorAnnotate = function(set_thisViewer)
-{
-	this.thisViewer = set_thisViewer;//HACK
+atb.viewer.TextEditorAnnotate = function(viewer) {
+	this.viewer = viewer;
     goog.editor.Plugin.call(this);
 
-    this.clientApp = this.thisViewer.clientApp;
+    this.clientApp = this.viewer.clientApp;
     this.databroker = this.clientApp.getDatabroker();
 	
 	this.lastStartNode = null;
@@ -43,10 +41,6 @@ atb.viewer.TextEditorAnnotate.COMMAND = {
  * ANNOTATION_CLASS
  */
 atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS = 'atb-editor-textannotation';
-
-atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '-ID-';
-
-atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '-LOCALID-';
 
 /**
  * ANNOTATION_CLASS_SELECTED
@@ -84,27 +78,22 @@ atb.viewer.TextEditorAnnotate.prototype.isSupportedCommand = function(command) {
  */
 atb.viewer.TextEditorAnnotate.prototype.execCommandInternal = function (command) {
     var domHelper = this.fieldObject.getEditableDomHelper();
-    var range = this.fieldObject.getRange();
 
     var selectedAnnotation = domHelper.getElementByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
-
-    var errorHandler = atb.Util.scopeAsyncHandler(this.thisViewer.flashErrorIcon, this.thisViewer);
     
     // if we have one selected assume we need to delete it, otherwise we're adding new.
     if (selectedAnnotation) {
         this.deleteAnnotation(selectedAnnotation);
     }
 	else {
-		var uid = this.databroker.createUuid();
-		this.addAnnotation(uid, range);
+		this.addAnnotation(this.fieldObject.getRange());
     }
 
     return true;
 };
 
 
-atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper_ = function(node, offset)
-{
+atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper_ = function(node, offset) {
 	/*
 	startOffset: 0; endOffset: 1921
 	#childnodes: 1921
@@ -124,8 +113,7 @@ atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper_ = function(node, of
 	return this.elementOffsetHelper2_(info);
 };
 
-atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper2_ = function(info)
-{
+atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper2_ = function(info) {
 	var TypeElement = Node.ELEMENT_NODE;// == 1
 	var TypeText = Node.TEXT_NODE;// == 3
 	var TypeCDataSection = Node.CDATA_SECTION_NODE;// == 4
@@ -173,21 +161,61 @@ atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper2_ = function(info)
 };
 	
 
-atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(annoId)
-{
-	//var count = counter;
-	//counter += 1;
-	var domHelper = this.fieldObject.getEditableDomHelper();
+atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(uri) {
+	var domHelper = this.fieldObject.getEditableDomHelper() || this.viewer.domHelper;
 	var span = domHelper.createElement('span');
-	
-	var newAnnotationId = annoId;
-	var cssClassNames = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + " " +
-		//atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED + " " +  // start selected
-        //atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID + newAnnotationId;
-	    atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID + newAnnotationId;
-	span.setAttribute('class', cssClassNames);
+
+	jQuery(span).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
+	this.setHighlightElementUri(span, uri);
+
 	this.addListeners(span);
 	return span;
+};
+
+atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
+    return this.databroker.getResource(this.viewer.uri);
+};
+
+atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
+	var highlight = this.databroker.getResource(highlightUri);
+    highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
+    highlight.addProperty('oa:exact', sc.data.Term.wrapLiteral(range.getText()));
+    // Need a solution for keeping this up to date
+    // TODO
+    // highlight.addProperty('oa:prefix')
+    // highlight.addProperty('oa:suffix')
+    
+    var specificResource = this.databroker.getResource(this.databroker.createUuid());
+    specificResource.addProperty('rdf:type', 'oa:SpecificResource');
+    specificResource.addProperty('oa:hasSource', this.getTextResource().bracketedUri);
+    specificResource.addProperty('oa:hasSelector', highlight.bracketedUri);
+
+    var anno = this.databroker.getResource(this.databroker.createUuid());
+    anno.addProperty('rdf:type', 'oa:Annotation');
+    anno.addProperty('oa:hasTarget', this.getTextResource().bracketedUri);
+
+    return highlight;
+};
+
+atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highlightUri) {
+    var highlight = this.databroker.getResource(highlightUri);
+    var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri));
+
+    goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
+    	anno.deleteProperty('oa:hasTarget', specificResource);
+    }, this);
+    highlight.deleteAllProperties();
+    specificResource.deleteAllProperties();
+};
+
+atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {
+    var elements = this.getAllAnnotationTags();
+    goog.structs.forEach(elements, function(element) {
+    	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element);
+    	var highlightResource = this.databroker.getResource(highlightUri);
+
+    	highlightResource.setProperty('oa:exact', sc.data.Term.wrapLiteral(jQuery(element).text()));
+    }, this);
 };
 
 
@@ -195,212 +223,181 @@ atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(annoId)
  * Add annotation wrapper to a selection 
  * @param {string} range The range object for the selection
  */
-atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
-{
-	if (range == null) {
+atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
+	if (range == null || range.getText() == '') {
 		return;
 	}
-    
-    var highlightResource = new atb.resource.TextHighlightResource(annoId, annoId);
-    highlightResource.user = this.thisViewer.clientApp.username;
-    highlightResource.textId = this.thisViewer.resourceId;
-    highlightResource.contents = range.getValidHtml();
-    highlightResource.textTitle = this.thisViewer.getTitle();
-    
-    var errorHandler = atb.Util.scopeAsyncHandler(this.thisViewer.flashErrorIcon, this.thisViewer);
-    
-    var ws = this.thisViewer.webService;
-    ws.withSavedResource(highlightResource, function (response) {}, this, errorHandler);
+
+	var highlightUri = this.databroker.createUuid();
+	var highlightResource = this.createHighlightResource(highlightUri, range);
 	
 	var TypeElement = Node.ELEMENT_NODE;
 	var TypeText = Node.TEXT_NODE;
 			
-    if (range.getText() != "") {
-        var domHelper = this.fieldObject.getEditableDomHelper();
-		var self = this;
-        
-        if (range.getHtmlFragment() == range.getValidHtml()) {
-			var span = this.createAnnoSpan(annoId);
-            range.surroundContents(span);
-        }
-		else {
-			var putNodeAfter = function (parent, afterNode, newNode) {
-				if (afterNode.nextSibling == null) {
-					parent.appendChild(newNode);
-				}
-				else {
-					parent.insertBefore(newNode, afterNode.nextSibling);
-				}
-			};
-			
-			var putNodeBefore = function (parent, beforeNode, newNode) {
-				parent.insertBefore(newNode,beforeNode);
-			};
-			
-			
-			var newParents = [];
-			var rangeHack = range.browserRangeWrapper_.range_; //HACK
-			
-			var startNode = rangeHack.startContainer;
-			var startOffset = rangeHack.startOffset;
-			var endNode = rangeHack.endContainer;
-			var endOffset = rangeHack.endOffset;
-			
-			if ((this.lastStartNode == startNode) || (this.lastEndNode == endNode)) {
-				debugPrint("!?!");
+    var domHelper = this.fieldObject.getEditableDomHelper();
+	var self = this;
+    
+    if (range.getHtmlFragment() == range.getValidHtml()) {
+		var span = this.createAnnoSpan(highlightUri);
+        range.surroundContents(span);
+    }
+	else {
+		var putNodeAfter = function (parent, afterNode, newNode) {
+			if (afterNode.nextSibling == null) {
+				parent.appendChild(newNode);
 			}
-			this.lastStartNode = startNode;
-			this.lastEndNode = endNode;
-			
-			
-			var bSameNode = (startNode===endNode);
-			
-			var bStartNodeIsElement =(startNode.nodeType===TypeElement);
-			var bEndNodeIsElement =(endNode.nodeType===TypeElement);
-			debugPrint("startOffset: "+startOffset+"; endOffset: "+endOffset);
-			
-			//element start tag; startOffset: 1
-			if (bStartNodeIsElement)
-			{
-				//TODO: need to figure out how to really do this properly...!?
-			
-				//occured: element start tag; startOffset: 1
-			
-				//unexpected if were to occur...?:
-				
-				var startInfo;
-				
-				startInfo = this.elementOffsetHelper_(startNode, startOffset);
-				
-				startNode = startInfo.node;
-				startOffset=startInfo.offset;
-				//bStartNodeIsElement =(startNode.nodeType===TypeElement);
-				bStartNodeIsElement =(startNode.nodeType===TypeElement);
-				//lol42..?
+			else {
+				parent.insertBefore(newNode, afterNode.nextSibling);
 			}
-			if (bEndNodeIsElement)
-			{
-				//unexpected if were to occur...?:
-				//alert("element end tag; endOffset: "+endOffset);
-				var endInfo;
-			
-				endInfo = this.elementOffsetHelper_(endNode, endOffset);
-				
-				endNode = endInfo.node;
-				endOffset = endInfo.offset;
-				bEndNodeIsElement =(endNode.nodeType===TypeElement);
-			}
-			//lol@selection bug in stuff...when changing it...!
-			
-			var endPrime;
-			var startPrime;
-			
-			var startNodeText = "" + startNode.nodeValue;
-			var endNodeText = "" + endNode.nodeValue;
-			
-			{
-				var beforeText = startNodeText.substring(0,startOffset);
-				var startNodeSelText = startNodeText.substring(startOffset);//+1);
-				var endNodeSelText = endNodeText.substring(0, endOffset);
-				var endNodeAfterText = endNodeText.substring(endOffset);// + 1);
-				//if (
-				//debugPrint("startOffset:"+startOffset+", endOffset:"+endOffset);
-				var beforeTextNode = document.createTextNode(beforeText);
-				var startSelTextNode =document.createTextNode(startNodeSelText);
-				
-				
-				//var endNodeSelText = document.createTextNode(endNodeSelText);
-				var endNodeSelTextNode = document.createTextNode(endNodeSelText);
-				var afterTextNode = document.createTextNode(endNodeAfterText);
-				
-				var startParent= startNode.parentNode;
-				var endParent = endNode.parentNode;
-				
-				if (bStartNodeIsElement)
-				{//TODO: finish figuring this out... what does it really mean tho...?
-				
-					//startPRime = startNode;//hack...?
-					
-					//TODO: split the parent tag in two, maybe...?
-					debugPrint("warning: starting on an element!");
-					if (startOffset != 0)
-					{
-						debugPrint("WARNING: starting on an element, w/o a start-offset of zero!");
-						//:
-					}
-					startPrime = startNode;//hack...?
-				}
-				else
-				{
-					debugPrint("textStart");
-					startParent.replaceChild(startSelTextNode, startNode);//NORMAL -- null here...?
-					startParent.insertBefore(beforeTextNode,startSelTextNode);
-					startPrime = startSelTextNode;
-				}
-				
-				if (bEndNodeIsElement)
-				{
-					debugPrint("warning: ending on an element!");
-					if (endOffset != 0)
-					{
-						debugPrint("WARNING: ending on an element, w/o a end-offset of zero!");
-						//:
-					}
-					endPrime = endNode;//hack...?
-				}
-				else
-				{
-					debugPrint("textEnd");
-					endParent.replaceChild(afterTextNode, endNode);//another bug...?
-					endParent.insertBefore(endNodeSelTextNode,afterTextNode);
-					endPrime = endNodeSelTextNode;
-				}
-			}
-			var traversal = new atb.util.DomTraverser(startPrime, endPrime);
-			
-			//TODO: ?= check this beforehand...?
-			var bFoundSpans = false;
-			traversal.each(function()
-			{
-				if (jQuery(this).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS))
-				{
-					bFoundSpans = true;
-				}
-			});
-			if (bFoundSpans)
-			{
-				//	//!!
-				//this.thisViewer.showErrorMessage("Can't highlight a selection 
-				this.thisViewer.showErrorMessage("Can't highlight a selection containing an existing highlight!");
-				return;
-			}
-			var arr = [];
-			traversal.eachTextNode(function()
-			{
-				if (this.parentNode!=null) {
-					var ndName = (""+this.parentNode.nodeName).toLowerCase();
-					if (ndName === "style") {
-						return;
-					}
-				}
-				arr.push(this);
-			});
-			var bunches = arr;//hack
-			
-			for(var i=0,l=bunches.length; i<l; i++)
-			{
-				var bunch=bunches[i];
-				bunch = [bunch,bunch];//HACK
-				var newParent = this.createAnnoSpan(annoId);
-				traversal.replaceBunchWithCommonParent(bunch, newParent);
-				newParents.push(newParent);
-				//document.createElement(
-			}
-			
-			debugPrint("# new parents: "+newParents.length);
+		};
 		
+		var putNodeBefore = function (parent, beforeNode, newNode) {
+			parent.insertBefore(newNode,beforeNode);
+		};
+		
+		
+		var newParents = [];
+		var rangeHack = range.browserRangeWrapper_.range_; //HACK
+		
+		var startNode = rangeHack.startContainer;
+		var startOffset = rangeHack.startOffset;
+		var endNode = rangeHack.endContainer;
+		var endOffset = rangeHack.endOffset;
+		
+		if ((this.lastStartNode == startNode) || (this.lastEndNode == endNode)) {
+			console.log("!?!");
+		}
+		this.lastStartNode = startNode;
+		this.lastEndNode = endNode;
+		
+		
+		var bSameNode = (startNode===endNode);
+		
+		var bStartNodeIsElement =(startNode.nodeType===TypeElement);
+		var bEndNodeIsElement =(endNode.nodeType===TypeElement);
+		console.log("startOffset: "+startOffset+"; endOffset: "+endOffset);
+		
+		//element start tag; startOffset: 1
+		if (bStartNodeIsElement) {
+			//TODO: need to figure out how to really do this properly...!?
+			//occured: element start tag; startOffset: 1
+			//unexpected if were to occur...?:
 			
-        }
+			var startInfo;
+			
+			startInfo = this.elementOffsetHelper_(startNode, startOffset);
+			
+			startNode = startInfo.node;
+			startOffset=startInfo.offset;
+			//bStartNodeIsElement =(startNode.nodeType===TypeElement);
+			bStartNodeIsElement =(startNode.nodeType===TypeElement);
+			//lol42..?
+		}
+
+		if (bEndNodeIsElement) {
+			//unexpected if were to occur...?:
+			//alert("element end tag; endOffset: "+endOffset);
+			var endInfo;
+		
+			endInfo = this.elementOffsetHelper_(endNode, endOffset);
+			
+			endNode = endInfo.node;
+			endOffset = endInfo.offset;
+			bEndNodeIsElement =(endNode.nodeType===TypeElement);
+		}
+		//lol@selection bug in stuff...when changing it...!
+		
+		var endPrime;
+		var startPrime;
+		
+		var startNodeText = "" + startNode.nodeValue;
+		var endNodeText = "" + endNode.nodeValue;
+		
+		{
+			var beforeText = startNodeText.substring(0,startOffset);
+			var startNodeSelText = startNodeText.substring(startOffset);//+1);
+			var endNodeSelText = endNodeText.substring(0, endOffset);
+			var endNodeAfterText = endNodeText.substring(endOffset);// + 1);
+			//if (
+			//console.log("startOffset:"+startOffset+", endOffset:"+endOffset);
+			var beforeTextNode = document.createTextNode(beforeText);
+			var startSelTextNode =document.createTextNode(startNodeSelText);
+			
+			
+			//var endNodeSelText = document.createTextNode(endNodeSelText);
+			var endNodeSelTextNode = document.createTextNode(endNodeSelText);
+			var afterTextNode = document.createTextNode(endNodeAfterText);
+			
+			var startParent= startNode.parentNode;
+			var endParent = endNode.parentNode;
+			
+			if (bStartNodeIsElement) {//TODO: finish figuring this out... what does it really mean tho...?
+			
+				//startPRime = startNode;//hack...?
+				
+				//TODO: split the parent tag in two, maybe...?
+				console.log("warning: starting on an element!");
+				if (startOffset != 0) {
+					console.log("WARNING: starting on an element, w/o a start-offset of zero!");
+				}
+				startPrime = startNode;//hack...?
+			}
+			else {
+				console.log("textStart");
+				startParent.replaceChild(startSelTextNode, startNode);//NORMAL -- null here...?
+				startParent.insertBefore(beforeTextNode,startSelTextNode);
+				startPrime = startSelTextNode;
+			}
+			
+			if (bEndNodeIsElement) {
+				console.log("warning: ending on an element!");
+				if (endOffset != 0) {
+					console.log("WARNING: ending on an element, w/o a end-offset of zero!");
+				}
+				endPrime = endNode;//hack...?
+			}
+			else {
+				console.log("textEnd");
+				endParent.replaceChild(afterTextNode, endNode);//another bug...?
+				endParent.insertBefore(endNodeSelTextNode,afterTextNode);
+				endPrime = endNodeSelTextNode;
+			}
+		}
+		var traversal = new atb.util.DomTraverser(startPrime, endPrime);
+		
+		//TODO: ?= check this beforehand...?
+		var bFoundSpans = false;
+		traversal.each(function() {
+			if (jQuery(this).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS)) {
+				bFoundSpans = true;
+			}
+		});
+		if (bFoundSpans) {
+			this.viewer.showErrorMessage("Can't highlight a selection containing an existing highlight!");
+			return;
+		}
+		var arr = [];
+		traversal.eachTextNode(function() {
+			if (this.parentNode!=null) {
+				var ndName = (""+this.parentNode.nodeName).toLowerCase();
+				if (ndName === "style") {
+					return;
+				}
+			}
+			arr.push(this);
+		});
+		var bunches = arr;//hack
+		
+		for(var i=0,l=bunches.length; i<l; i++) {
+			var bunch=bunches[i];
+			bunch = [bunch,bunch];//HACK
+			var newParent = this.createAnnoSpan(annoId);
+			traversal.replaceBunchWithCommonParent(bunch, newParent);
+			newParents.push(newParent);
+			//document.createElement(
+		}
+		
+		console.log("# new parents: "+newParents.length);
     }
 };
 
@@ -408,40 +405,16 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(annoId, range)
  * Delete an annotation
  * @param {node} annotation The annotation to delete
  */
-atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(annotation) {
+atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(element) {
+	if (jQuery(element).children().length > 0) {
+		jQuery(element).unwrap();
+	}
+	else {
+		jQuery(element).replaceWith(jQuery(element).text());
+	}
 
-    if(annotation) {
-
-        var domHelper = this.fieldObject.getEditableDomHelper();
-        var annotationId = atb.viewer.TextEditorAnnotate.getAnnotationId(annotation);
-        var annotationParts = domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID + annotationId);
-        var annotationParts2 = domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID + annotationId);
-        
-        var annos = [];
-        
-        for (var i in annotationParts) {
-            annos.push(annotationParts[i]);
-        }
-        for (var i in annotationParts2) {
-            annos.push(annotationParts2[i]);
-        }
-	
-		/*
-		//No. this kills ALL of the spans:
-		var annotationParts3 = domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-		for (var i in annotationParts3)
-		{
-            annos.push(annotationParts3[i]);
-        }
-		*/
-		//^LOLHACK
-		
-		//atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID + annotationId);
-        for(var i = 0; i < annos.length; i++) {
-            domHelper.flattenElement(annos[i]);
-        }
-
-    }
+    var uri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element);
+    this.deleteHighlightResource(uri);
 };
 
 /**
@@ -451,73 +424,92 @@ atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(annotation) 
  * @return {true}
  */
 atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
+	if (!this.isHighlightElement(object)) {
+		console.error('attempting to add highlight event listeners to an element which is not a highlight', object);
+	}
+
+	var selector = this.getElementSelectorResource(object);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(selector);
+
 	var self = this;
 	
 	// Check for click listeners so that they aren't fired multiple times
 	if(!goog.events.hasListener(object, goog.events.EventType.CLICK)) {
-		goog.events.listen(object, goog.events.EventType.CLICK, function( mouseEvent ){
-            self.selectAnnotationSpan(object, mouseEvent);
-			return self.handleHighlightClick(object, mouseEvent);
+		goog.events.listen(object, goog.events.EventType.CLICK, function(mouseEvent) {
+			event.stopPropagation();
+
+            this.selectAnnotationSpan(object, mouseEvent);
+			return this.handleHighlightClick(object, mouseEvent);
 		}, false, this);
 	}
     
     if (!goog.events.hasListener(object, goog.events.EventType.MOUSEOVER)) {
         goog.events.listen(object, goog.events.EventType.MOUSEOVER, function( mouseEvent ) {
-            self.hoverAnnotationSpan(object);
+            this.hoverAnnotationSpan(object);
             return false;
         }, false, this);
     }
     
     if (!goog.events.hasListener(object, goog.events.EventType.MOUSEOUT)) {
         goog.events.listen(object, goog.events.EventType.MOUSEOUT, function( mouseEvent ) {
-                    return self.unhoverAnnotationSpan(object);
+			return this.unhoverAnnotationSpan(object);
         }, false, this);
     }
     
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-	
-	var menuButtons = [
-		new atb.widgets.MenuItem(
-			"newTextAnno",
-			createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
-			function(actionEvent) {
-	            self.createNewAnnoBody(object);
-	        },
-            'Annotate this highlight'
-		),
-	  
-		new atb.widgets.MenuItem(
-			"createLink",
-			createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
-			function(actionEvent) {
-	            self.linkAnnotation(object);
-			},
-            'Link another resource to this highlight'
-		),
-		new atb.widgets.MenuItem(
-		        "showLinkedAnnos",
-		        createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
-		        function(actionEvent)
-		        {
-		            self.showAnnos(object);
-		        }, 
-		        'Show resources linked to this highlight'
-		    ),
-		new atb.widgets.MenuItem(
-				'delete_highlight_button',
-				createButtonGenerator('atb-radialmenu-button atb-radialmenu-button-delete'),
-				function(actionEvent)
-				{
-					self.thisViewer.hideHoverMenu()
-					self.deleteAnnotation(object);
 
+    if (this.viewer.isEditable()) {
+		var menuButtons = [
+			new atb.widgets.MenuItem(
+				"newTextAnno",
+				createButtonGenerator("atb-radialmenu-button icon-pencil"),
+				function(actionEvent) {
+		            self.createNewAnnoBody(object);
+
+		            if (self.annoTitlesList) {
+		                self.annoTitlesList.loadForResource(specificResourceUri);
+		            }
+		        },
+	            'Annotate this highlight'
+			),
+		  
+			new atb.widgets.MenuItem(
+				"createLink",
+				createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
+				function(actionEvent) {
+		            self.linkAnnotation(object);
+
+		            if (self.annoTitlesList) {
+		                self.annoTitlesList.loadForResource(specificResourceUri);
+		            }
 				},
-                'Delete this highlight'
+	            'Link another resource to this highlight'
+			),
+			// new atb.widgets.MenuItem(
+		 //        "showLinkedAnnos",
+		 //        createButtonGenerator("atb-radialmenu-button icon-search"),
+		 //        function(actionEvent) {
+		 //            self.showAnnos(object);
+		 //        }, 
+		 //        'Show resources linked to this highlight'
+		 //    ),
+			new atb.widgets.MenuItem(
+				'delete_highlight_button',
+				createButtonGenerator('atb-radialmenu-button icon-remove'),
+				function(actionEvent) {
+					self.viewer.hideHoverMenu()
+					self.deleteAnnotation(object);
+				},
+	            'Delete this highlight'
 			)
-	];
-    menuButtons.reverse();
+		];
+	    menuButtons.reverse();
+    }
+    else {
+    	var menuButtons = [];
+    }
     
-    this.thisViewer.addHoverMenuListenersToElement(object, menuButtons, atb.viewer.TextEditorAnnotate.getAnnotationId(object));
+    this.viewer.addHoverMenuListenersToElement(object, menuButtons, specificResourceUri);
 	
 	return true;
 };
@@ -531,49 +523,26 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 atb.viewer.TextEditorAnnotate.prototype.queryCommandValue = function(command) {
     var isSelection = this.selectionIsAnnotation();
     if(isSelection != true) {
-        this.unselectAnnotationSpan();
+        this.unselectAllHighlights();
     }
     return isSelection;
 };
 
 atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function () {
-    var domHelper = this.fieldObject.getEditableDomHelper();
-    var annotations = domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
+    var annotations = this.getAllAnnotationTags();
 
     for(var i=0, len=annotations.length; i < len; i++) {
         var highlightTag = annotations[i];
-        this.addListeners(highlightTag);
+
+    	this.addListeners(highlightTag);
     }
 };
 
-/**
- * getNewAnnotationId()
- * get list of existing annotation spans and find the highest span ID
- * we want the new ID to be 1 larger than the last
- * if we delete one in the middle we still don't want to reuse that one
- * @return new annotationId, 1 or higher
- **/
-atb.viewer.TextEditorAnnotate.prototype.getNewAnnotationId = function () {
+atb.viewer.TextEditorAnnotate.OA_EXACT_URI = 'http://www.w3.org/ns/oa#exact';
 
-     var annotationId = 0;
-
-    // get all annotations in an editor
-    // look through their classnames for the number ID
-    // get one higher than it
-    var domHelper = this.fieldObject.getEditableDomHelper();
-    var annotations = domHelper.getElementsByClass(
-                    atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-
-    for(var i = 0; i < annotations.length; i++) {
-        var testId = atb.viewer.TextEditorAnnotate.getAnnotationId(annotations[i]);
-        if(testId > annotationId) {
-            annotationId = testId;
-        }
-    }
-
-    annotationId++; // get just 1 more than the highest existing spanId value
-
-    return annotationId;
+atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(element, uri) {
+	jQuery(element).attr('about', uri);
+    jQuery(element).attr('property', atb.viewer.TextEditorAnnotate.OA_EXACT_URI);
 };
 
 
@@ -583,60 +552,51 @@ atb.viewer.TextEditorAnnotate.prototype.getNewAnnotationId = function () {
  * @param annotation is the annontation to look at
  * @return annotationId, 1 or higher
  **/
-atb.viewer.TextEditorAnnotate.getAnnotationId = function (annotation) {
+atb.viewer.TextEditorAnnotate.getHighlightSelectorUri = function (element) {
+    return jQuery(element).attr('about');
+};
 
-    var annotationId = 0;
+atb.viewer.TextEditorAnnotate.prototype.getElementSelectorResource = function(element) {
+    return this.databroker.getResource(atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element));
+};
 
-    //console.log("Annotate.getAnnotationId: annotation: ");
-    //console.log(annotation);
-    var classNames = annotation.className.split(" ");
-    for(var j = 0; j < classNames.length; j++) {
-        if(classNames[j].indexOf('-LOCALID-') != -1) {
-            var id = classNames[j].split("-"); // split class up
-            annotationId = id[id.length-1];  // and get just last number
-        }
-        else if (classNames[j].indexOf('-ID-') != -1) {
-            var id = classNames[j].split("-"); // split class up
-            annotationId = id[id.length-1];  // and get just last number
-        }
-    }
-
-    return annotationId;
+atb.viewer.TextEditorAnnotate.prototype.isHighlightElement = function(element) {
+    return jQuery(element).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS) && atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element) != null;
 };
 
 atb.viewer.TextEditorAnnotate.prototype.getAllAnnotationTags = function () {
-    var domHelper = this.thisViewer.field.getEditableDomHelper();
+	var annotation_class = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS;
 
-    var annotations = domHelper.getElementsByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
+	if (this.viewer.isEditable()) {
+		var domHelper = this.fieldObject.getEditableDomHelper();
+		var spans = domHelper.getElementsByClass(annotation_class);
+	}
+	else {
+		var spans = jQuery('#' + this.viewer.useID + ' .' + annotation_class).toArray();
+	}
 
-    return annotations;
+	var highlights = [];
+
+	for (var i=0, len=spans.length; i<len; i++) {
+		var span = spans[i];
+		if (this.isHighlightElement(span)) {
+			highlights.push(span);
+		}
+	}
+
+	return highlights;
 };
 
-atb.viewer.TextEditorAnnotate.prototype.getAnnotationTagByResourceId = function (resourceId) {
-    var annotations = this.getAllAnnotationTags(); //console.log(annotations);
+atb.viewer.TextEditorAnnotate.prototype.getHighlightElementByUri = function (uri) {
+	if (this.viewer.isEditable()) {
+		var domHelper = this.viewer.field.getEditableDomHelper();
+		var editableDocument = domHelper.getDocument();
 
-    for (var i=0; i<annotations.length; i++) {
-        var anno = annotations[i];
-
-        if (atb.viewer.TextEditorAnnotate.getAnnotationId(anno) == resourceId) {
-            return anno;
-        }
-    }
-    return null;
-};
-
-atb.viewer.TextEditorAnnotate.isUsingLocalId = function (spanElem) {
-    var result = false;
-
-    var classNames = spanElem.className.split(" ");
-
-    for (var j=0; j<classNames.length; j++) {
-        if (classNames[j].indexOf('-LOCALID-') != -1) {
-            result = true;
-        }
-    }
-
-    return result;
+		return jQuery('.' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '[about=\'' + uri + '\']', editableDocument).get(0);
+	}
+	else {
+		return jQuery('#' + this.viewer.useID + ' .' + atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS + '[about=\'' + uri + '\']').get(0);
+	}
 };
 
 
@@ -650,15 +610,10 @@ atb.viewer.TextEditorAnnotate.isUsingLocalId = function (spanElem) {
  * @return boolean true if the selection is an annotation
  **/
 atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function (opt_range) {
-	if(opt_range == null) {
-		var selectionRange = this.fieldObject.getRange();
-	}
-	else {
-		var selectionRange = opt_range;
-	}
+	var selectionRange = opt_range || this.fieldObject.getRange();
 
 	// Mozilla includes the span tag in the range, but other browsers do not
-	if(jQuery.browser.mozilla) {
+	if(goog.userAgent.product.Firefox) {
 		var selectedHtml = selectionRange.getPastableHtml();
 		return jQuery(selectedHtml).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
 	}
@@ -672,66 +627,51 @@ atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function (opt_ra
 /**
  * selectAnnotationSpan()
  **/
-atb.viewer.TextEditorAnnotate.prototype.selectAnnotationSpan = function (tag, mouseEvent) {
-    var annotationId = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
-	
-	this.setSelectedAnnotationHelper(annotationId, tag);
-    
-	return false;
+atb.viewer.TextEditorAnnotate.prototype.selectAnnotationSpan = function (tag) {
+	// Prevents firing of delayed change events
+	this.fieldObject.manipulateDom(function() {
+		this.deselectAllHighlights();
+		jQuery(tag).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
+	}, true, this);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.flashSpanHighlight = function (tag) {
     this.selectAnnotationSpan(tag);
     
-    var timeoutFns = [function () {
-                      this.unselectAnnotationSpan();
-                      }, function () {
-                      this.selectAnnotationSpan(tag);
-                      }, function () {
-                      this.unselectAnnotationSpan();
-                      }];
+    var timeoutFns = [
+    	function () {
+            this.unselectAllHighlights();
+        }, function () {
+            this.selectAnnotationSpan(tag);
+        }, function () {
+            this.unselectAllHighlights();
+        }
+    ];
     atb.Util.timeoutSequence(250, timeoutFns, this);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
-    var eventDispatcher = this.thisViewer.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClicked(atb.viewer.TextEditorAnnotate.getAnnotationId(tag));
+    var eventDispatcher = this.viewer.clientApp.getEventDispatcher();
+    var event = new atb.events.ResourceClick(atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag), eventDispatcher, this.viewer);
     
     eventDispatcher.dispatchEvent(event);
 };
 
+atb.viewer.TextEditorAnnotate.prototype.unselectAllHighlights = function() {
+    var annotation_class = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER;
 
-
-atb.viewer.TextEditorAnnotate.prototype.autoHideMenu = function () {
-    var afterTimer = function () {
-        if (! (this.mouseIsOverHighlight || this.mouseIsOverMenu)) {
-            this.hideTestRadialMenu();
-        }
-    };
-    afterTimer = atb.Util.scopeAsyncHandler(afterTimer, this);
-    window.setTimeout(afterTimer, 300);
-};
-
-atb.viewer.TextEditorAnnotate.prototype.hideTestRadialMenu = function () {
-	if (this.contextMenuDisplayer) {
-        this.contextMenuDisplayer.hide();
+    if (this.viewer.isEditable()) {
+    	var domHelper = this.fieldObject.getEditableDomHelper();
+    	var spans = domHelper.getElementsByClass(annotation_class);
+    	this.fieldObject.manipulateDom(function() {
+    		for (var i=0, len=spans.length; i<len; i++) {
+    			jQuery(spans[i]).removeClass(annotation_class);
+    		}
+    	}.bind(this));
     }
-};
-
-/**
- * unselectAnnotationSpan()
- * looks for a selected annotation and then removes the selected css class
- **/
-atb.viewer.TextEditorAnnotate.prototype.unselectAnnotationSpan = function () {
-    var domHelper = this.fieldObject.getEditableDomHelper();
-	
-	this.setSelectedAnnotationHelper(null, domHelper.getDocument());
-	
-	//hack:
-	this.hideTestRadialMenu();//hack
-	//end hack
-    
-	return true;
+    else {
+    	jQuery('#' + this.viewer.useID + ' .' + annotation_class).removeClass(annotation_class);
+    }
 };
 
 
@@ -739,9 +679,20 @@ atb.viewer.TextEditorAnnotate.prototype.unselectAnnotationSpan = function () {
  * hoverAnnotationSpan()
  **/
 atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function (forSpan) {
-    var domHelper = goog.dom.getDomHelper(forSpan);
-    var annotationId = atb.viewer.TextEditorAnnotate.getAnnotationId(forSpan);
-    this.setHoverAnnotationHelper(annotationId,forSpan);
+	this.unselectAllHighlights();
+
+    var viewer = this.viewer;
+    var field = viewer.field;
+
+    if (field && viewer.isEditable()) {
+    	// Prevents firing of delayed change events
+    	field.manipulateDom(function() {
+    	    jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	}, true, this);
+    }
+    else {
+    	jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    }
 };
 
 
@@ -749,172 +700,59 @@ atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function (forSpan)
  * unhoverAnnotationSpan()
  **/
 atb.viewer.TextEditorAnnotate.prototype.unhoverAnnotationSpan = function(forSpan) {
-    this.setHoverAnnotationHelper(null,forSpan);
-};
-
-atb.viewer.TextEditorAnnotate.prototype.setHoverAnnotationHelper = function(hoverAnnotationId,forSpan) {
-    var viewer = this.thisViewer;
+    var viewer = this.viewer;
     var field = viewer.field;
-    
-    // Prevents firing of delayed change events
-    field.manipulateDom(function () {
-                        this.enforceSingleSelectionRules(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER, hoverAnnotationId,forSpan);
-                        }, true, this);
-};
 
-atb.viewer.TextEditorAnnotate.prototype.setSelectedAnnotationHelper = function(hoverAnnotationId,forSpan) {
-    var viewer = this.thisViewer;
-    var field = viewer.field;
-    
-    // Prevents firing of delayed change events
-    field.manipulateDom(function () {
-                        this.enforceSingleSelectionRules(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED, hoverAnnotationId,forSpan);
-                        }, true, this);
-};
-
-atb.viewer.TextEditorAnnotate.prototype.enforceSingleSelectionRules = function(enforceForCssClass, hoverAnnotationId, forSpan)
-{
-	//Note: converted a bunch of dom.addClasses stuff to use jquery, since it complains less when a match fails, etc. ...
-	
-	var domHelper = goog.dom.getDomHelper(forSpan);
-	var fromSubtree = domHelper.getDocument();
-	
-	//first deselect them all:
-	jQuery("."+atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS,fromSubtree).removeClass(enforceForCssClass);
-	
-	
-	//now select the one:
-	if (hoverAnnotationId != null)
-	{
-		//hack to handle the :id variation from the "-id-" case.
-			//we need to "escape" the ':' for jquery:
-		hoverAnnotationId = ""+hoverAnnotationId;
-		if (hoverAnnotationId.length > 1)
-		{
-			if (hoverAnnotationId[0] === ":")//HACK
-			{
-				hoverAnnotationId = "\\" + hoverAnnotationId;//HACK
-			}
-		}
-		
-		//HACK - will affect both a local and remote with the same id... =/:
-		var clsA = "."+atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID + hoverAnnotationId;
-		var clsB = "."+atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID + hoverAnnotationId;
-		var jqA = jQuery(clsA,fromSubtree);
-		var jqB = jQuery(clsB,fromSubtree);
-		
-		jqA.addClass(enforceForCssClass);
-		jqB.addClass(enforceForCssClass);
-		
-		if ((jqA.length < 1) &&(jqB.length < 1))
-		{
-			//in case we still didn't find something, make sure we know that something odd is up:
-			debugPrint("warning: hoverAnnotationId not matched: '"+hoverAnnotationId+"'");
-		}
-	}
-};
-
-atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg)
-{
-	this.thisViewer.showErrorMessage(msg);
-};
-
-atb.viewer.TextEditorAnnotate.prototype.getOtherPanelHelper = function()
-{
-	return this.thisViewer.getOtherPanelHelper();
-};
-
-atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function (spanElem)
-{
-	var otherContainer = this.getOtherPanelHelper();
-    if (otherContainer == null)
-	{
-		this.showErrorMessage("only one panel container!");
-        return;
+    if (field && viewer.isEditable()) {
+    	// Prevents firing of delayed change events
+    	field.manipulateDom(function() {
+    	    jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    	}, true, this);
     }
-    var annoBodyEditor = new atb.viewer.Editor(
-		this.thisViewer.clientApp,	//Hack -- maybe there must be a better way than creating these everywhere...?
-        ''
-    );
-    annoBodyEditor.setPurpose('anno');
-    
-    var targetTextTitle = this.thisViewer.getTitle();
-    
-    var myResourceId = atb.viewer.TextEditorAnnotate.getAnnotationId(spanElem);
-    
-    var errorHandler = atb.Util.scopeAsyncHandler(this.thisViewer.flashErrorIcon, this.thisViewer);
-
-    var newTextId = this.databroker.createUuid();
-    var annoId = this.databroker.createUuid();
-        	
-    annoBodyEditor.resourceId = newTextId;
-    annoBodyEditor.annotationUid = annoId;
-    this.thisViewer.annotationUid = annoId;
-    
-    annoBodyEditor.setTitle('New Annotation on ' + targetTextTitle);
-    annoBodyEditor.toggleIsAnnoText(true);
-    
-    this.thisViewer.setAnnotationBody(newTextId);
-
-    this.databroker.createAnno(newTextId, myResourceId);
-
-    otherContainer.setViewer( annoBodyEditor );
-    otherContainer.setTabContents('New Annotation');
-
-    this.thisViewer.toggleAnnotationMode(true);
+    else {
+    	jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    }
 };
 
-
-
-atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function (tag) {
-	var myResourceId = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
-    
-    this.thisViewer.clientApp.createAnnoLink(myResourceId);
-    
-    this.selectAnnotationSpan(tag);
+atb.viewer.TextEditorAnnotate.prototype.deselectAllHighlights = function() {
+	// Prevents firing of delayed change events
+	this.fieldObject.manipulateDom(function() {
+		jQuery(this.getAllAnnotationTags()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
+	}, true, this);
 };
 
+atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
+	this.viewer.showErrorMessage(msg);
+};
 
+atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
+	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
 
-atb.viewer.TextEditorAnnotate.prototype.showAnnos = function (tag) {
-	var id = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
+	var databroker = this.databroker;
+    var body = databroker.dataModel.createText('New annotation on ' + this.viewer.getTitle());
+
+    var anno = databroker.dataModel.createAnno(body, specificResourceUri);
 	
-	var otherContainer = this.getOtherPanelHelper();
+    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
+    this.viewer.openRelatedViewer(annoBodyEditor);
+    annoBodyEditor.loadResourceByUri(body.uri);
+};
+
+atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(spanElem) {
+	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
+    
+    this.viewer.clientApp.createAnnoLink(specificResourceUri);
+    
+    this.selectAnnotationSpan(spanElem);
+};
+
+atb.viewer.TextEditorAnnotate.prototype.showAnnos = function(tag) {
+	var id = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag);
 	
-	var finder = new atb.viewer.Finder(this.thisViewer.clientApp, id);
+	var finder = new atb.viewer.Finder(this.viewer.clientApp, id);
     finder.setContextType(atb.viewer.Finder.ContextTypes.RESOURCE);
     
-	otherContainer.setViewer(finder);
-/*
-	this.thisViewer.saveContents(function () {
-		var id = atb.viewer.TextEditorAnnotate.getAnnotationId(tag);
-	
-	    var otherContainer = this.getOtherPanelHelper();
-	
-		var finder = new atb.viewer.Finder(this.thisViewer.clientApp, id);
-        finder.setContextType(atb.viewer.Finder.ContextTypes.RESOURCE);
-
-		otherContainer.setViewer(finder);
-	}, this);
-*/
-};
-
-
-
-atb.viewer.TextEditorAnnotate.prototype.createNewResourceListViewer = function (myAnnoId)
-{
-	var otherContainer = this.getOtherPanelHelper();
-
-    if (otherContainer == null)
-	{
-		this.showErrorMessage("Annotate::createNewResourceListViewer(): only one panel container!");
-        //alert("only one panel container!");
-        return;
-    }
-	
-	// TODO: editor loads with a null DIV id but right now the resource viewer needs one (rightPane)...needs modified
-    // TODO: resource viewer needs root div to unload properly, right now viewers just append instead of replace
-	
-	//debugPrint(
-	this.showErrorMessage("TODO: implement 'atb.viewer.TextEditorAnnotate.prototype.createNewResourceListViewer'...!");
+	this.viewer.openRelatedViewer(finder);
 };

@@ -2,8 +2,11 @@ goog.provide('atb.viewer.CanvasViewer');
 
 goog.require('atb.viewer.Viewer');
 
+goog.require('atb.ui.InfoPane');
+
 goog.require('sc.canvas.CanvasViewer');
 goog.require('sc.canvas.FabricCanvasFactory');
+goog.require('atb.viewer.TextEditor');
 
 
 atb.viewer.CanvasViewer = function(clientApp) {
@@ -17,43 +20,17 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     if (this.rootDiv != null) {
         return;
     }
-    
-    var self = this;
-    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-    
+
+    this._isEditable = true;
+
     atb.viewer.Viewer.prototype.render.call(this, div);
     jQuery(this.rootDiv).addClass('atb-CanvasViewer');
-    
-    var menuButtons = [
-        new atb.widgets.MenuItem(
-            "showLinkedAnnos",
-            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
-            function(actionEvent) {
-                self.showAnnos(self.getResourceId());
-                
-                self.hideHoverMenu();
-            },
-            'Show resources which are linked to this canvas'
-        ),
-        new atb.widgets.MenuItem(
-            "newTextAnno",
-            createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
-            function(actionEvent) {
-                self.createTextAnno(self.getResourceId());
-                
-                self.hideHoverMenu();
-            },
-            'Annotate this canvas'
-        )
-    ];
     
     this.documentIcon = this.domHelper.createElement('div');
 	jQuery(this.documentIcon).addClass('atb-viewer-documentIcon ' +
                                        'atb-viewer-documentIcon-noScrollbars');
 	goog.events.listen(this.documentIcon, 'click',
                        this.handleDocumentIconClick_, false, this);
-    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons,
-                                        jQuery.proxy(this.getResourceId, this));
     this.rootDiv.appendChild(this.documentIcon);
     
     this.viewer = new sc.canvas.CanvasViewer({
@@ -62,25 +39,49 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     
     this.setupEventListeners();
     
-    this.autoResize();
-    
     this.viewer.render(this.rootDiv);
-
-    window.setTimeout(function() {
-        self.autoResize();
-    }, 100);
 };
 
-atb.viewer.CanvasViewer.prototype.finishRender = function(div) {
-    
+atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
+    goog.events.removeAll(this.documentIcon, 'mouseover');
+    goog.events.removeAll(this.documentIcon, 'mouseout');
+
+    var self = this;
+    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
+
+    if (this.isEditable()) {
+        var menuButtons = [
+            new atb.widgets.MenuItem(
+                "showLinkedAnnos",
+                createButtonGenerator("atb-radialmenu-button icon-search"),
+                function(actionEvent) {
+                    self.showAnnos(self.getUri());
+                    
+                    self.hideHoverMenu();
+                },
+                'Show resources which are linked to this canvas'
+            ),
+            new atb.widgets.MenuItem(
+                "newTextAnno",
+                createButtonGenerator("atb-radialmenu-button icon-pencil"),
+                function(actionEvent) {
+                    self.createTextAnno(self.getUri());
+                    
+                    self.hideHoverMenu();
+                },
+                'Annotate this canvas'
+            )
+        ];
+    }
+    else {
+        var menuButtons = [];
+    }
+
+    this.addHoverMenuListenersToElement(this.documentIcon, menuButtons, this.getUri.bind(this));
 };
 
 atb.viewer.CanvasViewer.prototype.handleDocumentIconClick_ = function(event) {
     
-};
-
-atb.viewer.CanvasViewer.prototype.getResourceId = function() {
-    return this.webService.resourceUriToId(this.getUri());
 };
 
 atb.viewer.CanvasViewer.prototype.getUri = function() {
@@ -92,35 +93,75 @@ atb.viewer.CanvasViewer.prototype.getUri = function() {
     }
 };
 
+atb.viewer.CanvasViewer.prototype.getResourceId = atb.viewer.CanvasViewer.prototype.getUri;
+
+atb.viewer.CanvasViewer.prototype.setupControlEventListeners = function() {
+    var panZoomControl = this.viewer.mainViewport.getControl('PanZoomGesturesControl');
+    if (panZoomControl) {
+        panZoomControl.addEventListener(
+            'activated', function(event) {
+                this.enableHoverMenus();
+            }, false, this);
+        panZoomControl.addEventListener(
+            'deactivated', function(event) {
+                this.disableHoverMenus();
+            }, false, this);
+        panZoomControl.addEventListener(
+            'panstart', function(event) {
+                this.isPanning = true;
+
+                if (this.hoverMenusEnabled) {
+                    this.disableHoverMenus();
+                    goog.events.listenOnce(panZoomControl, 'panstop', function(event) {
+                        this.enableHoverMenus();
+                    }, false, this);
+                }
+            }, false, this);
+        panZoomControl.addEventListener(
+            'panstop', function(event) {
+                this.isPanning = false;
+                this.viewer.mainViewport.setCursor(null);
+            }, false, this);
+    }
+
+    var zoomSlider = this.viewer.mainViewport.getControl('ZoomSliderControl');
+    if (zoomSlider) {
+        zoomSlider.addEventListener('slidestart', function(event) {
+            if (this.hoverMenusEnabled) {
+                this.disableHoverMenus();
+                goog.events.listenOnce(zoomSlider, 'slidestop', this.enableHoverMenus.bind(this));
+            }
+        }, false, this);
+
+        jQuery(zoomSlider.sliderDiv).mouseenter(function(e) {
+            if (this.hoverMenusEnabled) {
+                this.disableHoverMenus();
+                jQuery(zoomSlider.sliderDiv).one('mouseleave', this.enableHoverMenus.bind(this));
+            }
+        }.bind(this));
+    }
+};
+
 atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     var self = this;
     var viewport = this.viewer.mainViewport;
     var eventDispatcher = this.clientApp.getEventDispatcher();
+
+    this._addDocumentIconListeners();
     
-    viewport.addEventListener('click', this.onResourceClick, false, this);
+    viewport.addEventListener('mouseup', this.onResourceClick, false, this);
     viewport.addEventListener('mouseover', this.onFeatureHover, false, this);
     viewport.addEventListener('mouseout', this.onFeatureMouseout, false, this);
-    
-    jQuery(window).resize(function() {
-        window.setTimeout(function() {
-            self.autoResize();
-        }, 150);
-    });
-    
     viewport.addEventListener('canvasAdded', this.onCanvasAdded, false, this);
-    
-    var panZoomControl = this.viewer.toolbar.controls.panZoom;
-    panZoomControl.addEventListener('activated', function(event) {
-                                    this.enableHoverMenus();
-                                    }, false, this);
-    panZoomControl.addEventListener('deactivated', function(event) {
-                                    this.disableHoverMenus();
-                                    }, false, this);
-    
+
+    this.setupControlEventListeners();
+
+/* SGB    
+*/
     goog.events.listen(eventDispatcher, 'resource deleted', function (e) {
                        if (e && e.target)
                        var id = e.target;
-                       var uri = this.webService.resourceIdToUri(id);
+                       var uri = id;
                        
                        try {
                        viewport.canvas.removeObjectByUri(uri);
@@ -131,118 +172,239 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
                        this.handleLinkingModeExited, false, this);
 };
 
+atb.viewer.CanvasViewer.prototype.isEditable = function() {
+    return this._isEditable;
+};
+
+atb.viewer.CanvasViewer.prototype.makeEditable = function() {
+    if (!this.isEditable()) {
+        this.viewer.makeEditable();
+
+        this.setupControlEventListeners();
+
+        this._isEditable = true;
+
+        this._addDocumentIconListeners();
+    }
+};
+
+atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
+    if (this.isEditable()) {
+        this.viewer.makeUneditable();
+
+        this.setupControlEventListeners();
+        this.enableHoverMenus();
+
+        this._isEditable = false;
+
+        this._addDocumentIconListeners();
+    }
+};
+
 atb.viewer.CanvasViewer.prototype.onCanvasAdded = function(event) {
+    this.setTitle(this.getCompleteTitle());
+};
+
+atb.viewer.CanvasViewer.prototype.getCompleteTitle = function() {
     var canvas = this.viewer.mainViewport.canvas;
-    
-    var resource = this.databroker.getResource(canvas.getUri());
-    
-    var title = resource.getOneProperty('dc:title') || 'Untitled canvas';
-    
-    this.setTitle(title);
+    var canvasResource = this.databroker.getResource(canvas.getUri());
+    var title = this.databroker.dataModel.getTitle(canvasResource) || 'Untitled canvas';
+
+    var parentResourceUri = this.databroker.dataModel.findManifestsContainingCanvas(canvasResource.uri)[0];
+    if (parentResourceUri) {
+        var parentResource = this.databroker.getResource(parentResourceUri);
+        var parentTitle = this.databroker.dataModel.getTitle(parentResource);
+
+        if (title.indexOf(parentTitle) == -1) {
+            title = parentTitle + ', ' + title;
+        }
+    }
+
+    return title;
 };
 
 atb.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
     var feature = event.feature;
     var uri = event.uri;
     
-    if (uri == null) return;
+    if (uri == null || feature.type == 'image') return;
+    if (this.isPanning) return;
     
-    if (feature.type == 'image') return;
+    this.viewer.mainViewport.setCursor('pointer');
+
+    this.mouseOverUri = uri;
     
-    this.mouseIsOverFloatingMenuParent = true;
-    
-    var id = this.webService.resourceUriToId(uri);
+    var id = uri;
     var self = this;
+    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri) || uri;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
     
     var afterTimer = function () {
-        if (this.mouseIsOverFloatingMenuParent) {
-            var menuButtons = [
-                new atb.widgets.MenuItem(
-                    "getMarkerInfo",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-info"),
-                    function(actionEvent) {
-                        var pane = new atb.ui.InfoPane(self.clientApp, id, self.domHelper);
-                        pane.show();
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Get marker info'
-                ),
-                new atb.widgets.MenuItem(
-                    "deleteThisMarker",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-delete"),
-                    function(actionEvent) {
-                        self.deleteFeature(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Delete this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "hideMarker",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-hide-marker"),
-                    function(actionEvent) {
-                        self.hideFeature(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Temporarily hide this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "showLinkedAnnos",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-show-linked-annos"),
-                    function(actionEvent) {
-                        self.showAnnos(uri);
-                        
-                        self.hideHoverMenu();
-                    },
-                    'Show other resources which are linked to this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "linkAway",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
-                    function(actionEvent) {
-                        self.clientApp.createAnnoLink(id);
-                        self.highlightFeature(uri);
-                    },
-                    'Link another resource to this marker'
-                ),
-                new atb.widgets.MenuItem(
-                    "newTextAnno",
-                    createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-new-text-anno"),
-                    function(actionEvent) {
-                        self.createTextAnno(uri);
-                    },
-                    'Annotate this marker'
-                )
-            ];
-            this.showHoverMenu(menuButtons, id);
+        if (this.mouseOverUri && this.mouseOverUri == uri) {
+            if (this.isEditable()) {
+                var menuButtons = [
+                    // new atb.widgets.MenuItem(
+                    //     "getMarkerInfo",
+                    //     createButtonGenerator("atb-radialmenu-button icon-info-sign"),
+                    //     function(actionEvent) {
+                    //         var pane = new atb.ui.InfoPane(self.clientApp, id, self.domHelper);
+                    //         pane.show();
+                            
+                    //         self.hideHoverMenu();
+                    //     },
+                    //     'Get marker info'
+                    // ),
+                    new atb.widgets.MenuItem(
+                        "deleteThisMarker",
+                        createButtonGenerator("atb-radialmenu-button icon-remove"),
+                        function(actionEvent) {
+                            self.deleteFeature(uri);
+                            
+                            self.hideHoverMenu();
+                        },
+                        'Delete this marker'
+                    ),
+                    new atb.widgets.MenuItem(
+                        "hideMarker",
+                        createButtonGenerator("atb-radialmenu-button icon-eye-close"),
+                        function(actionEvent) {
+                            self.hideFeature(uri);
+                            
+                            self.hideHoverMenu();
+                        },
+                        'Temporarily hide this marker'
+                    ),
+                    // new atb.widgets.MenuItem(
+                    //     "showLinkedAnnos",
+                    //     createButtonGenerator("atb-radialmenu-button icon-search"),
+                    //     function(actionEvent) {
+                    //         self.showAnnos(specificResourceUri);
+                            
+                    //         self.hideHoverMenu();
+                    //     },
+                    //     'Show other resources which are linked to this marker'
+                    // ),
+                    new atb.widgets.MenuItem(
+                        "linkAway",
+                        createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
+                        function(actionEvent) {
+                            self.clientApp.createAnnoLink(specificResourceUri);
+                            self.highlightFeature(uri);
+
+                            if (self.annoTitlesList) {
+                                self.annoTitlesList.loadForResource(specificResourceUri);
+                            }
+                        },
+                        'Link another resource to this marker'
+                    ),
+                    new atb.widgets.MenuItem(
+                        "newTextAnno",
+                        createButtonGenerator("atb-radialmenu-button icon-pencil"),
+                        function(actionEvent) {
+                            self.createTextAnno(specificResourceUri);
+
+                            if (self.annoTitlesList) {
+                                self.annoTitlesList.loadForResource(specificResourceUri);
+                            }
+                        },
+                        'Annotate this marker'
+                    )
+                ];
+            }
+            else {
+                var menuButtons = [
+                    new atb.widgets.MenuItem(
+                        "hideMarker",
+                        createButtonGenerator("atb-radialmenu-button icon-eye-close"),
+                        function(actionEvent) {
+                            self.hideFeature(uri);
+                            
+                            self.hideHoverMenu();
+                        },
+                        'Temporarily hide this marker'
+                    )
+                ];
+            }
+
+            this.showHoverMenu(menuButtons, specificResourceUri);
         }
-    };
-    afterTimer = atb.Util.scopeAsyncHandler(afterTimer, this)
+    }.bind(this);
     window.setTimeout(afterTimer, atb.viewer.Viewer.HOVER_SHOW_DELAY);
 };
 
 atb.viewer.CanvasViewer.prototype.onFeatureMouseout = function(event) {
-    this.mouseIsOverFloatingMenuParent = false;
+    this.viewer.mainViewport.setCursor(null);
+
+    this.mouseOverUri = null;
     this.maybeHideHoverMenu();
 };
 
 atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var uri = event.uri;
-    var feature = event.feature;
-    
     if (! uri) return;
+    var feature = event.getFeature();
+    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
+
+    console.log('resource click', event, uri, feature)
     
+    if (!specificResourceUri) return;
+    if (! feature) return;
     if (feature.type == 'image') return;
     
-    var resourceId = this.webService.resourceUriToId(uri);
-    
-    var event = new atb.events.ResourceClicked(resourceId, null, this);
-    
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    eventDispatcher.dispatchEvent(event);
+    var event = new atb.events.ResourceClick(specificResourceUri, eventDispatcher, this);
+
+    var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
+
+    if (eventDispatcher.dispatchEvent(event)) {
+        
+    }
+};
+
+atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
+    var resource = this.databroker.getResource(uri);
+
+    if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
+        this.setCanvasByUri(resource.getUri());
+    }
+    else if (resource.hasAnyType('oa:SpecificResource')) {
+        this.loadSpecificResource(resource);
+    }
+    else if (resource.hasAnyType('oa:SvgSelector')) {
+        var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(uri));
+        this.loadSpecificResource(specificResource);
+    }
+};
+
+atb.viewer.CanvasViewer.prototype.loadSpecificResource = function(specificResource) {
+    specificResource = this.databroker.getResource(specificResource);
+
+    var sourceUri = specificResource.getOneProperty('oa:hasSource');
+    var deferredCanvas = this.setCanvasByUri(sourceUri);
+
+    var zoomToFeature = function() {
+        this.viewer.mainViewport.pauseRendering();
+        this.viewer.marqueeViewport.pauseRendering();
+
+        var canvas = this.viewer.mainViewport.canvas;
+        var featureUri = specificResource.getOneProperty('oa:hasSelector')
+        var feature = canvas.getFabricObjectByUri(featureUri);
+
+        if (feature) {
+            canvas.hideMarkers();
+            canvas.showObject(feature);
+
+            this.viewer.mainViewport.zoomToFeatureByUri(featureUri);
+        }
+        else {
+            console.error('Specific Resource', specificResource.uri, 'not found on canvas', canvas.getUri());
+        }
+
+        this.viewer.mainViewport.resumeRendering();
+        this.viewer.marqueeViewport.resumeRendering();
+    }.bind(this);
+
+    deferredCanvas.progress(zoomToFeature).always(zoomToFeature);
 };
 
 atb.viewer.CanvasViewer.prototype.setCanvasByUri =
@@ -261,50 +423,49 @@ function(uri, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
     
     deferredCanvas.done(function(canvas) {
         self.hideLoadingSpinner();
-
-        self.viewer.mainViewport.zoomToFit();
     }).fail(function(canvas) {
         self.hideLoadingSpinner();
         self.flashErrorIcon();
     });
     
     this.viewer.addDeferredCanvas(deferredCanvas);
+
+    return deferredCanvas;
 };
 
 atb.viewer.CanvasViewer.prototype.setCanvasById =
 function(id, opt_onLoad, opt_scope, opt_sequenceUris, opt_sequenceIndex) {
-    var uri = this.webService.resourceIdToUri(id);
+    var uri = id;
     
     this.setCanvasByUri(uri, opt_onLoad, opt_scope, opt_sequenceUris,
                         opt_sequenceIndex);
 };
 
-atb.viewer.CanvasViewer.prototype.autoResize = function() {
-    var panelContainer = this.getPanelContainer();
-    
-    if (!panelContainer) return;
-    
-    var panelContainerDiv = this.getPanelContainer().rootDiv;
-    
-    var width = jQuery(panelContainerDiv).width();
-    var height = jQuery(panelContainerDiv).height();
-    
+atb.viewer.CanvasViewer.prototype.resize = function(width, height) {
+    atb.viewer.Viewer.prototype.resize.call(this, width, height);
+
     this.viewer.resize(width, height);
+
+    return this;
 };
+
 
 atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
     var viewport = this.viewer.mainViewport;
-    
     viewport.canvas.removeObjectByUri(uri);
     viewport.requestFrameRender();
+
+    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
     
-    var id = this.webService.resourceUriToId(uri);
+    var selectorResource = this.databroker.getResource(uri);
+    var specificResource = this.databroker.getResource(specificResourceUri);
+    goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
+        anno.deleteProperty('oa:hasTarget', specificResource);
+    }, this);
+    selectorResource.deleteAllProperties();
+    specificResource.deleteAllProperties();
     
-    // var webService = this.clientApp.getWebService();
-    // webService.withDeletedResource(id, function (response) {}, this, jQuery.proxy(this.flashErrorIcon, this));
-    
-    var event = new goog.events.Event('resource deleted', id);
-    
+    var event = new goog.events.Event('resource-deleted', uri);
     var eventDispatcher = this.clientApp.getEventDispatcher();
     eventDispatcher.dispatchEvent(event);
 };
@@ -319,7 +480,7 @@ atb.viewer.CanvasViewer.prototype.hideFeature = function(uri) {
 
 atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 	var uri = opt_uri || this.viewer.mainViewport.canvas.uri;
-    var id = this.webService.resourceUriToId(uri);
+    var id = uri;
     
     var otherContainer = this.getPanelManager().getAnotherPanel(this.getPanelContainer());
     
@@ -331,44 +492,19 @@ atb.viewer.CanvasViewer.prototype.showAnnos = function (opt_uri) {
 };
 
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
-    console.log("createTextAnno uri:", uri);
-    var id = this.webService.resourceUriToId(uri);
-    var svgUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
-    
     var canvasUri = this.viewer.mainViewport.canvas.getUri();
     var canvasResource = this.databroker.getResource(canvasUri);
+    var canvasTitle = this.databroker.dataModel.getTitle(canvasResource) || 'Untitled canvas';
     
-    var canvasTitle = canvasResource.getOneProperty('dc:title') || 'Untitled canvas';
+    var databroker = this.databroker;
+    var body = databroker.dataModel.createText('New annotation on ' + canvasTitle);
+
+    var anno = databroker.dataModel.createAnno(body, uri);
     
-    var textTitle = 'New annotation on ' + canvasTitle;
-    
-    var textEditor = new atb.viewer.Editor(this.clientApp);
+    var textEditor = new atb.viewer.TextEditor(this.clientApp);
     textEditor.setPurpose('anno');
-
-    var newTextResource = this.databroker.createText(textTitle, "");
-    var newTextId = newTextResource.uri;
-
-    // This should be a convenience method in the data broker
-    var specificTargets = [];
-    this.databroker.quadStore.forEachQuadMatchingQuery(
-        null, this.databroker.namespaces.expand('oa', 'hasSelector'), svgUri, null,
-        function(quad) {
-            specificTargets.push(quad.subject);
-        },
-        this
-    );
-       
-    var newAnno = this.databroker.createAnno(newTextId, specificTargets[0]);
-    var annoId = newAnno.uri;
-
-    textEditor.resourceId = newTextId;
-    textEditor.annotationUid = annoId;
-    textEditor.toggleIsAnnoText(true);
-
-    var otherContainer = this.getPanelManager().getAnotherPanel(
-        this.getPanelContainer());
-    otherContainer.setViewer(textEditor);
-    textEditor.setTitle(textTitle);
+    this.openRelatedViewer(textEditor);
+    textEditor.loadResourceByUri(body.uri);
 };
 
 atb.viewer.CanvasViewer.HIGHLIGHTED_FEATURE_STYLE = {
@@ -395,8 +531,7 @@ atb.viewer.CanvasViewer.prototype.unhighlightFeature = function(uri) {
     if (this.lastHighlightedFeatureStyle) {
         feature.set(this.lastHighlightedFeatureStyle);
     }
-    
-    feature.set(this.lastHighlightedFeatureStyle);
+
     this.viewer.mainViewport.requestFrameRender();
 };
 
@@ -418,24 +553,19 @@ atb.viewer.CanvasViewer.prototype.flashFeatureHighlight = function(uri) {
 };
 
 atb.viewer.CanvasViewer.prototype.handleLinkingModeExited = function(event) {
-    var anno = event.getResource();
+    var anno = this.databroker.getResource(event.uri);
     
-    if (! anno) {
-        if (this.lastHighlightedFeature) {
-            this.unhighlightFeature(this.lastHighlightedFeatureUri);
-        }
-        
-        return;
+    if (this.lastHighlightedFeatureUri) {
+        this.unhighlightFeature(this.lastHighlightedFeatureUri);
     }
     
-    var targetsAndBodies = new goog.structs.Set(anno.getChildIds());
+    var targetsAndBodies = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
     
-    goog.structs.forEach(targetsAndBodies, function (id) {
-        var uri = this.webService.resourceIdToUri(id);
-        /*if (uri) {
+    goog.structs.forEach(targetsAndBodies, function (uri) {
+        if (uri) {
             this.flashFeatureHighlight(uri);
         }
-        else */if (this.getResourceId() == id) {
+        else if (this.getUri() == uri) {
             this.flashDocumentIconHighlight();
         }
     }, this);

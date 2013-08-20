@@ -1,8 +1,13 @@
 #working copy specific files
 workspace/static/js/closure-library/*
-static/js/closure-library/*
 settings_local.py
 runserver
+collectstatic
+
+#deployment specific files
+django.wsgi
+
+static/*
 
 #python specific
 *.pyc
@@ -10,6 +15,8 @@ runserver
 ## generic files to ignore
 *~
 \#*#
+\.#
+*\.\#*
 *.lock
 *.DS_Store
 *.swp
@@ -17,3 +24,9 @@ runserver
 
 
 workspace/static/js/closure-library/
+
+manage_command_examples_local.sh
+
+# locally saved data exported from old version
+output/*
+*backup.sql

@@ -1,13 +1,12 @@
 from django.core.urlresolvers import reverse
 from django.db import transaction
 
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, RDF
-from rdflib.namespace import Namespace
+from rdflib.graph import Graph
+from rdflib import URIRef
 
-from semantic_store import rdfstore
+from semantic_store.rdfstore import rdfstore
 from semantic_store import collection
-from semantic_store.namespaces import NS, ns
+from semantic_store.namespaces import ns
 
 
 col_res_attributes = (ns['dc']['title'], 
@@ -27,9 +26,10 @@ def clean_store_host(store_host):
 
 
 def localize_describes(store_host, uri, url, g):
-    for t in g.triples((URIRef(url), ns['ore']['describes'], URIRef(uri))):
-        g.remove(t)
-    for t in g.triples((URIRef(uri), ns['ore']['isDescribedBy'], URIRef(url))):
+    if url:
+        for t in g.triples((URIRef(url), ns['ore']['describes'], None)):
+            g.remove(t)
+    for t in g.triples((URIRef(uri), ns['ore']['isDescribedBy'], URIRef(url) if url else None)):
         g.remove(t)
     local_rel_url = reverse('semantic_store_resources' , kwargs={'uri': str(uri)})
     local_abs_url = "http://%s%s" % (store_host, local_rel_url)
@@ -39,13 +39,13 @@ def localize_describes(store_host, uri, url, g):
 def harvest_collection(col_url, col_uri, store_host, manifest_file=None):
     store_host = clean_store_host(store_host)
     with transaction.commit_on_success():        
-        col_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(col_uri))
+        col_g = Graph(store=rdfstore(), identifier=URIRef(col_uri))
         collection.fetch_and_parse(col_url, col_g, manifest_file=manifest_file)
         localize_describes(store_host, col_uri, col_url, col_g)
 
         res_uris_urls = collection.aggregated_uris_urls(col_uri, col_g)
         for res_uri, res_url in res_uris_urls:
-            res_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(res_uri))
+            res_g = Graph(store=rdfstore(), identifier=URIRef(res_uri))
             collection.fetch_and_parse(res_url, res_g)
             for pred in col_res_attributes:
                 for t in res_g.triples((res_uri, pred, None)):
@@ -56,6 +56,7 @@ def harvest_collection(col_url, col_uri, store_host, manifest_file=None):
                 if aggr_url:
                     collection.fetch_and_parse(aggr_url, res_g)
                     localize_describes(store_host, aggr_uri, aggr_url, res_g)
+                    localize_describes(store_host, aggr_uri, aggr_url, col_g)
 
             seq_uris_urls = collection.aggregated_seq_uris_urls(res_uri, res_g)
             for seq_uri, seq_url in seq_uris_urls:
@@ -65,14 +66,17 @@ def harvest_collection(col_url, col_uri, store_host, manifest_file=None):
             localize_describes(store_host, res_uri, res_url, res_g)
             localize_describes(store_host, res_uri, res_url, col_g)
 
+    col_g.close()
+
 
 def harvest_repository(rep_uri, rep_url, store_host, manifest_file=None):
     store_host = clean_store_host(store_host)
     with transaction.commit_on_success():
-        rep_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(rep_uri))
+        rep_g = Graph(store=rdfstore(), identifier=URIRef(rep_uri))
         collection.fetch_and_parse(rep_url, rep_g)
         localize_describes(store_host, rep_uri, rep_url, rep_g)
         agg_uris_urls = collection.aggregated_uris_urls(rep_uri, rep_g)
         for agg_uri, agg_url in agg_uris_urls:
             harvest_collection(agg_url, agg_uri, store_host, manifest_file)
+    rep_g.close()
     

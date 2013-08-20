@@ -1,7 +1,13 @@
 @import "Common";
 
 .sc-CanvasViewport {
-    position: relative;}
+    position: relative;
+}
+
+.sc-CanvasViewport-pointer {
+    cursor: pointer;
+    .user-select(none);
+}
 
 .sc-CanvasViewport-drag {
     cursor: move;
@@ -27,58 +33,28 @@
         display: block;
     }
     
-    .sc-CanvasToolbar-panZoomIcon {
-        .sc-CanvasToolbar-button;
-        
-        .24x24spriteBackground(6);
-    }
-    
     .sc-CanvasToolbar-drawCircleIcon {
         .sc-CanvasToolbar-button;
         
-        .24x24spriteBackground(10);
+        .14x14spriteBackground(0);
     }
     
     .sc-CanvasToolbar-drawLineIcon {
         .sc-CanvasToolbar-button;
         
-        .24x24spriteBackground(9);
+        .14x14spriteBackground(1);
     }
     
     .sc-CanvasToolbar-drawPolygonIcon {
         .sc-CanvasToolbar-button;
         
-        .24x24spriteBackground(8);
+        .14x14spriteBackground(2);
     }
     
     .sc-CanvasToolbar-drawBoxIcon {
         .sc-CanvasToolbar-button;
         
-        .24x24spriteBackground(19);
-    }
-    
-    .sc-CanvasToolbar-transcriptionsIcon {
-        .sc-CanvasToolbar-button;
-        
-        .24x24spriteBackground(29);
-    }
-    
-    .sc-CanvasToolbar-next {
-        .sc-CanvasToolbar-button;
-        
-        .24x24spriteBackground(1);
-    }
-    
-    .sc-CanvasToolbar-previous {
-        .sc-CanvasToolbar-button;
-        
-        .24x24spriteBackground(0);
-    }
-
-    .sc-CanvasToolbar-toggleMarkersIcon {
-        .sc-CanvasToolbar-button;
-
-        .24x24spriteBackground(18);
+        .14x14spriteBackground(3);
     }
 }
 
@@ -91,6 +67,8 @@
         right: 0;
         bottom: 0;
         z-index: 1000;
+
+        opacity: 0.8;
         
         border-top: 1px solid gray;
         border-left: 1px solid gray;
@@ -143,8 +121,16 @@
         height: 16px;
         left: -5px;
         .border-radius(8px);
+        overflow: none;
         
         outline: none;
+        cursor: default;
+
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 9px;
+        line-height: 16px;
+        text-align: center;
+        text-decoration: none !important;
     }
 }
 

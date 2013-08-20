@@ -11,7 +11,7 @@
 
 - sc.data.DataBroker.createAnno
 
-- has to do with creating annotations in text editor: atb.viewer.Editor.prototype.createNewTextBody
+- has to do with creating annotations in text editor: atb.viewer.TextEditor.prototype.createNewTextBody
 
 - what causes new triples to be written to the back end?
 

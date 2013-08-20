@@ -1,0 +1,254 @@
+@prefix ns1: <http://www.shared-canvas.org/ns/> .
+@prefix ns2: <http://www.tei-c.org/ns/1.0/> .
+@prefix ns3: <http://purl.org/dc/elements/1.1/> .
+@prefix ns4: <http://www.openarchives.org/ore/terms/> .
+@prefix ns5: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://manifests.ydc2.yale.edu/manifest> a ns4:ResourceMap ;
+    ns5:creator "urn:uuid:233414b8-ae25-41c7-aad2-32817f5c6baa" ;
+    ns5:modified "2013-04-26T10:13:56-04:00"^^xsd:dateTime ;
+    ns4:aggregates <http://manifests.ydc2.yale.edu/manifest/Admont23>,
+        <http://manifests.ydc2.yale.edu/manifest/Admont43>,
+        <http://manifests.ydc2.yale.edu/manifest/BeineckeMS10>,
+        <http://manifests.ydc2.yale.edu/manifest/BeineckeMS109>,
+        <http://manifests.ydc2.yale.edu/manifest/BeineckeMS310>,
+        <http://manifests.ydc2.yale.edu/manifest/BeineckeMS360>,
+        <http://manifests.ydc2.yale.edu/manifest/BeineckeMS525>,
+        <http://manifests.ydc2.yale.edu/manifest/BeineckeMS748>,
+        <http://manifests.ydc2.yale.edu/manifest/BeineckeMS758.5>,
+        <http://manifests.ydc2.yale.edu/manifest/BodleianMSBodley113>,
+        <http://manifests.ydc2.yale.edu/manifest/BodleianMSBodley850>,
+        <http://manifests.ydc2.yale.edu/manifest/BodleianMSDouce18>,
+        <http://manifests.ydc2.yale.edu/manifest/BodleianMSGoughLiturg.3>,
+        <http://manifests.ydc2.yale.edu/manifest/BodleianMSLaudMisc.204>,
+        <http://manifests.ydc2.yale.edu/manifest/CologneErzbischflicheDizesanundDombibliothek127Ka>,
+        <http://manifests.ydc2.yale.edu/manifest/CologneErzbischflicheDizesanundDombibliothek128Kb>,
+        <http://manifests.ydc2.yale.edu/manifest/MarstonMS22>,
+        <http://manifests.ydc2.yale.edu/manifest/Osborna44>,
+        <http://manifests.ydc2.yale.edu/manifest/Osbornfa1>,
+        <http://manifests.ydc2.yale.edu/manifest/Ripoll078> ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest> .
+
+<http://manifests.ydc2.yale.edu/manifest/BodleianMSliturg.e.17> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Bodleian MS liturg. e. 17" ;
+    ns3:title "Bodleian MS liturg. e. 17" ;
+    ns4:isDescribedBy <http://manifests.ydc2.yale.edu/manifest/BodleianMSliturg.e.17#map> ;
+    ns2:country "United Kingdom" ;
+    ns2:institution "Oxford University" ;
+    ns2:repository "Bodleian Library" ;
+    ns2:settlement "Oxford" .
+
+<http://manifests.ydc2.yale.edu/manifest/Admont23> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Admont 23" ;
+    ns3:title "Admont 23" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/Admont23> ;
+    ns2:country "Austria" ;
+    ns2:institution "Benediktinerstift Admont Bibliothek" ;
+    ns2:repository "Stiftsbibliothek" ;
+    ns2:settlement "Admont" .
+
+<http://manifests.ydc2.yale.edu/manifest/Admont43> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Admont 43" ;
+    ns3:title "Admont 43" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/Admont43> ;
+    ns2:country "Austria" ;
+    ns2:institution "Benediktinerstift Admont" ;
+    ns2:repository "Stiftsbibliothek" ;
+    ns2:settlement "Admont" .
+
+<http://manifests.ydc2.yale.edu/manifest/BeineckeMS10> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Beinecke MS 10" ;
+    ns3:title "Beinecke MS 10" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BeineckeMS10> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.ms010.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/BeineckeMS109> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Beinecke MS 109" ;
+    ns3:title "Beinecke MS 109" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BeineckeMS109> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.ms109.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/BeineckeMS310> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Beinecke MS 310" ;
+    ns3:title "Beinecke MS 310" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BeineckeMS310> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.ms310.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/BeineckeMS360> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Beinecke MS 360" ;
+    ns3:title "Beinecke MS 360" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BeineckeMS360> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.ms360.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/BeineckeMS525> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Beinecke MS 525" ;
+    ns3:title "Beinecke MS 525" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BeineckeMS525> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.ms525.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/BeineckeMS748> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Beinecke MS 748" ;
+    ns3:title "Beinecke MS 748" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BeineckeMS748> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.ms748.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/BeineckeMS758.5> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Beinecke MS 758.5" ;
+    ns3:title "Beinecke MS 758.5" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BeineckeMS758.5> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/BodleianMSBodley113> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Bodleian MS Bodley 113" ;
+    ns3:title "Bodleian MS Bodley 113" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BodleianMSBodley113> ;
+    ns2:country "United Kingdom" ;
+    ns2:institution "Oxford University" ;
+    ns2:repository "Bodleian Library" ;
+    ns2:settlement "Oxford" .
+
+<http://manifests.ydc2.yale.edu/manifest/BodleianMSBodley850> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Bodleian MS Bodley 850" ;
+    ns3:title "Bodleian MS Bodley 850" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BodleianMSBodley850> ;
+    ns2:country "United Kingdom" ;
+    ns2:institution "Oxford University" ;
+    ns2:repository "Bodleian Library" ;
+    ns2:settlement "Oxford" .
+
+<http://manifests.ydc2.yale.edu/manifest/BodleianMSDouce18> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Bodleian MS Douce 18" ;
+    ns3:title "Bodleian MS Douce 18" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BodleianMSDouce18> ;
+    ns2:country "United Kingdom" ;
+    ns2:institution "Oxford University" ;
+    ns2:repository "Bodleian Library" ;
+    ns2:settlement "Oxford" .
+
+<http://manifests.ydc2.yale.edu/manifest/BodleianMSGoughLiturg.3> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Bodleian MS Gough Liturg. 3" ;
+    ns3:title "Bodleian MS Gough Liturg. 3" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BodleianMSGoughLiturg.3> ;
+    ns2:country "United Kingdom" ;
+    ns2:institution "Oxford University" ;
+    ns2:repository "Bodleian Library" ;
+    ns2:settlement "Oxford" .
+
+<http://manifests.ydc2.yale.edu/manifest/BodleianMSLaudMisc.204> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Bodleian MS Laud Misc. 204" ;
+    ns3:title "Bodleian MS Laud Misc. 204" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/BodleianMSLaudMisc.204> ;
+    ns2:country "United Kingdom" ;
+    ns2:institution "Oxford University" ;
+    ns2:repository "Bodleian Library" ;
+    ns2:settlement "Oxford" .
+
+<http://manifests.ydc2.yale.edu/manifest/CologneErzbischflicheDizesanundDombibliothek127Ka> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Cologne, Erzbischfliche Dizesan- und Dombibliothek 127 Ka" ;
+    ns3:title "Cologne, Erzbischfliche Dizesan- und Dombibliothek 127 Ka" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/CologneErzbischflicheDizesanundDombibliothek127Ka> ;
+    ns2:country "Germany" ;
+    ns2:institution "Erzbischöfliche Diözesan- und Dombibliothek Köln" ;
+    ns2:repository "Erzbischöfliche Diözesan- und Dombibliothek Köln" ;
+    ns2:settlement "Cologne" .
+
+<http://manifests.ydc2.yale.edu/manifest/CologneErzbischflicheDizesanundDombibliothek128Kb> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Cologne, Erzbischfliche Dizesan- und Dombibliothek 128 Kb" ;
+    ns3:title "Cologne, Erzbischfliche Dizesan- und Dombibliothek 128 Kb" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/CologneErzbischflicheDizesanundDombibliothek128Kb> ;
+    ns2:country "Germany" ;
+    ns2:institution "Erzbischöfliche Diözesan- und Dombibliothek Köln" ;
+    ns2:repository "Erzbischöfliche Diözesan- und Dombibliothek Köln" ;
+    ns2:settlement "Cologne" .
+
+<http://manifests.ydc2.yale.edu/manifest/MarstonMS22> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Marston MS 22" ;
+    ns3:title "Marston MS 22" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/MarstonMS22> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.mars022.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/Osborna44> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Osborn a44" ;
+    ns3:title "Osborn a44" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/Osborna44> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.osborn.a44.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/Osbornfa1> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Osborn fa1" ;
+    ns3:title "Osborn fa1" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/Osbornfa1> ;
+    ns1:hasRelatedDescription <http://brbl-net.library.yale.edu/pre1600ms/docs/pre1600.osborn.fa1.htm> ;
+    ns2:country "United States" ;
+    ns2:institution "Yale University" ;
+    ns2:repository "Beinecke Rare Book and Manuscript Library" ;
+    ns2:settlement "New Haven" .
+
+<http://manifests.ydc2.yale.edu/manifest/Ripoll078> a ns4:Aggregation,
+        ns1:Manifest ;
+    rdfs:label "Ripoll 078" ;
+    ns3:title "Ripoll 078" ;
+    ns4:isDescribedBy <http://localhost:8081/store/resources/http://manifests.ydc2.yale.edu/manifest/Ripoll078> ;
+    ns2:country "Spain" ;
+    ns2:institution "Archivio de la Corona de Aragon" ;
+    ns2:repository "Archivio de la Corona de Aragon" ;
+    ns2:settlement "Barcelona" .
+

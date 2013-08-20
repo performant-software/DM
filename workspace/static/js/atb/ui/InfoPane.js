@@ -2,13 +2,11 @@ goog.provide('atb.ui.InfoPane');
 
 goog.require('atb.widgets.DialogWidget');
 goog.require('goog.dom.DomHelper');
-goog.require('jquery.jQuery');
 goog.require('goog.events');
 
 atb.ui.InfoPane = function (clientApp, resourceId, opt_domHelper) {
     this.resourceId = resourceId;
     this.clientApp = clientApp;
-    this.webService = this.clientApp.getWebService();
     this.domHelper = opt_domHelper || new goog.dom.DomHelper(document);
     
     this.thumbOptions = {
@@ -47,7 +45,7 @@ atb.ui.InfoPane.prototype.getThumbUri = function (width, height, opt_paintMarker
     var wh = [width, height];
     var paintMarker = ! opt_paintMarker;
     
-    return this.webService.resourceJpgURI(id, wh, paintMarker);
+    // return this.webService.resourceJpgURI(id, wh, paintMarker);
 };
 
 atb.ui.InfoPane.prototype.createEmbedDiv_ = function () {

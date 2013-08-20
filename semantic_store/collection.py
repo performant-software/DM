@@ -1,11 +1,12 @@
 import os
-import urllib2
-import argparse
+from urllib2 import urlopen
+from argparse import ArgumentParser
 import pickle
-from rdflib.graph import ConjunctiveGraph as Graph
-from rdflib.namespace import Namespace
-from rdflib.term import URIRef, Literal
+from rdflib.graph import ConjunctiveGraph
+from rdflib.term import URIRef
 from rdflib import RDF
+from semantic_store.namespaces import ns, bind_namespaces, update_old_namespaces, NS
+from semantic_store.utils import parse_into_graph
 
 """
 Example:
@@ -13,56 +14,29 @@ Example:
 python collection.py --pages BeineckeMS525 --col_uri http://manifests.ydc2.yale.eduMetaManifest.xml --col_url http://openmanifests.s3-website-us-east-1.amazonaws.com/MetaManifest.xml
 """
 
-ns = dict(
-    dms=Namespace("http://dms.stanford.edu/ns/"),
-    sc=Namespace("http://www.shared-canvas.org/ns/"),
-    ore=Namespace("http://www.openarchives.org/ore/terms/"),
-    dc=Namespace("http://purl.org/dc/elements/1.1/"),
-    dcmitype=Namespace("http://purl.org/dc/dcmitype/"),
-    exif=Namespace("http://www.w3.org/2003/12/exif/ns#"),
-    tei=Namespace("http://www.tei-c.org/ns/1.0/"),
-    oac=Namespace("http://www.openannotation.org/ns/"))
-
 
 def resource_url(resource_uri, g):
-    query = """SELECT DISTINCT ?resource_url
-               WHERE {
-                   ?resource_url ore:describes <%s> .
-               }""" % resource_uri
-    qres = g.query(query, initNs=ns)
-    if len(qres) > 0:
-        (url,) = list(qres)[0]
-        return url
-    return None
+    return g.value(None, NS.ore.describes, URIRef(resource_uri))
 
 
 def resource_uri(resource_url, g):
-    query = """SELECT DISTINCT ?resource_uri
-               WHERE {
-                   <%s> ore:describes ?resource_uri .
-               }""" % resource_url
-    qres = g.query(query, initNs=ns)
-    if len(qres) > 0:
-        (uri,) = list(qres)[0]
-        return uri
-    return None
+    return g.value(URIRef(resource_url), NS.ore.describes, None)
     
 
 def find_resource(manifest_uri, g, pred, obj):
+    bind_namespaces(g)
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
                    <%s> ore:aggregates ?resource_uri .
                    ?resource_url ore:describes ?resource_uri .
                    ?resource_uri %s "%s" .
                }""" % (manifest_uri, pred, obj)
-    qres = g.query(query, initNs=ns)
+    qres = g.query(query, initNs = ns)
     return qres
     
 
 def list_resources(manifest_uri, g):
     uri_by_title = {}
-    print ns['ore']['aggregates']
-    print ns['dc']['title']
     for uri in g.objects(URIRef(manifest_uri), ns['ore']['aggregates']):
         for title in g.objects(uri, ns['dc']['title']):
             uri_by_title[title] = uri
@@ -71,48 +45,51 @@ def list_resources(manifest_uri, g):
 
 
 def resource_urls(manifest_uri, g):
+    bind_namespaces(g)
     query = """SELECT DISTINCT ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
+                   ?manifest_uri ore:aggregates ?resource_uri .
                    ?resource_url ore:describes ?resource_uri
-               }""" % manifest_uri
-    qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'manifest_uri': URIRef(manifest_uri)})
     if len(qres) == 0:
         query = """SELECT DISTINCT ?resource_url
                    WHERE {
-                       <%s> ore:aggregates ?resource_uri .
+                       ?manifest_uri ore:aggregates ?resource_uri .
                        ?resource_uri ore:isDescribedBy ?resource_url
-                   }""" % manifest_uri
-        qres = g.query(query, initNs=ns)
+                   }"""
+        qres = g.query(query, initNs=ns, initBindings={'manifest_uri': URIRef(manifest_uri)})
     return qres
 
 
 def aggregated_uris_urls(uri, g):
+    bind_namespaces(g)
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
+                   ?uri ore:aggregates ?resource_uri .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
-               }""" % uri
-    qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'uri': URIRef(uri)})
     return list(qres)
 
 
 def resource_uris_urls_old(manifest_uri, g):
+    bind_namespaces(g)
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
+                   ?manifest_uri ore:aggregates ?resource_uri .
                    ?resource_url ore:describes ?resource_uri
-               }""" % manifest_uri
-    qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'manifest_uri': URIRef(manifest_uri)})
     uris_urls = set(qres)
 
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
+                   ?manifest_uri ore:aggregates ?resource_uri .
                    ?resource_uri ore:isDescribedBy ?resource_url
-               }""" % manifest_uri
-    qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'manifest_uri': URIRef(manifest_uri)})
     for i in qres:
         uris_urls.add(i)
 
@@ -120,41 +97,44 @@ def resource_uris_urls_old(manifest_uri, g):
 
 
 def image_annotations(manifest_uri, g):
+    bind_namespaces(g)
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
+                   ?manifest_uri ore:aggregates ?resource_uri .
                    ?resource_uri rdf:type dms:ImageAnnotationList .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
-               }""" % manifest_uri
-    qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'manifest_uri': URIRef(manifest_uri)})
     return list(qres)
 
 
 def aggregated_seq_uris_urls(uri, g):
+    bind_namespaces(g)
     query = """SELECT DISTINCT ?resource_uri ?resource_url
                WHERE {
-                   <%s> ore:aggregates ?resource_uri .
-                   ?resource_uri rdf:type dms:Sequence .
+                   ?uri ore:aggregates ?resource_uri .
+                   {?resource_uri a dms:Sequence} UNION {?resource_uri a sc:Sequence} .
                    OPTIONAL { ?resource_url ore:describes ?resource_uri } .
                    OPTIONAL { ?resource_uri ore:isDescribedBy ?resource_url }
-               }""" % uri
-    qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'uri': uri})
     return list(qres)
 
 def fetch_and_parse(url, g, manifest_file=None, fmt="xml", cache=None):
     if (not cache) or (cache and (url not in cache['urls'])):
         if manifest_file:
-            g.parse(manifest_file, format=fmt)
+            parse_into_graph(g, source=manifest_file, format=fmt)
         else:
             print "fetching:", url
-            response = urllib2.urlopen(url)
+            response = urlopen(url)
             rdf_str = response.read()
             rdf_str = rdf_str.replace("rdf:nodeID=\"urn:uuid:", "rdf:nodeID=\"_") 
-            g.parse(data=rdf_str, format=fmt)
-#        g.parse(url, format=fmt)
+            parse_into_graph(g, data=rdf_str, format=fmt)
     if cache:
         cache['urls'].add(url)
+
+    update_old_namespaces(g)
 
 
 def harvest_resource_triples(g, collection_uri=None, pred=None, obj=None, 
@@ -170,37 +150,20 @@ def harvest_resource_triples(g, collection_uri=None, pred=None, obj=None,
 
 
 def page_attributes(g, page_uri, res_uri):
-    # height_triples = list(g.triples((rdflib.URIRef(page_uri), 
-    #                                  rdflib.URIRef(ns['exif']['height']), 
-    #                                  None)))
-    # if height_triples:
-    #     height = int(height_triples[0][2])
-    # width_triples = list(g.triples((rdflib.URIRef(page_uri), 
-    #                                 rdflib.URIRef(ns['exif']['width']), 
-    #                                 None)))
-    # if width_triples:
-    #     width = int(width_triples[0][2])
-
-    query = """SELECT DISTINCT ?res_title ?title ?width ?height ?image 
+    bind_namespaces(g)
+    qres = g.query("""SELECT DISTINCT ?res_title ?title ?width ?height ?image 
                WHERE {
-                   <%s> dc:title ?res_title .
-                   <%s> dc:title ?title .
-                   <%s> exif:width ?width .
-                   <%s> exif:height ?height .
-                   ?anno oac:hasTarget <%s> .
-                   ?anno oac:hasBody ?image .
-                   ?image rdf:type dcmitype:Image
-               }""" % (res_uri, page_uri, page_uri, page_uri, page_uri)
-    # query = """SELECT DISTINCT ?res_title ?title ?width ?height ?image 
-    #            WHERE {
-    #                <%s> dc:title ?title .
-    #                <%s> exif:width ?width .
-    #                <%s> exif:height ?height .
-    #                ?anno oac:hasTarget <%s> .
-    #                ?anno oac:hasBody ?image .
-    #                ?image rdf:type dcmitype:Image
-    #            }""" % (page_uri, page_uri, page_uri, page_uri)
-    qres = g.query(query, initNs=ns)
+                   {?res_uri dc:title ?res_title} UNION {?res_uri rdfs:label ?res_title} .
+                   {?page_uri dc:title ?title} UNION {?page_uri rdfs:label ?title} .
+                   ?page_uri exif:width ?width .
+                   ?page_uri exif:height ?height .
+                   ?anno oa:hasTarget ?page_uri .
+                   ?anno oa:hasBody ?image .
+                   ?image rdf:type dcmitype:Image .
+               }""", initBindings={
+        'res_uri': URIRef(res_uri),
+        'page_uri': URIRef(page_uri)
+    })
     if qres:
         (res_title, page_title, width, height, image) = list(qres)[0]
         return (unicode(res_title), unicode(page_title), int(width), int(height), 
@@ -244,21 +207,12 @@ def pagination(g, collection_uri=None, pred=None, obj=None,
 
     query = """SELECT DISTINCT ?first ?rest ?sequence_uri
                WHERE {
-                   <%s> ore:aggregates ?sequence_uri .
+                   ?res_uri ore:aggregates ?sequence_uri .
                    ?sequence_uri rdf:first ?first .
-                   ?first rdf:type dms:Canvas .
+                   {?first a dms:Canvas} UNION {?first a sc:Canavas} .
                    ?sequence_uri rdf:rest ?rest
-               }""" % res_uri
-    qres = g.query(query, initNs=ns)
-    if len(qres) == 0:
-        query = """SELECT DISTINCT ?first ?rest ?sequence_uri
-           WHERE {
-               <%s> ore:aggregates ?sequence_uri .
-               ?sequence_uri rdf:first ?first .
-               ?first rdf:type sc:Canvas .
-               ?sequence_uri rdf:rest ?rest
-           }""" % res_uri
-        qres = g.query(query, initNs=ns)
+               }"""
+    qres = g.query(query, initNs=ns, initBindings={'res_uri': res_uri})
 
     (first, rest, seq_uri) = list(qres)[0]
     seq_num = 1
@@ -290,7 +244,7 @@ def pagination(g, collection_uri=None, pred=None, obj=None,
 
 def load_cache(cache_filename):
     cache = {'urls': set(),
-             'g': Graph()}
+             'g': ConjunctiveGraph()}
     if not cache_filename:
         return cache
     if not os.path.exists(cache_filename):
@@ -298,7 +252,7 @@ def load_cache(cache_filename):
     f = open(cache_filename, "rb")
     cache = pickle.load(f)
     g_serialized = cache['g']
-    g = Graph()
+    g = ConjunctiveGraph()
     g.parse(data=g_serialized)
     cache['g'] = g
     f.close()
@@ -323,7 +277,7 @@ def __col_manifest_url(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description="Utilities for working with resources in a collection.")
     parser.add_argument("--list", 
                         dest="uri",

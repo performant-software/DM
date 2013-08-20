@@ -1,13 +1,10 @@
 /* ATB stylesheet imports - All used stylesheets inside of ATB */
 
 @import url("atb/atb.css");
-@import url("atb/autocomplete.css");
 @import url("atb/bezel.css");
 @import url("atb/editor.css");
-@import url("atb/filter.css");
+@import url("atb/editorframe.css");
 @import url("atb/markereditor.css");
-@import url("atb/panelcontainer.css");
-@import url("atb/radialmenu.css");
 @import url("atb/resourceviewer.css");   /* TODO: clean this up soon */
 @import url("atb/verticaltoolbar.css");
 @import url("atb/preferences.css");
@@ -18,10 +15,14 @@
 @import url("atb/workingresources.css");
 /*@import url("atb/repositorybrowser.css");
 @import url("atb/breadcrumbs.css");*/
+@import url("atb/radialmenu.css");
+@import url("atb/grid.css");
+@import url("atb/audioviewer.css");
 
 @import url("sc/BreadCrumbs.css");
 @import url("sc/RepoBrowser.css");
 @import url("sc/CanvasViewer.css");
+@import url("sc/ProjectViewer.css");
 
 .atb-ui-viewer-simplemarkereditor-popupdiv
 {

@@ -1,12 +1,12 @@
 goog.provide('sc.util.svg');
 
-goog.require('sc.util.Namespaces');
+goog.require('sc.data.NamespaceManager');
 
 /**
  * Extracted from https://github.com/ElbertF/Raphael.Export
  */
 sc.util.svg.raphaelElementToSVG = function(node) {
-    var escapeXML = sc.util.Namespaces.escapeForXml;
+    var escapeXML = sc.data.NamespaceManager.escapeForXml;
     
     var map = function(iterable, callback) {
 		var mapped = new Array;
@@ -152,7 +152,7 @@ sc.util.svg.raphaelElementToSVG = function(node) {
  * @return {Object} An object/dictionary of attributes and their values.
  */
 sc.util.svg.parseAttrsFromString = function(str) {
-    str = sc.util.Namespaces.unescapeFromXml(str);
+    str = sc.data.NamespaceManager.unescapeFromXml(str);
     
     /**
      * Note: These Regular Expressions will not recognize escaped quotes, but it

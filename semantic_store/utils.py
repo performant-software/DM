@@ -1,57 +1,75 @@
-from django.db import transaction, connection
-from rdflib import plugin, URIRef
-from rdflib.store import Store, NO_STORE, VALID_STORE
-from rdflib.graph import ConjunctiveGraph
-import hashlib
-from django.conf import settings
-from django.db import transaction
+from django.http import HttpResponse
+from rdflib import Graph
+from semantic_store.namespaces import NS
+
+METADATA_PREDICATES = (
+    NS.rdf.type,
+    NS.ore.isDescribedBy,
+    NS.rdfs.label,
+    NS.dc.title,
+    NS.exif.width,
+    NS.exif.height,
+    NS.oa.exact
+)
+
+RDFLIB_SERIALIZER_FORMATS = set((
+    'n3',
+    'nquads',
+    'nt',
+    'pretty',
+    'trig',
+    'trix',
+    'turtle',
+    'xml',
+))
+
+def accept_mimetypes(accept_string):
+    accept_parts = accept_string.split(',')
+    accept_parts = (s.strip() for s in accept_parts)
+
+    for part in accept_parts:
+        index_of_semicolon = part.rfind(';')
+        format = part[:index_of_semicolon] if index_of_semicolon != -1 else part
+        yield format
 
 
-default_identifier = URIRef(settings.RDFLIB_STORE_GRAPH_URI)        
+def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
+    mimetypes = accept_mimetypes(request.META['HTTP_ACCEPT'])
 
-def rdfstore():
-    pgplugin = plugin.get('PostgreSQL', Store)
-    store = pgplugin(identifier=default_identifier)
-    store.open()
+    for mimetype in mimetypes:
+        format = mimetype[mimetype.rfind('/') + 1:].strip()
 
+        if format in RDFLIB_SERIALIZER_FORMATS:
+            serialization = graph.serialize(format=format)
 
+            if close_graph:
+                graph.close()
 
+            return HttpResponse(serialization, mimetype=mimetype, **kwargs)
 
+    serialization = graph.serialize(format='turtle')
 
-# def default_config_string():
-#     if len(settings.DATABASES.keys()) == 1:
-#         dblabel = 'default'
-#     else:
-#         dblabel = 'rdfstore'
-#     cfgstr = "host=%s user=%s password=%s dbname=%s" % (
-#         settings.DATABASES[dblabel]['HOST'],
-#         settings.DATABASES[dblabel]['USER'],
-#         settings.DATABASES[dblabel]['PASSWORD'],
-#         settings.DATABASES[dblabel]['NAME'],
-#         )
-#     return cfgstr
+    if close_graph:
+        graph.close()
 
+    return HttpResponse(serialization, mimetype='text/turtle', **kwargs)
 
-# def load_fixture(fixture, store, identifier):
-#     g = ConjunctiveGraph(store, identifier=identifier)
-#     g.parse(fixture)
+def parse_into_graph(graph, **kwargs):
+    temp_graph = Graph()
+    temp_graph.parse(**kwargs)
+    for triple in temp_graph:
+        graph.add(triple)
 
+def parse_request_into_graph(request, graph):
+    mimetype = request.META['CONTENT_TYPE']
 
-# def init_store(identifier=default_identifier, fixture=None, cfgstr=None):
-#     if not cfgstr:
-#         cfgstr = default_config_string()
-#     pgplugin = plugin.get('PostgreSQL', Store)
-#     store = pgplugin(identifier=identifier)
-#     store.open()
-# #    store._db = connection
-# #    store.configuration = cfgstr
-#     # rt = store.open(cfgstr,create=False)
-#     # if rt == NO_STORE:
-#     #     print "intializing rdflib store tables"
-#     #     store.open(cfgstr,create=True)
-#     # else:
-#     #     assert rt == VALID_STORE,"The underlying store is corrupted"
+    format = mimetype[mimetype.rfind('/') + 1:].strip()
 
-#     if fixture:
-#         load_fixture(fixture, store, identifier)
-#         return store
+    index_of_semicolon = format.rfind(';')
+    if index_of_semicolon != -1:
+        format = format[:index_of_semicolon]
+
+    if format.startswith('rdf+'):
+        format = format[4:]
+
+    parse_into_graph(graph, format=format, data=request.body)

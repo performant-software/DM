@@ -1,7 +1,6 @@
 goog.provide('sc.canvas.DrawFeatureControl');
 
 goog.require('goog.events.Event');
-goog.require('jquery.jQuery');
 goog.require('sc.canvas.FeatureControl');
 
 goog.require('sc.util.svg');

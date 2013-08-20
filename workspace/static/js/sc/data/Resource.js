@@ -1,9 +1,8 @@
 goog.provide('sc.data.Resource');
 
 goog.require('goog.structs.Set');
-goog.require('jquery.jQuery');
+goog.require('goog.array');
 goog.require('sc.data.Quad');
-goog.require('sc.util.Namespaces');
 
 /**
  * A convenient wrapper around the databroker methods for querying information
@@ -21,7 +20,11 @@ goog.require('sc.util.Namespaces');
 sc.data.Resource = function(databroker, uri) {
     this.databroker = databroker;
     this.uri = uri;
-    this.bracketedUri = sc.util.Namespaces.wrapWithAngleBrackets(uri);
+    this.bracketedUri = sc.data.Term.wrapUri(uri);
+};
+
+sc.data.Resource.prototype.toString = function() {
+    return this.databroker.dumpResourceToTurtleString(this);
 };
 
 /**
@@ -82,11 +85,28 @@ sc.data.Resource.prototype.getUnescapedProperties = function(predicate) {
 };
 
 sc.data.Resource.prototype.escapeProperty = function(property) {
-    property = sc.util.Namespaces.stripQuotesAndDatatype(property);
-    property = sc.util.Namespaces.stripAngleBrackets(property);
-    property = sc.util.Namespaces.unescapeFromXml(property);
+    var escaper = function(property) {
+        if (sc.data.Term.isWrappedUri(property)) {
+            return sc.data.Term.unwrapUri(property);
+        }
+        else if (sc.data.Term.isLiteral(property)) {
+            return sc.data.Term.unwrapLiteral(property);
+        }
+        else {
+            return property;
+        }
+    };
     
-    return property;
+    if (goog.isArray(property)) {
+        var result = [];
+        goog.structs.forEach(property, function(p) {
+            result.push(escaper(p));
+        });
+        return result;
+    }
+    else {
+        return escaper(property);
+    }
 };
 sc.data.Resource.prototype.escapeProperties = sc.data.Resource.prototype.escapeProperty;
 
@@ -95,7 +115,7 @@ sc.data.Resource.prototype.getProperties = function(predicate) {
     properties = this.escapeProperties(properties);
     
     return properties;
-}
+};
 
 sc.data.Resource.prototype.getOneUnescapedProperty = function(predicate) {
     var properties = this.getUnescapedProperties(predicate);
@@ -113,6 +133,41 @@ sc.data.Resource.prototype.getOneProperty = function(predicate) {
     
     if (property) {
         return this.escapeProperty(property);
+    }
+    else {
+        return null;
+    }
+};
+
+sc.data.Resource.prototype.hasProperty = function(predicate, object) {
+    predicate = this.databroker.namespaces.autoExpand(predicate);
+    object = this.databroker.namespaces.autoExpand(object);
+
+    var numQuads = 0;
+
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        numQuads += this.databroker.quadStore.numQuadsMatchingQuery(sc.data.Term.wrapUri(uri), predicate, object);
+    }, this);
+
+    return numQuads > 0;
+};
+
+sc.data.Resource.prototype.getResourcesByProperty = function(predicate) {
+    var properties = this.getUnescapedProperties(predicate);
+    var resources = [];
+
+    goog.structs.forEach(properties, function(property) {
+        resources.push(this.databroker.getResource(property));
+    }, this);
+
+    return resources;
+};
+
+sc.data.Resource.prototype.getOneResourceByProperty = function(predicate) {
+    var resources = this.getResourcesByProperty(predicate);
+
+    if (resources.length > 0) {
+        return resources[0];
     }
     else {
         return null;
@@ -145,6 +200,47 @@ sc.data.Resource.prototype.addProperty = function(predicate, object) {
     
     this.databroker.addNewQuad(quad);
     
+    return this;
+};
+
+/**
+ * Ensures that a property has only one value by deleting any values for that predicate and adding that one property.
+ */
+sc.data.Resource.prototype.setProperty = function(predicate, object) {
+    return this.deleteProperty(predicate).addProperty(predicate, object);
+};
+
+sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
+    var safePredicate = sc.data.Term.wrapUri(this.databroker.namespaces.autoExpand(predicate));
+    var safeObject = opt_object ? this.databroker.namespaces.autoExpand(opt_object) : null;
+
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        this.databroker.quadStore.forEachQuadMatchingQuery(
+            this.bracketedUri,
+            safePredicate,
+            safeObject,
+            null,
+            function(quad) {
+                this.databroker.deleteQuad(quad);
+            }.bind(this)
+        );
+    }, this);
+
+    return this;
+};
+
+/**
+ * Deletes all quads with this resource's uri as their subject. Note: This will not delete other references to this resource.
+ */
+sc.data.Resource.prototype.deleteAllProperties = function() {
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        this.databroker.quadStore.forEachQuadMatchingQuery(
+            uri, null, null, null, function(quad) {
+                this.databroker.deleteQuad(quad);
+            }.bind(this)
+        );
+    }, this);
+
     return this;
 };
 
@@ -239,16 +335,33 @@ sc.data.Resource.prototype.hasAllTypes = function(possibleTypes) {
     return intersection.equals(possibleTypesSet);
 };
 
-sc.data.Resource.prototype.getTitles = function() {
-    return sc.util.Namespaces.stripWrappingQuotes(this.getProperties('dc:title'));
-};
-
-sc.data.Resource.prototype.getOneTitle = function() {
-    return sc.util.Namespaces.stripWrappingQuotes(this.getOneProperty('dc:title'));
-};
-
 sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
-    return this.databroker.getResourceAnnoIds(this.bracketedUri, opt_annoType);
+    return this.databroker.dataModel.findAnnosReferencingResource(this.bracketedUri, opt_annoType);
+};
+
+/**
+ * Finds resources which reference this resource using a given predicate (i.e., relation)
+ * @param  {string} predicate The relation to use in the search.
+ * @return {Array.<sc.data.Resource>} A list of matching resources.
+ */
+sc.data.Resource.prototype.getReferencingResources = function(predicate) {
+    var uris = new goog.structs.Set();
+    var expandedPredicate = this.databroker.namespaces.autoExpand(predicate);
+
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        this.databroker.quadStore.forEachQuadMatchingQuery(
+            null, expandedPredicate, this.bracketedUri, null, function(quad) {
+                uris.add(quad.subject);
+            }.bind(this));
+    }, this);
+
+    var resources = [];
+    goog.structs.forEach(uris, function(uri) {
+        var resource = this.databroker.getResource(uri);
+        resources.push(resource);
+    }, this);
+
+    return resources;
 };
 
 /**
@@ -261,7 +374,10 @@ sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
  * spec.
  */
 sc.data.Resource.prototype.isSameAs = function(other) {
-    if (other.uri) {
+    if (other == null) {
+        return false;
+    }
+    else if (other.uri) {
         var uri = other.uri;
     }
     else {
@@ -275,9 +391,13 @@ sc.data.Resource.prototype.equals = sc.data.Resource.prototype.isSameAs;
 
 /**
  * Returns the uris of all resources which are marked as owl:sameAs this
- * this resource. Note: all querying methods already query these equivalent
+ * this resource.
+ * 
+ * Note: all querying methods already query these equivalent
  * resources, so manually repeating queries on these other resources is
  * unnecessary.
+ *
+ * Note: This uri will also be included in the list.
  *
  * @return {Array.<string>} The equivalent uris.
  */
@@ -287,4 +407,16 @@ sc.data.Resource.prototype.getEquivalentUris = function() {
 
 sc.data.Resource.prototype.dump = function() {
     return this.databroker.dumpResource(this.bracketedUri);
+};
+
+sc.data.Resource.prototype.defer = function() {
+    return this.databroker.getDeferredResource(this);
+};
+
+sc.data.Resource.compareByTitle = function(a, b) {
+    var getTitle = a.databroker.dataModel.getTitle;
+    var titleA = getTitle(a).toLowerCase();
+    var titleB = getTitle(b).toLowerCase();
+
+    return goog.array.defaultCompare(titleA, titleB);
 };

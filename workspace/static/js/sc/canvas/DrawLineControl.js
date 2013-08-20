@@ -36,6 +36,8 @@ sc.canvas.DrawLineControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawLineControl, sc.canvas.DrawFeatureControl);
 
+sc.canvas.DrawLineControl.prototype.controlName = 'DrawLineControl';
+
 /**
  * @inheritDoc
  */
@@ -139,20 +141,20 @@ sc.canvas.DrawLineControl.prototype.handleMouseup = function(event) {
     var viewportDiv = this.viewport.getElement();
     var canvas = this.viewport.canvas;
 
-    var canvasCoords = this.clientToCanvasCoord(event.clientX, event.clientY);
+    var canvasCoord = this.clientToCanvasCoord(event.clientX, event.clientY);
 
     if (this.useDragToDraw) {
-        this.points.push(canvasCoords);
+        this.points.push(canvasCoord);
         this.finishDrawFeature();
     }
     else {
         if (this.isFirstClick()) {
-            this.createInitialLine(canvasCoords);
+            this.createInitialLine(canvasCoord);
 
             jQuery(viewportDiv).bind('mousemove', this.proxiedHandleMousemove);
         }
         else {
-            this.points.push(canvasCoords);
+            this.points.push(canvasCoord);
         }
     }
 };
@@ -172,23 +174,15 @@ sc.canvas.DrawLineControl.prototype.createInitialLine = function(canvasCoord) {
 
     this.points.push(canvasCoord);
     
-    this.feature = canvas.addPolyline([canvasCoord], this.uri);
-    this.feature.set({
-        top: canvasCoord.y - canvas.group.get('height') / 2,
-        left: canvasCoord.x - canvas.group.get('width') / 2
-    });
-};
+    this.feature = canvas.addPath("M 0 0", this.uri);
 
-/**
- * Aliases the sc.canvas.Canvas.createPathCommandsFromPoints function with the
- * closePath param set to false.
- *
- * @param {Array.<Object>} points An array of canvas coordinates.
- * @return {string} The svg path commands.
- */
-sc.canvas.DrawLineControl.prototype.createPathCommandsFromPoints = function(
-                                                                    points) {
-    return this.viewport.canvas.createPathCommandsFromPoints(points, false);
+    this.feature.set({
+        top: canvasCoord.y * canvas.displayToActualSizeRatio + canvas.offset.x,
+        left: canvasCoord.x * canvas.displayToActualSizeRatio + canvas.offset.y,
+        scaleX: canvas.displayToActualSizeRatio,
+        scaleY: canvas.displayToActualSizeRatio
+    });
+    this.updateFeatureCoords();
 };
 
 /**
@@ -217,24 +211,23 @@ sc.canvas.DrawLineControl.prototype.handleMousemove = function(event) {
 };
 
 sc.canvas.DrawLineControl.prototype.normalizePoints = function(points) {
+    var boundingBox = sc.canvas.FabricCanvas.getPointsBoundingBox(points);
+
     var newPoints = [];
 
-    var initialPoint = this.points[0];
+    var initialPoint = new fabric.Point(boundingBox.x1, boundingBox.y1);
 
     for (var i=0, len=points.length; i<len; i++) {
-        var point = {
-            x: points[i].x,
-            y: points[i].y
-        };
+        var point = new fabric.Point(
+            points[i].x - initialPoint.x,
+            points[i].y - initialPoint.y
+        );
 
-        point.x -= initialPoint.x;
-        point.y -= initialPoint.y;
-
-        newPoints.push(point)
+        newPoints.push(point);
     }
 
     for (var i=newPoints.length - 1; i>=0; i--) {
-        var point = newPoints[i];
+        var point = new fabric.Point(newPoints[i].x, newPoints[i].y);
 
         newPoints.push(point);
     }
@@ -243,21 +236,22 @@ sc.canvas.DrawLineControl.prototype.normalizePoints = function(points) {
 };
 
 sc.canvas.DrawLineControl.prototype.updateLine = function(points) {
-    points = this.normalizePoints(points);
+    var boundingBox = this.getLayerBoundingBox(points);
 
-    var initialPoint = this.points[0];
-
-    this.feature.set('points', points);
-    this.feature.setCoords();
-    this.feature._calcDimensions();
-
-    this.updateFeature();
-};
-
-sc.canvas.DrawLineControl.prototype.updatePath = function(commands) {
     var canvas = this.viewport.canvas;
+    this.feature = canvas.updatePath(
+        this.feature,
+        sc.canvas.FabricCanvas.convertPointsToSVGPathCommands(
+            this.normalizePoints(points),
+            null,
+            boundingBox
+        )
+    );
 
-    this.feature = canvas.updatePath(this.feature, commands);
+    this.feature.set({
+        left: boundingBox.x1 + (boundingBox.width / 2),
+        top: boundingBox.y1 + (boundingBox.height / 2)
+    });
 
     this.updateFeature();
 };
@@ -290,14 +284,30 @@ sc.canvas.DrawLineControl.prototype.handleDblclick = function(event) {
     }
 };
 
+sc.canvas.DrawLineControl.prototype.getLayerBoundingBox = function(points) {
+    var layerPoints = [];
+    goog.structs.forEach(points, function(point) {
+        layerPoints.push(this.viewport.canvasToLayerCoord(point));
+    }, this);
+
+    return sc.canvas.FabricCanvas.getPointsBoundingBox(layerPoints);
+};
+
 /**
  * @inheritDoc
  */
 sc.canvas.DrawLineControl.prototype.finishDrawFeature = function() {
-    // var pathCommands = this.createPathCommandsFromPoints(this.points);
-    // this.updatePath(pathCommands);
+    var boundingBox = this.getLayerBoundingBox(this.points);
 
-    this.updateLine(this.points);
+    var canvas = this.viewport.canvas;
+    canvas.removeFabricObject(this.feature, true);
+    this.feature = canvas.addPolyline(this.normalizePoints(this.points), this.uri);
+    this.feature.set({
+        left: boundingBox.x1 + (boundingBox.width / 2),
+        top: boundingBox.y1 + (boundingBox.height / 2)
+    });
+
+    this.updateFeature();
 
     sc.canvas.DrawFeatureControl.prototype.finishDrawFeature.call(this);
 

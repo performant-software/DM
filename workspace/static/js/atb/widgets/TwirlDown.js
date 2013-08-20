@@ -1,7 +1,6 @@
 goog.provide('atb.widgets.TwirlDown');
 
 goog.require('goog.ui.AnimatedZippy');
-goog.require('jquery.jQuery');
 
 /**
  * Works much like goog.ui.Zippy, except it is only opened by clicking the twirl

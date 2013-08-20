@@ -1,7 +1,5 @@
 goog.provide('jquery.rdfquery');
 
-goog.require('jquery.jQuery');
-
 /*
  * $ URIs @VERSION
  * 

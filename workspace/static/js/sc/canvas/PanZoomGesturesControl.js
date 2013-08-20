@@ -2,7 +2,6 @@ goog.provide('sc.canvas.PanZoomGesturesControl');
 
 goog.require('goog.events');
 goog.require('jquery.event.drag');
-goog.require('jquery.jQuery');
 goog.require('jquery.mousewheel');
 goog.require('sc.canvas.Control');
 
@@ -33,6 +32,8 @@ sc.canvas.PanZoomGesturesControl = function(viewport) {
     this.proxiedHandleDblclick = this.handleDblclick.bind(this);
 };
 goog.inherits(sc.canvas.PanZoomGesturesControl, sc.canvas.Control);
+
+sc.canvas.PanZoomGesturesControl.prototype.controlName = 'PanZoomGesturesControl';
 
 /**
  * @inheritDoc
@@ -127,15 +128,22 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousedown = function(opts) {
     this.lastPageX = event.pageX;
     this.lastPageY = event.pageY;
 
-    event.preventDefault();
+    this.mouseDownX = event.pageX;
+    this.mouseDownY = event.pageY;
+
+    jQuery(document.body).addClass('user-select-none');
+
+    this.dispatchEvent(new goog.events.Event('panstart', this));
 };
 
 sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {
     if (this.isDragging && this.viewport.canvas) {
         var event = opts.e;
 
-        var dx = this.lastPageX - event.pageX;
-        var dy = this.lastPageY - event.pageY;
+        this.viewport.registerHandledMouseEvent(event);
+
+        var dx = event.pageX - this.lastPageX;
+        var dy = event.pageY - this.lastPageY;
 
         this.lastPageX = event.pageX;
         this.lastPageY = event.pageY;
@@ -143,6 +151,8 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMousemove = function(opts) {
         this.viewport.panByPageCoords(dx, dy);
 
         event.preventDefault();
+
+        this.dispatchEvent(new goog.events.Event('pan', this));
     }
 };
 
@@ -154,7 +164,15 @@ sc.canvas.PanZoomGesturesControl.prototype.handleMouseup = function(opts) {
     this.timeOfLastDragEnd = event.timeStamp;
     this.viewport.registerHandledMouseEvent(event);
 
-    event.preventDefault();
+    if (!(this.mouseDownX == event.pageX && this.mouseDownY == event.pageY)) {
+        this.viewport.registerHandledMouseEvent(event);
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    jQuery(document.body).removeClass('user-select-none');
+
+    this.dispatchEvent(new goog.events.Event('panstop', this));
 };
 
 /**

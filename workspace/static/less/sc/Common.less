@@ -5,6 +5,10 @@
     user-select: @select;
 }
 
+.user-select-none {
+    .user-select(none);
+}
+
 .border-radius(@radius) {
     -webkit-border-radius: @radius;
     -moz-border-radius: @radius;
@@ -33,6 +37,17 @@
     -webkit-border-bottom-right-radius: @radius;
     -moz-border-radius-bottomright: @radius;
     border-bottom-right-radius: @radius;
+}
+
+.14x14spriteBackground(@index) {
+    @squareSize: 14px;
+
+    width: @squareSize;
+    height: @squareSize;
+
+    background-image: url("../../img/icons-14x14-sprite.png");
+    background-position: -@index * @squareSize 0;
+    background-repeat: no-repeat;
 }
 
 .16x16spriteBackground(@index) {

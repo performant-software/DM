@@ -4,8 +4,6 @@ goog.require('goog.ui.Button');
 goog.require('goog.ui.CustomButton');
 goog.require('goog.structs.Set');
 
-goog.require('jquery.jQuery');
-
 sc.canvas.ImageChoicePicker = function(button, databroker, imageWidth) {
     this.databroker = databroker;
     this.imageWidth = imageWidth;
@@ -60,7 +58,7 @@ sc.canvas.ImageChoicePicker.prototype.addImage = function(uri, choiceHandler) {
     var resource = this.databroker.getResource(uri);
     var src = this.databroker.getImageSrc(uri, this.imageWidth);
     
-    var title = resource.getOneProperty('dc:title') ||
+    var title = this.databroker.dataModel.getTitle(resource) ||
     uri.substring(uri.lastIndexOf('/') + 1);
     
     var img = new Image();

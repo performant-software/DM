@@ -4,13 +4,16 @@ from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseNotFound
 
-from rdflib.graph import Graph, ConjunctiveGraph
+from rdflib.graph import Graph
 from rdflib import URIRef, Literal, BNode
+from rdflib.exceptions import ParserError
 
-from .validators import AnnotationValidator
-from .rdfstore import rdfstore, default_identifier
-from .namespaces import NS, ns, bind_namespaces
+from semantic_store.validators import AnnotationValidator
+from semantic_store.rdfstore import rdfstore
+from semantic_store.namespaces import NS, bind_namespaces
 from semantic_store import uris
+from semantic_store import manuscripts
+from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
 
 def graph():
     g = Graph()
@@ -79,11 +82,9 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     dest_g = destination_graph(dest_graph_uri)
     annotations_g = graph()
     try:
-        annotations_g.parse(data=request.body)
-#        print "annotations.g:"
-#        print annotations_g.serialize(initNs=ns)
-    except:
-        return HttpResponse(status=400, content="Unable to parse serialization.")
+        parse_request_into_graph(request, annotations_g)
+    except ParserError as e:
+        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
     anno_uris = annotation_uris(annotations_g)
     if not anno_uris:
         return HttpResponse(status=400, 
@@ -96,9 +97,15 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
         for i in anno_uris:
             stored_g = update_annotation(request, dest_g, annotations_g, i)
 
-    return HttpResponse(stored_g.serialize(), status=201, mimetype='text/xml')
+    dest_g.close()
+    annotations_g.close()
 
-def get_annotations(request, graph_uri, anno_uris=[]):
+    return negotiated_graph_response(request, stored_g, close_graph=True, status=201)
+
+def get_annotations(request, graph_uri, anno_uris=None):
+    if anno_uris is None:
+        anno_uris = []
+
     result_g = graph()
     g = destination_graph(graph_uri)
     num_anno_uris = len(anno_uris)
@@ -119,13 +126,34 @@ def get_annotations(request, graph_uri, anno_uris=[]):
         agg_bnode = BNode()
         for i in subjects:
             result_g.add((agg_bnode, NS.ore['aggregates'], URIRef(i)))
+            result_g.add((URIRef(i), NS.rdf['type'], NS.oa['Annotation']))
+            url = reverse('semantic_store_project_annotations', 
+                          kwargs={'project_uri': graph_uri, 'anno_uri': i})
+            url = "http://dm.drew.edu" + url
+            result_g.add((URIRef(i), NS.ore['isDescribedBy'], URIRef(url)))
+
+    g.close()
+    anno_g.close()
+
     if len(result_g) > 0:
-        return HttpResponse(result_g.serialize(), status=200, mimetype='text/xml')
+        return negotiated_graph_response(request, result_g, close_graph=True, status=200)
     else:
-        return HttpResponseNotFound()
+        result_g.close()
+        return HttpResponse(status=204) # Not really a 404, just no content
 
 def search_annotations(request, graph_uri, search_uri):
     g = destination_graph(graph_uri)
-    anno_uris = annotation_ancestors(g, search_uri)
-    return get_annotations(request, graph_uri, anno_uris)
+    anno_uris = set(annotation_ancestors(g, search_uri))
+    if not anno_uris:
+        canvases = manuscripts.canvases(search_uri)
+        anno_uris = set()
+        for i in canvases:
+            canvas_anno_uris = set(annotation_ancestors(g, i))
+            anno_uris = anno_uris | canvas_anno_uris
+    anno_uris = list(anno_uris)
+    g.close()
+    if not anno_uris:
+        return HttpResponse(status=204) # Not really a 404, just no content
+    else:
+        return get_annotations(request, graph_uri, anno_uris)
 
