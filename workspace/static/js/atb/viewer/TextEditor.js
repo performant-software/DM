@@ -612,7 +612,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
         this.setDisplayTitle(this.databroker.dataModel.getTitle(resource));
 
         this.databroker.dataModel.textContents(resource, function(contents, error) {
-            if (contents) {
+            if (contents || this.databroker.dataModel.getTitle(resource)) {
                 this.setHtml(contents);
 
                 var textEditorAnnotate = this.field.getPluginByClassId('Annotation');

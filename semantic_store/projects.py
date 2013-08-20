@@ -32,31 +32,38 @@ def create_project_from_request(request):
     return HttpResponse("Successfully created the project.")
 
 def create_project(g, host):
-    sanitize_texts(g)
+    query = g.query("""SELECT ?uri ?user
+                    WHERE {
+                        ?user perm:hasPermissionOver ?uri .
+                        ?user rdf:type foaf:Agent .
+                    }""", initNs=ns)
 
-    for user in g.subjects(NS.rdf.type, NS.foaf.Agent):
-        username = user.split("/")[-1]
+    for uri, user in query:
+        sanitize_texts(g)
 
-        for project in g.objects(user, NS.perm.hasPermissionOver):
-            project_uri = uris.uri('semantic_store_projects', uri=project)
+        with transaction.commit_on_success():
+            project_uri = uris.uri('semantic_store_projects', uri=uri)
             project_g = Graph(store=rdfstore(), identifier=project_uri)
             bind_namespaces(project_g)
 
-            project_g += g
+            for t in g:
+                project_g.add(t)
 
-            url = uris.url(host, 'semantic_store_projects', uri=project)
-            project_g.set((project_uri, NS.dcterms.created, Literal(datetime.utcnow())))
+            url = uris.url(host, 'semantic_store_projects', uri=uri)
+            project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
             for t in g.triples((user, None, None)):
                 project_g.remove(t)
 
             check_project_types(project_g, project_uri)
 
-            create_project_user_graph(host, username, project_uri)
+        username = user.split("/")[-1]
+        create_project_user_graph(host, username, uri)
 
-            project_g.close()
+        print "Successfully created project with uri " + uri
 
-def get_project_graph_for_response(request, project_uri):
+
+def read_project(request, project_uri):
     uri = uris.uri('semantic_store_projects', uri=project_uri)
     store_g = Graph(store=rdfstore(), identifier=uri)
 
@@ -71,17 +78,20 @@ def get_project_graph_for_response(request, project_uri):
         text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
         project_g.add((text, NS.ore.isDescribedBy, text_url))
 
-    store_g.close()
+    # Add info about users which have permissions over the project
+    # This should be indexed in the future for scalability
+    for u in User.objects.filter():
+        user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
+        user_graph = Graph(store=rdfstore(), identifier=user_graph_identifier)
 
-    return project_g
+        if len(list(user_graph.triples((URIRef(user_graph_identifier), NS.perm.hasPermissionOver, URIRef(project_uri))))) > 0:
+            project_g += user_graph
 
-def read_project(request, project_uri):
-    project_g = get_project_graph_for_response(request, project_uri)
+        user_graph.close()
     
     if len(project_g) >0:
-        return negotiated_graph_response(request, project_g, close_graph=True)
+        return negotiated_graph_response(request, project_g)
     else:
-        project_g.close()
         return HttpResponseNotFound()
 
 
@@ -95,11 +105,8 @@ def update_project(request, uri):
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     project_graph = update_project_graph(input_graph, uri,request.get_host())
-    project_graph.close()
 
-    input_graph.close()
-
-    return HttpResponse(status=200)
+    return negotiated_graph_response(request, project_graph, status=201)
 
 def update_project_graph(g, identifier, host):
     predicate = NS.perm['hasPermissionOver']
@@ -114,7 +121,7 @@ def update_project_graph(g, identifier, host):
     with transaction.commit_on_success():
         uri = uris.uri('semantic_store_projects', uri=identifier)
         project_g = Graph(store=rdfstore(), identifier=uri)
-        # bind_namespaces(project_g) # This was causing a database error
+        bind_namespaces(project_g)
 
         print "Updating project using graph identifier %s"%(uri)
 
@@ -135,9 +142,7 @@ def delete_project(uri):
         user_uri = uris.uri("semantic_store_users", username=username)
         remove_triple(username, user_uri, NS.perm.hasPermissionOver, uri)
 
-    graph.close()
-
-    return HttpResponse("Successfully deleted project with uri %s."%uri, status=200)
+    return HttpResponse("Successfully deleted project with uri %s."%uri)
 
 # Creates a graph identified by user of the projects belonging to the user, which
 #  can be found at the descriptive url of the user (/store/user/<username>)
@@ -164,8 +169,6 @@ def create_project_user_graph(host, user, project):
 
     save_project_user_graph(g, user, host)
 
-    g.close()
-
 def save_project_user_graph(graph, username, host):
     with transaction.commit_on_success():
         user_uri = uris.uri('semantic_store_users', username=username)
@@ -181,8 +184,6 @@ def save_project_user_graph(graph, username, host):
 
         for project in graph.triples((user_uri, NS.ore.hasPermissionOver, None)):
             user_graph.add((project, NS.ore.isDescribedBy, uris.url(host, "semantic_store_projects", uri=project)))
-
-    user_graph.close()
 
 
 def delete_triples_from_project(request, uri):
@@ -212,8 +213,6 @@ def delete_triples_from_project(request, uri):
             if t in project_g:
                 project_g.remove(t)
                 removed.add(t)
-
-    project_g.close()
 
     return removed
 

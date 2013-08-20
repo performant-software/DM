@@ -44,6 +44,12 @@ sc.data.DataModel.VOCABULARY = {
     imageTypes: ['<http://dms.stanford.edu/ns/Image>', '<http://dms.stanford.edu/ns/ImageBody>', '<http://purl.org/dc/dcmitype/Image>'],
     imageChoiceTypes: ['<http://dms.stanford.edu/ns/ImageChoice>'],
     textTypes: ['<http://purl.org/dc/dcmitype/Text>'],
+    projectTypes: [
+        '<http://www.openarchives.org/ore/terms/Aggregation>',
+        '<http://purl.org/dc/dcmitype/Collection>',
+        '<http://dm.drew.edu/ns/Project>',
+        '<http://xmlns.com/foaf/0.1/Project>'
+    ],
     option: '<http://dms.stanford.edu/ns/option>',
     metadataPredicates: [
         '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
@@ -151,8 +157,6 @@ sc.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
                 imageUris.addAll(optionUris);
             }
         }
-
-        imageUris.addAll(bodyUris);
     }
 
     return sc.data.Term.unwrapUri(imageUris.getValues());
@@ -489,15 +493,6 @@ sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project, opt_qu
     var quadStore = opt_quadStore || this.databroker.quadStore;
 
     var quads = quadStore.query(project.bracketedUri, null, null, null);
-    quads = quads.concat(quadStore.query(null, null, project.bracketedUri, null));
-
-    goog.structs.forEach(project.getProperties('ore:aggregates'), function(contentUri) {
-        var contentResource = this.databroker.getResource(contentUri);
-
-        goog.structs.forEach(sc.data.DataModel.VOCABULARY.metadataPredicates, function(predicate) {
-            quads = quads.concat(quadStore.query(contentResource.bracketedUri, predicate, null, null))
-        }, this);
-    }, this);
 
     return quads;
 };
@@ -508,7 +503,7 @@ sc.data.DataModel.prototype.findQuadsToSyncForUser = function(user, opt_quadStor
 
     var quads = quadStore.query(user.bracketedUri, null, null, null);
 
-    return quads
+    return quads;
 };
 
 sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStore) {
