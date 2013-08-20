@@ -61,9 +61,12 @@ class Command(BaseCommand):
             user_g.add((user_identifier, NS.perm['mayDelete'], project_identifier))
             user_g.add((user_identifier, NS.perm['mayAugment'], project_identifier))
             user_g.add((user_identifier, NS.perm['mayAdminister'], project_identifier))
+
             user_g.add((project_identifier, NS.dc['title'], Literal(title))) 
             user_g.add((project_identifier, NS.rdf['type'], NS.dcmitype['Collection']))
             user_g.add((project_identifier, NS.rdf['type'], NS.ore['Aggregation']))
+            user_g.add((project_identifier, NS.rdf.type, NS.foaf.Project))
+            user_g.add((project_identifier, NS.rdf.type, NS.dm.Project))
             user_g.add((project_identifier, NS.ore['isDescribedBy'], project_url))
 
             user_g.add((user_identifier, NS.rdf['type'], NS.dcmitype['Collection']))

@@ -49,22 +49,15 @@ goog.inherits(atb.widgets.WorkingResources, goog.events.EventTarget);
  * @param {string} uri The uri of the manifest.
  * @param {?Function} opt_doAfter An optional function to call after the manifest has loaded.
  */
-atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter) {
+atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_deferred, opt_doAfter) {
     this.uri = uri;
 
     var withManifest = function(manifest) {
         this.clear();
 
-        var aggregateUris = this.databroker.dataModel.findAggregationContentsUris(uri);
-        var aggregateUrisInOrder = this.databroker.getListUrisInOrder(uri);
+        var resourceUris = this.databroker.projectController.findProjectContents(uri);
 
-        if (aggregateUrisInOrder.length > 0) {
-            var resourceUris = aggregateUrisInOrder;
-        }
-        else {
-            this.databroker.sortUrisByTitle(aggregateUris);
-            var resourceUris = aggregateUris;
-        }
+        var items = [];
 
         for (var i = 0, len = resourceUris.length; i < len; i++) {
             var resourceUri = resourceUris[i];
@@ -72,15 +65,28 @@ atb.widgets.WorkingResources.prototype.loadManifest = function(uri, opt_doAfter)
             var item = this.createItem(resourceUri);
 
             if (item) {
-                this.addItem(item);
+                items.push(item);
             }
         }
-    };
-    withManifest = jQuery.proxy(withManifest, this);
 
-    var deferredManifest = this.databroker.getDeferredResource(uri);
-    // deferredManifest.progress(withManifest).done(withManifest);
-    deferredManifest.done(withManifest);
+        this.addItems(items);
+
+        if (goog.isFunction(opt_doAfter)) {
+            opt_doAfter();
+        }
+    }.bind(this);
+
+    if (opt_deferred) {
+        var deferredManifest = this.databroker.getDeferredResource(uri);
+        // deferredManifest.progress(withManifest).done(withManifest);
+        deferredManifest.done(withManifest);
+    }
+    else {
+        withManifest();
+        if (goog.isFunction(opt_doAfter)) {
+            opt_doAfter();
+        }
+    }
 };
 
 atb.widgets.WorkingResources.prototype.clear = function() {
@@ -137,7 +143,8 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
 
     if (item) {
         if (this.databroker.user) {
-            if (this.databroker.user.hasProperty('perm:mayUpdate', sc.data.Term.wrapUri(this.uri))) {
+            if (this.databroker.projectController.userHasPermissionOverProject(
+                    this.databroker.user, this.uri, sc.data.ProjectController.PERMISSIONS.update)) {
                 item.showRemoveButton();
             }
         }
@@ -184,6 +191,12 @@ atb.widgets.WorkingResources.prototype.updateItemAttrs = function(item) {
 };
 
 atb.widgets.WorkingResources.THUMB_SIZE = new goog.math.Size(75, 75);
+
+atb.widgets.WorkingResources.prototype.updateCurrentItems = function() {
+    goog.structs.forEach(this.itemsByUri, function(item, uri) {
+        this.updateItem(item);
+    }, this);
+};
 
 atb.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLoaded) {
     var uri = item.getUri();
@@ -397,6 +410,20 @@ atb.widgets.WorkingResources.prototype.addItem = function(item) {
     this.addListenersToItem(item);
 
     item.render(this.scrollingDiv);
+};
+
+atb.widgets.WorkingResources.prototype.addItems = function(items) {
+    var fragment = this.domHelper.getDocument().createDocumentFragment();
+
+    goog.structs.forEach(items, function(item) {
+        this.itemsByUri.set(item.getUri(), item);
+
+        this.addListenersToItem(item);
+
+        item.render(fragment);
+    }, this);
+
+    this.scrollingDiv.appendChild(fragment);
 };
 
 atb.widgets.WorkingResources.prototype.removeItemByUri = function(uri) {

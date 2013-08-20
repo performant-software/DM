@@ -16,6 +16,7 @@ goog.require('atb.viewer.ViewerGrid');
 goog.require('atb.viewer.ViewerContainer');
 
 goog.require("sc.ProjectManager");
+goog.require('sc.ProjectViewer');
 
 
 var clientApp = null;
@@ -35,30 +36,10 @@ var scrollIntoView = function(element) {
 };
 
 
-var setupWorkingResources = function (clientApp, username, wrContainerParent) {
-    var databroker = clientApp.getDatabroker();
-
-    workingResourcesViewer = new atb.widgets.WorkingResources(clientApp.getDatabroker());
-
-    var wrContainer = jQuery('#workingResourcesModal .modal-body').get(0);
-
-    jQuery('#my_resources_button').on('click', function(event) {
-        workingResourcesViewer.refreshCurrentItems();
-    });
-
-    workingResourcesViewer.render(wrContainer);
-
-    workingResourcesViewer.addEventListener('openRequested', function(event) {
-        var resource = event.resource;
-        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
-            openCanvas(event.uri, event.urisInOrder, event.currentIndex);
-        }
-        else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.textTypes)) {
-            openText(resource.uri);
-        }
-    });
-
-    return workingResourcesViewer;
+var setupProjectViewer = function(clientApp, viewerGrid) {
+    goog.global.projectViewer = new sc.ProjectViewer(clientApp);
+    projectViewer.renderButtons('#projectViewerButtons');
+    projectViewer.renderModals('body');
 };
 
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
@@ -105,10 +86,10 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         
         var manuscriptUri = manuscriptResource.getUri();
 
-        databroker.addResourceToCurrentProject(resource);
-        if (workingResourcesViewer) {
-            workingResourcesViewer.loadManifest(databroker.currentProject);
-        }
+        databroker.projectController.addResourceToProject(resource);
+        // if (workingResourcesViewer) {
+        //     workingResourcesViewer.loadManifest(databroker.currentProject);
+        // }
     });
 
     var repoBrowserContainer = jQuery('#repoBrowserModal .modal-body').get(0);
@@ -124,37 +105,13 @@ var openCanvas = function(uri, urisInOrder, index) {
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
-var openText = function(uri) {
-    var textResource = databroker.getResource(uri);
-
-    var viewerContainer = new atb.viewer.ViewerContainer();
-    var viewer = new atb.viewer.TextEditor(clientApp);
-    viewerGrid.addViewerContainer(viewerContainer);
-    viewerContainer.setViewer(viewer);
-
-    scrollIntoView(viewerContainer.getElement());
-
-    textResource.defer().done(function() {
-        viewer.loadResourceByUri(textResource.uri);
-    });
-};
-
-var openBlankTextDocument = function() {
-    var textResource = databroker.createResource(null, 'dctypes:Text');
-    databroker.dataModel.setTitle(textResource, 'Untitled text document');
-
-    databroker.addResourceToCurrentProject(textResource);
-
-    openText(textResource.uri);
-};
-
 var setupCurrentProject = function(clientApp, username) {
     var db = goog.global.databroker;
     var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
     db.getDeferredResource(uri).done(function(resource){
         var uris = db.getResource(uri).getProperties('perm:hasPermissionOver');
         for (var i=0; i<uris.length; i++) {
-            db.allProjects.push(uris[i]);
+            // db.allProjects.push(uris[i]);
         }
 
         var pm = goog.global.projectManager;
@@ -192,6 +149,16 @@ var resizeViewerGrid = function() {
     }
 }
 
+var setupUser = function(databroker, username) {
+    databroker.user = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
+    var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
+    databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
+
+    databroker.user.defer().done(function() {
+        databroker.projectController.autoSelectProject();
+    });
+};
+
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
     cookies = new goog.net.Cookies(window.document);
     /* The following method is copied from Django documentation
@@ -225,9 +192,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 
     goog.global.databroker = clientApp.getDatabroker();
 
-    databroker.user = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
-    var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
-    databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
+    setupUser(databroker, username);
 
     goog.global.viewerGrid = new atb.viewer.ViewerGrid();
     viewerGrid.setDimensions(1,2);
@@ -245,12 +210,8 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
     
-    setupWorkingResources(clientApp, username, wrContainerParent);
-
-    goog.global.projectManager = new sc.ProjectManager(databroker, $("#projectManagerButton").get(0),viewerGrid, workingResourcesViewer, $("body").get(0), username);
-    setupCurrentProject(clientApp, username);
-    
     setupRepoBrowser(clientApp, wrContainerParent);
+    setupProjectViewer(clientApp, viewerGrid);
 }
 
 

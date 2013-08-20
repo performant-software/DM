@@ -25,12 +25,13 @@ sc.data.N3Parser = function(databroker) {
                 "var STATIC_URL = '" + goog.global.STATIC_URL.replace(/'/g, "\\'") + "';\n\
                 importScripts(STATIC_URL + 'js/sc/data/N3ParserWorker.js');\n"
             ], {'type': 'text/javascript'});
-            this.workerBlobUrl = window.URL.createObjectURL(this.workerBlob);
+            var URL = window.URL || window.webkitURL;
+            this.workerBlobUrl = URL.createObjectURL(this.workerBlob);
 
             this.webWorkerEnabled = true;
         }
         catch (e) {
-            console.error('Web worker blob failed', e);
+            console.warn('Web worker blob failed', e, 'reverting to standard implementation');
             this.webWorkerEnabled = false;
         }
     }

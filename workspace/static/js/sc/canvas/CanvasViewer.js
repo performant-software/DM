@@ -169,6 +169,22 @@ sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function() {
     this.marqueeViewport.requestFrameRender();
 };
 
+sc.canvas.CanvasViewer.prototype.addDeferredCanvas = function(deferred) {
+    var self = this;
+    var _canvas = null;
+    
+    var withCanvas = function(canvas) {
+        if (! _canvas) {
+            _canvas = canvas;
+            self.setCanvas(canvas);
+        }
+    };
+    
+    deferred.progress(withCanvas).done(withCanvas);
+    
+    return deferred;
+};
+
 sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     this.mainViewport.clear();
     this.marqueeViewport.clear();
@@ -183,8 +199,6 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     );
     
     deferredMarqueeCanvas.done(function (marqueeCanvas) {
-        this._adjustMarqueeFeatureStyles();
-
         canvas.addEventListener(
             ['featureAdded', 'featureModified', 'featureRemoved'],
             function(event) {
@@ -225,6 +239,8 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     });
     
     goog.events.listenOnce(this.marqueeViewport, 'canvasAdded', function(e) {
+        this._adjustMarqueeFeatureStyles();
+        
         var marqueeSize = this.marqueeViewport.canvas.getSize().clone().scaleToFit(this.maxMarqueeSize);
         this.marqueeViewport.resize(marqueeSize.width, marqueeSize.height);
 
@@ -333,20 +349,4 @@ sc.canvas.CanvasViewer.prototype.updateMarqueeBox = function() {
 sc.canvas.CanvasViewer.prototype.requestFrameRender = function() {
     this.mainViewport.requestFrameRender();
     this.marqueeViewport.requestFrameRender();
-};
-
-sc.canvas.CanvasViewer.prototype.addDeferredCanvas = function(deferred) {
-    var self = this;
-    var _canvas = null;
-    
-    var withCanvas = function(canvas) {
-        if (! _canvas) {
-            _canvas = canvas;
-            self.setCanvas(canvas);
-        }
-    };
-    
-    deferred.progress(withCanvas).done(withCanvas);
-    
-    return deferred;
 };
