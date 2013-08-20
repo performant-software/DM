@@ -91,7 +91,7 @@ sc.CommentViewer.prototype.clear = function() {
 sc.CommentViewer.prototype.addOrModifyComment = function(uri) {
     var resource = this.databroker.getResource(uri);
     
-    var title = resource.getOneProperty('dc:title') || 'Untitled comment';
+    var title = this.databroker.dataModel.getTitle(resource) || 'Untitled comment';
     var content = resource.getOneProperty('cnt:chars') ||
     'comment has no content';
     
@@ -160,12 +160,12 @@ sc.CommentViewer.prototype.setUri = function(uri) {
             return;
         }
         
-        var targetAnnoUris = this.databroker.getResourceTargetAnnoIds(uri);
+        var targetAnnoUris = this.databroker.dataModel.findAnnosReferencingResourceAsTarget(uri);
         
         for (var i=0, len=targetAnnoUris.length; i<len; i++) {
             var annoResource = this.databroker.getResource(targetAnnoUris[i]);
             
-            var bodyUri = annoResource.getOneProperty('oac:hasBody');
+            var bodyUri = annoResource.getOneProperty('oa:hasBody');
             var deferredBody = this.databroker.getDeferredResource(bodyUri);
             deferredBody.progress(withBodyResource).done(withBodyResource);
         }

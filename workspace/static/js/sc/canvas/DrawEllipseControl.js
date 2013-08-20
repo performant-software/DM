@@ -26,6 +26,8 @@ sc.canvas.DrawEllipseControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawEllipseControl, sc.canvas.DrawFeatureControl);
 
+sc.canvas.DrawEllipseControl.prototype.controlName = 'DrawEllipseControl';
+
 /**
  * @inheritDoc
  */
@@ -77,6 +79,7 @@ sc.canvas.DrawEllipseControl.prototype.handleMousedown = function(opts) {
     var ry = 0;
 
     this.feature = canvas.addEllipse(cx, cy, rx, ry, this.uri);
+    this.updateFeatureCoords();
 
     this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
     this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);
@@ -88,6 +91,8 @@ sc.canvas.DrawEllipseControl.prototype.handleMousedown = function(opts) {
  */
 sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(opts) {
     var event = opts.e;
+
+    var canvas = this.viewport.canvas;
 
     this.viewport.registerHandledMouseEvent(event);
     
@@ -101,15 +106,15 @@ sc.canvas.DrawEllipseControl.prototype.handleMousemove = function(opts) {
     var cx = this.x + rx;
     var cy = this.y + ry;
 
-    var coords = this.viewport.canvas.toCenteredCanvasCoord(cx, cy);
-
     this.feature.set({
-        'left': coords.x,
-        'top': coords.y,
+        'left': cx * canvas.displayToActualSizeRatio + canvas.offset.x,
+        'top': cy * canvas.displayToActualSizeRatio + canvas.offset.y,
         'rx': Math.abs(rx),
         'ry': Math.abs(ry),
-        'width': Math.abs(rx),
-        'height': Math.abs(ry)
+        'width': Math.abs(rx * 2),
+        'height': Math.abs(ry * 2),
+        'scaleX': canvas.displayToActualSizeRatio,
+        'scaleY': canvas.displayToActualSizeRatio
     });
 
     this.updateFeature();

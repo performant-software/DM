@@ -58,3 +58,7 @@
     font-size: 12px;
     padding: 6px;
 }
+
+.atb-Editor-noedit {
+    overflow-y: auto;
+}

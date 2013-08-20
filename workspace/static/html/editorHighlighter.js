@@ -5,7 +5,7 @@ goog.require('atb.DMWebService');
 goog.require("atb.viewer.StandardSimpleMarkerEditor");
 goog.require("goog.math.Size");
 
-goog.require("atb.viewer.Editor");
+goog.require("atb.viewer.TextEditor");
 goog.require("atb.widgets.MenuUtil");
 
 goog.require("atb.ClientApp");
@@ -79,16 +79,16 @@ function initPanelManagerTestApp()
     var strLoremIpsumXMany = "Lorem Ipsum. Lorem Ipsum. Lorem Ipsum. Lorem Ipsum. Lorem Ipsum. Lorem Ipsum. Lorem Ipsum. ";
     var fillerText = strLoremIpsumXMany+strLoremIpsumXMany+strLoremIpsumXMany+strLoremIpsumXMany+strLoremIpsumXMany;
     //var partenerDiv2 = null; //HACK
-    //textEditor = new atb.viewer.Editor(webService, styleRoot, fillerText, partenerDiv2);
-	textEditor = new atb.viewer.Editor(clientApp, fillerText);
+    //textEditor = new atb.viewer.TextEditor(webService, styleRoot, fillerText, partenerDiv2);
+	textEditor = new atb.viewer.TextEditor(clientApp, fillerText);
     leftContainer.setViewer(textEditor);
 
 
 	//// Right Pane: //////////////////////////////////
 
 	fillerText = "";
-	//textEditor = new atb.viewer.Editor(webService, styleRoot, fillerText, partenerDiv2);
-	textEditor = new atb.viewer.Editor(clientApp, fillerText);
+	//textEditor = new atb.viewer.TextEditor(webService, styleRoot, fillerText, partenerDiv2);
+	textEditor = new atb.viewer.TextEditor(clientApp, fillerText);
 	rightContainer.setViewer(textEditor);
 
 	////////////////////////////////////////////////

@@ -2,9 +2,6 @@ goog.provide('sc.canvas.ZoomSliderControl');
 
 goog.require('sc.canvas.Control');
 
-goog.require('jquery.jQueryUI');
-goog.require('jquery.jQuery');
-
 sc.canvas.ZoomSliderControl = function(viewport) {
     sc.canvas.Control.call(this, viewport);
     
@@ -17,10 +14,18 @@ sc.canvas.ZoomSliderControl = function(viewport) {
         'orientation': 'vertical',
         'slide': jQuery.proxy(this.handleSlide, this),
         'animate': 200,
-        'step': 0.005
+        'step': 0.005,
+        'start': function(event, ui) {
+            this.dispatchEvent(event);
+        }.bind(this),
+        'stop': function(event, ui) {
+            this.dispatchEvent(event);
+        }.bind(this)
     });
 };
 goog.inherits(sc.canvas.ZoomSliderControl, sc.canvas.Control);
+
+sc.canvas.ZoomSliderControl.prototype.controlName = 'ZoomSliderControl';
 
 sc.canvas.ZoomSliderControl.prototype.activate = function() {
     sc.canvas.Control.prototype.activate.call(this);
@@ -76,12 +81,10 @@ function(value) {
     var actualCanvasSize = this.viewport.canvas.getSize();
     
     var ratio = size / actualCanvasSize.getShortest();
-
-    var center = this.viewport.getCenterCoord();
     
     this.viewport.zoomToRatio(ratio);
     
-    this.updateTooltip();
+    this.updateZoomLevelDisplay();
 };
 
 sc.canvas.ZoomSliderControl.prototype.handleBoundsChanged = function(event) {
@@ -91,21 +94,23 @@ sc.canvas.ZoomSliderControl.prototype.handleBoundsChanged = function(event) {
     
     jQuery(this.sliderDiv).slider('value', Math.log(displaySize.getShortest()));
     
-    this.updateTooltip();
+    this.updateZoomLevelDisplay();
 };
 
 sc.canvas.ZoomSliderControl.prototype.handleCanvasAdded = function(event) {
     this.updateRange();
 };
 
-sc.canvas.ZoomSliderControl.prototype.updateTooltip = function() {
+sc.canvas.ZoomSliderControl.prototype.getZoomPercentage = function() {
+    return Math.round(this.viewport.canvas.getDisplayToActualSizeRatio() * 100);
+};
+
+sc.canvas.ZoomSliderControl.prototype.updateZoomLevelDisplay = function() {
     if (this.viewport.canvas) {
-        var zoomPercentage = Math.round(
-            this.viewport.canvas.getDisplayToActualSizeRatio() * 100);
-        
         jQuery(this.sliderDiv).attr('title', 'Zoomed to ' +
-            zoomPercentage + '%.\n' +
+            this.getZoomPercentage() + '%.\n' +
             'Slide to adjust the zoom level.');
+        jQuery(this.sliderDiv).find('.ui-slider-handle').text(this.getZoomPercentage());
     }
 };
 

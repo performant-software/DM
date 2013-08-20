@@ -1,7 +1,6 @@
 goog.provide('atb.ui.PopupWindow');
 
 goog.require('goog.dom');
-goog.require('jquery.jQuery');
 goog.require('goog.events');
 goog.require('atb.Util');
 goog.require('goog.dom.DomHelper');

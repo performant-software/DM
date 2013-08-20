@@ -1,31 +1,16 @@
 from optparse import make_option
-import datetime
-import pprint
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+from django.core.management.base import BaseCommand
 from django.core.urlresolvers import reverse
 from django.db import transaction
 
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, RDF
-from rdflib.namespace import Namespace
+from rdflib.graph import Graph
+from rdflib import URIRef
 
-import rdfstore
-#from semantic_store import store as main_store
+from rdfstore import rdfstore
 from semantic_store import collection
 
-
-ns = dict(
-    rdf=RDF,
-    dms=Namespace("http://dms.stanford.edu/ns/"),
-    sc=Namespace("http://www.shared-canvas.org/ns/"),
-    ore=Namespace("http://www.openarchives.org/ore/terms/"),
-    dc=Namespace("http://purl.org/dc/elements/1.1/"),
-    dcmitype=Namespace("http://purl.org/dc/dcmitype/"),
-    exif=Namespace("http://www.w3.org/2003/12/exif/ns#"),
-    tei=Namespace("http://www.tei-c.org/ns/1.0/"),
-    oac=Namespace("http://www.openannotation.org/ns/"))
+from semantic_store.namespaces import ns
 
 
 col_res_attributes = (ns['dc']['title'], 
@@ -82,13 +67,13 @@ class Command(BaseCommand):
             exit(0)
         
         with transaction.commit_on_success():        
-            col_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(col_uri))
+            col_g = Graph(store=rdfstore(), identifier=URIRef(col_uri))
             collection.fetch_and_parse(col_url, col_g, manifest_file=manifest_file)
             self.localize_describes(col_uri, col_url, col_g)
 
             res_uris_urls = collection.aggregated_uris_urls(col_uri, col_g)
             for res_uri, res_url in res_uris_urls:
-                res_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(res_uri))
+                res_g = Graph(store=rdfstore(), identifier=URIRef(res_uri))
                 collection.fetch_and_parse(res_url, res_g)
                 for pred in col_res_attributes:
                     for t in res_g.triples((res_uri, pred, None)):
@@ -107,5 +92,9 @@ class Command(BaseCommand):
                         self.localize_describes(page_uri, page_url, res_g)
                 self.localize_describes(res_uri, res_url, res_g)
                 self.localize_describes(res_uri, res_url, col_g)
+
+                res_g.close()
+
+            col_g.close()
         
                 

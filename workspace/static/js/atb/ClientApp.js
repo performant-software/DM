@@ -1,13 +1,7 @@
 goog.provide("atb.ClientApp");
 
-goog.require("atb.WebService");
-goog.require("atb.viewer.PanelManager");
-
 goog.require("atb.util.StyleUtil"); //used for a giant hack
 goog.require("atb.util.ReferenceUtil");
-
-goog.require('jquery.jQuery');
-goog.require('jquery.animate_enhanced'); // converts jquery animations to css3 when possible, enabling hardware accelleration
 
 goog.require('goog.events.EventTarget');
 goog.require('goog.events');
@@ -21,33 +15,18 @@ goog.require('goog.ui.KeyboardShortcutHandler');
 goog.require('atb.events.LinkingModeEntered');
 goog.require('atb.events.LinkingModeExited');
 
-goog.require('atb.resource.ResourceCrawler');
-
-goog.require('atb.ui.ViewerThumbnailTimeline');
-
 goog.require('sc.data.Databroker');
 
-atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
+atb.ClientApp = function (webService, username, opt_hack_set_styleRoot, databrokerOptions) {
     var self = this;
     
-	this.webService = webService;
-    this.webService.setClientApp(this);
-    
-    this.databroker = new sc.data.Databroker({
-        proxiedUrlGenerator: function (url) {
-            return self.webService.proxiedUri(url);
-        }
-    });
+    this.databroker = new sc.data.Databroker(databrokerOptions);
     
     this.eventDispatcher = new goog.events.EventTarget();
-    goog.events.listen(this.getEventDispatcher(), 'resource clicked', this.resourceClickHandler, false, this);
     
     this.username = username;
     
 	this.force_styleRoot = atb.util.ReferenceUtil.applyDefaultValue(opt_hack_set_styleRoot, null);
-	
-	this.panelManager = new atb.viewer.PanelManager(this);
-	this.resourceCrawler = new atb.resource.ResourceCrawler(this);
     
 	atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.getStyleRoot(); // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
 
@@ -61,28 +40,13 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot) {
     goog.events.listen(window, 'beforeunload', this.onBeforeUnload, false, this);
     
     this.linkingInProgress = false;
-    this.renderLinkCreationUI();
-    
-    this.viewerThumbnailTimeline = new atb.ui.ViewerThumbnailTimeline(this);
     
     this.keyboardShortcutHandler = new goog.ui.KeyboardShortcutHandler(window);
     this.registerKeyboardShortcuts();
 };
 
-atb.ClientApp.prototype.getWebService = function () {
-	return this.webService;
-};
-
-atb.ClientApp.prototype.getPanelManager = function () {
-	return this.panelManager;
-};
-
 atb.ClientApp.prototype.getEventDispatcher = function () {
     return this.eventDispatcher;
-};
-
-atb.ClientApp.prototype.getResourceCrawler = function () {
-    return this.resourceCrawler;
 };
 
 atb.ClientApp.prototype.getDatabroker = function() {
@@ -93,7 +57,6 @@ atb.ClientApp.prototype.getStyleRoot = function () {
 	if (this.force_styleRoot !== null) {
 		return this.force_styleRoot;
 	}
-	return this.webService.getCssRoot(); //for now...
 };
 
 atb.ClientApp.prototype.getActiveAnnotation = function () {
@@ -108,15 +71,15 @@ atb.ClientApp.prototype.clearActiveAnnotation = function () {
 	this.setActiveAnnotation(null);
 	this.setAnnotationBody(null);
 	
-	var panelContainers = this.getPanelManager().getAllPanels();
-	for (var x in panelContainers) {
-		var viewer = panelContainers[x].getViewer();
+	// var panelContainers = this.getPanelManager().getAllPanels();
+	// for (var x in panelContainers) {
+	// 	var viewer = panelContainers[x].getViewer();
 		
-		try {
-			viewer.unHighlightDocumentIcon();
-		}
-		catch (e) {}
-	}
+	// 	try {
+	// 		viewer.unHighlightDocumentIcon();
+	// 	}
+	// 	catch (e) {}
+	// }
 };
 
 
@@ -169,15 +132,15 @@ atb.ClientApp.prototype.getUsername = function () {
 
 /**
  * Starts the process of creating a link between two resources, taking a body id and optional annoId,
- * and listening for the next 'resource clicked' event for the target id
+ * and listening for the next 'resource-click' event for the target id
  */
 atb.ClientApp.prototype.createAnnoLink = function (bodyId, opt_annoId) {
     this.linkingInProgress = true;
     
     this.annoLinkCreationBodyId = bodyId;
-    this.annoLinkCreationAnnoId = opt_annoId;
+    this.annoLinkCreationAnnoId = opt_annoId || this.databroker.createUuid();
     
-    var modeEnteredEvent = new atb.events.LinkingModeEntered(this.annoLinkCreationAnnoId);
+    var modeEnteredEvent = new atb.events.LinkingModeEntered(this.annoLinkCreationAnnoId, this.eventDispatcher);
     this.eventDispatcher.dispatchEvent(modeEnteredEvent);
     
     this.createAnnoLinkAddListeners_();
@@ -252,10 +215,6 @@ atb.ClientApp.prototype.renderLinkCreationUI = function () {
             this.undoLinkCreationPopup.reposition();
         }
     }, false, this);
-    
-    goog.events.listen(this.eventDispatcher, atb.events.ViewerHasEnteredBackground.EVENT_TYPE, function (e) {
-        this.hideUndoLinkCreationUI();
-    }, false, this);
 };
 
 atb.ClientApp.prototype.showLinkCreationUI = function () {
@@ -277,12 +236,12 @@ atb.ClientApp.prototype.hideUndoLinkCreationUI = function () {
 };
 
 atb.ClientApp.prototype.createAnnoLinkAddListeners_ = function () {
-    goog.events.listen(this.getEventDispatcher(), 'resource clicked', this.annoLinkCreationHandler_, false, this);
+    goog.events.listen(this.getEventDispatcher(), 'resource-click', this.annoLinkCreationHandler_, false, this);
     goog.events.listen(window, 'keyup', this.annoLinkCreationKeyHandler_, false, this);
 };
 
 atb.ClientApp.prototype.createAnnoLinkRemoveListeners_ = function () {
-    goog.events.unlisten(this.getEventDispatcher(), 'resource clicked', this.annoLinkCreationHandler_, false, this);
+    goog.events.unlisten(this.getEventDispatcher(), 'resource-click', this.annoLinkCreationHandler_, false, this);
     goog.events.unlisten(window, 'keyup', this.annoLinkCreationKeyHandler_, false, this);
 };
 
@@ -294,19 +253,22 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     
     this.linkingInProgress = false;
     
-    var id = e.target;
+    var targetUri = e.uri;
     
     if (this.annoLinkCreationBodyId) {
         var bodyId = this.annoLinkCreationBodyId;
         this.annoLinkCreationBodyId = null;
 
-        this.databroker.createAnno(bodyId, id);
+        var anno = this.databroker.dataModel.createAnno(bodyId, targetUri);
         
         var bezel = new atb.ui.Bezel('atb-bezel-linked');
         bezel.show();
         
         this.hideLinkCreationUI();
     }
+
+    var exitedEvent = new atb.events.LinkingModeExited(this.annoLinkCreationAnnoId);
+    this.eventDispatcher.dispatchEvent(exitedEvent);
 };
 
 atb.ClientApp.prototype.annoLinkCreationKeyHandler_ = function (e) {
@@ -334,10 +296,6 @@ atb.ClientApp.prototype.undoLastAnnoLinkCreation = function () {
     }
     
     this.hideUndoLinkCreationUI();
-};
-
-atb.ClientApp.prototype.resourceClickHandler = function (e) {
-    var id = e.target;
 };
 
 /**
@@ -376,13 +334,5 @@ atb.ClientApp.prototype.onBeforeUnload = function (event) {
 };
 
 atb.ClientApp.prototype.registerKeyboardShortcuts = function () {
-    this.keyboardShortcutHandler.registerShortcut('show_desktop', 'ctrl+d');
     
-    var handleKey = function (event) {
-        if (event.identifier) {
-            this.viewerThumbnailTimeline.toggleVisibility();
-        }
-    };
-    
-    goog.events.listen(this.keyboardShortcutHandler, goog.ui.KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED, handleKey, false, this);
 };

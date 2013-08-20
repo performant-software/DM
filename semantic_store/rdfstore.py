@@ -1,10 +1,7 @@
-from django.db import transaction, connection
 from rdflib import plugin, URIRef
 from rdflib.plugin import register
-from rdflib.store import Store, NO_STORE, VALID_STORE
-from rdflib.graph import ConjunctiveGraph
+from rdflib.store import Store
 from django.conf import settings
-from namespaces import ns
 
 
 register('PostgreSQL', Store, 'semantic_store.PostgreSQL', 'PostgreSQL')

@@ -6,7 +6,6 @@ goog.provide("atb.widgets.MenuUtil");
  * @author John O'Meara
 **/
 
-goog.require("jquery.jQuery");
 goog.require("atb.util.ReferenceUtil");
 goog.require('goog.asserts');
 goog.require("atb.widgets.MenuItem");

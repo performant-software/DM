@@ -30,6 +30,7 @@ MEDIA_URL = BASE_URL + 'media/'
 
 STATIC_ROOT = os.path.join(DIRNAME, 'static')
 
+# This must be an absolute url
 STATIC_URL = BASE_URL + 'static/'
 
 # uncomment if you decide to use francescortiz/image

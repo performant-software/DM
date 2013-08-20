@@ -5,42 +5,43 @@ goog.require('atb.resource.TextHighlightSummary');
 goog.require('atb.resource.CanvasSummary');
 goog.require('atb.resource.MarkerSummary');
 goog.require('atb.resource.ManuscriptSummary');
+goog.require('atb.resource.AudioSummary');
 
-/**
- * @param resource {atb.resource.Resource}
- * @return {atb.resource.ResourceSummary}
- */
-atb.resource.ResourceSummaryFactory.createFromResource = function (resource, clickHandler, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+atb.resource.ResourceSummaryFactory.createFromUri = function(uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
     var result;
-    var id = resource.getId();
-    var type = resource.getType();
+    var databroker = clientApp.databroker;
+
+    var resource = databroker.getResource(uri);
     
-    if (type == 'text') {
-        result = new atb.resource.TextSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+    if (resource.hasAnyType('dctypes:Text')) {
+        result = new atb.resource.TextSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
-    else if (type == 'textHighlight') {
-        result = new atb.resource.TextHighlightSummary (id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+    else if (resource.hasAnyType('oa:SpecificResource')) {
+        var selector = resource.getOneResourceByProperty('oa:hasSelector');
+
+        if (selector.hasType('oa:TextQuoteSelector')) {
+            result = new atb.resource.TextHighlightSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        }
+        else if (selector.hasType('oa:SvgSelector')) {
+            result = new atb.resource.MarkerSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
+        }
     }
     
-    else if (type == 'marker') {
-        result = new atb.resource.MarkerSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+    else if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
+        result = new atb.resource.CanvasSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
-    
-    else if (type == 'canvas') {
-        result = new atb.resource.CanvasSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
-    }
-    
-    else if (type == 'manuscript') {
-        result = new atb.resource.ManuscriptSummary(id, clickHandler, viewer, resource, clientApp, opt_domHelper, opt_styleOptions);
+
+    else if (resource.hasAnyType('dms:AudioSegment', 'dctypes:Sound')) {
+        result = new atb.resource.AudioSummary(uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
     }
     
     else {
-        if (console.log) {
-            console.log(resource);
+        if (console.error) {
+            console.error('Unrecognized resource type ' + resource);
         }
         
-        throw 'Unrecognized resource type in ResourceSummaryFactory: ' + type;
+        // throw 'Unrecognized resource type in ResourceSummaryFactory: ' + type;
     }
     
     return result;

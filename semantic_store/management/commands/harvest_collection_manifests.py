@@ -1,18 +1,12 @@
 from optparse import make_option
-import datetime
-import pprint
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+from django.core.management.base import BaseCommand
 from django.core.urlresolvers import reverse
-from django.db import transaction
 
-from rdflib.graph import Graph, ConjunctiveGraph
+from rdflib.graph import Graph
 from rdflib import URIRef, Literal
-from rdflib.namespace import Namespace
 
-from semantic_store import rdfstore
-from semantic_store import collection
+from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS
 from _harvest import harvest_collection, localize_describes
 
@@ -55,13 +49,13 @@ class Command(BaseCommand):
         manifest_file = options['manifest_file']
         rep_uri = options['rep_uri']
         rep_title = options['rep_title']
-        if ((not col_url) or (not manifest_file) or (not col_uri) or 
-            (not store_host) or (not rep_uri) or (not rep_title)):
+        if ((not ((col_url or manifest_file) and col_uri)) or 
+            (not (store_host and rep_uri and rep_title))):
             print "url or manifest_file and uri arguments are required."
             exit(0)
         rep_uri = URIRef(rep_uri)
         col_uri = URIRef(col_uri)
-        rep_g = Graph(store=rdfstore.rdfstore(), identifier=URIRef(rep_uri))
+        rep_g = Graph(store=rdfstore(), identifier=URIRef(rep_uri))
         rep_g.add((rep_uri, NS.rdf['type'], NS.dms['Manifest']))
         rep_g.add((rep_uri, NS.rdf['type'], NS.ore['Aggregation']))
         rep_g.add((rep_uri, NS.dc['title'], Literal(rep_title)))
@@ -73,4 +67,6 @@ class Command(BaseCommand):
         rep_g.add((col_uri, NS.ore['isDescribedBy'], URIRef(col_url)))
         localize_describes(store_host, col_uri, col_url, rep_g)
         harvest_collection(col_url, col_uri, store_host, manifest_file)
+
+        rep_g.close()
                 

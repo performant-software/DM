@@ -1,22 +1,14 @@
 from optparse import make_option
-import datetime
-import pprint
-import uuid
 
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 from django.db import transaction
 
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, Literal
-from rdflib.namespace import Namespace
+from rdflib.graph import Graph
+from rdflib import Literal
 
 from semantic_store import rdfstore
-from semantic_store import collection
-from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.rdf_views import UserView, ProjectView
+from semantic_store.namespaces import NS
 from semantic_store import uris
 from _projects import create_project
 
@@ -53,7 +45,7 @@ class Command(BaseCommand):
         
             project_identifier = uris.uuid()
             project_url = uris.url(store_host, 'semantic_store_projects', 
-                                   identifier=project_identifier)
+                                   uri=project_identifier)
             title = "Default project"
             create_project(user, project_identifier, title, store_host)
 
@@ -63,13 +55,25 @@ class Command(BaseCommand):
             user_g = Graph(store=rdfstore.rdfstore(), identifier=user_identifier)
 
             user_g.add((user_identifier, NS.ore['aggregates'], project_identifier))
+            user_g.add((user_identifier, NS.perm['hasPermissionOver'], project_identifier))
+            user_g.add((user_identifier, NS.perm['mayRead'], project_identifier))
+            user_g.add((user_identifier, NS.perm['mayUpdate'], project_identifier))
+            user_g.add((user_identifier, NS.perm['mayDelete'], project_identifier))
+            user_g.add((user_identifier, NS.perm['mayAugment'], project_identifier))
+            user_g.add((user_identifier, NS.perm['mayAdminister'], project_identifier))
+
             user_g.add((project_identifier, NS.dc['title'], Literal(title))) 
             user_g.add((project_identifier, NS.rdf['type'], NS.dcmitype['Collection']))
             user_g.add((project_identifier, NS.rdf['type'], NS.ore['Aggregation']))
+            user_g.add((project_identifier, NS.rdf.type, NS.foaf.Project))
+            user_g.add((project_identifier, NS.rdf.type, NS.dm.Project))
             user_g.add((project_identifier, NS.ore['isDescribedBy'], project_url))
 
             user_g.add((user_identifier, NS.rdf['type'], NS.dcmitype['Collection']))
             user_g.add((user_identifier, NS.rdf['type'], NS.ore['Aggregation']))
+            user_g.add((user_identifier, NS.rdf['type'], NS.foaf['Agent']))
             user_g.add((user_identifier, NS.ore['isDescribedBy'], user_url))
+
+            user_g.close()
 
                 

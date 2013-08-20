@@ -26,6 +26,8 @@ sc.canvas.DrawCircleControl = function(viewport, databroker) {
 };
 goog.inherits(sc.canvas.DrawCircleControl, sc.canvas.DrawFeatureControl);
 
+sc.canvas.DrawCircleControl.prototype.controlName = 'DrawCircleControl';
+
 /**
  * @inheritDoc
  */
@@ -74,6 +76,7 @@ sc.canvas.DrawCircleControl.prototype.handleMousedown = function(event) {
     var r = 0;
 
     this.feature = canvas.addCircle(cx, cy, r, this.uri);
+    this.updateFeatureCoords();
 
     this.viewport.fabricCanvas.on('mouse:move', this.proxiedHandleMousemove);
     this.viewport.fabricCanvas.on('mouse:up', this.proxiedHandleMouseup);
@@ -85,6 +88,8 @@ sc.canvas.DrawCircleControl.prototype.handleMousedown = function(event) {
  */
 sc.canvas.DrawCircleControl.prototype.handleMousemove = function(event) {
     this.viewport.registerHandledMouseEvent(event);
+
+    var canvas = this.viewport.canvas;
     
     var canvasCoords = this.clientToCanvasCoord(event.clientX, event.clientY);
 
@@ -98,14 +103,14 @@ sc.canvas.DrawCircleControl.prototype.handleMousemove = function(event) {
     var cx = this.x + r;
     var cy = this.y + r;
 
-    var coords = this.viewport.canvas.toCenteredCanvasCoord(cx, cy);
-
     this.feature.set({
-        'left': coords.x,
-        'top': coords.y,
-        'width': r,
-        'height': r
-    }).setRadius(r);
+        'left': cx * canvas.displayToActualSizeRatio + canvas.offset.x,
+        'top': cy * canvas.displayToActualSizeRatio + canvas.offset.y,
+        'width': Math.abs(r),
+        'height': Math.abs(r),
+        'scaleX': canvas.displayToActualSizeRatio,
+        'scaleY': canvas.displayToActualSizeRatio
+    }).setRadius(Math.abs(r));
 
     this.updateFeature();
 };

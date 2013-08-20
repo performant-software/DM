@@ -20,6 +20,13 @@ sc.canvas.FeatureControl = function(viewport, databroker) {
     /** @type {sc.data.Databroker} */
     this.databroker = databroker;
     
+    this.resetFeature();
+    
+    this.shouldSaveChanges = true;
+};
+goog.inherits(sc.canvas.FeatureControl, sc.canvas.Control);
+
+sc.canvas.FeatureControl.prototype.resetFeature = function() {
     /**
      * The current feature being drawn.
      * @type {(Raphael.Element|null)}
@@ -30,11 +37,15 @@ sc.canvas.FeatureControl = function(viewport, databroker) {
      * The uri for the feature being drawn
      * @type {string}
      */
-    this.uri = '';
-    
-    this.shouldSaveChanges = true;
+    this.uri = this.databroker.createUuid();
 };
-goog.inherits(sc.canvas.FeatureControl, sc.canvas.Control);
+
+sc.canvas.FeatureControl.prototype.updateFeatureCoords = function() {
+    this.feature.setCoords();
+    if (this.feature._calcDimensions) {
+        this.feature._calcDimensions(true);
+    }
+};
 
 /**
  * This method should be called when the shape of a feature is updated.
@@ -44,10 +55,7 @@ sc.canvas.FeatureControl.prototype.updateFeature = function() {
                                       EVENT_TYPES.updateFeature, this.uri);
     event.feature = this.feature;
 
-    this.feature.setCoords();
-    if (this.feature._calcDimensions) {
-        this.feature._calcDimensions();
-    }
+    this.updateFeatureCoords();
 
     this.viewport.requestFrameRender();
 
@@ -84,7 +92,7 @@ sc.canvas.FeatureControl.prototype.pageToCanvasCoord = function(x, y) {
  * Converts client coordinates (such as those from a mouse event) into
  * coordinates on the canvas.
  *
- * @see sc.canvas.CanvasViewport.prototype.canvasToPageCoord
+ * @see sc.Canvas.CanvasViewport.prototype.canvasToPageCoord
  *
  * @param {(number|Object)} x The client x coordinate or an object with x and y
  * properties.
@@ -108,13 +116,12 @@ sc.canvas.FeatureControl.prototype.layerToCanvasCoord = function(x, y) {
 sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
     var canvas = this.viewport.canvas;
 
-    var featureClone = this.feature.clone();
+    var featureClone = canvas.getCanvasSizedFeatureClone(this.feature);
+    
+    var svgString = featureClone.toSVG();
+    svgString = svgString.replace(/\"/g, "'");
 
-    var coords = canvas.getFeatureCoords(this.feature);
-
-    featureClone.set('left', coords.x).set('top', coords.y);
-
-    return featureClone.toSVG();
+    return svgString;
 };
 
 /**
@@ -124,27 +131,28 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     if (! this.shouldSaveChanges) {
         return;
     }
-
-    var svgString = sc.util.Namespaces.escapeForXml(this.exportFeatureToSvg());
     
-    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature) ||
-        this.databroker.createUuid();
+    var svgString = this.exportFeatureToSvg();
+    console.log("svgString: ", svgString);
+    
+    var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature);
     var canvasUri = this.viewport.canvas.getUri();
 
     var selector = this.databroker.createResource(
-        contentUri, 'oac:SvgSelector');
+        contentUri, 'oa:SvgSelector');
     selector.addType('cnt:ContentAsText');
     selector.addProperty('cnt:chars', '"' + svgString + '"');
     selector.addProperty('cnt:characterEncoding', '"UTF-8"');
     
     var specificResource = this.databroker.createResource(
-        this.databroker.createUuid(), 'oac:SpecificResource');
-    specificResource.addProperty('oac:hasSource', '<' + canvasUri + '>');
-    specificResource.addProperty('oac:hasSelector', selector.bracketedUri);
+        this.databroker.createUuid(), 'oa:SpecificResource');
+    specificResource.addProperty('oa:hasSource', '<' + canvasUri + '>');
+    specificResource.addProperty('oa:hasSelector', selector.bracketedUri);
 
-    var annotation = this.databroker.createResource(
-        this.databroker.createUuid(), 'oac:Annotation');
-    annotation.addProperty('oac:hasTarget', specificResource.bracketedUri);
+    var annotation = this.databroker.createResource(null, 'oa:Annotation');
+    annotation.addProperty('oa:hasTarget', specificResource.bracketedUri);
+
+    this.resetFeature();
 };
 
 /**

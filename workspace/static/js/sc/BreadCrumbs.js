@@ -1,7 +1,5 @@
 goog.provide('sc.BreadCrumbs');
 
-goog.require('jquery.jQuery');
-
 /**
  * A UI representation of a history pathbar
  * 

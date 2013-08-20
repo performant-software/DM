@@ -1,4 +1,4 @@
-goog.require('jquery.jQuery');
+
 
 var preloadATBScripts = function (scriptURIs) {
     for (var i=0, len=scriptURIs.length; i<len; i++) {

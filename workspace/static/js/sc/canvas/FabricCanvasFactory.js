@@ -8,8 +8,8 @@ sc.canvas.FabricCanvasFactory.createFromResource = function(resource) {
     var databroker = resource.getDatabroker();
 
     var size = new goog.math.Size(
-        resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.width),
-        resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.height)
+        Number(resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.width)),
+        Number(resource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.height))
     );
 
     var canvas = new sc.canvas.FabricCanvas(uri, databroker, size);
@@ -59,9 +59,13 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
     var canvas = null;
 
     var withResource = function(resource) {
-        if (!(resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.width) &&
-            resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.height)) &&
-            deferredResource.state() == 'resolved') {
+        if (
+                !(
+                    resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.width) &&
+                    resource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.height)
+                ) &&
+                deferredResource.state() == 'resolved'
+            ) {
             deferredCanvas.rejectWith(
                 canvas,
                 ['Manuscript ' + uri + ' has no width and height data', canvas]
@@ -69,16 +73,18 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
         }
         else {
             if (! canvas) {
-                var actualWidth = resource.getOneProperty(
-                    sc.canvas.FabricCanvas.RDF_ENUM.width);
-                var actualHeight = resource.getOneProperty(
-                    sc.canvas.FabricCanvas.RDF_ENUM.height);
+                var width = Number(resource.getOneProperty(
+                    sc.canvas.FabricCanvas.RDF_ENUM.width
+                ));
+                var height = Number(resource.getOneProperty(
+                    sc.canvas.FabricCanvas.RDF_ENUM.height
+                ));
 
-                if (actualWidth == null || actualHeight == null) {
+                if (width == null || height == null) {
                     return;
                 }
 
-                var actualSize = new goog.math.Size(actualWidth, actualHeight);
+                var actualSize = new goog.math.Size(width, height);
 
                 canvas = new sc.canvas.FabricCanvas(
                     uri,
@@ -94,20 +100,34 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
                 }
             }
 
-            sc.canvas.FabricCanvasFactory.findAndAddImages(canvas);
-            sc.canvas.FabricCanvasFactory.findAndAddSegments(canvas);
-            sc.canvas.FabricCanvasFactory.findAndAddSelectors(canvas);
-            sc.canvas.FabricCanvasFactory.findAndAddComments(canvas);
+            canvas.pauseRendering();
 
-            if (deferredResource.state() == 'resolved') {
-                deferredCanvas.resolveWith(canvas, [canvas]);
-            }
-            else if (deferredResource.state() == 'rejected') {
-                deferredCanvas.rejectWith(canvas, [canvas]);
-            }
-            else {
-                deferredCanvas.notifyWith(canvas, [canvas]);
-            }
+            // setTimeout(function() {
+                sc.canvas.FabricCanvasFactory.findAndAddImages(canvas);
+
+            // setTimeout(function() {
+                sc.canvas.FabricCanvasFactory.findAndAddSegments(canvas);
+
+            // setTimeout(function() {
+                sc.canvas.FabricCanvasFactory.findAndAddSelectors(canvas);
+                // sc.canvas.FabricCanvasFactory.findAndAddComments(canvas);
+
+            // setTimeout(function() {
+                canvas.resumeRendering();
+
+                if (deferredResource.state() == 'resolved') {
+                    deferredCanvas.resolveWith(canvas, [canvas]);
+                }
+                else if (deferredResource.state() == 'rejected') {
+                    deferredCanvas.rejectWith(canvas, [canvas]);
+                }
+                else {
+                    deferredCanvas.notifyWith(canvas, [canvas]);
+                }
+            // }, 1);
+            // }, 1)
+            // }, 1);
+            // }, 1);
         }
     }
     deferredResource.progress(withResource).done(withResource).fail(withResource);
@@ -122,9 +142,8 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
 sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
     var databroker = canvas.databroker;
 
-    var imageAnnoUris = databroker.getResourceTargetAnnoIds(
-        canvas.uri,
-        sc.canvas.FabricCanvas.RDF_ENUM.imageAnno
+    var imageAnnoUris = databroker.dataModel.findAnnosReferencingResourceAsTarget(
+        canvas.uri
     );
 
     var imageUris = [];
@@ -142,13 +161,12 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
         var imageUri = imageUris[i];
         var imageResource = databroker.getResource(imageUri);
 
-        if (imageResource.hasAnyType(sc.canvas.FabricCanvas.RDF_ENUM.imageTypes)) {
+        if (imageResource.hasAnyType(sc.data.DataModel.VOCABULARY.imageTypes)) {
             if (! canvas.imagesBySrc.containsKey(imageUri)) {
                 canvas.addImageResource(imageResource);
             }
         }
-        else if (imageResource.hasAnyType(sc.canvas.FabricCanvas.RDF_ENUM.
-                                          imageChoice)) {
+        else if (imageResource.hasAnyType(sc.data.DataModel.VOCABULARY.imageChoiceTypes)) {
             var optionUris = imageResource.getProperties(
                 sc.canvas.FabricCanvas.RDF_ENUM.option
             );
@@ -157,15 +175,12 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
                 var optionUri = optionUris[j];
                 var optionResource = databroker.getResource(optionUri);
 
-                if (! canvas.imagesBySrc.containsKey(optionUri)) {
+                if (! canvas.hasFeature(optionUri)) {
                     canvas.addImageResource(optionResource);
 
                     canvas.imageOptionUris.push(optionUri);
                 }
             }
-        }
-        else {
-            canvas.addImage(databroker.getImageSrc(imageUri), canvas.getSize());
         }
     }
 };
@@ -173,7 +188,7 @@ sc.canvas.FabricCanvasFactory.findAndAddImages = function(canvas) {
 sc.canvas.FabricCanvasFactory.findAndAddComments = function(canvas) {
     var databroker = canvas.databroker;
 
-    var annoUris = databroker.getResourceBodyAnnoIds(
+    var annoUris = databroker.dataModel.findAnnosReferencingResourceAsBody(
         canvas.uri,
         sc.canvas.FabricCanvas.RDF_ENUM.commentAnno
     );
@@ -198,11 +213,11 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
     var databroker = canvas.databroker;
 
     var specificResourceUris = databroker.getUrisWithProperty(
-        'oac:hasSource', '<' + canvas.uri + '>');
+        'oa:hasSource', '<' + canvas.uri + '>');
     for (var i=0; i<specificResourceUris.length; i++) {
         var specificResource = databroker.getResource(specificResourceUris[i]);
 
-        if (!specificResource.hasType('oac:SpecificResource')) {
+        if (!specificResource.hasType('oa:SpecificResource')) {
             goog.array.removeAt(specificResourceUris, i);
             i--;
 
@@ -213,11 +228,11 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
     for (var i=0, len=specificResourceUris.length; i<len; i++) {
         var specificResource = databroker.getResource(specificResourceUris[i]);
 
-        var selectorUris = specificResource.getProperties('oac:hasSelector');
+        var selectorUris = specificResource.getProperties('oa:hasSelector');
         for (var j=0, lenj=selectorUris.length; j<lenj; j++) {
             var selector = databroker.getResource(selectorUris[j]);
 
-            if (!selector.hasType('oac:SvgSelector')) {
+            if (!selector.hasType('oa:SvgSelector')) {
                 continue;
             }
 
@@ -225,11 +240,11 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
                 var svgText = selector.getOneProperty('cnt:chars');
 
                 if (svgText) {
-                    if (canvas.getFabricObjectByUri(selector.getUri())) {
+                    if (canvas.hasFeature(selector.getUri())) {
                         canvas.removeObjectByUri(selector.getUri());
                     }
-                    
-                    canvas.addFeatureFromTagString(svgText, selector.getUri());
+
+                    canvas.addFeatureFromSVGString(svgText, selector.getUri());
                 }
             }
             else {
@@ -245,14 +260,14 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
 
     var addedTextUris = [];
 
-    var partUris = databroker.getResourcePartUris(canvas.uri);
+    var partUris = databroker.dataModel.getResourcePartUris(canvas.uri);
     for (var i = 0, len = partUris.length; i < len; i++) {
         var partUri = partUris[i];
 
         if (! canvas.segmentUris.contains(partUri)) {
-            var constraintAttrs = sc.data.Databroker.getConstraintAttrsFromUri(
+            var constraintAttrs = sc.data.DataModel.getConstraintAttrsFromUri(
                                                                        partUri);
-            var annoUris = databroker.getResourceAnnoIds(partUri);
+            var annoUris = databroker.dataModel.findAnnosReferencingResource(partUri);
 
             canvas.segmentUris.add(partUri);
 
@@ -263,16 +278,17 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
                 if (annoResource.hasAnyType(sc.canvas.FabricCanvas.RDF_ENUM.
                                             textAnno)) {
                     addedTextUris = addedTextUris.concat(
-                        canvas.addTextAnnotation(annoResource, constraintAttrs)
+                        sc.canvas.FabricCanvasFactory.addTextAnnotation(canvas, annoResource, constraintAttrs)
                     );
                 }
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.imageAnno)) {
                     // canvas.addImageAnnoSegment(annoResource, constraintAttrs);
+                    console.log('found image segment with anno uri', annoResource.getUri());
                 }
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.audioAnno)) {
-                    // canvas.addAudioAnno(annoResource, constraintAttrs);
+                    sc.canvas.FabricCanvasFactory.addAudioAnno(canvas, annoResource, constraintAttrs);
                 }
                 else {
                     console.log(
@@ -284,5 +300,57 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
             }
         }
     }
-    // canvas.showTextAnnos();
+    canvas.showTextAnnos();
+};
+
+sc.canvas.FabricCanvasFactory.addTextAnnotation = function(canvas, annoResource, constraintAttrs) {
+    var addedTextUris = [];
+    var databroker = annoResource.getDatabroker();
+
+    var bodyUris = annoResource.getProperties(sc.canvas.FabricCanvas.RDF_ENUM.hasBody);
+    for (var k = 0, lenk = bodyUris.length; k < lenk; k++) {
+        var bodyUri = bodyUris[k];
+        var bodyResource = databroker.getResource(bodyUri);
+
+        if (canvas.hasFeature(bodyUri)) {
+            continue;
+        }
+
+        var text = null;
+        if (bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cntChars)) {
+            text = bodyResource.getOneProperty(
+                sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
+        } else if (
+            bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars)
+        ){
+            text = bodyResource.getOneProperty(
+                sc.canvas.FabricCanvas.RDF_ENUM.cnt08Chars);
+        }
+
+        if (text) {
+            var textBox = canvas.addTextBox(
+                Number(constraintAttrs.x),
+                Number(constraintAttrs.y),
+                Number(constraintAttrs.width),
+                Number(constraintAttrs.height),
+                text,
+                bodyUri
+            );
+
+            addedTextUris.push(bodyUri);
+        }
+    }
+
+    return addedTextUris;
+};
+
+sc.canvas.FabricCanvasFactory.addAudioAnno = function(canvas, annoResource, constraintAttrs) {
+    var x = constraintAttrs.x;
+    var y = constraintAttrs.y;
+    var width = constraintAttrs.width;
+    var height = constraintAttrs.height;
+
+    var targetUri = annoResource.getOneProperty('oa:hasTarget');
+
+    var rect = canvas.addRect(x, y, width, height, targetUri);
 };

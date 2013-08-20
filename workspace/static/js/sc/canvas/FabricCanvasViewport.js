@@ -4,7 +4,6 @@ goog.require('fabric');
 goog.require('goog.object');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.Event');
-goog.require('jquery.jQuery');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.structs.Set');
 goog.require('goog.async.Throttle');
@@ -19,13 +18,17 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
     }, options || {});
 
     this.domHelper = new goog.dom.DomHelper(this.options.doc);
+    var domHelper = new goog.dom.DomHelper(this.options.doc);
 
-    this.baseDiv = this.domHelper.createDom('div', {'class': 'sc-CanvasViewport'});
-    var canvasElement = this.domHelper.createDom('canvas');
+    this.size = new goog.math.Size(0, 0);
+
+    this.baseDiv = domHelper.createDom('div', {'class': 'sc-CanvasViewport'});
+    var canvasElement = domHelper.createDom('canvas');
     this.fabricCanvas = new fabric.Canvas(canvasElement, {
         selection: false,
         defaultCursor: 'inherit',
-        hoverCursor: 'inherit'
+        hoverCursor: 'inherit',
+        renderOnAddition: false
     });
     this.baseDiv.appendChild(canvasElement);
     this.baseDiv.appendChild(this.fabricCanvas.getSelectionElement());
@@ -34,11 +37,12 @@ sc.canvas.FabricCanvasViewport = function(databroker, options) {
 
     this.canvas = null;
 
+    this.controlsByName = new goog.structs.Map();
     this.activeControls = new goog.structs.Set();
     this.inactiveControls = new goog.structs.Set();
 
     this.renderThrottle = new goog.async.Throttle(
-        this.renderThrottleHandler.bind(this),
+        this._renderCanvas.bind(this),
         sc.canvas.FabricCanvasViewport.RENDER_INTERVAL
     );
 };
@@ -46,9 +50,17 @@ goog.inherits(sc.canvas.FabricCanvasViewport, goog.events.EventTarget);
 
 sc.canvas.FabricCanvasViewport.RENDER_INTERVAL = 18;
 
-sc.canvas.FabricCanvasViewport.prototype.renderThrottleHandler = function() {
+sc.canvas.FabricCanvasViewport.prototype._renderCanvas = function() {
     this.isRendering = true;
-    this.fabricCanvas.renderAll()
+
+    this.fabricCanvas.clear();
+    if (this.canvas) {
+        goog.structs.forEach(this.canvas.objects, function(obj) {
+            this.fabricCanvas.add(obj);
+        }, this);
+    }
+    this.fabricCanvas.renderAll();
+
     this.isRendering = false;
     this.isAwaitingRenderFinish = false;
 };
@@ -61,6 +73,30 @@ sc.canvas.FabricCanvasViewport.prototype.complainIfNoCanvas = function() {
     }
 };
 
+sc.canvas.FabricCanvasViewport.prototype._addControl = function(control) {
+    if (this.controlsByName.containsKey(control.controlName)) {
+        var e = new Error("A " + control.controlName + " control has already been registered for this canvas viewport");
+        e.control = control;
+        e.viewport = this;
+        throw e;
+    }
+
+    if (control.isActive) {
+        this.activeControls.add(control);
+    }
+    else {
+        this.inactiveControls.add(control);
+    }
+
+    this.controlsByName.set(control.controlName, control);
+};
+
+sc.canvas.FabricCanvasViewport.prototype._removeControl = function(control) {
+    this.inactiveControls.remove(control);
+    this.activeControls.remove(control);
+    this.controlsByName.remove(control.controlName);
+};
+
 sc.canvas.FabricCanvasViewport.prototype.getActiveControls = function() {
     return this.activeControls.getValues();
 };
@@ -71,6 +107,10 @@ sc.canvas.FabricCanvasViewport.prototype.getInactiveControls = function() {
 
 sc.canvas.FabricCanvasViewport.prototype.getControls = function() {
     return this.getActiveControls().concat(this.getInactiveControls());
+};
+
+sc.canvas.FabricCanvasViewport.prototype.getControl = function(name) {
+    return this.controlsByName.get(name);
 };
 
 /**
@@ -130,6 +170,10 @@ sc.canvas.FabricCanvasViewport.prototype.registerHandledMouseEvent = function(op
     else {
         this.timeOfLastHandledClick = goog.now();
     }
+
+    if (goog.isFunction(opt_time.stopPropagation)) {
+        opt_time.stopPropagation();
+    }
 };
 
 /**
@@ -157,19 +201,14 @@ sc.canvas.FabricCanvasViewport.prototype.resize = function(width, height) {
 
     jQuery(this.baseDiv).width(width).height(height);
 
+    if (! this.isEmpty()) {
+        var center = this.getCenterCoord();
+    }
+
     this.fabricCanvas.setWidth(width).setHeight(height);
 
-    if (! this.isEmpty()) {
-        if (oldSize) {
-            var deltaWidth = width - oldSize.width;
-            var deltaHeight = height - oldSize.height;
-
-            this.panByPageCoords(-deltaWidth / 2, -deltaHeight / 2)
-        }
-        else {
-            this.fireBoundsChanged();
-            this.requestFrameRender();
-        }
+    if (center) {
+        this.centerOnCanvasCoord(center);
     }
 
     return this;
@@ -195,7 +234,9 @@ sc.canvas.FabricCanvasViewport.prototype.setCanvas = function(canvas) {
 
     this.fabricCanvas.clear();
 
-    this.fabricCanvas.add(canvas.group);
+    goog.structs.forEach(canvas.objects, function(obj) {
+        this.fabricCanvas.add(obj);
+    }, this);
 
     this.requestFrameRender();
 
@@ -255,10 +296,8 @@ sc.canvas.FabricCanvasViewport.prototype.panByPageCoords = function(x, y) {
 
     this.complainIfNoCanvas();
 
-    var group = this.canvas.group;
-    
-    group.set('left', group.get('left') - x);
-    group.set('top', group.get('top') - y);
+    var offset = this.canvas.getOffset();
+    this.canvas.setOffset(offset.x + x, offset.y + y);
 
     this.requestFrameRender();
 
@@ -266,42 +305,39 @@ sc.canvas.FabricCanvasViewport.prototype.panByPageCoords = function(x, y) {
 };
 
 sc.canvas.FabricCanvasViewport.prototype.centerOnLayerCoord = function(x, y) {
+    this.centerOnCanvasCoord(this.layerToCanvasCoord(x, y));
+};
+
+sc.canvas.FabricCanvasViewport.prototype.centerOnCanvasCoord = function(x, y) {
     if (y == null) {
         y = x.y;
         x = x.x;
     }
 
-    this.complainIfNoCanvas();
+    var size = this.getDisplaySize();
 
-    var viewportSize = this.getDisplaySize();
-    var viewportCenterX = viewportSize.width / 2;
-    var viewportCenterY = viewportSize.height / 2;
-
-    var dx = x - viewportCenterX;
-    var dy = y - viewportCenterY;
-
-    var group = this.canvas.group;
-    group.set('left', group.get('left') - dx);
-    group.set('top', group.get('top') - dy);
+    this.moveCanvasCoordToLayerCoord(
+        {
+            x: x,
+            y: y
+        },
+        {
+            x: size.width / 2,
+            y: size.height / 2
+        }
+    );
 
     this.requestFrameRender();
-};
-
-sc.canvas.FabricCanvasViewport.prototype.centerOnCanvasCoord = function(x, y) {
-    this.centerOnLayerCoord(this.canvasToLayerCoord(x, y));
 };
 
 sc.canvas.FabricCanvasViewport.prototype.moveCanvasCoordToLayerCoord = function(canvasCoord, layerCoord) {
-    var canvasLayerCoord = this.canvasToLayerCoord(canvasCoord);
-
-    var dx = canvasLayerCoord.x - layerCoord.x;
-    var dy = canvasLayerCoord.y - layerCoord.y;
-
-    var group = this.canvas.group;
-    group.set('left', group.get('left') - dx);
-    group.set('top', group.get('top') - dy);
+    this.canvas.setOffset(
+        layerCoord.x - (canvasCoord.x * this.canvas.displayToActualSizeRatio),
+        layerCoord.y - (canvasCoord.y * this.canvas.displayToActualSizeRatio)
+    );
 
     this.requestFrameRender();
+    this.fireBoundsChanged();
 };
 
 sc.canvas.FabricCanvasViewport.prototype.panToCanvasCoord = function(x, y) {
@@ -333,10 +369,9 @@ sc.canvas.FabricCanvasViewport.prototype.getCanvasOffset = function() {
     var x = viewportOffset.left;
     var y = viewportOffset.top;
 
-    var group = this.canvas.group;
-    var canvasDisplaySize = this.canvas.getDisplaySize();
-    x += group.get('left') - canvasDisplaySize.width / 2;
-    y += group.get('top') - canvasDisplaySize.height / 2;
+    var internalOffset = canvas.getOffset();
+    x += internalOffset.x;
+    y += internalOffset.y;
 
     return {
         left: x,
@@ -352,13 +387,11 @@ sc.canvas.FabricCanvasViewport.prototype.layerToCanvasCoord = function(x, y) {
 
     this.complainIfNoCanvas();
 
-    var group = this.canvas.group;
-    var canvasDisplaySize = this.canvas.getDisplaySize();
-    x -= group.get('left') - canvasDisplaySize.width / 2;
-    y -= group.get('top') - canvasDisplaySize.height / 2;
+    var offset = this.canvas.getOffset();
+    x -= offset.x;
+    y -= offset.y;
 
     var ratio = this.canvas.getDisplayToActualSizeRatio();
-
     x /= ratio;
     y /= ratio;
 
@@ -377,14 +410,12 @@ sc.canvas.FabricCanvasViewport.prototype.canvasToLayerCoord = function(x, y) {
     this.complainIfNoCanvas();
 
     var ratio = this.canvas.getDisplayToActualSizeRatio();
-
     x *= ratio;
     y *= ratio;
 
-    var group = this.canvas.group;
-    var canvasDisplaySize = this.canvas.getDisplaySize();
-    x += group.get('left') - canvasDisplaySize.width / 2;
-    y += group.get('top') - canvasDisplaySize.height / 2;
+    var offset = this.canvas.getOffset();
+    x += offset.x;
+    y += offset.y;
 
     return {
         x: x,
@@ -472,12 +503,9 @@ sc.canvas.FabricCanvasViewport.prototype.pageToClientCoord = function(x, y) {
         x = x.x;
     }
 
-    var scrollTop = jQuery(window).scrollTop();
-    var scrollLeft = jQuery(window).scrollLeft();
-
     return {
-        'x': x - scrollLeft,
-        'y': y - scrollTop
+        'x': x - jQuery(window).scrollLeft(),
+        'y': y - jQuery(window).scrollTop()
     };
 };
 
@@ -487,12 +515,9 @@ sc.canvas.FabricCanvasViewport.prototype.clientToPageCoord = function(x, y) {
         x = x.x;
     }
 
-    var scrollTop = jQuery(window).scrollTop();
-    var scrollLeft = jQuery(window).scrollLeft();
-
     return {
-        'x': x + scrollLeft,
-        'y': y + scrollTop
+        'x': x + jQuery(window).scrollLeft(),
+        'y': y + jQuery(window).scrollTop()
     };
 };
 
@@ -590,6 +615,10 @@ sc.canvas.FabricCanvasViewport.prototype._maybeShowProgressCursor = function() {
     }
 };
 
+sc.canvas.FabricCanvasViewport.prototype.setCursor = function(cursorName) {
+    this.baseDiv.style.cursor = cursorName;
+};
+
 sc.canvas.FabricCanvasViewport.prototype.showProgressCursor = function() {
     if (! this.isShowingProgressCursor) {
         this.isShowingProgressCursor = true;
@@ -647,7 +676,7 @@ sc.canvas.FabricCanvasViewport.prototype.zoomByFactor = function(factor,
         return;
     }
 
-    this.zoomToRatio(factor * this.canvas.group.get('scaleX'), opt_centerOn);
+    this.zoomToRatio(factor * this.canvas.getDisplayToActualSizeRatio(), opt_centerOn);
 };
 
 /**
@@ -661,7 +690,7 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRatio = function(ratio, opt_cente
     var canvas = this.canvas;
     this.complainIfNoCanvas();
 
-    if (canvas.group.get('scaleX') == ratio && canvas.group.get('scaleY') == ratio) {
+    if (canvas.getDisplayToActualSizeRatio() == ratio) {
         return;
     }
 
@@ -680,7 +709,7 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRatio = function(ratio, opt_cente
         return;
     }
 
-    canvas.group.set('scaleX', ratio).set('scaleY', ratio);
+    canvas.setDisplayToActualSizeRatio(ratio);
     this.centerOnCanvasCoord(center);
 
     this.requestFrameRender();
@@ -702,7 +731,7 @@ sc.canvas.FabricCanvasViewport.MIN_CANVAS_DISPLAY_SIZE = 50;
  * Effectively limits how far the user can zoom in.
  * @const
  */
-sc.canvas.FabricCanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO = 25;
+sc.canvas.FabricCanvasViewport.MAX_DISPLAY_TO_ACTUAL_SIZE_RATIO = 5;
 
 /**
  * Returns whether the canvas will meet the minimum and maximum size constraints
@@ -773,15 +802,38 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToFit = function() {
         viewportDisplaySize.height / canvasSize.height
     );
 
-    this.canvas.group.set('scaleX', ratio).set('scaleY', ratio);
+    this.canvas.setDisplayToActualSizeRatio(ratio);
 
-    this.canvas.group.set('left', viewportDisplaySize.width / 2);
-    this.canvas.group.set('top', viewportDisplaySize.height / 2);
+    this.moveCanvasCoordToLayerCoord({
+        // Move the center of the canvas...
+        x: canvasSize.width / 2,
+        y: canvasSize.height / 2
+    }, {
+        // to the center of the viewport
+        x: viewportDisplaySize.width / 2,
+        y: viewportDisplaySize.height / 2
+    });
 
     this.requestFrameRender();
     this.fireBoundsChanged();
 
     return this;
+};
+
+sc.canvas.FabricCanvasViewport.prototype.calculateRatioForBox = function(width, height) {
+    if (height == null) {
+        height = width.height;
+        width = width.width;
+    }
+
+    this.complainIfNoCanvas();
+
+    var rectSize = new goog.math.Size(width, height);
+    rectSize.scaleToFit(this.size);
+
+    var ratio = rectSize.width / width;
+
+    return ratio;
 };
 
 /**
@@ -801,61 +853,41 @@ sc.canvas.FabricCanvasViewport.prototype.zoomToRect = function(x, y, width, heig
     }
 
     this.complainIfNoCanvas();
-    
-    console.warn('CanvasViewport#zoomToRect is not yet fully implemented. ' +
-                 'The viewport will pan to the xy coords, but will not zoom.');
-    
-    // Incomplete Implementation
 
-//    var canvas = this.canvas;
-//    var actualSize = canvas.getActualSize();
-//
-//    var largestDimension = Math.max(width, height);
-//
-//    var ratio = largestDimension / actualSize.getLongest();//FIXME
-//
-//    this.zoomToRatio(ratio);
-    this.panToCanvasCoord(x, y);
+    this.zoomToRatio(this.calculateRatioForBox(width, height));
+    this.centerOnCanvasCoord(x + width / 2, y + height / 2);
+};
+
+sc.canvas.FabricCanvasViewport.prototype.zoomToFeatureByUri = function(uri) {
+    this.complainIfNoCanvas();
+
+    var feature = this.canvas.getFabricObjectByUri(uri);
+    var boundingBox = this.canvas.getFeatureBoundingBox(feature);
+
+    if (feature.type == 'circle' && feature.getRadiusX() == 7) {
+        // This is almost certainly an old dm 'point', so zoom out more
+        var zoomOutFactor = 5;
+    }
+    else {
+        var zoomOutFactor = 2;
+    }
+
+    var cx = boundingBox.x + boundingBox.width / 2;
+    var cy = boundingBox.y + boundingBox.height / 2;
+    var width = boundingBox.width * zoomOutFactor;
+    var height = boundingBox.height * zoomOutFactor;
+
+    var ratio = this.calculateRatioForBox(width, height);
+
+    this.zoomToRatio(ratio > 1 ? 1 : ratio);
+    this.centerOnCanvasCoord(cx, cy);
 };
 
 sc.canvas.FabricCanvasViewport.prototype.getDisplaySize = function() {
-    return new goog.math.Size(
-        this.fabricCanvas.getWidth(),
-        this.fabricCanvas.getHeight()
-    );
+    return this.size.clone();
 };
 
 sc.canvas.FabricCanvasViewport.prototype.getSize = sc.canvas.FabricCanvasViewport.prototype.getDisplaySize;
-
-sc.canvas.FabricCanvasViewport.prototype.getObjectAtLayerCoord = function(event) {
-    this.complainIfNoCanvas();
-
-    var group = this.canvas.group;
-    var target = null;
-    var pointer = this.fabricCanvas.getPointer(event);
-
-    var possibleTargets = [];
-    for (var i = group.size(); i--; ) {
-        if (group.item(i) && this.canvas.objectContainsPoint(group.item(i), event)) {
-            if (group.canvas.perPixelTargetFind || group.item(i).perPixelTargetFind) {
-                possibleTargets.push(group.item(i));
-            }
-            else {
-                target = group.item(i);
-                break;
-            }
-        }
-    }
-    for (var j = 0, len = possibleTargets.length; j < len; j++) {
-        var isTransparent = group.canvas._isTargetTransparent(possibleTargets[j], pointer.x, pointer.y);
-        if (!isTransparent) {
-            target = possibleTargets[j];
-            break;
-        }
-    }
-
-    return target;
-};
 
 sc.canvas.FabricCanvasViewport.MOUSE_EVENTS = new goog.structs.Set([
     'click',
@@ -877,7 +909,7 @@ sc.canvas.FabricCanvasViewport.prototype._setupEventListeners = function() {
         goog.events.listen(this.baseDiv, type, function(event) {
             if (this.shouldFireMouseEvents()) {
                 var customEvent = new sc.canvas.FabricCanvasViewportEvent(
-                    type, event, this,
+                    event.type, event, this,
                     type == 'mouseover' || type == 'mouseout' ? this : null
                 );
 
@@ -912,6 +944,16 @@ sc.canvas.FabricCanvasViewport.prototype._handleMouseMove = function(event) {
     }
 };
 
+sc.canvas.FabricCanvasViewport.prototype.getFeatureForEvent = function(event) {
+    var feature = null;
+
+    if (this.canvas) {
+        feature = this.fabricCanvas.findTarget(event);
+    }
+
+    return feature;
+};
+
 goog.provide('sc.canvas.FabricCanvasViewportEvent');
 sc.canvas.FabricCanvasViewportEvent = function(type, originalEvent, viewport, opt_feature) {
     goog.events.BrowserEvent.call(this, originalEvent, viewport);
@@ -921,8 +963,15 @@ sc.canvas.FabricCanvasViewportEvent = function(type, originalEvent, viewport, op
 
     this.canvas = viewport.canvas;
 
+    this.layerX = originalEvent.offsetX;
+    this.layerY = originalEvent.offsetY;
+    this.layerCoord = {
+        x: this.layerX,
+        y: this.layerY
+    };
+
     if (this.canvas) {
-        this.canvasCoord = viewport.layerToCanvasCoord(originalEvent.offsetX, originalEvent.offsetY);
+        this.canvasCoord = viewport.layerToCanvasCoord(this.layerCoord);
         this.canvasX = this.canvasCoord.x;
         this.canvasY = this.canvasCoord.y;
     }
@@ -940,7 +989,7 @@ goog.inherits(sc.canvas.FabricCanvasViewportEvent, goog.events.BrowserEvent);
 
 sc.canvas.FabricCanvasViewportEvent.prototype.getFeature = function() {
     if (! this._feature && ! this.viewport.isEmpty()) {
-        this._feature = this.viewport.getObjectAtLayerCoord(this.getBrowserEvent());
+        this._feature = this.viewport.getFeatureForEvent(this);
     }
 
     return this._feature;

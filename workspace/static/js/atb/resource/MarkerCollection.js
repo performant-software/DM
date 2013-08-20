@@ -2,8 +2,6 @@ goog.provide('atb.resource.MarkerCollection');
 
 goog.require('atb.resource.ResourceCollection');
 
-goog.require('jquery.jQuery');
-
 /**
  * @extends {atb.resource.ResourceCollection}
  */

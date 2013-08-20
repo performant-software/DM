@@ -1,8 +1,6 @@
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef, BNode, Literal, RDF
-from rdflib.namespace import Namespace
+from rdflib import URIRef, BNode
 
-from .namespaces import NS, ns
+from .namespaces import NS
 
 
 class BaseValidator(object):

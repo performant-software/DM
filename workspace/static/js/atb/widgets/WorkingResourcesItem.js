@@ -4,7 +4,6 @@ goog.require('goog.dom.DomHelper');
 goog.require('goog.events');
 goog.require('goog.events.ActionEvent');
 goog.require('goog.events.EventTarget');
-goog.require('jquery.jQuery');
 
 atb.widgets.WorkingResourcesItem = function(databroker, uri, opt_domHelper) {
     goog.events.EventTarget.call(this);
@@ -39,6 +38,13 @@ atb.widgets.WorkingResourcesItem.prototype.setupLayout_ = function() {
         'class': 'atb-WorkingResourcesItem-attributes'
     });
 
+    this.removeButton = this.domHelper.createDom('div', {
+        'class': 'atb-WorkingResourcesItem-remove icon-minus-sign',
+        'title': 'Remove this resource from the project'
+    });
+    jQuery(this.removeButton).hide();
+    goog.events.listen(this.removeButton, 'click', this.handleRemoveClick, false, this);
+
     this.clearDiv = this.domHelper.createDom('div', {
         'style': 'clear: both;'
     });
@@ -46,6 +52,7 @@ atb.widgets.WorkingResourcesItem.prototype.setupLayout_ = function() {
     this.div.appendChild(this.thumbnailDiv);
     this.div.appendChild(this.titleDiv);
     this.div.appendChild(this.attributesDiv);
+    this.div.appendChild(this.removeButton);
 
     this.div.appendChild(this.clearDiv);
 };
@@ -54,6 +61,12 @@ atb.widgets.WorkingResourcesItem.prototype.handleClick = function(event) {
     var actionEvent = new goog.events.ActionEvent(event);
     actionEvent.target = this;
     this.dispatchEvent(actionEvent);
+};
+
+atb.widgets.WorkingResourcesItem.prototype.handleRemoveClick = function(event) {
+    event.stopPropagation();
+    var removeEvent = new goog.events.Event('remove-click', this);
+    this.dispatchEvent(removeEvent);
 };
 
 atb.widgets.WorkingResourcesItem.prototype.render = function(div) {
@@ -78,8 +91,7 @@ atb.widgets.WorkingResourcesItem.prototype.getUri = function() {
     return this.uri;
 };
 
-atb.widgets.WorkingResourcesItem.prototype.setThumb =
-function(src, width, height) {
+atb.widgets.WorkingResourcesItem.prototype.setThumb = function(src, width, height) {
     jQuery(this.thumbnailImg).attr({
         'src': src,
         'width': width,
@@ -87,8 +99,7 @@ function(src, width, height) {
     });
 };
 
-atb.widgets.WorkingResourcesItem.prototype.setAttribute =
-function(name, value) {
+atb.widgets.WorkingResourcesItem.prototype.setAttribute = function(name, value) {
     if (this.attributeDivsByName.containsKey(name)) {
         var div = this.attributeDivsByName.get(name);
     }
@@ -103,4 +114,12 @@ function(name, value) {
 
 atb.widgets.WorkingResourcesItem.prototype.setTooltip = function(text) {
     jQuery(this.div).attr('title', text);
+};
+
+atb.widgets.WorkingResourcesItem.prototype.showRemoveButton = function() {
+    jQuery(this.removeButton).show();
+};
+
+atb.widgets.WorkingResourcesItem.prototype.hideRemoveButton = function() {
+    jQuery(this.removeButton).hide();
 };

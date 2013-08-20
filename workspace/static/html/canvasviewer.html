@@ -8,21 +8,8 @@
     <script src="../js/atb-deps.js" type="text/javascript"></script>
     
     <script type="text/javascript">
-        goog.require('Raphael');
-        goog.require('jquery.jQuery');
-        goog.require('jquery.event.drag');
-        
         goog.require('sc.data.Databroker');
-        goog.require('sc.canvas.FabricCanvas');
-        goog.require('sc.canvas.FabricCanvasViewport');
-        
-        goog.require('sc.canvas.PanZoomGesturesControl');
-        goog.require('sc.canvas.DrawEllipseControl');
-        goog.require('sc.canvas.DrawCircleControl');
-        goog.require('sc.canvas.DrawRectControl');
-        goog.require('sc.canvas.DrawLineControl');
-        goog.require('sc.canvas.DrawPolygonControl');
-        goog.require('sc.canvas.DragFeatureControl');
+        goog.require('sc.canvas.CanvasViewer');
         
         goog.require('sc.RepoBrowser');
     </script>
@@ -30,6 +17,7 @@
     <style type="text/css">
         @import url("../css/dev-atb.css");
         @import url("../css/dev-libraries.css");
+        @import url("../bootstrap/css/bootstrap.min.css");
         
         @import url("../css/sc/CanvasViewer.css");
         @import url("../css/sc/RepoBrowser.css");
@@ -94,17 +82,15 @@
 //    var toolbar = new sc.canvas.CanvasToolbar(viewport, databroker);
 //    toolbar.render(canvasToolbarDiv);
     
-    var viewer = new sc.canvas.FabricCanvasViewport(databroker, {
-        doc: window.document
+    var viewer = new sc.canvas.CanvasViewer({
+        doc: window.document,
+        databroker: databroker
     });
     viewer.render(canvasViewportDiv);
     viewer.resize(jQuery(canvasViewportDiv).width(), 650);
     jQuery(window).on('resize', function() {
         viewer.resize(jQuery(canvasViewportDiv).width(), 650);
     });
-
-    var panZoomControl = new sc.canvas.PanZoomGesturesControl(viewer);
-    panZoomControl.activate();
     
     var setCanvasByUri = function(uri) {
         viewer.addDeferredCanvas(sc.canvas.FabricCanvas.createDeferredCanvas(uri, databroker));
@@ -118,13 +104,13 @@
 
         if (event.resource.hasAnyType('dms:Canvas')) {
             var withCollection = function (deferreds) {
-                var deferredCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(uri, databroker, urisInOrder, index);
+                var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(uri, databroker, urisInOrder, index);
                 
                 viewer.addDeferredCanvas(deferredCanvas);
             };
             
             databroker.getDeferredResourceCollection(
-                [uri].concat(databroker.getManuscriptAggregationUris(manifestUri))).
+                [uri].concat(databroker.dataModel.findManuscriptAggregationUris(manifestUri))).
                     allComplete(withCollection).singleFail(function () {
                         console.error(arguments);
                     }
@@ -136,10 +122,18 @@
     
     var repoBrowser = new sc.RepoBrowser({
         databroker: databroker,
-        repositoryUrlsByName: {
-            'Stanford DMS': 'http://dms-data.stanford.edu/Repository.xml',
-            'Shared Canvas': 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml'
-        },
+        repositories: [
+            {
+                title: 'Stanford DMS',
+                url: 'http://dms-data.stanford.edu/Repository.xml',
+                uri: 'http://dms-data.stanford.edu/Repository'
+            },
+            {
+                title: 'Shared Canvas',
+                url: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository.xml',
+                uri: 'http://ada.drew.edu/tandres/repos/SharedCanvas/Repository'
+            }
+        ],
         noImages: false,
         showAddButton: false
     });
@@ -153,7 +147,7 @@
     var canvasUri = 'http://ada.drew.edu:8005/resource/2';
     
 //    databroker.fetchRdf(manifestUrl, function () {
-//        databroker.getDeferredResourceCollection([manuscriptUri].concat(databroker.getManuscriptAggregationUris(manuscriptUri))).allComplete(function (deferreds) {
+//        databroker.getDeferredResourceCollection([manuscriptUri].concat(databroker.dataModel.findManuscriptAggregationUris(manuscriptUri))).allComplete(function (deferreds) {
 //            
 //            var deferredCanvas = sc.canvas.FabricCanvas.createDeferredCanvas(canvasUri, databroker, {width: 600, height: 600});
 //            viewport.addDeferredCanvas(deferredCanvas);

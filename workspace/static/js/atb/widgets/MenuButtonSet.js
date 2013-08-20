@@ -10,7 +10,6 @@ goog.require('goog.asserts');
 goog.require("goog.ui.Dialog.ButtonSet");
 goog.require("goog.dom");
 goog.require("atb.widgets.MenuUtil");
-goog.require("jquery.jQuery");
 goog.require("atb.util.ReferenceUtil");
 goog.require("atb.widgets.MenuActionEvent");
 

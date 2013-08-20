@@ -3,6 +3,7 @@ goog.provide('sc.canvas.FabricCanvas');
 goog.require('fabric');
 goog.require('goog.events.EventTarget');
 goog.require('goog.math.Size');
+goog.require('goog.math.Coordinate');
 goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
 
@@ -48,14 +49,10 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
     this.uri = this.resource.getUri();
 
     this.size = size;
+    this.displayToActualSizeRatio = 1;
+    this.offset = new goog.math.Coordinate(0, 0);
 
-    this.group = new fabric.Group([], {
-        width: size.width,
-        height: size.height,
-        selectable: false,
-        top: size.height / 2,
-        left: size.width / 2
-    });
+    this.objects = [];
     this.objectsByUri = new goog.structs.Map();
     this.urisByObject = new goog.structs.Map();
 
@@ -63,19 +60,13 @@ sc.canvas.FabricCanvas = function(uri, databroker, size) {
     this.imagesBySrc = new goog.structs.Map();
     this.imageSrcsInProgress = new goog.structs.Set();
     this.textsByUri = new goog.structs.Map();
-
+     
     /**
      * @type {sc.canvas.FabricCanvasViewport}
      */
     this.viewport = null;
 
     this.segmentUris = new goog.structs.Set();
-
-    var textCanvasElement = document.createElement('canvas');
-    this.textCanvas = new fabric.StaticCanvas(textCanvasElement, {
-        renderOnAddition: false
-    });
-    this.textCanvas.setDimensions(this.size);
 };
 goog.inherits(sc.canvas.FabricCanvas, goog.events.EventTarget);
 
@@ -96,15 +87,16 @@ sc.canvas.FabricCanvas.RDF_ENUM = {
     textAnno: 'dms:TextAnnotation',
     imageAnno: 'dms:ImageAnnotation',
     audioAnno: 'dms:AudioAnnotation',
-    hasBody: ['oac:hasBody'],
-    hasTarget: ['oac:hasTarget'],
+    hasBody: ['oa:hasBody'],
+    hasTarget: ['oa:hasTarget'],
     cntChars: ['cnt:chars'],
-    constrainedBody: ['oac:ConstrainedBody'],
-    constrainedTarget: ['oac:ConstrainedTarget'],
-    constrains: 'oac:constrains',
-    constrainedBy: 'oac:constrainedBy',
+    cnt08Chars: ['cnt08:chars'],
+    constrainedBody: ['oa:ConstrainedBody'],
+    constrainedTarget: ['oa:ConstrainedTarget'],
+    constrains: 'oa:constrains',
+    constrainedBy: 'oa:constrainedBy',
     commentAnno: 'dms:CommentAnnotation',
-    title: ['dc:title']
+    title: ['dc:title', 'rdfs:label']
 };
 
 /**
@@ -113,12 +105,23 @@ sc.canvas.FabricCanvas.RDF_ENUM = {
 sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES = {
     fill: 'rgba(15, 108, 214, 0.6)',
     stroke: 'rgba(3, 75, 158, 0.7)',
-    strokeWidth: 5
+    strokeWidth: 5,
+    selectable: false,
+    perPixelTargetFind: true
+};
+
+/**
+ * These styles should even override what is specified in saved feature data.
+ */
+sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES = {
+    selectable: false,
+    perPixelTargetFind: true,
+    minScaleLimit: 0
 };
 
 sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE = {
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    textBackgroundColor: 'rgba(3, 75, 158, 1.0)',
+    textBackgroundColor: 'rgba(3, 75, 158, 0.6)',
     fontFamily: 'Helvetica, Arial, Sans-Sefif',
     opacity: 1
 };
@@ -136,38 +139,7 @@ sc.canvas.FabricCanvas.prototype.getUri = function() {
     return this.uri;
 };
 
-sc.canvas.FabricCanvas.prototype.addTextAnnotation = function(annoResource, constraintAttrs) {
-    var addedTextUris = [];
-    var databroker = annoResource.getDatabroker();
-
-    var bodyUris = annoResource.getProperties(sc.canvas.FabricCanvas.RDF_ENUM.hasBody);
-    for (var k = 0, lenk = bodyUris.length; k < lenk; k++) {
-        var bodyUri = bodyUris[k];
-        var bodyResource = databroker.getResource(bodyUri);
-        if (bodyResource.hasAnyPredicate(sc.canvas.FabricCanvas.RDF_ENUM.cntChars)) {
-            var text = bodyResource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.cntChars);
-
-            var textBox = this.addTextBox(
-                Number(constraintAttrs.x),
-                Number(constraintAttrs.y),
-                Number(constraintAttrs.width),
-                Number(constraintAttrs.height),
-                text,
-                bodyUri
-            );
-
-            addedTextUris.push(bodyUri);
-        }
-    }
-
-    return addedTextUris;
-};
-
 /**
- * Adds a text box to the canvas by drawing text with a rectangle behind it, and
- * then expanding the font size until the text fills the box on one line.
- *
- * Note: The font-size expansion to fill the box is a dom intensive operation.
  *
  * @param {Number} x The top left x coordinate of the text box.
  * @param {Number} y The top left y coordinate of the text box.
@@ -175,70 +147,35 @@ sc.canvas.FabricCanvas.prototype.addTextAnnotation = function(annoResource, cons
  * @param {Number} height The height of the text box.
  * @param {string} text The contents of the text box.
  * @param {string} uri The uri of the resource.
- *
- * @return {Raphael.set} A Raphael set containing the text and rectangle
- * elements.
  */
 sc.canvas.FabricCanvas.prototype.addTextBox = function(x, y, width, height, text, uri) {
-    return this.addTextBoxes([{
-        x: x,
-        y: y,
-        width: width,
-        height: height,
-        text: text,
-        uri: uri
-    }])[0];
-};
+    var t = new fabric.Text(text, sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
+    t.set(sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE);
 
-sc.canvas.FabricCanvas.prototype.addTextBoxes = function(options_list) {;
-    var texts = [];
+    var currentSize = new goog.math.Size(t.get('width'), t.get('height'));
+    var desiredSize = new goog.math.Size(width, height);
+    var renderedSize = currentSize.clone().scaleToFit(desiredSize);
+    t.scale(renderedSize.width / currentSize.width);
 
-    for (var i=0, len=options_list.length; i<len; i++) {
-        var options = options_list[i];
+    t.set({
+        left: x + desiredSize.width / 2,
+        top: y + desiredSize.height / 2
+    });
 
-        if (options.uri == null) {
-            options.uri = this.databroker.createUuid();
-        }
+    this._scaleAndPositionNewFeature(t);
 
-        var t = new fabric.Text(options.text, sc.canvas.FabricCanvas.DEFAULT_TEXT_STYLE);
-        t.set({
-            left: options.x,
-            top: options.y
-        });
-        this.textCanvas.add(t)
-        texts.push(t);
-        this.textsByUri.set(options.uri, t);
-    }
+    if (! uri) uri = this.databroker.createUuid();
+    this.textsByUri.set(uri, t);
+    this.addFabricObject(t, uri);
 
-    this.textCanvas.renderAll();
-
-    for (var i=0, len=texts.length; i<len; i++) {
-        var t = texts[i];
-        var options = options_list[i];
-
-        var currentSize = new goog.math.Size(t.get('width'), t.get('height'));
-        var desiredSize = new goog.math.Size(options.width, options.height);
-
-        var renderedSize = currentSize.clone().scaleToFit(desiredSize);
-        t.scaleToHeight(renderedSize.height);
-
-        t.set({
-            left: t.get('left') + renderedSize.width / 2 - this.group.get('width') / 2,
-            top: t.get('top') + renderedSize.height / 2 - this.group.get('height') / 2
-        });
-
-        this.textCanvas.remove(t);
-        this.addFabricObject(t, options.uri);
-    }
-
-    return texts;
+    return t;
 };
 
 sc.canvas.FabricCanvas.prototype.showTextAnnos = function() {
     this.isShowingTextAnnos = true;
 
     goog.structs.forEach(this.textsByUri, function(text, uri) {
-        this.group.add(text);
+        text.set('visible', true).set('opacity', 1);
     }, this);
 
     this.requestFrameRender();
@@ -248,7 +185,7 @@ sc.canvas.FabricCanvas.prototype.hideTextAnnos = function() {
     this.isShowingTextAnnos = false;
 
     goog.structs.forEach(this.textsByUri, function(text, uri) {
-        this.group.remove(text);
+        text.set('visible', false);
     }, this);
 
     this.requestFrameRender();
@@ -299,11 +236,15 @@ sc.canvas.FabricCanvas.MARKER_TYPES = new goog.structs.Set([
 ]);
 
 sc.canvas.FabricCanvas.prototype.showObject = function(obj) {
-    obj.set('opacity', 1);
+    obj.set('visible', true);
+
+    this.fireShownFeature(obj, this.getFabricObjectUri(obj));
 };
 
 sc.canvas.FabricCanvas.prototype.hideObject = function(obj) {
-    obj.set('opacity', 0);
+    obj.set('visible', false);
+
+    this.fireHiddenFeature(obj, this.getFabricObjectUri(obj));
 };
 
 sc.canvas.FabricCanvas.prototype.showMarkers = function() {
@@ -328,7 +269,8 @@ sc.canvas.FabricCanvas.prototype.hideMarkers = function() {
 
 sc.canvas.FabricCanvas.prototype.isHidingAllMarkers = function() {
     return goog.structs.every(this.objectsByUri, function(obj, uri) {
-        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && obj.get('opacity') != 0) {
+        if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type) && 
+            obj.get('visible') === true) {
             return false;
         }
         else {
@@ -381,11 +323,8 @@ sc.canvas.FabricCanvas.prototype.setFeatureCoords = function(feature, x, y) {
         x = x.x;
     }
 
-    var featureCenteredCoords = sc.canvas.FabricCanvas.toCenteredCoords(x, y,
-        feature.getBoundingRectWidth(), feature.getBoundingRectHeight());
-
-    x = featureCenteredCoords.x - this.group.get('width') / 2;
-    y = featureCenteredCoords.y - this.group.get('height') / 2;
+    x += feature.getBoundingRectWidth() / 2;
+    y += feature.getBoundingRectHeight() / 2;
 
     feature.set('left', x).set('top', y);
 };
@@ -397,8 +336,8 @@ sc.canvas.FabricCanvas.prototype.getFeatureCoords = function(feature) {
     var featureTopLeftCoords = sc.canvas.FabricCanvas.toTopLeftCoords(x, y,
         feature.getBoundingRectWidth(), feature.getBoundingRectHeight());
 
-    x = featureTopLeftCoords.x + this.group.get('width') / 2;
-    y = featureTopLeftCoords.y + this.group.get('height') / 2;
+    x = featureTopLeftCoords.x;
+    y = featureTopLeftCoords.y;
 
     return {
         x: x,
@@ -407,14 +346,18 @@ sc.canvas.FabricCanvas.prototype.getFeatureCoords = function(feature) {
 };
 
 sc.canvas.FabricCanvas.prototype.addFabricObject = function(obj, uri, opt_noEvent) {
-    this.group.add(obj);
-
     if (uri == null) {
         uri = this.databroker.createUuid();
     }
 
+    if (this.hasFeature(uri)) {
+        throw "Fabric Object with uri " + uri + " has already been added to the canvas";
+    }
+
+    this.objects.push(obj);
+
     this.objectsByUri.set(uri, obj);
-    this.urisByObject.set(obj, uri);
+    this.urisByObject.set(goog.getUid(obj), uri);
 
     if (!opt_noEvent) {
         this.fireAddedFeature(obj, uri);
@@ -423,12 +366,18 @@ sc.canvas.FabricCanvas.prototype.addFabricObject = function(obj, uri, opt_noEven
     return this;
 };
 
+sc.canvas.FabricCanvas.prototype.hasFeature = function(uri) {
+    return this.objectsByUri.containsKey(uri);
+};
+
 sc.canvas.FabricCanvas.prototype.removeFabricObject = function(obj, opt_noEvent) {
-    this.group.remove(obj);
+    goog.asserts.assert(obj != null, 'Attempting to remove a null object from a canvas');
+
+    goog.array.remove(this.objects, obj);
 
     var uri = this.getFabricObjectUri(obj);
     this.objectsByUri.remove(uri);
-    this.urisByObject.remove(obj);
+    this.urisByObject.remove(goog.getUid(obj));
 
     if (!opt_noEvent) {
         this.fireRemovedFeature(obj, uri);
@@ -438,16 +387,16 @@ sc.canvas.FabricCanvas.prototype.removeFabricObject = function(obj, opt_noEvent)
 };
 
 sc.canvas.FabricCanvas.prototype.bringObjectToFront = function(obj) {
-    this.group.remove(obj);
-    this.group.add(obj);
+    goog.array.remove(this.objects, obj);
+    this.objects.push(obj);
 
     this.requestFrameRender();
 };
 
 sc.canvas.FabricCanvas.prototype.sendObjectToBack = function(obj) {
-    this.group.remove(obj);
+    goog.array.remove(this.objects, obj);
 
-    goog.array.insertAt(this.group.objects, obj, 0);
+    goog.array.insertAt(this.objects, obj, 0);
 
     this.requestFrameRender();
 };
@@ -459,7 +408,12 @@ sc.canvas.FabricCanvas.prototype.removeObjectByUri = function(uri, opt_noEvent) 
 };
 
 sc.canvas.FabricCanvas.prototype.getFabricObjectUri = function(obj) {
-    return this.urisByObject.get(obj);
+    if (obj == null) {
+        return null;
+    }
+    else {
+        return this.urisByObject.get(goog.getUid(obj));
+    }
 };
 
 sc.canvas.FabricCanvas.prototype.getFabricObjectByUri = function(uri) {
@@ -486,7 +440,7 @@ sc.canvas.FabricCanvas.prototype.addImage = function(src, size, opt_coords, opt_
 
     if (this.imagesBySrc.containsKey(src)) {
         var image = this.imagesBySrc.get(src);
-        this.group.remove(image);
+        goog.array.remove(this.objects, image);
     }
 
     var x = 0, y = 0;
@@ -500,12 +454,23 @@ sc.canvas.FabricCanvas.prototype.addImage = function(src, size, opt_coords, opt_
         this.imagesBySrc.set(src, image);
         this.imageSrcsInProgress.remove(src);
 
+        image.set('selectable', false);
+        image.set('perPixelTargetFind', false);
+
         if (! size.isEmpty()) {
             image.set('scaleX', size.width / image.get('width'));
             image.set('scaleY', size.height / image.get('height'));
         }
 
-        this.setFeatureCoords(image, x, y);
+        this._scaleAndPositionNewFeature(image);
+        image.set({
+            left: image.getBoundingRectWidth() / 2 + x * this.displayToActualSizeRatio + this.offset.x,
+            top: image.getBoundingRectHeight() / 2 + y * this.displayToActualSizeRatio + this.offset.y
+        });
+
+        if (this.hasFeature(src)) {
+            this.removeObjectByUri(src);
+        }
 
         this.addFabricObject(image, src);
         this.sendObjectToBack(image);
@@ -535,11 +500,10 @@ sc.canvas.FabricCanvas.prototype.chooseImage = function(uri) {
     var image = this.imagesBySrc.get(uri);
 
     goog.structs.forEach(this.imagesBySrc, function(image, src) {
-        this.group.remove(image);
+        goog.array.remove(this.objects, image);
     }, this);
 
-    this.group.add(image);
-    this.sendObjectToBack(image);
+    goog.array.insertAt(this.objects, image, 0);
 
     this.requestFrameRender();
 
@@ -564,6 +528,8 @@ sc.canvas.FabricCanvas.prototype.addRect = function(x, y, width, height, uri) {
     });
     this.setFeatureCoords(rect, x, y);
 
+    this._scaleAndPositionNewFeature(rect);
+
     this.addFabricObject(rect, uri);
 
     return rect;
@@ -585,6 +551,8 @@ sc.canvas.FabricCanvas.prototype.addCircle = function(cx, cy, r, uri) {
     });
     this.setFeatureCoords(circle, cx + r/2, cy + r/2);
 
+    this._scaleAndPositionNewFeature(circle);
+
     this.addFabricObject(circle, uri);
 
     return circle;
@@ -603,17 +571,101 @@ sc.canvas.FabricCanvas.prototype.addCircle = function(cx, cy, r, uri) {
 sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
     var ellipse = new fabric.Ellipse(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
     ellipse.set({
-        left: cx - this.group.get('width') / 2,
-        top: cy - this.group.get('height') / 2,
+        left: cx,
+        top: cy,
         width: rx,
         height: ry,
         rx: rx,
         ry: ry
     });
 
+    this._scaleAndPositionNewFeature(ellipse);
+
     this.addFabricObject(ellipse, uri);
 
     return ellipse;
+};
+
+sc.canvas.FabricCanvas.prototype.getFeatureBoundingBox = function(feature) {
+    feature = this.getCanvasSizedFeatureClone(feature);
+
+    var width = feature.getBoundingRectWidth();
+    var height = feature.getBoundingRectHeight();
+
+    var x = feature.get('left') - width / 2;
+    var y = feature.get('top') - height / 2;
+
+    return {
+        width: width,
+        height: height,
+        x: x,
+        y: y
+    };
+};
+
+sc.canvas.FabricCanvas.getPointsBoundingBox = function(points) {
+    var utilMin = fabric.util.array.min;
+    var utilMax = fabric.util.array.max;
+
+    var xBounds = [];
+    var yBounds = [];
+
+    goog.structs.forEach(points, function(point) {
+        xBounds.push(Number(point.x));
+        yBounds.push(Number(point.y));
+    }, this);
+
+    var box = {
+        x1: utilMin(xBounds),
+        y1: utilMin(yBounds),
+        x2: utilMax(xBounds),
+        y2: utilMax(yBounds)
+    };
+
+    box.width = box.x2 - box.x1;
+    box.height = box.y2 - box.y1;
+
+    return box;
+};
+
+sc.canvas.FabricCanvas.convertPointsToSVGPathCommands = function(points, opt_smooth, opt_boundingBox, opt_close) {
+    var fabricPoints = [];
+    goog.structs.forEach(points, function(pt) {
+        fabricPoints.push(new fabric.Point(pt.x, pt.y));
+    }, this);
+
+    var boundingBox = opt_boundingBox || sc.canvas.FabricCanvas.getPointsBoundingBox(points);
+
+    var pathCommands = [];
+    var p1 = new fabric.Point(fabricPoints[0].x - boundingBox.x1, fabricPoints[0].y - boundingBox.y1);
+    if (points.length > 1) {
+        var p2 = new fabric.Point(fabricPoints[1].x - boundingBox.x1, fabricPoints[1].y - boundingBox.y1);
+    }
+
+    pathCommands.push('M ', fabricPoints[0].x - boundingBox.x1, ' ', fabricPoints[0].y - boundingBox.y1, ' ');
+    for (var i = 1, len = fabricPoints.length; i < len; i++) {
+        // p1 is our bezier control point
+        // midpoint is our endpoint
+        // start point is p(i-1) value.
+        if (opt_smooth) {
+            var midPoint = p1.midPointFrom(p2);
+            path.push('Q ', p1.x, ' ', p1.y, ' ', midPoint.x, ' ', midPoint.y, ' ');
+        }
+        else {
+            pathCommands.push('L ', p1.x, ' ', p1.y, ' ');
+        }
+        p1 = new fabric.Point(fabricPoints[i].x - boundingBox.x1, fabricPoints[i].y - boundingBox.y1);
+        if ((i+1) < fabricPoints.length) {
+            p2 = new fabric.Point(fabricPoints[i+1].x - boundingBox.x1, fabricPoints[i+1].y - boundingBox.y1);
+        }
+    }
+    pathCommands.push('L ', p1.x, ' ', p1.y, ' ');
+
+    if (opt_close) {
+        pathCommands.push('Z');
+    }
+
+    return pathCommands.join('');
 };
 
 /**
@@ -627,14 +679,39 @@ sc.canvas.FabricCanvas.prototype.addEllipse = function(cx, cy, rx, ry, uri) {
  * @return {fabric.Path} The fabric element created.
  */
 sc.canvas.FabricCanvas.prototype.addPolyline = function(points, uri) {
-    points = this.originToCenterPoints(points);
-
     var line = new fabric.Polyline(points);
     line.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+
+    this._scaleAndPositionNewFeature(line);
 
     this.addFabricObject(line, uri);
 
     return line;
+};
+
+sc.canvas.FabricCanvas.prototype.addPath = function(pathCommands, uri) {
+    var path = new fabric.Path(pathCommands);
+    path.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+
+    this._scaleAndPositionNewFeature(path);
+
+    this.addFabricObject(path, uri);
+
+    return path;
+};
+
+sc.canvas.FabricCanvas.prototype.updatePath = function(path, pathCommands) {
+    this.removeFabricObject(path, true);
+    var uri = this.getFabricObjectUri(path);
+
+    path = new fabric.Path(pathCommands);
+    path.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES); // In the future, this should copy the old path's styles
+
+    this._scaleAndPositionNewFeature(path);
+
+    this.addFabricObject(path, uri, true); // In the future, this should ensure that the path remains at the same z-index
+
+    return path;
 };
 
 /**
@@ -648,10 +725,10 @@ sc.canvas.FabricCanvas.prototype.addPolyline = function(points, uri) {
  * @return {fabric.Path} The fabric element created.
  */
 sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
-    points = this.originToCenterPoints(points);
-
     var polygon = new fabric.Polygon(points);
     polygon.set(sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES);
+
+    this._scaleAndPositionNewFeature(polygon);
 
     this.addFabricObject(polygon, uri);
 
@@ -667,57 +744,37 @@ sc.canvas.FabricCanvas.prototype.addPolygon = function(points, uri) {
  * @return {fabric.Object|null} The fabric element created, or null if
  * the feature type is unrecognized.
  */
-sc.canvas.FabricCanvas.prototype.addFeatureFromTagString = function(str, uri) {
-    var re = /^<?\s*(?:svg:)?([\w\-:]+)[\s*>]/;
-    var match = re.exec(str);
+sc.canvas.FabricCanvas.prototype.addFeatureFromSVGString = function(str, uri) {
+    var svgDoc = 
+        '<?xml version="1.0" standalone="no"?>'
+        + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"'
+        + ' "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
+        + ' <svg xmlns="http://www.w3.org/2000/svg" version="1.1">'
+        + str
+        + '</svg>';
 
-    if (match) {
-        var featureType = match[1].toLowerCase();
+    fabric.loadSVGFromString(svgDoc, function(objects, options) {
+        var obj = objects[0];
 
-        var attrs = sc.util.svg.parseAttrsFromString(str);
+        if (obj.transformMatrix) {
+            var transformMatrix = obj.transformMatrix;
+            delete obj.transformMatrix;
 
-        switch (featureType) {
-            case 'path':
-                return this.addPath(attrs.d, uri);
-                break;
-            case 'circle':
-                return this.addCircle(attrs.cx, attrs.cy, attrs.r, uri);
-                break;
-            case 'rect':
-                return this.addRect(
-                    attrs.x,
-                    attrs.y,
-                    attrs.width,
-                    attrs.height,
-                    uri
-                );
-                break;
-            case 'ellipse':
-                return this.addEllipse(attrs.cx, attrs.cy, attrs.rx, attrs.ry, uri);
-                break;
-            case 'line':
-                var points = [
-                    {x: attrs.x1, y: attrs.y1},
-                    {x: attrs.x2, y: attrs.y2}
-                ];
-                return this.addPolyline(points, uri);
-                break;
-            case 'polyline':
-                var points = sc.canvas.FabricCanvas.pointsStringToPointsArray(
-                                                                    attrs.points);
-                return this.addPolyline(points, uri);
-                break;
-            case 'polygon':
-                var points = sc.canvas.FabricCanvas.pointsStringToPointsArray(
-                                                                    attrs.points);
-                return this.addPolygon(points, uri);
-                break;
-            default:
-                console.warn('Unrecognized feature type', str);
-                return null;
-                break;
+            obj.set('left', obj.get('left') + transformMatrix[4]);
+            obj.set('top', obj.get('top') + transformMatrix[5]);
         }
-    }
+
+        obj.set(sc.canvas.FabricCanvas.GLOBAL_FEATURE_STYLES);
+        if (obj.isType('image')) {
+            obj.set('perPixelTargetFind', false);
+        }
+
+        this._scaleAndPositionNewFeature(obj);
+
+        this.addFabricObject(obj, uri);
+
+        this.requestFrameRender();
+    }.bind(this));
 };
 
 
@@ -800,86 +857,6 @@ sc.canvas.FabricCanvas.prototype.fireHiddenFeature = function(feature, uri) {
     this.dispatchEvent(event);
 };
 
-sc.canvas.FabricCanvas.toCenteredCoords = function(x, y, width, height) {
-    if (y == null) {
-        width = x.width;
-        height = x.height;
-        y = x.y;
-        x = x.x;
-    }
-
-    x += width / 2;
-    y += height / 2
-
-    return {
-        x: x,
-        y: y,
-        left: x,
-        top: y
-    };
-};
-
-sc.canvas.FabricCanvas.prototype.originToCenterPoints = function(points) {
-    var newPoints = [];
-
-    for (var i=0, len=points.length; i<len; i++) {
-        var point = {
-            x: points[i].x,
-            y: points[i].y
-        };
-
-        point.x -= this.group.get('width') / 2;
-        point.y -= this.group.get('height') / 2;
-
-        newPoints.push(point);
-    }
-
-    return newPoints;
-};
-
-sc.canvas.FabricCanvas.prototype.originToCenterPoint = function(point) {
-    return this.originToCenterPoints([point]);
-};
-
-sc.canvas.FabricCanvas.prototype.toCenteredCanvasCoord = function(x, y) {
-    if (y == null) {
-        y = x.y;
-        x = x.x;
-    }
-
-    var size = this.getSize();
-
-    return sc.canvas.FabricCanvas.toTopLeftCoords(x, y, size.width, size.height);
-};
-
-sc.canvas.FabricCanvas.toTopLeftCoords = function(x, y, width, height) {
-    if (y == null) {
-        width = x.width;
-        height = x.height;
-        y = x.y;
-        x = x.x;
-    }
-
-    x -= width / 2;
-    y -= height / 2;
-
-    return {
-        x: x,
-        y: y,
-        left: x,
-        top: y
-    };
-};
-
-sc.canvas.FabricCanvas.objectTopLeftCoords = function(object) {
-    return sc.canvas.FabricCanvas.toTopLeftCoords(
-        object.get('left'),
-        object.get('top'),
-        object.get('width'),
-        object.get('height')
-    );
-};
-
 sc.canvas.FabricCanvas.prototype.requestFrameRender = function() {
     if (this.viewport) {
         this.viewport.requestFrameRender();
@@ -926,8 +903,8 @@ sc.canvas.FabricCanvas.prototype.knowsSequenceInformation = function() {
  */
 sc.canvas.FabricCanvas.prototype.getDisplaySize = function() {
     return new goog.math.Size(
-        this.group.get('width') * this.group.get('scaleX'),
-        this.group.get('height') * this.group.get('scaleY')
+        this.size.width * this.displayToActualSizeRatio,
+        this.size.height * this.displayToActualSizeRatio
     );
 };
 
@@ -937,39 +914,68 @@ sc.canvas.FabricCanvas.prototype.getDisplaySize = function() {
  * @return {number} display width / actual width
  */
 sc.canvas.FabricCanvas.prototype.getDisplayToActualSizeRatio = function() {
-    var actualWidth = this.getSize().width;
-    var displayWidth = this.getDisplaySize().width;
-
-    return displayWidth / actualWidth;
+    return this.displayToActualSizeRatio;
 };
 
-sc.canvas.FabricCanvas.prototype.objectContainsPoint = function(target, event) {
-    var canvas = this.group.canvas;
+sc.canvas.FabricCanvas.prototype.setDisplayToActualSizeRatio = function(ratio) {
+    goog.asserts.assert(ratio !== 0, 'Display to actual size ratio cannot be 0');
+    ratio = Math.abs(ratio);
 
-    var pointer = canvas.getPointer(event);
-    var xy = canvas._normalizePointer(target, pointer);
-    var x = (xy.x - this.group.get('left')) / this.group.get('scaleX');
-    var y = (xy.y - this.group.get('top')) / this.group.get('scaleY');
+    goog.structs.forEach(this.objects, function(obj) {
+        obj.set({
+            scaleX: (obj.get('scaleX') / this.displayToActualSizeRatio) * ratio,
+            scaleY: (obj.get('scaleY') / this.displayToActualSizeRatio) * ratio,
+            left: (obj.get('left') / this.displayToActualSizeRatio) * ratio,
+            top: (obj.get('top') / this.displayToActualSizeRatio) * ratio
+        });
+    }, this);
 
-    // http://www.geog.ubc.ca/courses/klink/gis.notes/ncgia/u32.html
-    // http://idav.ucdavis.edu/~okreylos/TAship/Spring2000/PointInPolygon.html
-    
-    if (!target.oCoords) {
-        return false;
+    this.offset.x = (this.offset.x / this.displayToActualSizeRatio) * ratio;
+    this.offset.y = (this.offset.y / this.displayToActualSizeRatio) * ratio;
+
+    this.displayToActualSizeRatio = ratio;
+};
+
+sc.canvas.FabricCanvas.prototype._scaleAndPositionNewFeature = function(feature) {
+    feature.set({
+        scaleX: feature.get('scaleX') * this.displayToActualSizeRatio,
+        scaleY: feature.get('scaleY') * this.displayToActualSizeRatio,
+        left: feature.get('left') * this.displayToActualSizeRatio + this.offset.x,
+        top: feature.get('top') * this.displayToActualSizeRatio + this.offset.y
+    });
+};
+
+sc.canvas.FabricCanvas.prototype.getCanvasSizedFeatureClone = function(feature) {
+    var newFeature = feature.clone();
+
+    newFeature.set({
+        scaleX: feature.get('scaleX') / this.displayToActualSizeRatio,
+        scaleY: feature.get('scaleY') / this.displayToActualSizeRatio,
+        left: (feature.get('left') - this.offset.x) / this.displayToActualSizeRatio,
+        top: (feature.get('top') - this.offset.y) / this.displayToActualSizeRatio
+    });
+
+    return newFeature;
+};
+
+sc.canvas.FabricCanvas.prototype.getOffset = function() {
+    return this.offset;
+};
+
+sc.canvas.FabricCanvas.prototype.setOffset = function(x, y) {
+    if (y == null) {
+        y = x.y;
+        x = x.x;
     }
 
-    // we iterate through each object. If target found, return it.
-    var iLines = target._getImageLines(target.oCoords);
-    var xpoints = target._findCrossPoints(x, y, iLines);
+    goog.structs.forEach(this.objects, function(obj) {
+        obj.set({
+            left: Number(obj.get('left')) - this.offset.x + x,
+            top: Number(obj.get('top')) - this.offset.y + y
+        });
+    }, this);
 
-    // if xcount is odd then we clicked inside the object
-    // For the specific case of square images xcount === 1 in all true cases
-    if ((xpoints && xpoints % 2 === 1) || target._findTargetCorner(event, canvas._offset)) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    this.offset = new goog.math.Coordinate(x, y);
 };
 
 /**
@@ -1010,5 +1016,24 @@ sc.canvas.FabricCanvas.prototype.proportionalToCanvasCoord = function(x, y) {
     return {
         'x': x * this.size.width,
         'y': y * this.size.height
+    };
+};
+
+sc.canvas.FabricCanvas.toCenteredCoords = function(x, y, width, height) {
+    if (y == null) {
+        width = x.width;
+        height = x.height;
+        y = x.y;
+        x = x.x;
+    }
+
+    x += width / 2;
+    y += height / 2
+
+    return {
+        x: x,
+        y: y,
+        left: x,
+        top: y
     };
 };

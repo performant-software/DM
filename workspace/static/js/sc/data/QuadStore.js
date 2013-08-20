@@ -1,10 +1,8 @@
 goog.provide('sc.data.QuadStore');
 
-goog.require('goog.array');
 goog.require('goog.structs.Set');
-goog.require('goog.string');
 goog.require('sc.util.DefaultDict');
-goog.require('sc.util.Namespaces');
+goog.require('sc.data.BNode');
 
 /**
  * An indexed store of {sc.data.Quad} Quads (triples with a context),
@@ -22,6 +20,8 @@ sc.data.QuadStore = function(opt_quads) {
     this.indexedQuads = new sc.util.DefaultDict(function() {
         return new goog.structs.Set();
     });
+
+    this._bNodeCounter = 0;
 
     if (opt_quads) {
         this.addQuads(opt_quads);
@@ -42,9 +42,14 @@ sc.data.QuadStore = function(opt_quads) {
  * @return {goog.structs.Set.<sc.data.Quad>}  The set of quads matching the query.
  */
 sc.data.QuadStore.prototype._queryReturningSet = function(subject, predicate, object, context) {
-    var key = sc.data.QuadStore.getIndexKeyForQuery(subject, predicate, object, context);
+    if (subject == null && predicate == null && object == null && context == null) {
+        return this.quads;
+    }
+    else {
+        var key = sc.data.QuadStore.getIndexKeyForQuery(subject, predicate, object, context);
 
-    return this.indexedQuads.get(key, true);
+        return this.indexedQuads.get(key, true);
+    }
 };
 
 /**
@@ -87,6 +92,28 @@ sc.data.QuadStore.prototype.numQuadsMatchingQuery = function(subject, predicate,
 };
 
 /**
+ * Checks if this store contains a given quad.
+ * @param  {sc.data.Quad} quad The quad to check for.
+ * @return {boolean}           Whether this store contains the quad.
+ */
+sc.data.QuadStore.prototype.containsQuad = function(quad) {
+    return this.containsQuadMatchingQuery(quad.subject, quad.predicate, quad.object, quad.context);
+};
+
+/**
+ * Checks if the store contains a quad matching a given pattern.
+ * (null or undefined is treated as a wildcard)
+ * @param  {string|null|undefined} subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined} predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined} object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined} context   The context to search for, or null as a wildcard.
+ * @return {boolean}                         Whether a matching quad is found.
+ */
+sc.data.QuadStore.prototype.containsQuadMatchingQuery = function(subject, predicate, object, context) {
+    return this.numQuadsMatchingQuery(subject, predicate, object, context) > 0;
+};
+
+/**
  * Calls a function with each quad matching the specified pattern.
  * (null or undefined is treated as a wildcard)
  * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
@@ -104,6 +131,25 @@ sc.data.QuadStore.prototype.forEachQuadMatchingQuery = function(subject, predica
 
     goog.structs.every(
         this._queryReturningSet(subject, predicate, object, context),
+        function(quad) {
+            if (fn(quad, this) === false) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        },
+        this
+    );
+};
+
+sc.data.QuadStore.prototype.forEachQuad = function(fn, opt_obj) {
+    if (opt_obj) {
+        fn = fn.bind(opt_obj);
+    }
+
+    goog.structs.every(
+        this.quads,
         function(quad) {
             if (fn(quad, this) === false) {
                 return false;
@@ -240,17 +286,27 @@ sc.data.QuadStore.prototype.contextsMatchingQuery = function(subject, predicate,
     return this.contextsSetMatchingQuery(subject, predicate, object, context).getValues();
 };
 
+sc.data.QuadStore.prototype.getNextBNode = function() {
+    var node = new sc.data.BNode(this._bNodeCounter);
+    this._bNodeCounter ++;
+    return node;
+};
+
 /**
  * Adds a quad to the store, and indexes it.
  * @param {sc.data.Quad} quad Quad to add.
  */
 sc.data.QuadStore.prototype.addQuad = function(quad) {
-    var keys = sc.data.QuadStore.generateIndexKeys(quad);
+    if (! this.containsQuad(quad)) {
+        this.quads.add(quad);
 
-    for (var i=0, len=keys.length; i<len; i++) {
-        var key = keys[i];
+        var keys = sc.data.QuadStore.generateIndexKeys(quad);
 
-        this.indexedQuads.get(key).add(quad);
+        for (var i=0, len=keys.length; i<len; i++) {
+            var key = keys[i];
+
+            this.indexedQuads.get(key).add(quad);
+        }
     }
 
     return this;
@@ -269,26 +325,86 @@ sc.data.QuadStore.prototype.addQuads = function(quads) {
     return this;
 };
 
-sc.data.QuadStore.prototype.removeQuad = function(quad) {
-    var keys = sc.data.QuadStore.generateIndexKeys(quad);
+/**
+ * Removes a quad (by reference) from the store.
+ * If you don't have a reference to the quad, use sc.data.QuadStore#removeQuadsMatchingQuery or #removeQuad.
+ * @param  {sc.data.Quad} quad A reference to the quad to remove.
+ * @return {boolean}      Whether the quad was found and removed.
+ */
+sc.data.QuadStore.prototype._removeQuad = function(quad) {
+    if (this.quads.remove(quad)) {
+        var keys = sc.data.QuadStore.generateIndexKeys(quad);
 
-    goog.structs.forEach(keys, function(key) {
-        var set = this.indexedQuads.get(key);
+        goog.structs.forEach(keys, function(key) {
+            var set = this.indexedQuads.get(key);
 
-        set.remove(quad);
-    }, this);
+            set.remove(quad);
+        }, this);
+
+        return true;
+    }
+    else {
+        return false;
+    }
 };
 
-sc.data.QuadStore.prototype.removeQuads = function(quads) {
+/**
+ * Removes quads (by reference) from the store.
+ * @param  {array.<sc.data.Quad>} quads The quads to remove.
+ * @return {sc.data.QuadStore}          this.
+ */
+sc.data.QuadStore.prototype._removeQuads = function(quads) {
     goog.structs.forEach(quads, function(quad) {
-        this.removeQuad(quad);
+        this._removeQuad(quad);
     }, this);
+
+    return this;
 };
 
+/**
+ * Removes all quads from the store which match the query.
+ * @param  {string|null|undefined}  subject   The subject to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  predicate The predicate to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  object    The object to search for, or null as a wildcard.
+ * @param  {string|null|undefined}  context   The context to search for, or null as a wildcard.
+ * @return {boolean}                          Whether any quads were found and removed.
+ */
 sc.data.QuadStore.prototype.removeQuadsMatchingQuery = function(subject, predicate, object, context) {
+    var ret = false;
+
     this.forEachQuadMatchingQuery(subject, predicate, object, context, function(quad) {
-        this.removeQuad(quad);
+        ret = this._removeQuad(quad);
     }, this);
+
+    return ret;
+};
+
+/**
+ * Removes a quad from the store.
+ * @param  {sc.data.Quad} quad The quad to remove.
+ * @return {boolean}           Whether the quad was found and removed.
+ */
+sc.data.QuadStore.prototype.removeQuad = function(quad) {
+    return this.removeQuadsMatchingQuery(quad.subject, quad.predicate, quad.object, quad.context);
+};
+
+/**
+ * Removes the given quads from the store.
+ * @param  {array.<sc.data.Quad>} quads The quads to remove.
+ * @return {boolean}                    Whether any quads were found and removed.
+ */
+sc.data.QuadStore.prototype.removeQuads = function(quads) {
+    var ret = false;
+
+    goog.structs.forEach(quads, function(quad) {
+        var b = this.removeQuad(quad);
+
+        if (b) {
+            ret = true;
+        }
+    }, this);
+
+    return ret;
 };
 
 /**
@@ -308,6 +424,81 @@ sc.data.QuadStore.prototype.getCount = function() {
 };
 
 /**
+ * Returns a clone of this Quad Store.
+ * @param {boolean} opt_shallow If true, individual quads will not be cloned. This is faster, but may cause referencing issues.
+ * @return {sc.data.QuadStore} cloned store.
+ */
+sc.data.QuadStore.prototype.clone = function(opt_shallow) {
+    var store = new sc.data.QuadStore();
+
+    if (opt_shallow) {
+        store.quads = this.quads.clone();
+        store.indexedQuads = this.indexedQuads.clone();
+    }
+    else {
+        goog.structs.forEach(this.quads, function(quad) {
+            store.addQuad(quad.clone());
+        }, this);
+    }
+
+    return store;
+};
+
+/**
+ * Removes all quads from the store.
+ * @return {sc.data.QuadStore} this.
+ */
+sc.data.QuadStore.prototype.clear = function() {
+    this.quads.clear();
+    this.indexedQuads.clear();
+
+    return this;
+};
+
+/**
+ * Returns a Quad Store containing quads in both this store and the other store.
+ * @param  {sc.data.QuadStore} other The other store.
+ * @return {sc.data.QuadStore}       A store containing the intersection.
+ */
+sc.data.QuadStore.prototype.intersection = function(other) {
+    var store = new sc.data.QuadStore();
+    var a, b;
+    if (other.getCount() > this.getCount()) {
+        a = this;
+        b = other;
+    }
+    else {
+        a = other;
+        b = this;
+    }
+
+    goog.structs.forEach(a.quads, function(quad) {
+        if (b.contains(quad)) {
+            store.addQuad(quad.clone());
+        }
+    }, this);
+
+    return store;
+};
+
+/**
+ * Finds all values that are present in this store and not in the other store.
+ * @param  {sc.data.QuadStore} other The other store.
+ * @return {sc.data.QuadStore}       A store containing the difference.
+ */
+sc.data.QuadStore.prototype.difference = function(other) {
+    var store = new sc.data.QuadStore(this.quads.difference(other));
+
+    goog.structs.forEach(this.quads, function(quad) {
+        if (!other.contains(quad)) {
+            store.addQuad(quad.clone());
+        }
+    }, this);
+
+    return store;
+};
+
+/**
  * Generates all possible keys under which the given quad should be
  * stored in the index.
  * @param  {sc.data.Quad} quad The quad to index.
@@ -315,12 +506,14 @@ sc.data.QuadStore.prototype.getCount = function() {
  */
 sc.data.QuadStore.generateIndexKeys = function(quad) {
     var keys = [
+        // Base case
         sc.data.QuadStore.getIndexKeyForQuery(
             quad.subject,
             quad.predicate,
             quad.object,
             quad.context
         ),
+        // One wildcard
         sc.data.QuadStore.getIndexKeyForQuery(
             null,
             quad.predicate,
@@ -345,6 +538,7 @@ sc.data.QuadStore.generateIndexKeys = function(quad) {
             quad.object,
             null
         ),
+        // Two wildcards
         sc.data.QuadStore.getIndexKeyForQuery(
             null,
             null,
@@ -364,8 +558,45 @@ sc.data.QuadStore.generateIndexKeys = function(quad) {
             null
         ),
         sc.data.QuadStore.getIndexKeyForQuery(
-            quad.subject,
+            null,
             quad.predicate,
+            quad.object,
+            null
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            null,
+            quad.predicate,
+            null,
+            quad.context
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            quad.subject,
+            null,
+            quad.object,
+            null
+        ),
+        // Three wildcards
+        sc.data.QuadStore.getIndexKeyForQuery(
+            null,
+            null,
+            null,
+            quad.context
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            quad.subject,
+            null,
+            null,
+            null
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            null,
+            quad.predicate,
+            null,
+            null
+        ),
+        sc.data.QuadStore.getIndexKeyForQuery(
+            null,
+            null,
             quad.object,
             null
         )
@@ -394,7 +625,7 @@ sc.data.QuadStore._hashCodeOrWildcard = function(str) {
         return sc.data.QuadStore.WILDCARD;
     }
     else {
-        return goog.string.hashCode(str);
+        return str.toString();
     }
 };
 
@@ -408,12 +639,12 @@ sc.data.QuadStore._hashCodeOrWildcard = function(str) {
  * @return {string}                          The index key to use.
  */
 sc.data.QuadStore.getIndexKeyForQuery = function(subject, predicate, object, context) {
-    var key = [];
+    var key = [
+        '_s:', sc.data.QuadStore._hashCodeOrWildcard(subject), ';',
+        '_p:', sc.data.QuadStore._hashCodeOrWildcard(predicate), ';',
+        '_o:', sc.data.QuadStore._hashCodeOrWildcard(object), ';',
+        '_c:', sc.data.QuadStore._hashCodeOrWildcard(context)
+    ];
 
-    key.push('_s:' + sc.data.QuadStore._hashCodeOrWildcard(subject));
-    key.push('_p:' + sc.data.QuadStore._hashCodeOrWildcard(predicate));
-    key.push('_o:' + sc.data.QuadStore._hashCodeOrWildcard(object));
-    key.push('_c:' + sc.data.QuadStore._hashCodeOrWildcard(context));
-
-    return key.join(';');
+    return key.join('');
 };

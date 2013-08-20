@@ -8,7 +8,6 @@ goog.provide("atb.widgets.GlassPane");
 goog.require("atb.util.ReferenceUtil");
 goog.require("atb.util.LangUtil");
 goog.require("goog.events");
-goog.require("jquery.jQuery");
 
 //TODO: //lol@mergeoptions recursivelyidea...lol...?
 

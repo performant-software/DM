@@ -14,30 +14,30 @@
 	<foaf:name>Ruby test code</foaf:name>
 	<rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://manifests.ydc2.yale.edu/MetaManifest">
+  <rdf:Description rdf:about="http://manifests.ydc2.yale.edu/manifest/MetaManifest">
     <rdfs:label>Yale University Shared Canvas Manuscripts</rdfs:label>
     <dc:title>Yale University Shared Canvas Manuscripts</dc:title>
     <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
     <rdf:type rdf:resource="http://dms.stanford.edu/ns/Manifest"/>
-    <ore:aggregates rdf:resource="http://openmanifests.s3-website-us-east-1.amazonaws.com/BeineckeMS10/Manifest"/>
-    <ore:isDescribeBy rdf:resource="http://openmanifests.s3-website-us-east-1.amazonaws.com/MetaManifest.xml"/>
+    <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/BeineckeMS10/Manifest"/>
+    <ore:isDescribedBy rdf:resource="http://manifests.ydc2.yale.edu/manifest/MetaManifest.xml"/>
     <dcterms:modified>2013-01-24T16:09:58Z</dcterms:modified>
     <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
     <dc:format>application/rdf+xml</dc:format>
     <dcterms:creator rdf:resource="urn:uuid:233414b8-ae25-41c7-aad2-32817f5c6baa"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://openmanifests.s3-website-us-east-1.amazonaws.com/BeineckeMS10/Manifest">
+  <rdf:Description rdf:about="http://manifests.ydc2.yale.edu/manifest/BeineckeMS10/Manifest">
     <rdfs:label>BeineckeMS10</rdfs:label>
     <dc:title>BeineckeMS10</dc:title>
     <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
     <rdf:type rdf:resource="http://dms.stanford.edu/ns/Manifest"/>
-    <ore:aggregates rdf:resource="http://openmanifests.s3-website-us-east-1.amazonaws.com/BeineckeMS10/ImageAnnotations"/>
-    <ore:aggregates rdf:resource="http://openmanifests.s3-website-us-east-1.amazonaws.com/BeineckeMS10/NormalSequence"/>
-    <ore:isDescribedBy rdf:resource="http://openmanifests.s3-website-us-east-1.amazonaws.com/BeineckeMS10/Manifest.xml"/>
+    <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/BeineckeMS10/ImageAnnotations"/>
+    <ore:aggregates rdf:resource="http://manifests.ydc2.yale.edu/manifest/BeineckeMS10/NormalSequence"/>
+    <ore:isDescribedBy rdf:resource="http://manifests.ydc2.yale.edu/manifest/BeineckeMS10/Manifest.xml"/>
   </rdf:Description>
 
-  <rdf:Description rdf:about="http://openmanifests.s3-website-us-east-1.amazonaws.com/BeineckeMS10/Manifest.xml">
-    <ore:describes rdf:resource="http://openmanifests.s3-website-us-east-1.amazonaws.com/BeineckeMS10/Manifest"/>
+  <rdf:Description rdf:about="http://manifests.ydc2.yale.edu/manifest/BeineckeMS10/Manifest.xml">
+    <ore:describes rdf:resource="http://manifests.ydc2.yale.edu/manifest/BeineckeMS10/Manifest"/>
     <dcterms:modified>2013-01-24T16:09:58Z</dcterms:modified>
     <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
     <dc:format>application/rdf+xml</dc:format>

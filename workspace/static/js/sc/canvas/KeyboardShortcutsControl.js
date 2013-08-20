@@ -11,6 +11,8 @@ sc.canvas.KeyboardShortcutsControl = function(viewport, opt_element) {
 };
 goog.inherits(sc.canvas.KeyboardShortcutsControl, sc.canvas.Control);
 
+sc.canvas.KeyboardShortcutsControl.prototype.controlName = 'KeyboardShortcutsControl';
+
 sc.canvas.KeyboardShortcutsControl.prototype.activate = function() {
     goog.events.listen(this.element, 'keydown', this.handleKeydown,
                        false, this);
