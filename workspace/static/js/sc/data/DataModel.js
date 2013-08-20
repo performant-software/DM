@@ -493,15 +493,6 @@ sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project, opt_qu
     var quadStore = opt_quadStore || this.databroker.quadStore;
 
     var quads = quadStore.query(project.bracketedUri, null, null, null);
-    quads = quads.concat(quadStore.query(null, null, project.bracketedUri, null));
-
-    goog.structs.forEach(project.getProperties('ore:aggregates'), function(contentUri) {
-        var contentResource = this.databroker.getResource(contentUri);
-
-        goog.structs.forEach(sc.data.DataModel.VOCABULARY.metadataPredicates, function(predicate) {
-            quads = quads.concat(quadStore.query(contentResource.bracketedUri, predicate, null, null))
-        }, this);
-    }, this);
 
     return quads;
 };
@@ -512,7 +503,7 @@ sc.data.DataModel.prototype.findQuadsToSyncForUser = function(user, opt_quadStor
 
     var quads = quadStore.query(user.bracketedUri, null, null, null);
 
-    return quads
+    return quads;
 };
 
 sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStore) {

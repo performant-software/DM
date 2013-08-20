@@ -236,6 +236,7 @@ sc.ProjectViewer.prototype._buildAddUser = function(fragment) {
 
         var username = $(usernameInput).val();
         var userUri = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
+        var user = this.databroker.getResource(userUri);
 
         var permissionsToGrant = [];
         if (readCheck.checked)
@@ -246,7 +247,12 @@ sc.ProjectViewer.prototype._buildAddUser = function(fragment) {
             permissionsToGrant.push(sc.data.ProjectController.PERMISSIONS.administer);
 
         if (permissionsToGrant.length > 0) {
-            this.projectController.grantPermissionsToUser(userUri, null, permissionsToGrant);
+            if (!user.hasType('foaf:Agent')) {
+                user.addProperty('rdf:type', 'foaf:Agent');
+            }
+
+            this.projectController.grantPermissionsToUser(user, null, permissionsToGrant);
+
             this.updatePermissionsUI();
         }
         else {

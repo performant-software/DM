@@ -76,7 +76,7 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
         url += "/";
     }
     else if (resType == sc.data.SyncService.RESTYPE.project) {
-        url += this.options.restUserPath.replace(/^\/+|\/+$/g, "");
+        url += this.options.restProjectPath.replace(/^\/+|\/+$/g, "");
         url += "/";
     }
 
@@ -156,7 +156,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         url = this.restUrl(this.projectController.currentProject.uri, resType, null, null);
     }
-    else if (resource.hasType('ore:Aggregation') &&
+    else if (resource.hasType('dm:Project') &&
         this.databroker.projectController.userHasPermissionOverProject(null, resource, sc.data.ProjectController.PERMISSIONS.update)) {
         var resType = sc.data.SyncService.RESTYPE.project;
 
@@ -183,6 +183,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         console.error("Don't know how to sync resource " + resource);
         return;
     }
+
     if (quadsToRemove.length > 0)  {
         this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
             // Success
@@ -191,7 +192,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             // Error
         }.bind(this));
     }
-    
 
     if (quadsToPost.length > 0) {
         this.sendQuads(quadsToPost, url, method, null, function() {
