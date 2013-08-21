@@ -349,6 +349,20 @@ sc.ProjectViewer.prototype.updateEditUI = function() {
         var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
         $(this.titleInput).val(projectTitle);
         $(this.descriptionInput).val(this.projectController.currentProject.getOneProperty('dcterms:description') || '');
+
+        if (!this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+            this.titleInput.disabled = true;
+        }
+        else {
+            this.titleInput.disabled = false;
+        }
+
+        if (!this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+            this.descriptionInput.disabled = true;
+        }
+        else {
+            this.descriptionInput.disabled = false;
+        }
     }
 
     this.updatePermissionsUI();
