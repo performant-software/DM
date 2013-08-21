@@ -618,7 +618,8 @@ sc.ProjectViewer.prototype.saveEdits = function() {
 };
 
 sc.ProjectViewer.prototype.createNewText = function() {
-    var textResource = this.databroker.createResource(null, 'dctypes:Text');
+    var textResource = this.databroker.createResource();
+    textResource.addType('dctypes:Text');
     this.databroker.dataModel.setTitle(textResource, 'Untitled text document');
 
     this.projectController.addResourceToProject(textResource);
