@@ -548,7 +548,8 @@ sc.data.DataModel.prototype.findSpecificResourcesInResource = function(resource,
 };
 
 sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
-    var text = this.databroker.createResource(null, 'dctypes:Text');
+    var text = this.databroker.createResource();
+    text.addProperty('rdf:type', 'dctypes:Text');
     text.addProperty('rdf:type', 'cnt:ContentAsText');
     text.addProperty('dc:format', '"text/html"');
 
