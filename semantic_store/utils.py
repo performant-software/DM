@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from rdflib import Graph
-from semantic_store.namespaces import NS
+from semantic_store.namespaces import NS, bind_namespaces
 
 METADATA_PREDICATES = (
     NS.rdf.type,
@@ -34,6 +34,8 @@ def accept_mimetypes(accept_string):
 
 
 def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
+    bind_namespaces(graph)
+
     mimetypes = accept_mimetypes(request.META['HTTP_ACCEPT'])
 
     for mimetype in mimetypes:
@@ -54,13 +56,18 @@ def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
 
     return HttpResponse(serialization, mimetype='text/turtle', **kwargs)
 
-def parse_into_graph(graph, **kwargs):
+def parse_into_graph(graph=None, **kwargs):
+    if graph is None:
+        graph = Graph()
+
     temp_graph = Graph()
     temp_graph.parse(**kwargs)
     for triple in temp_graph:
         graph.add(triple)
 
-def parse_request_into_graph(request, graph):
+    return graph
+
+def parse_request_into_graph(request, graph=None):
     mimetype = request.META['CONTENT_TYPE']
 
     format = mimetype[mimetype.rfind('/') + 1:].strip()
@@ -72,4 +79,9 @@ def parse_request_into_graph(request, graph):
     if format.startswith('rdf+'):
         format = format[4:]
 
-    parse_into_graph(graph, format=format, data=request.body)
+    return parse_into_graph(graph, format=format, data=request.body)
+
+def metadata_triples(graph, subject=None):
+    for predicate in METADATA_PREDICATES:
+        for t in graph.triples((subject, predicate, None)):
+            yield t
