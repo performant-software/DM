@@ -352,16 +352,20 @@ sc.ProjectViewer.prototype.updateEditUI = function() {
 
         if (!this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.administer)) {
             this.titleInput.disabled = true;
+            this.titleInput.title = "You need admin permissions to change the project's title";
         }
         else {
             this.titleInput.disabled = false;
+            this.titleInput.title = "";
         }
 
         if (!this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
             this.descriptionInput.disabled = true;
+            this.descriptionInput.title = "You need modify permissions to change the project's description";
         }
         else {
             this.descriptionInput.disabled = false;
+            this.descriptionInput.title = "";
         }
     }
 
