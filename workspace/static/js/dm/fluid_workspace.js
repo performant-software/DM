@@ -154,9 +154,14 @@ var setupUser = function(databroker, username) {
     var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
     databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
 
-    databroker.user.defer().done(function() {
+    var selectProject = function() {
+        if (goog.global.projectViewer) {
+            projectViewer.updateButtonUI();
+        }
         databroker.projectController.autoSelectProject();
-    });
+    };
+
+    databroker.user.defer().progress(selectProject).done(selectProject);
 };
 
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {
