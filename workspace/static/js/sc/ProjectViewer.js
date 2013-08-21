@@ -512,6 +512,11 @@ sc.ProjectViewer.prototype.openViewerForResource = function(resource) {
     var viewer = atb.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
     container.setViewer(viewer);
 
+    if (goog.isFunction(viewer.makeUneditable) &&
+        !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+        viewer.makeUneditable();
+    }
+
     viewer.loadResourceByUri(resource.uri);
     container.autoResize();
 };
