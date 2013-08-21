@@ -76,8 +76,7 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
         url += "/";
     }
     else if (resType == sc.data.SyncService.RESTYPE.project) {
-        url += this.options.restProjectPath.replace(/^\/+|\/+$/g, "");
-        url += "/";
+        // pass
     }
 
     if (resUri != null) {
@@ -240,4 +239,8 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
 
 sc.data.SyncService.prototype.getCsrfToken = function() {
     return this.cookies.get('csrftoken');
+};
+
+sc.data.SyncService.prototype.hasUnsavedChanges = function() {
+    return this.databroker.newQuadStore.getCount() !== 0 || this.databroker.deletedQuadsStore.getCount() !== 0;
 };
