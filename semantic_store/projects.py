@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
 from django.contrib.auth.models import User
 
 from rdflib.graph import Graph
@@ -10,7 +10,7 @@ from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
-from semantic_store.users import add_triple, remove_triple
+from semantic_store.users import remove_triple, has_permission_over, PERMISSION_PREDICATES
 from semantic_store.project_texts import sanitized_content
 
 from datetime import datetime
@@ -18,13 +18,10 @@ from datetime import datetime
 PROJECT_TYPES = [NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project]
 
 def create_project_from_request(request):
-    g = Graph()
-    bind_namespaces(g)
-
     host = request.get_host()
 
     try:
-        parse_request_into_graph(request, g)
+        g = parse_request_into_graph(request)
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
@@ -41,11 +38,10 @@ def create_project(g, host):
     for uri, user in query:
         sanitize_texts(g)
 
-        with transaction.commit_on_success():
-            project_uri = uris.uri('semantic_store_projects', uri=uri)
-            project_g = Graph(store=rdfstore(), identifier=project_uri)
-            bind_namespaces(project_g)
+        project_uri = uris.uri('semantic_store_projects', uri=uri)
+        project_g = Graph(store=rdfstore(), identifier=project_uri)
 
+        with transaction.commit_on_success():
             for t in g:
                 project_g.add(t)
 
@@ -64,66 +60,76 @@ def create_project(g, host):
 
 
 def read_project(request, project_uri):
-    uri = uris.uri('semantic_store_projects', uri=project_uri)
-    store_g = Graph(store=rdfstore(), identifier=uri)
+    if request.user.is_authenticated():
+        if has_permission_over(request.user.username, project_uri, NS.perm.mayRead):
+            uri = uris.uri('semantic_store_projects', uri=project_uri)
+            store_g = Graph(store=rdfstore(), identifier=uri)
 
-    # Work with a memory graph so triples can be removed
-    project_g = Graph()
-    bind_namespaces(project_g)
-    project_g += store_g
+            # Work with a memory graph so triples can be removed
+            project_g = Graph()
+            bind_namespaces(project_g)
+            project_g += store_g
 
-    for text in project_g.subjects(NS.rdf['type'], NS.dcmitype.Text):
-        for t in project_g.triples((text, NS.cnt.chars, None)):
-            project_g.remove(t)
-        text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
-        project_g.add((text, NS.ore.isDescribedBy, text_url))
+            for text in project_g.subjects(NS.rdf['type'], NS.dcmitype.Text):
+                for t in project_g.triples((text, NS.cnt.chars, None)):
+                    project_g.remove(t)
+                text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
+                project_g.add((text, NS.ore.isDescribedBy, text_url))
 
-    # Add info about users which have permissions over the project
-    # This should be indexed in the future for scalability
-    for u in User.objects.filter():
-        user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
-        user_graph = Graph(store=rdfstore(), identifier=user_graph_identifier)
+            # Add info about users which have permissions over the project
+            # This should be indexed in the future for scalability
+            for u in User.objects.all():
+                user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
+                user_graph = Graph(store=rdfstore(), identifier=user_graph_identifier)
 
-        if len(list(user_graph.triples((URIRef(user_graph_identifier), NS.perm.hasPermissionOver, URIRef(project_uri))))) > 0:
-            project_g += user_graph
+                if (URIRef(user_graph_identifier), NS.perm.hasPermissionOver, URIRef(project_uri)) in user_graph:
+                    for predicate in PERMISSION_PREDICATES:
+                        for t in user_graph.triples((URIRef(user_graph_identifier), predicate, URIRef(project_uri))):
+                            project_g.add(t)
+                        for t in user_graph.triples((URIRef(user_graph_identifier), NS.ore.isDescribedBy, None)):
+                            project_g.add(t)
 
-        user_graph.close()
-    
-    if len(project_g) >0:
-        return negotiated_graph_response(request, project_g)
+                user_graph.close()
+            
+            if len(project_g) >0:
+                return negotiated_graph_response(request, project_g)
+            else:
+                return HttpResponseNotFound()
+        else:
+            return HttpResponseForbidden('User "%s" does not have read permissions over project "%s"' % (request.user.username, project_uri))
     else:
-        return HttpResponseNotFound()
+        return HttpResponse(status=401)
 
 
 def update_project(request, uri):
-    input_graph = Graph()
-    bind_namespaces(input_graph)
+    if request.user.is_authenticated():
+        if has_permission_over(request.user.username, uri, NS.perm.mayUpdate):
+            try:
+                input_graph = parse_request_into_graph(request)
+            except ParserError as e:
+                return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-    try:
-        parse_request_into_graph(request, input_graph)
-    except ParserError as e:
-        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
+            project_graph = update_project_graph(input_graph, uri,request.get_host())
 
-    project_graph = update_project_graph(input_graph, uri,request.get_host())
-
-    return negotiated_graph_response(request, project_graph, status=201)
+            return negotiated_graph_response(request, project_graph, status=201)
+        else:
+            return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
+    else:
+        return HttpResponse(status=401)
 
 def update_project_graph(g, identifier, host):
-    predicate = NS.perm['hasPermissionOver']
-    for subj, obj in g.subject_objects(predicate):
-        username = subj.split("/")[-1]
-        
-        add_triple(username,subj,predicate,obj, host)
-
-        g.remove((subj,predicate,obj))
-
+    uri = uris.uri('semantic_store_projects', uri=identifier)
 
     with transaction.commit_on_success():
-        uri = uris.uri('semantic_store_projects', uri=identifier)
         project_g = Graph(store=rdfstore(), identifier=uri)
-        bind_namespaces(project_g)
 
-        print "Updating project using graph identifier %s"%(uri)
+        #Prevent duplicate metadata
+        if (URIRef(identifier), NS.dc.title, None) in g:
+            project_g.remove((URIRef(identifier), NS.dc.title, None))
+        if (URIRef(identifier), NS.rdfs.label, None) in g:
+            project_g.remove((URIRef(identifier), NS.rdfs.label, None))
+        if (URIRef(identifier), NS.dcterms.description, None) in g:
+            project_g.remove((URIRef(identifier), NS.dcterms.description, None))
 
         for triple in g:
             project_g.add(triple)
@@ -173,7 +179,6 @@ def save_project_user_graph(graph, username, host):
     with transaction.commit_on_success():
         user_uri = uris.uri('semantic_store_users', username=username)
         user_graph = Graph(store=rdfstore(), identifier=user_uri)
-        bind_namespaces(user_graph)
 
         for s,p,o in graph.triples((user_uri, None, None)):
             user_graph.add((s,p,o))
@@ -187,34 +192,31 @@ def save_project_user_graph(graph, username, host):
 
 
 def delete_triples_from_project(request, uri):
-    g = Graph()
-    bind_namespaces(g)
-    removed = Graph()
-    bind_namespaces(removed)
+    if request.user.is_authenticated():
+        if has_permission_over(request.user.username, uri, NS.perm.mayUpdate):
+            g = Graph()
+            removed = Graph()
+            bind_namespaces(removed)
 
-    try:
-        parse_request_into_graph(request, g)
-    except ParserError as e:
-        return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
+            try:
+                parse_request_into_graph(request, g)
+            except ParserError as e:
+                return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-    project_uri = uris.uri('semantic_store_projects', uri=uri)
-    project_g = Graph(store=rdfstore(), identifier=project_uri)
+            project_uri = uris.uri('semantic_store_projects', uri=uri)
+            project_g = Graph(store=rdfstore(), identifier=project_uri)
 
-    predicate = NS.perm['hasPermissionOver']
-    for subj, obj in g.subject_objects(predicate):
-        username = subj.split("/")[-1]
-        
-        remove_triple(username,subj,predicate,obj,request.get_host())
+            with transaction.commit_on_success():
+                for t in g:
+                    if t in project_g:
+                        project_g.remove(t)
+                        removed.add(t)
 
-        g.remove((subj,predicate,obj))
-
-    with transaction.commit_on_success():
-        for t in g:
-            if t in project_g:
-                project_g.remove(t)
-                removed.add(t)
-
-    return removed
+            return negotiated_graph_response(request, removed, close_graph=True)
+        else:
+            return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
+    else:
+        return HttpResponse(status=401)
 
 
 # Create the project graph, with all of the required data, and sends it to be saved
@@ -235,11 +237,6 @@ def create_project_graph(host, user, title, project):
     g.add((project, NS.rdf['type'], NS.ore['Aggregation']))
     g.add((project, NS.dc['title'], Literal(title)))
     g.add((project, NS.dcterms['created'], Literal(datetime.utcnow())))
-
-    user_uri = uris.uri('semantic_store_users', username=user)
-
-    g.add((user_uri, NS.perm['hasPermissionOver'], project))
-    g.add((user_uri, NS.rdf['type'], NS.foaf['Agent']))
 
     return g
 

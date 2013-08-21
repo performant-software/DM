@@ -187,8 +187,7 @@ def add_all_users(graph):
 
 
 def remove_project_triples(request, uri):
-    g = delete_triples_from_project(request, uri)
-    return negotiated_graph_response(request, g, close_graph=True)
+    return delete_triples_from_project(request, uri)
 
 
 def project_texts(request, project_uri, text_uri):
@@ -224,5 +223,4 @@ def users(request, username=None):
         return HttpResponseNotAllowed(['PUT', 'GET'])
 
 def remove_user_triples(request, username):
-    g = remove_triples_from_user(request, username)
-    return negotiated_graph_response(request, g)
+    return remove_triples_from_user(request, username)
