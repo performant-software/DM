@@ -562,8 +562,12 @@ sc.ProjectViewer.prototype.saveEdits = function() {
     var title = $(this.titleInput).val();
     var description = $(this.descriptionInput).val();
 
-    this.databroker.dataModel.setTitle(this.projectController.currentProject, title);
-    this.projectController.currentProject.setProperty('dcterms:description', sc.data.Literal(description));
+    if (this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+        this.databroker.dataModel.setTitle(this.projectController.currentProject, title);
+    }
+    if (this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+        this.projectController.currentProject.setProperty('dcterms:description', sc.data.Literal(description));
+    }
 
     goog.structs.forEach(this.permissionsRows, function(row) {
         var cells = $(row).children();
@@ -575,34 +579,36 @@ sc.ProjectViewer.prototype.saveEdits = function() {
 
         var userUri = $(row).attr('about');
 
-        if (readCheck.checked) {
-            if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
-                this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+        if (this.databroker.user.equals(userUri) || this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+            if (readCheck.checked) {
+                if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
+                    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+                }
             }
-        }
-        else {
-            if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
-                this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+            else {
+                if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
+                    this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+                }
             }
-        }
-        if (modifyCheck.checked) {
-            if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
-                this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+            if (modifyCheck.checked) {
+                if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
+                    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+                }
             }
-        }
-        else {
-            if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
-                this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+            else {
+                if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
+                    this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+                }
             }
-        }
-        if (adminCheck.checked) {
-            if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
-                this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+            if (adminCheck.checked) {
+                if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+                    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+                }
             }
-        }
-        else {
-            if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
-                this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+            else {
+                if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+                    this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+                }
             }
         }
     }, this);
