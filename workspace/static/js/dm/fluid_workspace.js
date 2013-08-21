@@ -136,7 +136,16 @@ var setupUser = function(databroker, username) {
         }
         databroker.projectController.autoSelectProject();
         if (databroker.projectController.currentProject) {
-            databroker.projectController.currentProject.defer();
+            var deferredProject = databroker.projectController.currentProject.defer();
+
+            var updateUI = function() {
+                if (goog.global.projectViewer) {
+                    projectViewer.updateButtonUI();
+                    projectViewer.updateModalUI();
+                }
+            };
+
+            deferredProject.progress(updateUI).done(updateUI);
         }
     };
 

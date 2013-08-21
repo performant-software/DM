@@ -457,11 +457,19 @@ sc.ProjectViewer.prototype.switchToProject = function(project) {
         return false;
     }
 
+    var deferredProject = project.defer();
+
+    var performSwitch = function() {
+        deferredProject.done(function() {
+            this.projectController.selectProject(project);
+            this.workingResources.loadManifest(project.uri);
+        }.bind(this));
+    }.bind(this);
+
     if (!viewerGrid.isEmpty()) {
         if (confirm('Are you sure you want to switch projects? All your open resources from the current project will be closed.')) {
             viewerGrid.closeAllContainers();
-            this.projectController.selectProject(project);
-            this.workingResources.loadManifest(project.uri, true);
+            performSwitch();
             return true;
         }
         else {
@@ -469,8 +477,7 @@ sc.ProjectViewer.prototype.switchToProject = function(project) {
         }
     }
     else {
-        this.projectController.selectProject(project);
-        this.workingResources.loadManifest(project.uri, true);
+        performSwitch();
         return true;
     }
 };
