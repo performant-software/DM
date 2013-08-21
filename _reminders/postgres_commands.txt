@@ -1,2 +1,0 @@
-launchctl load -w ~/Library/LaunchAgents/org.postgresql.postgres.plist
-launchctl unload -w ~/Library/LaunchAgents/org.postgresql.postgres.plist
