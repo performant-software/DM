@@ -367,9 +367,9 @@ sc.ProjectViewer.prototype.updateEditUI = function() {
             this.descriptionInput.disabled = false;
             this.descriptionInput.title = "";
         }
-    }
 
-    this.updatePermissionsUI();
+        this.updatePermissionsUI();
+    }
 };
 
 sc.ProjectViewer.prototype.updateModalUI = function() {
