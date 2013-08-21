@@ -367,8 +367,12 @@ sc.data.Databroker.prototype.registerSerializer = function(serializer) {
  * @param {sc.data.Quad} quad The quad to be added.
  */
 sc.data.Databroker.prototype.addNewQuad = function(quad) {
+    var isActuallyNew = !this.quadStore.containsQuad(quad);
+
     this.quadStore.addQuad(quad);
-    this.newQuadStore.addQuad(quad);
+    if (isActuallyNew) {
+        this.newQuadStore.addQuad(quad);
+    }
 
     return this;
 };
