@@ -248,7 +248,9 @@ sc.ProjectViewer.prototype._buildAddUser = function(fragment) {
 
         if (permissionsToGrant.length > 0) {
             if (!user.hasType('foaf:Agent')) {
-                user.addProperty('rdf:type', 'foaf:Agent');
+                this.databroker.quadStore.addQuad(
+                    new sc.data.Quad(user.bracketedUri, this.databroker.namespaces.expand('rdf', 'type'), this.databroker.namespaces.expand('foaf', 'Agent'), null)
+                );
             }
 
             this.projectController.grantPermissionsToUser(user, null, permissionsToGrant);
@@ -343,18 +345,25 @@ sc.ProjectViewer.prototype.updatePermissionsUI = function() {
 };
 
 sc.ProjectViewer.prototype.updateEditUI = function() {
-    var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
-    $(this.titleInput).val(projectTitle);
-    $(this.descriptionInput).val(this.projectController.currentProject.getOneProperty('dcterms:description') || '');
+    if (this.projectController.currentProject) {
+        var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
+        $(this.titleInput).val(projectTitle);
+        $(this.descriptionInput).val(this.projectController.currentProject.getOneProperty('dcterms:description') || '');
+    }
 
     this.updatePermissionsUI();
 };
 
 sc.ProjectViewer.prototype.updateModalUI = function() {
-    this.workingResources.loadManifest(this.projectController.currentProject.uri);
+    if (this.projectController.currentProject) {
+        this.workingResources.loadManifest(this.projectController.currentProject.uri);
 
-    var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
-    $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
+        var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
+        $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
+    }
+    else {
+        $(this.modalTitle).text('No project selected');
+    }
 
     this.updateEditUI();
 };
