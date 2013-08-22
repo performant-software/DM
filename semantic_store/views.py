@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
@@ -18,7 +18,7 @@ from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
 from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
 from semantic_store import uris
-from semantic_store.users import read_user, update_user, remove_triples_from_user
+from semantic_store.users import read_user, update_user, remove_triples_from_user, has_permission_over
 
 from project_texts import create_project_text_from_request, read_project_text, update_project_text_from_request, remove_project_text
 
@@ -189,23 +189,29 @@ def add_all_users(graph):
 def remove_project_triples(request, uri):
     return delete_triples_from_project(request, uri)
 
-
+@login_required
 def project_texts(request, project_uri, text_uri):
     if request.method == 'POST':
-        create_project_text_from_request(request, project_uri)
-        g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        return create_project_text_from_request(request, project_uri)
     elif request.method == 'GET':
-        g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        if has_permission_over(request.user.username, project_uri, NS.perm.mayRead):
+            g = read_project_text(project_uri, text_uri)
+            return negotiated_graph_response(request, g, close_graph=True)
+        else:
+            return HttpResponseForbidden()
     elif request.method == 'PUT':
-        update_project_text_from_request(request, project_uri, text_uri)
-        g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        if has_permission_over(request.user.username, project_uri, NS.perm.mayUpdate):
+            update_project_text_from_request(request, project_uri, text_uri)
+            g = read_project_text(project_uri, text_uri)
+            return negotiated_graph_response(request, g, close_graph=True)
+        else:
+            return HttpResponseForbidden()
     elif request.method == 'DELETE':
-        remove_project_text(project_uri, text_uri)
-        g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        if has_permission_over(request.user.username, project_uri, NS.perm.mayUpdate):
+            remove_project_text(project_uri, text_uri)
+            return HttpResponse(status=204)
+        else:
+            return HttpResponseForbidden()
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 

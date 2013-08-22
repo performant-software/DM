@@ -12,6 +12,7 @@ from semantic_store import uris
 from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
 from semantic_store.users import remove_triple, has_permission_over, PERMISSION_PREDICATES
 from semantic_store.project_texts import sanitized_content
+from semantic_store import project_texts
 
 from datetime import datetime
 
@@ -41,9 +42,20 @@ def create_project(g, host):
         project_uri = uris.uri('semantic_store_projects', uri=uri)
         project_g = Graph(store=rdfstore(), identifier=project_uri)
 
+        user_obj = User.objects.get(username=user.strip('/').split('/')[-1])
+
         with transaction.commit_on_success():
             for t in g:
                 project_g.add(t)
+
+            for aggregate_uri in g.objects(uri, NS.ore.aggregates):
+                if (aggregate_uri, NS.rdf.type, NS.dcmitype.Text) in g:
+                    project_g.remove((aggregate_uri, NS.cnt.chars, None))
+
+                    text_graph = Graph()
+                    for t in g.triples((aggregate_uri, None, None)):
+                        text_graph.add(t)
+                    project_texts.update_project_text(text_graph, uri, aggregate_uri, user_obj)
 
             url = uris.url(host, 'semantic_store_projects', uri=uri)
             project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
