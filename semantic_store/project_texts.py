@@ -115,6 +115,9 @@ def update_project_text(g, p_uri, t_uri, user):
         for t in specific_resources_subgraph(g, text_uri):
             project_g.add(t)
 
+        for t in g.triple((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
+            project_g.set(t)
+
     project_g.close()
 
 # Updates a project's text to match data in a (PUT) request
