@@ -177,20 +177,20 @@ atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
-	var highlight = this.databroker.getResource(highlightUri);
+	var highlight = this.databroker.createResource(highlightUri);
     highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
     highlight.addProperty('oa:exact', sc.data.Term.wrapLiteral(range.getText()));
-    // Need a solution for keeping this up to date
+    
     // TODO
     // highlight.addProperty('oa:prefix')
     // highlight.addProperty('oa:suffix')
     
-    var specificResource = this.databroker.getResource(this.databroker.createUuid());
+    var specificResource = this.databroker.createResource(this.databroker.createUuid());
     specificResource.addProperty('rdf:type', 'oa:SpecificResource');
     specificResource.addProperty('oa:hasSource', this.getTextResource().bracketedUri);
     specificResource.addProperty('oa:hasSelector', highlight.bracketedUri);
 
-    var anno = this.databroker.getResource(this.databroker.createUuid());
+    var anno = this.databroker.createResource(this.databroker.createUuid());
     anno.addProperty('rdf:type', 'oa:Annotation');
     anno.addProperty('oa:hasTarget', this.getTextResource().bracketedUri);
 
@@ -230,6 +230,8 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 
 	var highlightUri = this.databroker.createUuid();
 	var highlightResource = this.createHighlightResource(highlightUri, range);
+
+	this.viewer.unsavedChanges = true;
 	
 	var TypeElement = Node.ELEMENT_NODE;
 	var TypeText = Node.TEXT_NODE;

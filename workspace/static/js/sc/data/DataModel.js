@@ -526,6 +526,21 @@ sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStor
     return quads;
 };
 
+sc.data.DataModel.prototype.findQuadsToSyncForSvgSelector = function(selector, opt_quadStore) {
+    selector = this.databroker.getResource(selector);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+
+    var specificResourceUri = quadStore.subjectsMatchingQuery(null, this.databroker.namespaces.expand('oa', 'hasSelector'), selector.bracketedUri, null)[0];
+
+    var quads = quadStore.query(selector.bracketedUri, null, null, null);
+    
+    if (specificResourceUri) {
+        quads = quads.concat(quadStore.query(specificResourceUri, null, null, null));
+    }
+
+    return quads;
+};
+
 sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
     canvasUri = sc.data.Term.wrapUri(canvasUri);
