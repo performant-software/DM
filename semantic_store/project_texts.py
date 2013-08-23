@@ -12,6 +12,8 @@ from semantic_store import uris
 from semantic_store.utils import parse_request_into_graph, negotiated_graph_response
 from semantic_store.models import Text
 from semantic_store.users import has_permission_over
+from semantic_store.annotations import resource_annotation_subgraph
+from semantic_store.specific_resources import specific_resources_subgraph
 
 from datetime import datetime
 
@@ -56,6 +58,11 @@ def read_project_text(project_uri, text_uri):
     project_uri = uris.uri('semantic_store_projects', uri=project_uri)
     project_g = Graph(rdfstore(), identifier=project_uri)
 
+    memory_project_g = Graph()
+    memory_project_g += project_g
+
+    project_g.close()
+
     # Make text uri URIRef (so Graph will understand)
     text_uri = URIRef(text_uri)
 
@@ -71,19 +78,13 @@ def read_project_text(project_uri, text_uri):
     except ObjectDoesNotExist:
         pass
     else:
-        text_g.add((text_uri, NS.dc.title, Literal(text.title)))
-        text_g.add((text_uri, NS.rdfs.label, Literal(text.title)))
-        text_g.add((text_uri, NS.cnt.chars, Literal(text.content)))
+        text_g.set((text_uri, NS.dc.title, Literal(text.title)))
+        text_g.set((text_uri, NS.rdfs.label, Literal(text.title)))
+        text_g.set((text_uri, NS.cnt.chars, Literal(text.content)))
 
-    # Add specific resources
-    for specific_resource in project_g.subjects(NS.oa.hasSource, text_uri):
-        for t in project_g.triples((specific_resource, None, None)):
-            text_g.add(t)
-        selector = project_g.value(specific_resource, NS.oa.hasSelector, None)
-        for t in project_g.triples((selector, None, None)):
-            text_g.set(t)
+    text_g += resource_annotation_subgraph(memory_project_g, text_uri)
 
-    project_g.close()
+    text_g += specific_resources_subgraph(memory_project_g, text_uri)
 
     # Return graph about text
     return text_g
@@ -111,12 +112,8 @@ def update_project_text(g, p_uri, t_uri, user):
         project_g.set((text_uri, NS.dc.title, title))
         project_g.set((text_uri, NS.rdfs.label, title))
 
-        for specific_resource in g.subjects(NS.oa.hasSource, text_uri):
-            for t in g.triples((specific_resource, None, None)):
-                project_g.add(t)
-            selector = g.value(specific_resource, NS.oa.hasSelector, None)
-            for t in g.triples((selector, None, None)):
-                project_g.set(t)
+        for t in specific_resources_subgraph(g, text_uri):
+            project_g.add(t)
 
     project_g.close()
 
@@ -151,12 +148,8 @@ def remove_project_text(project_uri, text_uri):
     text_uri = URIRef(text_uri)
 
     with transaction.commit_on_success():
-        for specific_resource in project_g.subjects(NS.oa.hasSource, text_uri):
-            selector = g.value(specific_resource, NS.oa.hasSelector, None)
-            for t in project_g.triples((selector, None, None)):
-                project_g.remove(t)
-            for t in project_g.triples((specific_resource, None, None)):
-                project_g.remove(t)
+        for t in specific_resources_subgraph(project_g, text_uri):
+            project_g.remove(t)
 
         for t in project_g.triples((text_uri, None, None)):
             # Delete triple about text from project graph
