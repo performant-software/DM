@@ -56,9 +56,12 @@ SVG     = {
     'circle':"<circle fill=\'rgba(15, 108, 214, 0.6)\'  stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' cx=\'%s\' cy=\'%s\' r=\'%s\' />",
     'polyline':"<polyline fill=\'none\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
 }
+
+URL_BASE = 'http://dm.drew.edu/'
+
 # URL for the base of user URIs
 # Hard-coded to be understood properly in the new version
-USER_URL_BASE = 'http://dm.drew.edu/store/users/'
+USER_URL_BASE = URL_BASE + 'store/users/'
 # Dictionary for mapping User object to a custom uuid, which is the uuid of the
 #  user's default project
 user_mapping = {}
@@ -85,6 +88,7 @@ def complete_user_graph(name):
     # Add all the data to everything_graph
     # Each of these methods returns a Graph object, which is implemented so
     #  that the += syntax is a valid operation
+    everything_graph += handle_user(user)
     everything_graph += handle_canvases(user)
     everything_graph += handle_circles(user)
     everything_graph += handle_polygons(user)
@@ -92,7 +96,6 @@ def complete_user_graph(name):
     everything_graph += handle_constraints(user)
     everything_graph += handle_images(user)
     everything_graph += handle_texts(user)
-    everything_graph += handle_user(user)
 
     # Annos are special because we need to check that there is information
     #  about them in the larger graph as well
@@ -117,7 +120,7 @@ def multiprocess_export_all_users(path_to_export_folder):
 
     usernames = [user.username for user in User.objects.all()]
 
-    pool = Pool(processes=10)
+    pool = Pool()
     for username in usernames:
         with_username(username)
 
