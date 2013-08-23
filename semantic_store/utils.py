@@ -7,6 +7,7 @@ METADATA_PREDICATES = (
     NS.ore.isDescribedBy,
     NS.rdfs.label,
     NS.dc.title,
+    NS.dcterms.description,
     NS.exif.width,
     NS.exif.height,
     NS.oa.exact
