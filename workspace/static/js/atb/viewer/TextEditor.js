@@ -607,25 +607,27 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
     var resource = this.databroker.getResource(uri);
 
     if (resource.hasType('dctypes:Text')) {
-        this.resourceId = resource.getUri();
-        this.uri = resource.getUri();
-        this.setDisplayTitle(this.databroker.dataModel.getTitle(resource));
+        resource.defer().done(function() {
+            this.resourceId = resource.getUri();
+            this.uri = resource.getUri();
+            this.setDisplayTitle(this.databroker.dataModel.getTitle(resource));
 
-        this.databroker.dataModel.textContents(resource, function(contents, error) {
-            if (contents || this.databroker.dataModel.getTitle(resource)) {
-                this.setHtml(contents);
+            this.databroker.dataModel.textContents(resource, function(contents, error) {
+                if (contents || this.databroker.dataModel.getTitle(resource)) {
+                    this.setHtml(contents);
 
-                var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
-                textEditorAnnotate.addListenersToAllHighlights();
-                this._addHighlightListenersWhenUneditable();
+                    var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
+                    textEditorAnnotate.addListenersToAllHighlights();
+                    this._addHighlightListenersWhenUneditable();
 
-                if (opt_doAfter) {
-                    opt_doAfter();
+                    if (opt_doAfter) {
+                        opt_doAfter();
+                    }
                 }
-            }
-            else {
-                console.error(error);
-            }
+                else {
+                    console.error(error);
+                }
+            }.bind(this));
         }.bind(this));
 
         this.resource = resource;

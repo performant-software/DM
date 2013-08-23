@@ -128,54 +128,84 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
 
 sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {
     var resource = this.databroker.getResource(uri);
+
     var dataModel = this.databroker.dataModel;
+    var newQuadStore = this.databroker.newQuadStore;
+    var deletedQuadsStore = this.databroker.deletedQuadsStore;
+    var projectController = this.databroker.projectController;
+    var currentProject = projectController.currentProject;
+    var PERMISSIONS = sc.data.ProjectController.PERMISSIONS;
+    var VOCABULARY = sc.data.DataModel.VOCABULARY;
 
     var resType;
     var quadsToPost = [];
     var quadsToRemove = [];
     var url;
 
-    if (resource.hasType('dctypes:Text')) {
+    if (resource.hasAnyType(VOCABULARY.textTypes)) {
         resType = sc.data.SyncService.RESTYPE.text;
 
         quadsToPost = this.databroker.dataModel.findQuadsToSyncForText(resource);
         // The back end just overwrites with new data for texts, so we can just ignore quad deletion
-        this.databroker.newQuadStore.removeQuads(this.databroker.dataModel.findQuadsToSyncForText(resource, this.databroker.newQuadStore));
-        this.databroker.deletedQuadsStore.removeQuads(this.databroker.dataModel.findQuadsToSyncForText(resource, this.databroker.deletedQuadsStore));
+        newQuadStore.removeQuads(dataModel.findQuadsToSyncForText(resource, newQuadStore));
+        deletedQuadsStore.removeQuads(dataModel.findQuadsToSyncForText(resource, deletedQuadsStore));
 
-        url = this.restUrl(this.databroker.projectController.currentProject.uri, resType,
-                           sc.data.Term.unwrapUri(uri), null);
+        url = this.restUrl(currentProject.uri, resType, sc.data.Term.unwrapUri(uri), null);
+    }
+    else if (resource.hasAnyType(VOCABULARY.canvasTypes)) {
+        resType = sc.data.SyncService.RESTYPE.project;
+
+        quadsToPost = newQuadStore.query(resource.bracketedUri, null, null, null);
+        quadsToRemove = deletedQuadsStore(resource.bracketedUri, null, null, null);
+
+        url = this.restUrl(currentProject.uri, resType, null, null);
+        if (method == 'POST') {
+            method = 'PUT'
+        }
+    }
+    else if (resource.hasType('oa:SvgSelector')) {
+        resType = sc.data.SyncService.RESTYPE.project;
+
+        quadsToPost = dataModel.findQuadsToSyncForSvgSelector(resource, newQuadStore);
+        quadsToRemove = dataModel.findQuadsToSyncForSvgSelector(resource, deletedQuadsStore);
+
+        url = this.restUrl(currentProject.uri, resType, null, null);
+        if (method == 'POST') {
+            method = 'PUT'
+        }
     }
     else if (resource.hasType('oa:Annotation')) {
-        resType = sc.data.SyncService.RESTYPE.annotation;
+        resType = sc.data.SyncService.RESTYPE.project;
 
         quadsToPost = dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
-        // The back end just overwrites with new data for texts, so we can just ignore quad deletion
-        this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri, null, null, null);
+        quadsToRemove = dataModel.findQuadsToSyncForAnno(resource.bracketedUri, deletedQuadsStore);
 
-        url = this.restUrl(this.databroker.projectController.currentProject.uri, resType, null, null);
+        url = this.restUrl(currentProject.uri, resType, null, null);
+        if (method == 'POST') {
+            method = 'PUT'
+        }
     }
     else if (resource.hasType('dm:Project') &&
-        this.databroker.projectController.userHasPermissionOverProject(null, resource, sc.data.ProjectController.PERMISSIONS.update)) {
+        projectController.userHasPermissionOverProject(null, resource, PERMISSIONS.update)) {
         var resType = sc.data.SyncService.RESTYPE.project;
 
-        quadsToPost = dataModel.findQuadsToSyncForProject(resource, this.databroker.newQuadStore);
-        quadsToRemove = dataModel.findQuadsToSyncForProject(resource, this.databroker.deletedQuadsStore);
+        quadsToPost = dataModel.findQuadsToSyncForProject(resource, newQuadStore);
+        quadsToRemove = dataModel.findQuadsToSyncForProject(resource, deletedQuadsStore);
 
-        url = this.restUrl(this.databroker.projectController.currentProject.uri, resType, null, null);
+        url = this.restUrl(currentProject.uri, resType, null, null);
         if (method == 'POST') {
             method = 'PUT'
         }
     }
     else if (resource.hasType('foaf:Agent')){
         resType = sc.data.SyncService.RESTYPE.user;
-        quadsToPost = dataModel.findQuadsToSyncForUser(resource, this.databroker.newQuadStore)
-        quadsToRemove = dataModel.findQuadsToSyncForUser(resource, this.databroker.deletedQuadsStore)
+        quadsToPost = dataModel.findQuadsToSyncForUser(resource, newQuadStore)
+        quadsToRemove = dataModel.findQuadsToSyncForUser(resource, deletedQuadsStore)
 
         var username = resource.uri.split("/").pop()
         url = this.restUrl(null, resType, username, null) + "/";
     }
-    else if (resource.hasAnyType('oa:SpecificResource', 'oa:TextQuoteSelector', 'oa:SvgSelector')) {
+    else if (resource.hasAnyType('oa:SpecificResource', 'oa:TextQuoteSelector')) {
         //pass, these should be synced with either texts or annotations
     }
     else {
