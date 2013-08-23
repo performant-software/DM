@@ -153,7 +153,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         // The back end just overwrites with new data for texts, so we can just ignore quad deletion
         this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri, null, null, null);
 
-        url = this.restUrl(this.projectController.currentProject.uri, resType, null, null);
+        url = this.restUrl(this.databroker.projectController.currentProject.uri, resType, null, null);
     }
     else if (resource.hasType('dm:Project') &&
         this.databroker.projectController.userHasPermissionOverProject(null, resource, sc.data.ProjectController.PERMISSIONS.update)) {
