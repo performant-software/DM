@@ -15,6 +15,14 @@ urlpatterns = patterns('',
         semantic_store.views.project_texts, 
         name="semantic_store_project_texts"),
 
+    url(r'^projects/(?P<project_uri>.+)/canvases(?:/(?P<canvas_uri>.+))?/?$',
+        semantic_store.views.remove_project_canvas_triples,
+        name="semantic_store_project_canvases_remove_triples"),
+
+    url(r'^projects/(?P<project_uri>.+)/canvases(?:/(?P<canvas_uri>.+))?/?$',
+        semantic_store.views.project_canvases,
+        name="semantic_store_project_canvases"),
+
     url(r'^projects/(?P<uri>.+)/resources(?:/(?P<resource_identifier>.+))?/?$', 
         semantic_store.views.projects, 
         name="semantic_store_project_resources"),
