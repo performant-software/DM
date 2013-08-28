@@ -37,25 +37,32 @@ def accept_mimetypes(accept_string):
 def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
     bind_namespaces(graph)
 
+    def serialization(format, mimetype):
+        body = graph.serialize(format=format)
+
+        if close_graph:
+            graph.close()
+
+        return HttpResponse(body, mimetype=mimetype, **kwargs)
+
     mimetypes = accept_mimetypes(request.META['HTTP_ACCEPT'])
 
+    try:
+        mimetype = accept_mimetypes(request.META['HTTP_ACCEPT']).next()
+    except StopIteration:
+        pass
+    else:
+        format = mimetype[mimetype.rfind('/') + 1:].strip().lower()
+        if format == 'html':
+            return serialization('turtle', 'text/turtle')
+
     for mimetype in mimetypes:
-        format = mimetype[mimetype.rfind('/') + 1:].strip()
+        format = mimetype[mimetype.rfind('/') + 1:].strip().lower()
 
         if format in RDFLIB_SERIALIZER_FORMATS:
-            serialization = graph.serialize(format=format)
+            return serialization(format, mimetype)
 
-            if close_graph:
-                graph.close()
-
-            return HttpResponse(serialization, mimetype=mimetype, **kwargs)
-
-    serialization = graph.serialize(format='turtle')
-
-    if close_graph:
-        graph.close()
-
-    return HttpResponse(serialization, mimetype='text/turtle', **kwargs)
+    return serialization('turtle', 'text/turtle')
 
 def parse_into_graph(graph=None, **kwargs):
     if graph is None:
