@@ -1,24 +1,82 @@
 from django.contrib.auth.models import User
-
-from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.db import transaction, IntegrityError
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
 
-from rdflib.graph import Graph, URIRef, ConjunctiveGraph
+from rdflib import Graph, URIRef, ConjunctiveGraph, Literal
 from rdflib.exceptions import ParserError
 
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import bind_namespaces,NS
 from semantic_store import uris
 from semantic_store.utils import negotiated_graph_response, parse_request_into_graph, metadata_triples
-
-PERMISSION_PREDICATES = (
-    NS.perm.hasPermissionOver,
-    NS.perm.mayRead,
-    NS.perm.mayUpdate,
-    NS.perm.mayDelete,
-    NS.perm.mayAugment,
-    NS.perm.mayAdminister
+from semantic_store.models import ProjectPermission
+from semantic_store.permissions import (
+    PERMISSION_URIS_BY_MODEL_VALUE,
+    PERMISSION_MODEL_VALUES_BY_URI,
+    PERMISSION_PREDICATES,
+    grant_read_permissions,
+    grant_write_permissions,
+    grant_admin_permissions,
+    is_unowned_project,
+    has_permission_over
 )
+
+USER_GRAPH_IDENTIFIER = URIRef('http://dm.drew.edu/store/users')
+
+def user_metadata_graph(username=None, user=None):
+    if user is None:
+        user = User.objects.get(username=username)
+    if username is None:
+        username = user.username
+
+    graph = Graph()
+    user_uri = URIRef(uris.uri('semantic_store_users', username=username))
+
+    graph.add((user_uri, NS.rdf.type, NS.foaf.Agent))
+    graph.add((user_uri, NS.rdfs.label, Literal(username)))
+
+    if user.email:
+        graph.add((user_uri, NS.foaf.mbox, URIRef("mailto:" + user.email)))
+
+    return graph
+
+def user_graph(request, username=None, user=None):
+    if user is None:
+        user = User.objects.get(username=username)
+    if username is None:
+        username = user.username
+
+    user_graph = Graph(store=rdfstore(), identifier=USER_GRAPH_IDENTIFIER)
+
+    user_uri = URIRef(uris.uri('semantic_store_users', username=username))
+    graph = Graph()
+
+    graph += user_metadata_graph(user=user)
+
+    graph += user_graph.triples((user_uri, NS.dm.lastOpenProject, None)):
+
+    for permission in ProjectPermission.objects.filter(user=user):
+        perm_uri = PERMISSION_URIS_BY_MODEL_VALUE[permission.permission]
+        project_uri = URIRef(permission.identifier)
+
+        graph.add((user_uri, NS.perm.hasPermissionOver, project_uri))
+        graph.add((user_uri, perm_uri, project_uri))
+
+    # Add metadata info about projects
+    for project in graph.objects(user_uri, NS.perm.hasPermissionOver):
+        project_graph_identifier = uris.uri('semantic_store_projects', uri=project)
+        project_graph = Graph(store=rdfstore(), identifier=project_graph_identifier)
+
+        project_url = uris.url(request.get_host(), "semantic_store_projects", uri=project)
+        graph.add((project, NS.ore.isDescribedBy, URIRef(project_url)))
+
+        for t in metadata_triples(project_graph, project):
+            graph.add(t)
+
+    #TODO: dm:lastOpenProject
+
+    return graph
 
 def read_user(request, username=None):
     if username:
@@ -28,29 +86,9 @@ def read_user(request, username=None):
         except Exception as e:
             return HttpResponseNotFound()
         else:
-            user_graph_identifier = uris.uri('semantic_store_users', username=username)
-            print "reading info on user with identifier %s"%user_graph_identifier
-            g = Graph(store=rdfstore(), identifier=user_graph_identifier)
+            graph = user_graph(request, user=user)
 
-            memory_graph = Graph()
-            for t in g:
-                memory_graph.add(t)
-
-            if user.email:
-                memory_graph.add((URIRef(user_graph_identifier), NS.foaf.mbox, URIRef("mailto:" + user.email)))
-
-            # Add metadata info about projects
-            for project in g.objects(None, NS.perm.hasPermissionOver):
-                project_graph_identifier = uris.uri('semantic_store_projects', uri=project)
-                project_graph = Graph(store=rdfstore(), identifier=project_graph_identifier)
-
-                project_url = uris.url(request.get_host(), "semantic_store_projects", uri=project)
-                memory_graph.add((project, NS.ore.isDescribedBy, URIRef(project_url)))
-
-                for t in metadata_triples(project_graph, project):
-                    memory_graph.add(t)
-
-            return negotiated_graph_response(request, memory_graph, close_graph=True)
+            return negotiated_graph_response(request, graph, close_graph=True)
     else:
         return read_all_users(request)
 
@@ -58,26 +96,19 @@ def read_all_users(request):
     g = Graph()
     bind_namespaces(g)
     for u in User.objects.filter():
-        user_graph_identifier = uris.uri('semantic_store_users', username=u.username)
-        user_graph = Graph(store=rdfstore(), identifier=user_graph_identifier)
-
-        for t in metadata_triples(user_graph, URIRef(user_graph_identifier)):
-            g.add(t)
-
-        user_graph.close()
+        g += user_metadata_graph(user=u)
 
     return negotiated_graph_response(request, g)
 
 def permission_updates_are_allowed(request, input_graph):
     for perm_predicate in PERMISSION_PREDICATES:
         for user, p, project in input_graph.triples((None, perm_predicate, None)):
-            has_admin_permissions = has_permission_over(request.user.username, project, NS.perm.mayAdminister)
-            is_unowned_project = (None, NS.perm.mayAdminister, project) not in ConjunctiveGraph(store=rdfstore())
+            has_admin_permissions = has_permission_over(project, user=request.user, permission=NS.perm.mayAdminister)
 
             project_graph = Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project))
             is_empty_project = (project, NS.ore.aggregates, None) not in project_graph
 
-            if not has_admin_permissions and not is_unowned_project and not is_empty_project:
+            if not has_admin_permissions and not is_unowned_project() and not is_empty_project:
                 return False
 
     return True
@@ -90,9 +121,28 @@ def update_user(request, username):
             return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
         if permission_updates_are_allowed(request, input_graph):
-            graph = update_user_graph(request, input_graph, username)
+            user_uri = URIRef(uris.uri('semantic_store_users', username=username))
+            user_graph = Graph(store=rdfstore(), identifier=USER_GRAPH_IDENTIFIER)
 
-            return negotiated_graph_response(request, graph, status=200, close_graph=True)
+            with transaction.commit_on_success():
+                try:
+                    user = User.objects.get(username=username)
+                except ObjectDoesNotExist:
+                    return HttpResponse('User %s does not exist' % (username), status=400)
+                else:
+                    for t in input_graph.triples((user_uri, NS.dm.lastOpenProject, None)):
+                        user_graph.set(t)
+
+                    for project in input_graph.objects(user_uri, NS.perm.mayRead):
+                        grant_read_permissions(project, user=user)
+
+                    for project in input_graph.objects(user_uri, NS.perm.mayUpdate):
+                        grant_write_permissions(project, user=user)
+
+                    for project in input_graph.objects(user_uri, NS.perm.mayAdminister):
+                        grant_admin_permissions(project, user=user)
+
+            return HttpResponse(status=204)
         else:
             return HttpResponseForbidden('The PUT graph contained permissions updates which were not allowed')
     else:
@@ -116,71 +166,24 @@ def is_allowed_update_triple(triple, username, request=None):
     else:
         return predicate in ALLOWED_USER_UPDATE_PREDICATES
 
-def update_user_graph(request, g, username):
-    added_graph = Graph()
-
-    with transaction.commit_on_success():
-        user = uris.uri('semantic_store_users', username=username)
-        user_graph = Graph(store=rdfstore(), identifier=user)
-
-        if URIRef(uris.uri('semantic_store_users', username=username)) == user:
-            if (user, NS.dm.lastOpenProject, None) in g:
-                user_graph.remove((user, NS.dm.lastOpenProject, None))
-
-        for triple in g.triples((user, None, None)):
-            if is_allowed_update_triple(triple, unicode(user).strip('/').split('/')[-1], request):
-                user_graph.add(triple)
-                added_graph.add(triple)
-            else:
-                print "Triple %s was rejected to be added to user graph %s" % (triple, user)
-
-    return added_graph
-
 def remove_triples_from_user(request, username):
-    g = Graph()
     removed = Graph()
+    user = User.objects.get(username=username)
 
     try:
-        parse_request_into_graph(request, g)
+        input_graph = parse_request_into_graph(request)
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-    uri = uris.uri('semantic_store_users', username=username)
-    graph = Graph(store=rdfstore(), identifier=uri)
-
     with transaction.commit_on_success():
-        for t in g:
+        for t in input_graph:
             if is_allowed_update_triple(t, username, request):
-                graph.remove(t)
                 removed.add(t)
+                user_uri, perm, project = t
+
+                revoke_permission_by_uri(perm, project, user=user)
             else:
                 print "Triple %s was rejected to be removed from user graph" % unicode(triple)
 
-    graph.close()
-    g.close()
-
-    return negotiated_graph_response(request, removed, status=200, close_graph=True)
-
-def remove_triple(username, s, p, o):
-    # todo: check validity of username? (will return false)
-    # todo: check permissions
-    with transaction.commit_on_success():
-        uri = uris.uri('semantic_store_users', username=username)
-        graph = Graph(store=rdfstore(), identifier=uri)
-        if ((s,p,o)) in graph:
-            graph.remove((s,p,o))
-            graph.close()
-            return True
-    graph.close()
-    return False
-
-def has_permission_over(username, project_uri, permission=NS.perm.hasPermissionOver):
-    user_uri = URIRef(uris.uri('semantic_store_users', username=username))
-    user_graph = Graph(store=rdfstore(), identifier=user_uri)
-
-    ret = (user_uri, URIRef(permission), URIRef(project_uri)) in user_graph
-
-    user_graph.close()
-
-    return ret
+    return HttpResponse(status=204)
 
