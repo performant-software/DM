@@ -54,7 +54,7 @@ def user_graph(request, username=None, user=None):
 
     graph += user_metadata_graph(user=user)
 
-    graph += user_graph.triples((user_uri, NS.dm.lastOpenProject, None)):
+    graph += user_graph.triples((user_uri, NS.dm.lastOpenProject, None))
 
     for permission in ProjectPermission.objects.filter(user=user):
         perm_uri = PERMISSION_URIS_BY_MODEL_VALUE[permission.permission]
