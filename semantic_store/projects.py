@@ -19,8 +19,6 @@ from semantic_store import permissions
 
 from datetime import datetime
 
-from time import time
-
 PROJECT_TYPES = (NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project)
 
 def create_project_from_request(request):
@@ -67,6 +65,7 @@ def create_project(g, host):
                 project_g.remove(t)
 
             add_project_types(project_g, uri)
+            build_project_metadata_graph(uri)
 
         username = user.split("/")[-1]
         permissions.grant_full_project_permissions(username, uri)
@@ -81,6 +80,32 @@ def add_is_described_bys(request, project_uri, graph):
     for canvas in graph.subjects(NS.rdf.type, NS.sc.Canvas):
         canvas_url = uris.url(request.get_host(), "semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas)
         graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
+
+def build_project_metadata_graph(project_uri):
+    metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+    project_graph = Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project_uri))
+    project_memory_graph = Graph()
+    project_memory_graph += project_graph
+
+    with transaction.commit_on_success():
+        for t in metadata_triples(project_memory_graph, project_uri):
+            metadata_graph.add(t)
+
+        for aggregate_uri in project_memory_graph.objects(project_uri, NS.ore.aggregates):
+            metadata_graph.add((project_uri, NS.ore.aggregates, aggregate_uri))
+
+            if ((aggregate_uri, NS.rdf.type, NS.sc.Canvas) in project_memory_graph or
+                (aggregate_uri, NS.rdf.type, NS.dms.Canvas) in project_memory_graph):
+                for t in canvases.canvas_and_images_graph(project_memory_graph, aggregate_uri):
+                    metadata_graph.add(t)
+            elif (aggregate_uri, NS.rdf.type, NS.dcmitype.Text) in project_memory_graph:
+                for t in metadata_triples(project_memory_graph, aggregate_uri):
+                    metadata_graph.add(t)
+            else:
+                for t in metadata_triples(project_memory_graph, aggregate_uri):
+                    metadata_graph.add(t)
+
+        return metadata_graph
 
 def read_project(request, project_uri):
     project_uri = URIRef(project_uri)
@@ -147,17 +172,27 @@ def update_project_graph(g, identifier, host):
 
     with transaction.commit_on_success():
         project_g = Graph(store=rdfstore(), identifier=uri)
+        project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(identifier))
 
         #Prevent duplicate metadata
         if (URIRef(identifier), NS.dc.title, None) in g:
             project_g.remove((URIRef(identifier), NS.dc.title, None))
+            project_metadata_g.remove((URIRef(identifier), NS.dc.title, None))
         if (URIRef(identifier), NS.rdfs.label, None) in g:
             project_g.remove((URIRef(identifier), NS.rdfs.label, None))
+            project_metadata_g.remove((URIRef(identifier), NS.rdfs.label, None))
         if (URIRef(identifier), NS.dcterms.description, None) in g:
             project_g.remove((URIRef(identifier), NS.dcterms.description, None))
+            project_metadata_g.remove((URIRef(identifier), NS.dcterms.description, None))
 
         for triple in g:
             project_g.add(triple)
+
+        for triple in metadata_triples(g, identifier):
+            project_metadata_g.add(triple)
+
+        for triple in g.triples((identifier, NS.ore.aggregates, None)):
+            project_metadata_g.add(triple)
 
         return project_g
 
@@ -185,11 +220,13 @@ def delete_triples_from_project(request, uri):
 
             project_uri = uris.uri('semantic_store_projects', uri=uri)
             project_g = Graph(store=rdfstore(), identifier=project_uri)
+            project_metadata_g = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(uri))
 
             with transaction.commit_on_success():
                 for t in g:
                     if t in project_g:
                         project_g.remove(t)
+                        project_metadata_g.remove(t)
                         removed.add(t)
 
             return negotiated_graph_response(request, removed, close_graph=True)

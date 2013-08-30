@@ -86,35 +86,34 @@ def update_canvas(project_uri, canvas_uri, input_graph):
     project_uri = URIRef(project_uri)
     canvas_uri = URIRef(canvas_uri)
 
-    canvas_identifier = uris.uri('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas_uri)
-    canvas_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
-
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
-    project_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
+    project_graph = Graph(store=rdfstore(), identifier=project_identifier)
+    project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
 
     with transaction.commit_on_success():
         if (canvas_uri, NS.dc.title, None) in input_graph:
-            canvas_graph.remove((canvas_uri, NS.dc.title, None))
             project_graph.remove((canvas_uri, NS.dc.title, None))
+            project_metadata_g.remove((canvas_uri, NS.dc.title, None))
         if (canvas_uri, NS.rdfs.label, None) in input_graph:
-            canvas_graph.remove((canvas_uri, NS.rdfs.label, None))
             project_graph.remove((canvas_uri, NS.rdfs.label, None))
+            project_metadata_g.remove((canvas_uri, NS.rdfs.label, None))
 
-        canvas_graph += input_graph
-        project_graph += canvas_and_images_graph(input_graph, canvas_uri)
+        project_graph += input_graph
+        project_metadata_g += canvas_and_images_graph(input_graph, canvas_uri)
 
-    return canvas_graph
+    return project_graph
 
 def remove_canvas_triples(project_uri, canvas_uri, input_graph):
-    canvas_identifier = uris.uri('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas_uri)
-    canvas_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
+    project_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
+    project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
 
     removed_graph = Graph()
 
     with transaction.commit_on_success():
         for t in input_graph:
-            if t in canvas_graph:
-                canvas_graph.remove(t)
+            if t in project_graph:
+                project_graph.remove(t)
+                project_metadata_g.remove(t)
                 removed_graph.add(t)
 
         return removed_graph
