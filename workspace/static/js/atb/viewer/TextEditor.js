@@ -186,16 +186,24 @@ atb.viewer.TextEditor.prototype.saveContents = function (
  * @param tag {Element} highlight span
  **/
 atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
-    var editorHeight = this.editorIframe.document.body.clientHeight;
+    if (this.isEditable()) {
+        var editorElement = this.editorIframe;
+        var editorHeight = this.editorIframe.document.body.clientHeight;
+        var elementVerticalOffset = jQuery(element).offset().top;
+    }
+    else {
+        var editorElement = goog.dom.getElement(this.useID);
+        var editorHeight = jQuery(editorElement).height();
+        var elementVerticalOffset = jQuery(element).offset().top - jQuery(editorElement).offset().top;
+    }
 
-    var elementVerticalOffset = jQuery(element).offset().top;
     var elementHeight = jQuery(element).outerHeight();
     var elementCenterY = Math.round(elementVerticalOffset + elementHeight / 2);
 
     var scrollTop = elementCenterY - Math.round(editorHeight / 2);
     if (scrollTop < 0) scrollTop = 0;
     
-    jQuery(this.editorIframe).scrollTop(scrollTop);
+    jQuery(editorElement).scrollTop(scrollTop);
 };
 
 atb.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (specificResource) {
