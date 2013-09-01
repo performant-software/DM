@@ -3,6 +3,8 @@ var goog = {
     require: function() {}
 };
 
+STATIC_URL = '../../'
+
 importScripts(STATIC_URL + 'js/n3/n3lexer.js');
 importScripts(STATIC_URL + 'js/n3/n3store.js');
 importScripts(STATIC_URL + 'js/n3/n3parser.js');

@@ -96,27 +96,55 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
 
     var resource = event.resource;
 
-    var eventDispatcher = this.clientApp.getEventDispatcher();
-    var resourceClickEvent = new atb.events.ResourceClick(resource.getUri(), eventDispatcher, this);
-    if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
-        var deferredResource = this.databroker.getDeferredResource(uri);
+    var loadInSameSpot = false;
 
-        var viewerGrid = this.clientApp.viewerGrid;
-        var container = new atb.viewer.ViewerContainer(this.domHelper);
-        viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
-
-        if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
-
-        var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
-        container.setViewer(viewer);
-
-        deferredResource.done(function() {
-            viewer.loadResourceByUri(uri);
-            if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
-                if (viewer.makeUneditable) viewer.makeUneditable();
+    if (resource.hasType('oa:SpecificResource')) {
+        var selectorUri = resource.getOneProperty('oa:hasSelector');
+        if (selectorUri) {
+            var selector = this.databroker.getResource(selectorUri);
+            var text = selector.getOneProperty('oa:exact');
+            if (text == 'Previous' || text == 'Next') {
+                loadInSameSpot = true;
             }
-            container.autoResize();
-        }.bind(this));
+        }
+    }
+
+    var viewerContainer = viewerContainersByUri.get(uri);
+
+    if (viewerContainer && viewerContainer.grid) {
+        scrollIntoView(viewerContainer.getElement());
+    }
+    else {
+        var eventDispatcher = this.clientApp.getEventDispatcher();
+        var resourceClickEvent = new atb.events.ResourceClick(resource.getUri(), eventDispatcher, this);
+        if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
+            var deferredResource = this.databroker.getDeferredResource(uri);
+
+            var viewerGrid = this.clientApp.viewerGrid;
+            var container = new atb.viewer.ViewerContainer(this.domHelper);
+
+            if (loadInSameSpot) {
+                var position = viewerGrid.indexOf(this.viewer.container);
+                this.viewer.container.close();
+                viewerGrid.addViewerContainerAt(container, position);
+            }
+            else {
+                viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
+            }
+
+            if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+
+            var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
+            container.setViewer(viewer);
+
+            deferredResource.done(function() {
+                viewer.loadResourceByUri(uri);
+                if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
+                    if (viewer.makeUneditable) viewer.makeUneditable();
+                }
+                container.autoResize();
+            }.bind(this));
+        }
     }
 };
 

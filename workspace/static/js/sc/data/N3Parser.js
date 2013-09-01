@@ -19,13 +19,13 @@ sc.data.N3Parser = function(databroker) {
 
     if (Worker != null && Blob != null) {
         try {
-            goog.asserts.assert(goog.global.STATIC_URL != null);
-            // Apologies for the inline code, but it's necessary due to cross-site restrictions
-            this.workerBlob = new Blob([
-                "var STATIC_URL = '" + goog.global.STATIC_URL.replace(/'/g, "\\'") + "';\n\
-                importScripts(STATIC_URL + 'js/sc/data/N3ParserWorker.js');\n"
-            ], {'type': 'text/javascript'});
-            this.workerBlobUrl = window.URL.createObjectURL(this.workerBlob);
+            // goog.asserts.assert(goog.global.STATIC_URL != null);
+            // // Apologies for the inline code, but it's necessary due to cross-site restrictions
+            // this.workerBlob = new Blob([
+            //     "var STATIC_URL = '" + goog.global.STATIC_URL.replace(/'/g, "\\'") + "';\n\
+            //     importScripts(STATIC_URL + 'js/sc/data/N3ParserWorker.js');\n"
+            // ], {'type': 'text/javascript'});
+            // this.workerBlobUrl = window.URL.createObjectURL(this.workerBlob);
 
             this.webWorkerEnabled = true;
         }
@@ -75,7 +75,7 @@ sc.data.N3Parser.prototype._n3ParserHandler = function(error, triple, handler) {
 };
 
 sc.data.N3Parser.prototype.parseInWorker = function(data, context, handler) {
-    var worker = new Worker(this.workerBlobUrl);
+    var worker = new Worker('supporting_files/js/N3ParserWorker.js');
 
     worker.addEventListener('error', function(e) {
         console.warn('Web worker parsing failed', e, 'reverting to standard implementation');

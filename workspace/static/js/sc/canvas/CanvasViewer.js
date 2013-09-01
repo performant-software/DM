@@ -147,8 +147,8 @@ sc.canvas.CanvasViewer.prototype.getDisplaySize;
 sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY = 1.0;
 sc.canvas.CanvasViewer.MARQUEE_MARKER_HIDDEN_OPACITY = 1.0;
 
-sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function() {
-    var marqueeCanvas = this.marqueeViewport.canvas;
+sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function(opt_canvas) {
+    var marqueeCanvas = opt_canvas || this.marqueeViewport.canvas;
 
     goog.structs.forEach(marqueeCanvas.objectsByUri, function(obj, uri) {
         if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type)) {
@@ -202,7 +202,7 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
     );
     
     deferredMarqueeCanvas.done(function (marqueeCanvas) {
-        this._adjustMarqueeFeatureStyles();
+        this._adjustMarqueeFeatureStyles(marqueeCanvas);
 
         canvas.addEventListener(
             ['featureAdded', 'featureModified', 'featureRemoved'],

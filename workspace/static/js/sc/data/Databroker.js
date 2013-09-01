@@ -508,38 +508,52 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToReque
             deferredResource.resolveWith(this, [this.getResource(uri), this]);
         }
         else {
-            if (this.knowsAboutResource(uri)) {
-                deferredResource.notifyWith(this, [this.getResource(uri), this]);
-            }
-
-            var deferredCollection = new sc.util.DeferredCollection();
-
-            var urlsToRequestArr = urlsToRequest.getValues();
-            for (var i = 0, len = urlsToRequestArr.length; i < len; i++) {
-                var url = urlsToRequestArr[i];
-
-                var jqXhr = this.fetchRdf(url, function(rdf, data) {
-                    deferredResource.notifyWith(this, [self.getResource(uri), self]);
-                }, true);
-                deferredCollection.add(jqXhr);
-            }
-
-            deferredCollection.allComplete(function(deferreds, collection) {
-                if (! collection.areAllFailed()) {
-                    deferredResource.resolveWith(this, [self.getResource(uri), self]);
-                }
-            });
-
-            deferredCollection.allFailed(function(deferreds, collection) {
-                var resource = self.getResource(uri);
-
-                if (resource.hasPredicate('ore:isDescribedBy')) {
-                    deferredResource.rejectWith(this, [resource, self]);
+            var alreadyReceived = goog.structs.every(urlsToRequest, function(url) {
+                if (this.receivedUrls.contains(url)) {
+                    return true;
                 }
                 else {
-                    deferredResource.resolveWith(this, [resource, self]);
+                    return false;
                 }
-            });
+            }, this);
+
+            if (alreadyReceived) {
+                deferredResource.resolveWith(this, [this.getResource(uri), this]);
+            }
+            else {
+                if (this.knowsAboutResource(uri)) {
+                    deferredResource.notifyWith(this, [this.getResource(uri), this]);
+                }
+
+                var deferredCollection = new sc.util.DeferredCollection();
+
+                var urlsToRequestArr = urlsToRequest.getValues();
+                for (var i = 0, len = urlsToRequestArr.length; i < len; i++) {
+                    var url = urlsToRequestArr[i];
+
+                    var jqXhr = this.fetchRdf(url, function(rdf, data) {
+                        deferredResource.notifyWith(this, [self.getResource(uri), self]);
+                    }, true);
+                    deferredCollection.add(jqXhr);
+                }
+
+                deferredCollection.allComplete(function(deferreds, collection) {
+                    if (! collection.areAllFailed()) {
+                        deferredResource.resolveWith(this, [self.getResource(uri), self]);
+                    }
+                });
+
+                deferredCollection.allFailed(function(deferreds, collection) {
+                    var resource = self.getResource(uri);
+
+                    if (resource.hasPredicate('ore:isDescribedBy')) {
+                        deferredResource.rejectWith(this, [resource, self]);
+                    }
+                    else {
+                        deferredResource.resolveWith(this, [resource, self]);
+                    }
+                });
+            }
         }
     }.bind(this), 0);
 
