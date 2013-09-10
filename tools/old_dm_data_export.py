@@ -457,25 +457,31 @@ def handle_annos(user, parent_graph):
     return graph
 
 def correct_selector_annos(graph):
+    corrected_annos = []
+
     res = list(graph.query("""SELECT ?anno ?selector ?specific_resource WHERE {
         ?anno a oa:Annotation .
         ?anno oa:hasTarget ?selector .
-        ?selector a oa:SvgSelector .
+        { ?selector a oa:SvgSelector . } UNION { ?selector a oa:TextQuoteSelector . } .
         ?specific_resource oa:hasSelector ?selector .
     }""", initNs={'oa': OA}))
     for anno, selector, specific_resource in res:
         graph.remove((anno, OA.hasTarget, selector))
         graph.add((anno, OA.hasTarget, specific_resource))
+        corrected_annos.append(anno)
 
     res = list(graph.query("""SELECT ?anno ?selector ?specific_resource WHERE {
         ?anno a oa:Annotation .
         ?anno oa:hasBody ?selector .
-        ?selector a oa:SvgSelector .
+        { ?selector a oa:SvgSelector . } UNION { ?selector a oa:TextQuoteSelector . } .
         ?specific_resource oa:hasSelector ?selector .
     }""", initNs={'oa': OA}))
     for anno, selector, specific_resource in res:
         graph.remove((anno, OA.hasBody, selector))
         graph.add((anno, OA.hasBody, specific_resource))
+        corrected_annos.append(anno)
+
+    return corrected_annos
 
 
 # Create the graph with data about a user and their default project
