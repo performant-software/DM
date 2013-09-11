@@ -28,6 +28,17 @@ def sanitized_content(content):
     for script in soup.find_all('script'):
         script.extract()
 
+    # Scrub javascript event attributes
+    for tag in soup.find_all(True):
+        for attr in tag.attrs.keys():
+            if attr.startswith('on'):
+                del tag.attrs[attr]
+
+    # Scrub javascript links
+    for a in soup.find_all('a'):
+        if 'href' in a.attrs and a['href'].startswith('javascript:'):
+            a.replace_with(unicode(s) for s in a.contents)
+
     content = ''.join(unicode(s) for s in soup.find('body').contents)
 
     return content
