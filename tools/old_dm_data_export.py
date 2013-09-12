@@ -95,6 +95,12 @@ def complete_user_graph(name):
 
     correct_selector_annos(everything_graph)
 
+    broken_specific_resources = remove_broken_specific_resources(everything_graph)
+    print "Removed %s broken specific resources" % len(broken_specific_resources)
+
+    empty_annos, broken_triples = remove_broken_annotations(everything_graph)
+    print "Removed %s broken annotation targets and bodies, and %s empty annos" % (len(broken_triples), len(empty_annos))
+
     return everything_graph
 
 def save_user_graph(username, path):
@@ -127,6 +133,40 @@ def export_all_users(path_to_export_folder):
         user_graph.serialize(os.path.join(path_to_export_folder, "%s.ttl" % name), format="turtle")
         print "  Done."
 
+
+def remove_broken_specific_resources(graph):
+    broken_specific_resources = []
+
+    for specific_resource in graph.subjects(RDF.type, OA.SpecificResource):
+        selector = graph.value(specific_resource, OA.hasSelector)
+        source = graph.value(specific_resource, OA.hasSource)
+
+        if (selector, None, None) not in graph or (source, None, None) not in graph:
+            broken_specific_resources.append(specific_resource)
+            graph.remove((specific_resource, None, None))
+
+    return broken_specific_resources
+
+def remove_broken_annotations(graph):
+    empty_annos = []
+    broken_triples = []
+
+    for anno in graph.subjects(RDF.type, OA.Annotation):
+        for target in graph.objects(anno, OA.hasTarget):
+            if (target, None, None) not in graph:
+                graph.remove((anno, OA.hasTarget, target))
+                broken_triples.append((anno, OA.hasTarget, target))
+
+        for body in graph.objects(anno, OA.hasBody):
+            if (body, None, None) not in graph:
+                graph.remove((anno, OA.hasBody, body))
+                broken_triples.append((anno, OA.hasBody, body))
+
+        if (anno, OA.hasBody, None) not in graph and (anno, OA.hasTarget, None) not in graph:
+            graph.remove((anno, None, None))
+            empty_annos.append(anno)
+
+    return empty_annos, broken_triples
 
 # Canvases, although gotten by username, are structured as global data
 # ((only gotten by username to shorten query time for testing purposes))
