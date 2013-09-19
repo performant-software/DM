@@ -81,7 +81,7 @@ def add_is_described_bys(request, project_uri, graph):
         canvas_url = uris.url(request.get_host(), "semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas)
         graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
-def build_project_metadata_graph(project_uri):
+def read_project(project_uri):
     metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
     project_graph = Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project_uri))
     project_memory_graph = Graph()
@@ -112,25 +112,10 @@ def read_project(request, project_uri):
 
     if request.user.is_authenticated():
         if permissions.has_permission_over(project_uri, user=request.user, permission=NS.perm.mayRead):
-            uri = uris.uri('semantic_store_projects', uri=project_uri)
-            store_g = Graph(store=rdfstore(), identifier=uri)
-
-            memory_graph = Graph()
-            memory_graph += store_g
+            identifier = uris.uri('semantic_store_projects', uri=project_uri)
+            store_metadata_graph = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
             ret_graph = Graph()
-            ret_graph += memory_graph.triples((project_uri, None, None))
-
-            for aggregate_uri in ret_graph.objects(project_uri, NS.ore.aggregates):
-                ret_graph += metadata_triples(memory_graph, aggregate_uri)
-
-                # if (aggregate_uri, NS.rdf.type, NS.sc.Canvas) in memory_graph:
-                #     canvases.canvas_and_images_graph(memory_graph, aggregate_uri)
-                if (aggregate_uri, NS.rdf.type, NS.dcmitype.Text) in memory_graph:
-                    pass # already taken care of with metadata_triples
-                elif (aggregate_uri, NS.rdf.type, NS.ore.Aggregation) in memory_graph:
-                    ret_graph += memory_graph.triples((aggregate_uri, None, None))
-
-            ret_graph += canvases.all_canvases_and_images_graph(memory_graph)
+            ret_graph += store_metadata_graph
 
             for permission in ProjectPermission.objects.filter(identifier=project_uri):
                 user = permission.user
