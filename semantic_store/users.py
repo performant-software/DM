@@ -19,7 +19,8 @@ from semantic_store.permissions import (
     grant_write_permissions,
     grant_admin_permissions,
     is_unowned_project,
-    has_permission_over
+    has_permission_over,
+    revoke_permission_by_uri
 )
 
 USER_GRAPH_IDENTIFIER = URIRef('http://dm.drew.edu/store/users')
