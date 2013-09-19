@@ -211,8 +211,8 @@ def delete_triples_from_project(request, uri):
                 for t in g:
                     if t in project_g:
                         project_g.remove(t)
-                        project_metadata_g.remove(t)
                         removed.add(t)
+                    project_metadata_g.remove(t)
 
             return negotiated_graph_response(request, removed, close_graph=True)
         else:
