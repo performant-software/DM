@@ -507,6 +507,7 @@ sc.ProjectViewer.prototype._onProjectSelected = function(event) {
 
 sc.ProjectViewer.prototype.openViewerForResource = function(resource) {
     var resource = this.databroker.getResource(resource);
+    var deferredResource = resource.defer();
 
     var container = new atb.viewer.ViewerContainer(this.domHelper);
     this.viewerGrid.addViewerContainer(container);
@@ -521,8 +522,10 @@ sc.ProjectViewer.prototype.openViewerForResource = function(resource) {
         viewer.makeUneditable();
     }
 
-    viewer.loadResourceByUri(resource.uri);
-    container.autoResize();
+    deferredResource.done(function() {
+        viewer.loadResourceByUri(resource.uri);
+        container.autoResize();
+    }.bind(this));
 };
 
 sc.ProjectViewer.prototype._handleWorkingResourcesOpenRequest = function(event) {
