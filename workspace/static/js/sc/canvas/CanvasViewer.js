@@ -153,7 +153,7 @@ sc.canvas.CanvasViewer.prototype._adjustMarqueeFeatureStyles = function() {
     goog.structs.forEach(marqueeCanvas.objectsByUri, function(obj, uri) {
         if (sc.canvas.FabricCanvas.MARKER_TYPES.contains(obj.type)) {
             var mainObject = this.mainViewport.canvas.getFabricObjectByUri(uri);
-            if (mainObject.visible === true) {
+            if (mainObject && mainObject.visible === true) {
                 obj.set('opacity', sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY);
             }
             else {
