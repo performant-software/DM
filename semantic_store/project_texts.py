@@ -37,7 +37,7 @@ def sanitized_content(content):
 #  graph object instead of a request object
 def create_project_text_from_request(request, project_uri):
     if request.user.is_authenticated():
-        if has_permission_over(request.user.username, project_uri, NS.perm.mayUpdate):
+        if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 g = parse_request_into_graph(request)
             except ParserError as e:
@@ -130,7 +130,7 @@ def update_project_text(g, p_uri, t_uri, user):
 #  graph object instead of a request object
 def update_project_text_from_request(request, project_uri, text_uri):
     if request.user.is_authenticated():
-        if has_permission_over(request.user.username, project_uri, NS.perm.mayUpdate):
+        if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 g = parse_request_into_graph(request)
             except ParserError:
