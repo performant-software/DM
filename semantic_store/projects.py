@@ -81,7 +81,7 @@ def add_is_described_bys(request, project_uri, graph):
         canvas_url = uris.url(request.get_host(), "semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas)
         graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
-def read_project(project_uri):
+def build_project_metadata_graph(project_uri):
     metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
     project_graph = Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project_uri))
     project_memory_graph = Graph()
