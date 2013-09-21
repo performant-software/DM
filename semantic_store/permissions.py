@@ -34,10 +34,8 @@ def grant_permission_by_model_code(model_perm, project_uri, username=None, user=
     if username is None:
         username = user.username
 
-    try:
+    if ProjectPermission.objects.filter(user=user, identifier=project_uri, permission=model_perm).count() == 0:
         ProjectPermission.objects.create(user=user, identifier=project_uri, permission=model_perm)
-    except IntegrityError:
-        pass
 
 def grant_read_permissions(project_uri, username=None, user=None):
     grant_permission_by_model_code('r', project_uri, username, user)
