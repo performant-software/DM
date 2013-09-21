@@ -438,17 +438,11 @@ def handle_annos(user):
 
         target_resources = []
         for target in Triple.objects.filter(subj=r_id, pred='oac:hasTarget', most_recent=True, valid=True):
-            try:
-                target_resources.append(Resource.objects.get(r_id=target.obj))
-            except ObjectDoesNotExist:
-                pass
+            target_resources += Resource.objects.filter(r_id=target.obj)
 
         body_resources = []
         for body in Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True):
-            try:
-                body_resources.append(Resource.objects.get(r_id=body.obj))
-            except ObjectDoesNotExist:
-                pass
+            body_resources += Resource.objects.filter(r_id=body.obj)
 
         if (len(target_resources) > 0) and (len(body_resources) > 0):
             graph.add((uri, RDF.type, OA.Annotation))
