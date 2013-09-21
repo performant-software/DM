@@ -45,24 +45,22 @@ def create_project(g, host):
 
         user_obj = User.objects.get(username=user.strip('/').split('/')[-1])
 
+        for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
+            text_graph = Graph()
+            text_graph += g.triples((text_uri, None, None))
+            project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
+
         with transaction.commit_on_success():
             for t in g:
                 project_g.add(t)
 
-            for aggregate_uri in g.objects(uri, NS.ore.aggregates):
-                if (aggregate_uri, NS.rdf.type, NS.dcmitype.Text) in g:
-                    project_g.remove((aggregate_uri, NS.cnt.chars, None))
-
-                    text_graph = Graph()
-                    for t in g.triples((aggregate_uri, None, None)):
-                        text_graph.add(t)
-                    project_texts.update_project_text(text_graph, uri, aggregate_uri, user_obj)
+            for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
+                project_g.remove((text_uri, NS.cnt.chars, None))
 
             url = uris.url(host, 'semantic_store_projects', uri=uri)
             project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
-            for t in g.triples((user, None, None)):
-                project_g.remove(t)
+            project_g.remove((user, None, None))
 
             add_project_types(project_g, uri)
             build_project_metadata_graph(uri)
