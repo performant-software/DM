@@ -117,6 +117,8 @@ def read_project(request, project_uri):
             ret_graph = Graph()
             ret_graph += store_metadata_graph
 
+            add_is_described_bys(request, project_uri, ret_graph)
+
             for permission in ProjectPermission.objects.filter(identifier=project_uri):
                 user = permission.user
                 user_uri = uris.uri('semantic_store_users', username=user.username)
