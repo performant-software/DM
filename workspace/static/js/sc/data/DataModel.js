@@ -448,7 +448,7 @@ sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_delete
     anno = this.databroker.getResource(anno);
     body = this.databroker.getResource(body);
 
-    anno.deleteProperty('oa:hasBody', target);
+    anno.deleteProperty('oa:hasBody', body);
 
     if (opt_deleteIfEmpty) {
         if (anno.getProperties('oa:hasBody').length == 0 && anno.getProperties('oa:hasTarget').length <= 1) {
