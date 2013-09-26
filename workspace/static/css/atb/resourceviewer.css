@@ -152,10 +152,12 @@
 }
 
 .atb-markersummary .atb-resourcesummary-panel-ctrls {
-    background-image: url(../../img/50pctOpacityWhite.png);
+    /*background-image: url(../../img/50pctOpacityWhite.png);
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
-    border-radius: 2px;
+    border-radius: 2px;*/
+    position: absolute;
+    right: 10px;
 }
 
 

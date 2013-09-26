@@ -438,7 +438,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	// Check for click listeners so that they aren't fired multiple times
 	if(!goog.events.hasListener(object, goog.events.EventType.CLICK)) {
 		goog.events.listen(object, goog.events.EventType.CLICK, function(mouseEvent) {
-			event.stopPropagation();
+			mouseEvent.stopPropagation();
 
             this.selectAnnotationSpan(object, mouseEvent);
 			return this.handleHighlightClick(object, mouseEvent);
@@ -653,8 +653,11 @@ atb.viewer.TextEditorAnnotate.prototype.flashSpanHighlight = function (tag) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
+	var selectorUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(selectorUri);
+
     var eventDispatcher = this.viewer.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClick(atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag), eventDispatcher, this.viewer);
+    var event = new atb.events.ResourceClick(specificResourceUri, eventDispatcher, this.viewer);
     
     eventDispatcher.dispatchEvent(event);
 };
