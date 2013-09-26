@@ -48,7 +48,7 @@ def sanitized_content(content):
 #  graph object instead of a request object
 def create_project_text_from_request(request, project_uri):
     if request.user.is_authenticated():
-        if has_permission_over(request.user.username, project_uri, NS.perm.mayUpdate):
+        if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 g = parse_request_into_graph(request)
             except ParserError as e:
@@ -107,6 +107,7 @@ def update_project_text(g, p_uri, t_uri, user):
     # Correctly format project uri and get project graph
     project_uri = uris.uri('semantic_store_projects', uri=p_uri)
     project_g = Graph(rdfstore(), identifier=project_uri)
+    project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(p_uri))
     text_uri = URIRef(t_uri)
 
     title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or Literal("")
@@ -123,6 +124,10 @@ def update_project_text(g, p_uri, t_uri, user):
         project_g.set((text_uri, NS.dc.title, title))
         project_g.set((text_uri, NS.rdfs.label, title))
 
+        project_metadata_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
+        project_metadata_g.set((text_uri, NS.dc.title, title))
+        project_metadata_g.set((text_uri, NS.rdfs.label, title))
+
         for t in specific_resources_subgraph(g, text_uri):
             project_g.add(t)
 
@@ -136,7 +141,7 @@ def update_project_text(g, p_uri, t_uri, user):
 #  graph object instead of a request object
 def update_project_text_from_request(request, project_uri, text_uri):
     if request.user.is_authenticated():
-        if has_permission_over(request.user.username, project_uri, NS.perm.mayUpdate):
+        if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 g = parse_request_into_graph(request)
             except ParserError:
@@ -157,6 +162,7 @@ def remove_project_text(project_uri, text_uri):
     # Correctly format project uri and get project graph
     project_uri = uris.uri('semantic_store_projects', uri=project_uri)
     project_g = Graph(rdfstore(), identifier=project_uri)
+    project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(p_uri))
 
     # Make text uri a URIRef (so Graph will understand)
     text_uri = URIRef(text_uri)
@@ -168,10 +174,13 @@ def remove_project_text(project_uri, text_uri):
         for t in project_g.triples((text_uri, None, None)):
             # Delete triple about text from project graph
             project_g.remove(t)
+            project_metadata_g.remove(t)
 
         project_g.remove((URIRef(project_uri), NS.ore.aggregates, text_uri))
 
-        Text.objects.filter(identifier=text_uri).delete()
+        for text in Text.objects.filter(identifier=text_uri, valid=True).only('valid'):
+            text.valid = False
+            text.save()
 
     project_g.close()
 

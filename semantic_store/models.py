@@ -1,11 +1,19 @@
 from django.contrib.auth.models import User
 from django.db import models
-from permissions import Permission
 
 class ProjectPermission(models.Model):
-    identifier = models.CharField(max_length=2000)
-    user = models.ForeignKey(User)
-    permission = models.CharField(max_length=64, choices=Permission.choices)
+    PERMISSION_CHOICES = (
+        ('r', 'Read'),
+        ('w', 'Write'),
+        ('a', 'Administer')
+    )
+
+    identifier = models.CharField(max_length=2000, db_index=True)
+    user = models.ForeignKey(User, db_index=True)
+    permission = models.CharField(max_length=10, choices=PERMISSION_CHOICES)
+
+    class Meta:
+        unique_together = ('user', 'identifier', 'permission')
 
 class Text(models.Model):
     identifier = models.CharField(max_length=2000, db_index=True)
