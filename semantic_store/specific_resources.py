@@ -6,6 +6,7 @@ from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import metadata_triples
 from semantic_store.annotations import resource_annotation_subgraph
+from semantic_store import uris
 
 def specific_resource_subgraph(graph, specific_resource):
     specific_resource_graph = Graph()
@@ -34,14 +35,18 @@ def specific_resources_subgraph(graph, source_uri):
 
     return specific_resources_graph
 
-def read_specific_resource(project_uri, specific_resource):
+def read_specific_resource(project_uri, specific_resource, source):
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
     project_graph = Graph(store=rdfstore(), identifier=project_identifier)
 
     memory_project_graph = Graph()
     memory_project_graph += project_graph
+    graph = Graph()
 
-    graph = specific_resource_subgraph(memory_project_graph, specific_resource)
+    print len(specific_resource_subgraph(memory_project_graph, specific_resource))
+    print len(specific_resources_subgraph(memory_project_graph, source))
+
+    print len(memory_project_graph)
 
     return graph
 
