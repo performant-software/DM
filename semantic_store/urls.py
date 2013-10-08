@@ -11,13 +11,21 @@ urlpatterns = patterns('',
         semantic_store.views.project_annotations, 
         name="semantic_store_project_annotations"),
 
-    url(r'^projects/(?P<project_uri>.+)/texts(?:/(?P<text_uri>.+))?/?$', 
+    url(r'^projects/(?P<project_uri>.+)/texts(?:/(?P<text_uri>.+))/specific_resource/(?P<specific_resource>.+)$', 
+        semantic_store.views.text_specific_resource, 
+        name="semantic_store_text_specific_resource"),
+
+    url(r'^projects/(?P<project_uri>.+)/texts(?:/(?P<text_uri>.+))?/$', 
         semantic_store.views.project_texts, 
         name="semantic_store_project_texts"),
 
     url(r'^projects/(?P<project_uri>.+)/canvases(?:/(?P<canvas_uri>.+))/remove_triples$',
         semantic_store.views.remove_project_canvas_triples,
         name="semantic_store_project_canvases_remove_triples"),
+
+    url(r'^projects/(?P<project_uri>.+)/canvases(?:/(?P<canvas_uri>.+))/specific_resource/(?P<specific_resource>.+)$',
+        semantic_store.views.canvas_specific_resource,
+        name="semantic_store_canvas_specific_resource"),
 
     url(r'^projects/(?P<project_uri>.+)/canvases(?:/(?P<canvas_uri>.+))?/?$',
         semantic_store.views.project_canvases,

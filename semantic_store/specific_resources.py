@@ -33,3 +33,15 @@ def specific_resources_subgraph(graph, source_uri):
         specific_resources_graph += resource_annotation_subgraph(graph, specific_resource)
 
     return specific_resources_graph
+
+def read_specific_resource(project_uri, specific_resource):
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    project_graph = Graph(store=rdfstore(), identifier=project_identifier)
+
+    memory_project_graph = Graph()
+    memory_project_graph += project_graph
+
+    graph = specific_resource_subgraph(memory_project_graph, specific_resource)
+
+    return graph
+
