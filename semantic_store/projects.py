@@ -22,17 +22,15 @@ from datetime import datetime
 PROJECT_TYPES = (NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project)
 
 def create_project_from_request(request):
-    host = request.get_host()
-
     try:
         g = parse_request_into_graph(request)
     except ParserError as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-    create_project(g, host)
+    create_project(g)
     return HttpResponse("Successfully created the project.")
 
-def create_project(g, host):
+def create_project(g):
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
@@ -57,7 +55,7 @@ def create_project(g, host):
             for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
                 project_g.remove((text_uri, NS.cnt.chars, None))
 
-            url = uris.url(host, 'semantic_store_projects', uri=uri)
+            url = uris.url('semantic_store_projects', uri=uri)
             project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
             project_g.remove((user, None, None))
@@ -72,11 +70,11 @@ def create_project(g, host):
 
 def add_is_described_bys(request, project_uri, graph):
     for text in graph.subjects(NS.rdf.type, NS.dcmitype.Text):
-        text_url = uris.url(request.get_host(), "semantic_store_project_texts", project_uri=project_uri, text_uri=text)
+        text_url = uris.url("semantic_store_project_texts", project_uri=project_uri, text_uri=text)
         graph.add((text, NS.ore.isDescribedBy, text_url))
 
     for canvas in graph.subjects(NS.rdf.type, NS.sc.Canvas):
-        canvas_url = uris.url(request.get_host(), "semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas)
+        canvas_url = uris.url("semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas)
         graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
 def build_project_metadata_graph(project_uri):
@@ -144,7 +142,7 @@ def update_project(request, uri):
             except ParserError as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-            project_graph = update_project_graph(input_graph, uri,request.get_host())
+            project_graph = update_project_graph(input_graph, uri)
 
             return negotiated_graph_response(request, project_graph, status=201)
         else:
@@ -152,7 +150,7 @@ def update_project(request, uri):
     else:
         return HttpResponse(status=401)
 
-def update_project_graph(g, identifier, host):
+def update_project_graph(g, identifier):
     uri = uris.uri('semantic_store_projects', uri=identifier)
 
     with transaction.commit_on_success():

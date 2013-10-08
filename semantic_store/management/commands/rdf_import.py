@@ -14,19 +14,18 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('-f', '--filename', dest='filename', help='RDF file to parse'),
         make_option('-d', '--directory', dest='directory', help='Directory in which to look for RDF files to parse'),
-        make_option('--store_host', dest='store_host', help='The base uri for the store')
     )
 
     DEFAULT_PASSWORD_STRING = 'password'
 
-    def parse_file(self, filename, store_host):
+    def parse_file(self, filename):
         print '- Parsing %s' % filename
 
         graph = Graph()
         graph.parse(filename, format=guess_format(filename) or 'turtle')
 
         self.add_all_users(graph)
-        create_project(graph, store_host)
+        create_project(graph)
 
         print '-- Done.'
 
@@ -56,16 +55,12 @@ class Command(BaseCommand):
                 print "User '%s' was created successfully." % username
 
     def handle(self, filename, directory, store_host, *args, **options):
-        if not store_host:
-            print '--store_host is a required argument'
-            exit(0)
-
         if filename:
-            self.parse_file(os.path.join(os.getcwd(), filename), store_host)
+            self.parse_file(os.path.join(os.getcwd(), filename))
 
         if directory:
             qualified_directory_path = os.listdir(os.path.join(os.getcwd(), directory))
             for filename in qualified_directory_path:
                 if filename.startswith('.'):
                     continue
-                self.parse_file(os.path.join(qualified_directory_path, filename), store_host)
+                self.parse_file(os.path.join(qualified_directory_path, filename))

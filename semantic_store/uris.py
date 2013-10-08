@@ -10,9 +10,9 @@ def uri(viewname, **kwargs):
                  + reverse(viewname, kwargs=kwargs))
     return uri
 
-def url(host, viewname, **kwargs):
+def url(viewname, **kwargs):
     url = URIRef("http://" 
-                 + host
+                 + settings.STORE_HOST
                  + reverse(viewname, kwargs=kwargs))
     return url
 

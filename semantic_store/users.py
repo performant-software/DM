@@ -69,7 +69,7 @@ def user_graph(request, username=None, user=None):
         project_graph_identifier = uris.uri('semantic_store_projects', uri=project)
         project_graph = Graph(store=rdfstore(), identifier=project_graph_identifier)
 
-        project_url = uris.url(request.get_host(), "semantic_store_projects", uri=project)
+        project_url = uris.url("semantic_store_projects", uri=project)
         graph.add((project, NS.ore.isDescribedBy, URIRef(project_url)))
 
         for t in metadata_triples(project_graph, project):

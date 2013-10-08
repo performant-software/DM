@@ -141,7 +141,6 @@ def resources(request, uri, ext=None):
 def import_old_data(request):
     everything_graph = Graph()
     bind_namespaces(everything_graph)
-    host = request.get_host()
 
     # Either gather post data (must be one project/user graph at a time)
     if request.method == 'POST':
@@ -152,7 +151,7 @@ def import_old_data(request):
         # Create each user's default project
         # Due to the structure of the data when exported from the old system, this also
         #  add each annotation to the project as an aggregated resource
-        create_project(everything_graph, host)
+        create_project(everything_graph)
 
     # or serialize from a folder, where each file is one project/user graph
     else:
@@ -167,7 +166,7 @@ def import_old_data(request):
                 print "Failed to decode file '%s' with error message '%s'"%(file_name, e.args[-1])
             else:
                 add_all_users(everything_graph)
-                create_project(everything_graph, host)
+                create_project(everything_graph)
         
 
     return HttpResponse("I finished migrating data without errors.")
