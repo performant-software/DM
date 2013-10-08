@@ -72,12 +72,12 @@ def read_canvas(request, project_uri, canvas_uri):
 
     for text in memory_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
         if (text, NS.ore.isDescribedBy, None) not in memory_graph:
-            text_url = URIRef(uris.url(request.get_host(), 'semantic_store_project_texts', project_uri=project_uri, text_uri=text))
+            text_url = uris.url('semantic_store_project_texts', project_uri=project_uri, text_uri=text)
             memory_graph.add((text, NS.ore.isDescribedBy, text_url))
 
     for canvas in memory_graph.subjects(NS.rdf.type, NS.sc.Canvas):
         if (canvas, NS.ore.isDescribedBy, None) not in memory_graph:
-            canvas_url = URIRef(uris.url(request.get_host(), 'semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas))
+            canvas_url = uris.url('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas)
             memory_graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
     return memory_graph
