@@ -54,7 +54,7 @@ class Command(BaseCommand):
                 u.save()
                 print "User '%s' was created successfully." % username
 
-    def handle(self, filename, directory, store_host, *args, **options):
+    def handle(self, filename, directory, *args, **options):
         if filename:
             self.parse_file(os.path.join(os.getcwd(), filename))
 
