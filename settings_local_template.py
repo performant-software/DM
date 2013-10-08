@@ -58,6 +58,8 @@ SITE_ATTRIBUTES = {
 
 STORE_HOST = 'localhost:8081' #Could also be something like 'dm.drew.edu/beta' for subsite urls
 
+LOGIN_REDIRECT_URL = '/'
+
 # uncomment if you decide to use francescortiz
 #IMAGE_DEFAULT_FORMAT='JPEG'
 #IMAGE_DEFAULT_QUALITY=100
