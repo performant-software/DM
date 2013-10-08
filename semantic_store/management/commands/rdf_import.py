@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.db import transaction, IntegrityError
+from django.conf import settings
 from optparse import make_option
 import os
 
@@ -55,6 +56,11 @@ class Command(BaseCommand):
                 print "User '%s' was created successfully." % username
 
     def handle(self, filename, directory, *args, **options):
+        # The following is a regrettable hack to fix the fact that the uris we use as graph identifiers change based on whether
+        # they are being generated from the shell or from a live production server like gunicorn at a non-root url
+        if settings.FORCE_SCRIPT_NAME:
+            settings.STORE_HOST += settings.FORCE_SCRIPT_NAME
+
         if filename:
             self.parse_file(os.path.join(os.getcwd(), filename))
 
