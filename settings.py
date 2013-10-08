@@ -112,8 +112,6 @@ URI_MINT_BASE = 'http://dm.drew.edu'
 #FTS_CONFIGURE_ALL_BACKENDS = False
 #DATABASE_ENGINE = 'postgresql_psycopg2'
 
-LOGIN_REDIRECT_URL = '/'
-
 ROOT_URLCONF = 'urls'
 
 SOUTH_TESTS_MIGRATE = False
