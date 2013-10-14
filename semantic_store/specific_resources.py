@@ -36,14 +36,22 @@ def specific_resources_subgraph(graph, source_uri):
     return specific_resources_graph
 
 def read_specific_resource(project_uri, specific_resource, source):
+    specific_resource = URIRef(specific_resource)
+
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
     project_graph = Graph(store=rdfstore(), identifier=project_identifier)
 
     memory_project_graph = Graph()
     memory_project_graph += project_graph
 
-    memory_graph = Graph()
-    memory_graph += specific_resources_subgraph(memory_project_graph, URIRef(source))
+    return_graph = Graph()
 
-    return memory_graph
+    return_graph += memory_project_graph.triples((specific_resource, None, None))
 
+    selectors = memory_project_graph.objects(specific_resource, NS.oa.hasSelector)
+    for selector in selectors:
+        return_graph += memory_project_graph.triples((selector, None, None))
+
+    return_graph += resource_annotation_subgraph(memory_project_graph, specific_resource)
+
+    return return_graph
