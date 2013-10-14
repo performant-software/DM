@@ -260,16 +260,14 @@ def remove_project_canvas_triples(request, project_uri, canvas_uri):
 @check_project_resource_permissions
 def text_specific_resource(request, project_uri, text_uri, specific_resource):
     if request.method == 'GET':
-        source_uri = uris.uri('semantic_store_project_texts', project_uri=project_uri, text_uri=text_uri)
-        return specific_resource_graph(request, project_uri, specific_resource, source_uri)
+        return specific_resource_graph(request, project_uri, specific_resource, text_uri)
     else:
         return HttpResponseNotAllowed(('GET'))
 
 @check_project_resource_permissions
 def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource):
     if request.method == 'GET':
-        source_uri = uris.uri('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas_uri)
-        return specific_resource_graph(request, project_uri, specific_resource, source_uri)
+        return specific_resource_graph(request, project_uri, specific_resource, canvas_uri)
     else:
         return HttpResponseNotAllowed(('GET'))
 
