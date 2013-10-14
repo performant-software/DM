@@ -41,12 +41,9 @@ def read_specific_resource(project_uri, specific_resource, source):
 
     memory_project_graph = Graph()
     memory_project_graph += project_graph
-    graph = Graph()
 
-    print len(specific_resource_subgraph(memory_project_graph, specific_resource))
-    print len(specific_resources_subgraph(memory_project_graph, source))
+    memory_graph = Graph()
+    memory_graph += specific_resources_subgraph(memory_project_graph, URIRef(source))
 
-    print len(memory_project_graph)
-
-    return graph
+    return memory_graph
 

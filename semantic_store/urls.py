@@ -23,7 +23,7 @@ urlpatterns = patterns('',
         semantic_store.views.remove_project_canvas_triples,
         name="semantic_store_project_canvases_remove_triples"),
 
-    url(r'^projects/(?P<project_uri>.+)/canvases(?:/(?P<canvas_uri>.+))/specific_resource/(?P<specific_resource>.+)$',
+    url(r'^projects/(?P<project_uri>.+)/canvases(?:/(?P<canvas_uri>.+))/specific_resource/(?P<specific_resource>.+)?/?$',
         semantic_store.views.canvas_specific_resource,
         name="semantic_store_canvas_specific_resource"),
 
