@@ -66,8 +66,8 @@ def create_project_text_from_request(request, project_uri):
 # Although intended to be used with a GET request, works independent of a request
 def read_project_text(project_uri, text_uri):
     # Correctly format project uri and get project graph
-    project_uri = uris.uri('semantic_store_projects', uri=project_uri)
-    project_g = Graph(rdfstore(), identifier=project_uri)
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    project_g = Graph(rdfstore(), identifier=project_identifier)
 
     memory_project_g = Graph()
     memory_project_g += project_g
@@ -95,7 +95,9 @@ def read_project_text(project_uri, text_uri):
 
     text_g += resource_annotation_subgraph(memory_project_g, text_uri)
 
-    text_g += specific_resources_subgraph(memory_project_g, text_uri)
+    # text_g += specific_resources_subgraph(memory_project_g, text_uri)
+    print "yes hello"
+    text_g += make_is_described_bys(memory_project_g, project_uri)
 
     # Return graph about text
     return text_g
@@ -184,5 +186,21 @@ def remove_project_text(project_uri, text_uri):
 
     project_g.close()
 
+def make_is_described_bys(graph, project_uri):
+    return_graph = Graph()
+
+    qres = graph.query("""SELECT ?resource ?txt WHERE{
+                       ?resource a oa:SpecificResource .
+                       ?resource oa:hasSource ?txt .
+                       ?txt a dctypes:Text .
+        }""", initNs=ns)
+
+    print len(qres)
+
+    for resource, text in qres:
+        url = uris.url("semantic_store_text_specific_resource",project_uri=project_uri, text_uri=text, specific_resource=resource)
+        return_graph.add((resource, NS.ore.isDescribedBy, url))
+
+    return return_graph
 
 

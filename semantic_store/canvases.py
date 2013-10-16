@@ -56,6 +56,8 @@ def canvas_subgraph(graph, canvas_uri):
 
     canvas_graph += resource_annotation_subgraph(graph, canvas_uri)
 
+    canvas_graph 
+
     # canvas_graph += specific_resources_subgraph(graph, canvas_uri)
 
 
@@ -81,7 +83,7 @@ def read_canvas(request, project_uri, canvas_uri):
             canvas_url = uris.url('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas)
             memory_graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
-    memory_graph += make_is_described_bys(memory_project_graph, project_uri)
+    memory_graph += make_is_described_bys(memory_project_graph, project_uri, canvas_uri)
 
     return memory_graph
 
@@ -121,17 +123,23 @@ def remove_canvas_triples(project_uri, canvas_uri, input_graph):
 
         return removed_graph
 
-def make_is_described_bys(graph, project_uri):
+def make_is_described_bys(graph, project_uri, canvas_uri):
     return_graph = Graph()
 
-    qres = graph.query("""SELECT ?resource ?canvas WHERE{
+    canvas_uri=URIRef(canvas_uri)
+
+    qres = graph.query("""SELECT ?resource ?anno WHERE{
                        ?resource a oa:SpecificResource .
                        ?resource oa:hasSource ?canvas .
-                       ?canvas a sc:Canvas .
-        }""", initNs=ns)
+                       ?anno oa:hasTarget ?resource .
+        }""", initNs=ns, initBindings={'canvas':canvas_uri})
 
-    for resource, canvas in qres:
-        url = uris.url("semantic_store_canvas_specific_resource",project_uri=project_uri, canvas_uri=canvas, specific_resource=resource)
-        return_graph.add((resource, NS.ore.isDescribedBy, url))
+    for resource, anno in qres:
+        url = uris.url("semantic_store_canvas_specific_resource",project_uri=project_uri, canvas_uri=canvas_uri, specific_resource=resource)
+        return_graph.set((resource, NS.ore.isDescribedBy, url))
+
+        for t in graph.triples((anno, None, None)):
+            return_graph.add(t)
+
 
     return return_graph
