@@ -89,7 +89,7 @@
     <div class="loginform-panel2">
       <div id="login-title">Login</div>
       <form class="loginform" 
-            action="{% url "accounts.views.sign_in" %}?next={{ next }}"
+            action="{% url accounts.views.sign_in %}?next={{ next }}"
             method="post">
         {% csrf_token %}
         <input type="hidden" id="id_image_path" name="image_path" 
