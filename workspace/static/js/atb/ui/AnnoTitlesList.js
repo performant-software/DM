@@ -58,8 +58,13 @@ atb.ui.AnnoTitlesList.prototype.decorate = function (div) {
         'class': 'atb-annoTitlesList-noAnnosMessage'
     }, 'resource has no annotations');
     jQuery(this.noAnnosDiv).hide();
-
     this.scrollingDiv.appendChild(this.noAnnosDiv);
+
+    this.loadingDiv = this.domHelper.createDom('div', {
+        'class': 'atb-annoTitlesList-loadingMessage'
+    }, 'finding annotations...');
+    jQuery(this.loadingDiv).hide();
+    this.scrollingDiv.appendChild(this.loadingDiv);
 
     this.rootDiv.appendChild(this.scrollingDiv);
 
@@ -222,10 +227,11 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
 
     if (uri instanceof sc.data.Resource) uri = uri.uri;
 
-    console.log('uri', uri);
+    console.log('uri of hovered resource', uri);
     this.uri = uri;
     
     jQuery(this.noAnnosDiv).hide();
+    jQuery(this.loadingDiv).show();
 
     var deferredResource = this.databroker.getDeferredResource(uri);
 
@@ -248,6 +254,8 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
                 this.targetAnnoResourcesByUri.get(targetUri).push(anno);
             }, this);
         }, this);
+
+        jQuery(this.loadingDiv).fadeOut(200);
 
         if (bodyUris.getCount() + targetUris.getCount() == 0/* && deferredResource.state() == 'resolved'*/) {
             jQuery(this.noAnnosDiv).show();
