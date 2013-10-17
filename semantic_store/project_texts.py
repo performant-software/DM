@@ -66,8 +66,8 @@ def create_project_text_from_request(request, project_uri):
 # Although intended to be used with a GET request, works independent of a request
 def read_project_text(project_uri, text_uri):
     # Correctly format project uri and get project graph
-    project_uri = uris.uri('semantic_store_projects', uri=project_uri)
-    project_g = Graph(rdfstore(), identifier=project_uri)
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    project_g = Graph(rdfstore(), identifier=project_identifier)
 
     memory_project_g = Graph()
     memory_project_g += project_g
@@ -95,7 +95,7 @@ def read_project_text(project_uri, text_uri):
 
     text_g += resource_annotation_subgraph(memory_project_g, text_uri)
 
-    text_g += specific_resources_subgraph(memory_project_g, text_uri)
+    text_g += specific_resources_subgraph(memory_project_g, text_uri, project_uri)
 
     # Return graph about text
     return text_g
@@ -128,7 +128,7 @@ def update_project_text(g, p_uri, t_uri, user):
         project_metadata_g.set((text_uri, NS.dc.title, title))
         project_metadata_g.set((text_uri, NS.rdfs.label, title))
 
-        for t in specific_resources_subgraph(g, text_uri):
+        for t in specific_resources_subgraph(g, text_uri, p_uri):
             project_g.add(t)
 
         for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
@@ -168,7 +168,7 @@ def remove_project_text(project_uri, text_uri):
     text_uri = URIRef(text_uri)
 
     with transaction.commit_on_success():
-        for t in specific_resources_subgraph(project_g, text_uri):
+        for t in specific_resources_subgraph(project_g, text_uri, project_uri):
             project_g.remove(t)
 
         for t in project_g.triples((text_uri, None, None)):
@@ -183,6 +183,4 @@ def remove_project_text(project_uri, text_uri):
             text.save()
 
     project_g.close()
-
-
 
