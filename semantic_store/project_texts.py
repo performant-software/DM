@@ -95,9 +95,7 @@ def read_project_text(project_uri, text_uri):
 
     text_g += resource_annotation_subgraph(memory_project_g, text_uri)
 
-    # text_g += specific_resources_subgraph(memory_project_g, text_uri)
-    print "yes hello"
-    text_g += make_is_described_bys(memory_project_g, project_uri)
+    text_g += specific_resources_subgraph(memory_project_g, text_uri, project_uri)
 
     # Return graph about text
     return text_g
@@ -130,7 +128,7 @@ def update_project_text(g, p_uri, t_uri, user):
         project_metadata_g.set((text_uri, NS.dc.title, title))
         project_metadata_g.set((text_uri, NS.rdfs.label, title))
 
-        for t in specific_resources_subgraph(g, text_uri):
+        for t in specific_resources_subgraph(g, text_uri, p_uri):
             project_g.add(t)
 
         for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
@@ -170,7 +168,7 @@ def remove_project_text(project_uri, text_uri):
     text_uri = URIRef(text_uri)
 
     with transaction.commit_on_success():
-        for t in specific_resources_subgraph(project_g, text_uri):
+        for t in specific_resources_subgraph(project_g, text_uri, project_uri):
             project_g.remove(t)
 
         for t in project_g.triples((text_uri, None, None)):
@@ -185,22 +183,4 @@ def remove_project_text(project_uri, text_uri):
             text.save()
 
     project_g.close()
-
-def make_is_described_bys(graph, project_uri):
-    return_graph = Graph()
-
-    qres = graph.query("""SELECT ?resource ?txt WHERE{
-                       ?resource a oa:SpecificResource .
-                       ?resource oa:hasSource ?txt .
-                       ?txt a dctypes:Text .
-        }""", initNs=ns)
-
-    print len(qres)
-
-    for resource, text in qres:
-        url = uris.url("semantic_store_text_specific_resource",project_uri=project_uri, text_uri=text, specific_resource=resource)
-        return_graph.add((resource, NS.ore.isDescribedBy, url))
-
-    return return_graph
-
 
