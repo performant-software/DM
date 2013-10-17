@@ -47,7 +47,7 @@ def all_canvases_and_images_graph(graph):
 
     return canvas_graph
 
-def canvas_subgraph(graph, canvas_uri):
+def canvas_subgraph(graph, canvas_uri, project_uri):
     canvas_uri = URIRef(canvas_uri)
 
     canvas_graph = Graph()
@@ -56,7 +56,7 @@ def canvas_subgraph(graph, canvas_uri):
 
     canvas_graph += resource_annotation_subgraph(graph, canvas_uri)
 
-    canvas_graph += specific_resources_subgraph(graph, canvas_uri)
+    canvas_graph += specific_resources_subgraph(graph, canvas_uri, project_uri)
 
     return canvas_graph
 
@@ -68,7 +68,7 @@ def read_canvas(request, project_uri, canvas_uri):
     memory_project_graph += project_graph
 
     memory_graph = Graph()
-    memory_graph += canvas_subgraph(memory_project_graph, canvas_uri)
+    memory_graph += canvas_subgraph(memory_project_graph, canvas_uri, project_uri)
 
     for text in memory_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
         if (text, NS.ore.isDescribedBy, None) not in memory_graph:

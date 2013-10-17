@@ -227,7 +227,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
     
     jQuery(this.noAnnosDiv).hide();
 
-    // var deferredResource = this.databroker.getDeferredResource(uri);
+    var deferredResource = this.databroker.getDeferredResource(uri);
 
     var withResource = function(resource) {
         var bodyAnnoResources = resource.getReferencingResources('oa:hasTarget');
@@ -292,6 +292,6 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
             }));
         }
     }.bind(this);
-    // deferredResource.done(withResource);
-    withResource(this.databroker.getResource(uri));
+    deferredResource.done(withResource);
+    // withResource(this.databroker.getResource(uri));
 }; 
