@@ -439,7 +439,7 @@ sc.data.DataModel.prototype.unlinkTargetFromAnno = function(anno, target, opt_de
 
     if (opt_deleteIfEmpty) {
         if (anno.getProperties('oa:hasTarget').length == 0 && anno.getProperties('oa:hasBody').length <= 1) {
-            anno.deleteAllProperties();
+            anno.delete();
         }
     }
 };
@@ -452,7 +452,7 @@ sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_delete
 
     if (opt_deleteIfEmpty) {
         if (anno.getProperties('oa:hasBody').length == 0 && anno.getProperties('oa:hasTarget').length <= 1) {
-            anno.deleteAllProperties();
+            anno.delete();
         }
     }
 };

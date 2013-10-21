@@ -204,8 +204,8 @@ atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highl
     goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
     	anno.deleteProperty('oa:hasTarget', specificResource);
     }, this);
-    highlight.deleteAllProperties();
-    specificResource.deleteAllProperties();
+    highlight.delete();
+    specificResource.delete();
 };
 
 atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {

@@ -216,7 +216,7 @@ sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
         this.databroker.quadStore.forEachQuadMatchingQuery(
-            this.bracketedUri,
+            sc.data.Term.wrapUri(uri),
             safePredicate,
             safeObject,
             null,
@@ -232,7 +232,7 @@ sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
 /**
  * Deletes all quads with this resource's uri as their subject. Note: This will not delete other references to this resource.
  */
-sc.data.Resource.prototype.deleteAllProperties = function() {
+sc.data.Resource.prototype.delete = function() {
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
         this.databroker.quadStore.forEachQuadMatchingQuery(
             uri, null, null, null, function(quad) {
@@ -240,6 +240,8 @@ sc.data.Resource.prototype.deleteAllProperties = function() {
             }.bind(this)
         );
     }, this);
+
+    this.databroker.deletedResourceUris.add(this.uri);
 
     return this;
 };

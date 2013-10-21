@@ -57,6 +57,7 @@ sc.data.Databroker = function(options) {
     this.user = this.options.user;
 
     this.newResourceUris = new goog.structs.Set();
+    this.deletedResourceUris = new goog.structs.Set();
 
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
 
