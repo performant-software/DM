@@ -5,36 +5,23 @@ from rdflib.plugins.sparql import prepareQuery
 
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.utils import metadata_triples
-
-annotation_subgraph_prepared_query = prepareQuery("""SELECT ?anno ?anno_res ?source ?selector WHERE {
-    ?anno a oa:Annotation .
-    {
-        ?anno oa:hasTarget ?resource .
-        ?anno oa:hasBody ?anno_res .
-    } UNION {
-        ?anno oa:hasBody ?resource .
-        ?anno oa:hasTarget ?anno_res .
-    } OPTIONAL {
-        ?anno_res oa:hasSource ?source .
-        ?anno_res oa:hasSelector ?selector .
-    }
-}""", initNs=ns)
+from semantic_store.utils import metadata_triples, timed_block
 
 def resource_annotation_subgraph(graph, resource_uri):
     subgraph = Graph()
 
-    qres = graph.query(annotation_subgraph_prepared_query, initBindings={'resource': resource_uri})
-
-    for anno, anno_res, source, selector in qres:
+    annos = list(graph.subjects(NS.oa.hasTarget, resource_uri)) + list(graph.subjects(NS.oa.hasBody, resource_uri))
+    for anno in annos:
         subgraph += graph.triples((anno, None, None))
 
-        if source and selector:
-            subgraph += metadata_triples(graph, source)
-            subgraph += graph.triples((selector, None, None))
-            subgraph += graph.triples((anno_res, None, None))
-        else:
-            subgraph += metadata_triples(graph, anno_res)
+        for resource in list(graph.objects(anno, NS.oa.hasBody)) + list(graph.objects(anno, NS.oa.hasTarget)):
+            if (resource, NS.rdf.type, NS.oa.SpecificResource) in graph:
+                source = graph.value(resource, NS.oa.hasSource)
+                selector = graph.value(resource, NS.oa.hasSelector)
+                subgraph += metadata_triples(graph, source)
+                subgraph += graph.triples((resource, None, None))
+                subgraph += graph.triples((selector, None, None))
+            else:
+                subgraph += metadata_triples(graph, resource)
 
     return subgraph
-
