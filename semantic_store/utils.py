@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.conf import settings
 from rdflib import Graph
 from semantic_store.namespaces import NS, bind_namespaces
 from datetime import datetime
@@ -35,36 +36,38 @@ def accept_mimetypes(accept_string):
         format = part[:index_of_semicolon] if index_of_semicolon != -1 else part
         yield format
 
+class NegotiatedGraphResponse(HttpResponse):
+    default_format = 'turtle'
+    default_type = 'text'
 
-def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
-    bind_namespaces(graph)
+    def __init__(self, request, graph, close_graph=False, *args, **kwargs):
+        mimetypes = list(accept_mimetypes(request.META['HTTP_ACCEPT']))
 
-    def serialization(format, mimetype):
-        body = graph.serialize(format=format)
+        if settings.DEBUG and mimetypes[0].strip().lower().endswith('html'):
+            format = NegotiatedGraphResponse.default_format
+            kwargs['mimetype'] = '%s/%s' % (NegotiatedGraphResponse.default_type, NegotiatedGraphResponse.default_format)
+        else:
+            for mimetype in mimetypes:
+                format = mimetype[mimetype.rfind('/') + 1:].strip().lower()
+
+                if format in RDFLIB_SERIALIZER_FORMATS:
+                    kwargs['mimetype'] = '%s/%s' % (NegotiatedGraphResponse.default_type, NegotiatedGraphResponse.default_format)
+                    break
+            else:
+                format = NegotiatedGraphResponse.default_format
+                kwargs['mimetype'] = '%s/%s' % (NegotiatedGraphResponse.default_type, NegotiatedGraphResponse.default_format)
+
+        super(NegotiatedGraphResponse, self).__init__(self, *args, **kwargs)
+
+        bind_namespaces(graph)
+        self.content = graph.serialize(format=format)
+
+        # Note(tandres): Tried this to make it more memory efficient, but I encountered infinite recursion in django's HttpResponse write method
+        # graph.serialize(self, format=format)
 
         if close_graph:
             graph.close()
 
-        return HttpResponse(body, mimetype=mimetype, **kwargs)
-
-    mimetypes = accept_mimetypes(request.META['HTTP_ACCEPT'])
-
-    try:
-        mimetype = accept_mimetypes(request.META['HTTP_ACCEPT']).next()
-    except StopIteration:
-        pass
-    else:
-        format = mimetype[mimetype.rfind('/') + 1:].strip().lower()
-        if format == 'html':
-            return serialization('turtle', 'text/turtle')
-
-    for mimetype in mimetypes:
-        format = mimetype[mimetype.rfind('/') + 1:].strip().lower()
-
-        if format in RDFLIB_SERIALIZER_FORMATS:
-            return serialization(format, mimetype)
-
-    return serialization('turtle', 'text/turtle')
 
 def parse_into_graph(graph=None, **kwargs):
     if graph is None:

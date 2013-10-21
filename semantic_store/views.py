@@ -13,7 +13,7 @@ from rdflib.util import guess_format
 from semantic_store import collection, permissions
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
 from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
@@ -123,7 +123,7 @@ def resources(request, uri, ext=None):
             g.add((URIRef(anno_uri), NS.rdf['type'], NS.ore['Aggregation']))
             g.add((URIRef(anno_uri), NS.rdf['type'], NS.rdf['List']))
             g.add((URIRef(anno_uri), NS.rdf['type'], NS.dms['AnnotationList']))
-        return negotiated_graph_response(request, g)
+        return NegotiatedGraphResponse(request, g)
     else:
         main_graph_store = ConjunctiveGraph(store=rdfstore(), 
                                       identifier=default_identifier)
@@ -135,7 +135,7 @@ def resources(request, uri, ext=None):
         for t in main_graph.triples((URIRef(uri), None, None)):
             g.add(t)
         if len(g) > 0:
-            return negotiated_graph_response(request, g)
+            return NegotiatedGraphResponse(request, g)
         else:
             return HttpResponseNotFound()
 
@@ -213,11 +213,11 @@ def project_texts(request, project_uri, text_uri):
         return create_project_text_from_request(request, project_uri)
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        return NegotiatedGraphResponse(request, g, close_graph=True)
     elif request.method == 'PUT':
         update_project_text_from_request(request, project_uri, text_uri)
         g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        return NegotiatedGraphResponse(request, g, close_graph=True)
     elif request.method == 'DELETE':
         remove_project_text(project_uri, text_uri)
         return HttpResponse(status=204)
@@ -243,17 +243,17 @@ def remove_user_triples(request, username):
 @check_project_resource_permissions
 def project_canvases(request, project_uri, canvas_uri):
     if request.method == 'GET':
-        return negotiated_graph_response(request, read_canvas(request, project_uri, canvas_uri), close_graph=True)
+        return NegotiatedGraphResponse(request, read_canvas(request, project_uri, canvas_uri), close_graph=True)
     elif request.method == 'PUT':
         input_graph = parse_request_into_graph(request)
-        return negotiated_graph_response(request, update_canvas(project_uri, canvas_uri, input_graph), close_graph=True)
+        return NegotiatedGraphResponse(request, update_canvas(project_uri, canvas_uri, input_graph), close_graph=True)
     else:
         return HttpResponseNotAllowed(('GET', 'PUT'))
 
 @check_project_resource_permissions
 def remove_project_canvas_triples(request, project_uri, canvas_uri):
     if request.method == 'PUT':
-        return negotiated_graph_response(request, remove_canvas_triples(project_uri, canvas_uri, input_graph), close_graph=True)
+        return NegotiatedGraphResponse(request, remove_canvas_triples(project_uri, canvas_uri, input_graph), close_graph=True)
     else:
         return HttpResponseNotAllowed(('PUT'))
 
@@ -272,4 +272,4 @@ def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource
         return HttpResponseNotAllowed(('GET'))
 
 def specific_resource_graph(request, project_uri, specific_resource, source):
-    return negotiated_graph_response(request, read_specific_resource(project_uri, specific_resource, source), close_graph=True)
+    return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source), close_graph=True)

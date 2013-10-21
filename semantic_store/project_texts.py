@@ -9,7 +9,7 @@ from rdflib import Literal, URIRef
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
-from semantic_store.utils import parse_request_into_graph, negotiated_graph_response
+from semantic_store.utils import parse_request_into_graph, NegotiatedGraphResponse
 from semantic_store.models import Text
 from semantic_store.users import has_permission_over
 from semantic_store.annotations import resource_annotation_subgraph
@@ -56,7 +56,7 @@ def create_project_text_from_request(request, project_uri):
             else:
                 text_uri = URIRef(uris.uuid())
                 update_project_text(g, project_uri, text_uri, request.user)
-                return negotiated_graph_response(request, read_project_text(project_uri, text_uri), close_graph=True)
+                return NegotiatedGraphResponse(request, read_project_text(project_uri, text_uri), close_graph=True)
         else:
             return HttpResponseForbidden()
     else:

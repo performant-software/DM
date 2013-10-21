@@ -9,7 +9,7 @@ from rdflib.exceptions import ParserError
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import bind_namespaces,NS
 from semantic_store import uris
-from semantic_store.utils import negotiated_graph_response, parse_request_into_graph, metadata_triples
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, metadata_triples
 from semantic_store.models import ProjectPermission
 from semantic_store.permissions import (
     PERMISSION_URIS_BY_MODEL_VALUE,
@@ -89,7 +89,7 @@ def read_user(request, username=None):
         else:
             graph = user_graph(request, user=user)
 
-            return negotiated_graph_response(request, graph, close_graph=True)
+            return NegotiatedGraphResponse(request, graph, close_graph=True)
     else:
         return read_all_users(request)
 
@@ -99,7 +99,7 @@ def read_all_users(request):
     for u in User.objects.filter():
         g += user_metadata_graph(user=u)
 
-    return negotiated_graph_response(request, g)
+    return NegotiatedGraphResponse(request, g)
 
 def permission_updates_are_allowed(request, input_graph):
     for perm_predicate in PERMISSION_PREDICATES:
