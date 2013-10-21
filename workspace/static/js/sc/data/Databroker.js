@@ -435,7 +435,7 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
                 allUris.addAll(this.dataModel.findManuscriptAggregationUris(manifestUri));
             }, this);
         }
-        else if (resource.hasAnyType('oa:SpecificResource')) {
+        else if (resource.hasAnyType('oa:SpecificResource') && this.getResourceDescribers(resource.uri) === 0) {
             allUris.add(resource.getOneProperty('oa:hasSource'));
         }
     }
