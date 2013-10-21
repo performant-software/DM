@@ -65,13 +65,12 @@ def canvas_subgraph(graph, canvas_uri, project_uri):
 
 def read_canvas(request, project_uri, canvas_uri):
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
-    project_graph = Graph(store=rdfstore(), identifier=project_identifier)
+    db_project_graph = Graph(store=rdfstore(), identifier=project_identifier)
 
-    memory_project_graph = Graph()
-    memory_project_graph += project_graph
+    project_graph = db_project_graph
 
     memory_graph = Graph()
-    memory_graph += canvas_subgraph(memory_project_graph, canvas_uri, project_uri)
+    memory_graph += canvas_subgraph(project_graph, canvas_uri, project_uri)
 
     for text in memory_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
         if (text, NS.ore.isDescribedBy, None) not in memory_graph:

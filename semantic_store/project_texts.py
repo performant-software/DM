@@ -69,11 +69,6 @@ def read_project_text(project_uri, text_uri):
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
     project_g = Graph(rdfstore(), identifier=project_identifier)
 
-    memory_project_g = Graph()
-    memory_project_g += project_g
-
-    project_g.close()
-
     # Make text uri URIRef (so Graph will understand)
     text_uri = URIRef(text_uri)
 
@@ -93,9 +88,9 @@ def read_project_text(project_uri, text_uri):
         text_g.set((text_uri, NS.rdfs.label, Literal(text.title)))
         text_g.set((text_uri, NS.cnt.chars, Literal(text.content)))
 
-    text_g += resource_annotation_subgraph(memory_project_g, text_uri)
+    text_g += resource_annotation_subgraph(project_g, text_uri)
 
-    text_g += specific_resources_subgraph(memory_project_g, text_uri, project_uri)
+    text_g += specific_resources_subgraph(project_g, text_uri, project_uri)
 
     # Return graph about text
     return text_g
