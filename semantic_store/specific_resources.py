@@ -1,6 +1,7 @@
 from django.db import transaction
 
 from rdflib import Literal, URIRef, Graph
+from rdflib.plugins.sparql import prepareQuery
 
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
@@ -19,6 +20,12 @@ def specific_resource_subgraph(graph, specific_resource):
 
     return specific_resource_graph
 
+specific_resources_subgraph_prepared_query = prepareQuery("""SELECT ?specific_resource ?selector WHERE {
+    ?specific_resource a oa:SpecificResource .
+    ?specific_resource oa:hasSource ?source .
+    ?specific_resource oa:hasSelector ?selector .
+}""", initNs=ns)
+
 def specific_resources_subgraph(graph, source_uri, project_uri):
     specific_resources_graph = Graph()
 
@@ -27,11 +34,7 @@ def specific_resources_subgraph(graph, source_uri, project_uri):
     elif (source_uri, NS.rdf.type, NS.dcmitype.Text) in graph:
         source_type = NS.dcmitype.Text
 
-    qres = graph.query("""SELECT ?specific_resource ?selector WHERE {
-        ?specific_resource a oa:SpecificResource .
-        ?specific_resource oa:hasSource ?source .
-        ?specific_resource oa:hasSelector ?selector .
-    }""", initNs=ns, initBindings={'source': source_uri})
+    qres = graph.query(specific_resources_subgraph_prepared_query, initBindings={'source': source_uri})
 
     for specific_resource, selector in qres:
         specific_resources_graph += graph.triples((specific_resource, None, None))
