@@ -2,6 +2,7 @@ from django.db import transaction
 
 from rdflib.exceptions import ParserError
 from rdflib import Literal, URIRef, Graph
+from rdflib.plugins.sparql import prepareQuery
 
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
@@ -10,18 +11,19 @@ from semantic_store.utils import parse_request_into_graph, NegotiatedGraphRespon
 from semantic_store.annotations import resource_annotation_subgraph
 from semantic_store.specific_resources import specific_resources_subgraph
 
+canvas_and_images_graph_prepared_query = prepareQuery("""SELECT ?image_anno ?image WHERE {
+    ?image_anno a oa:Annotation .
+    ?image_anno oa:hasTarget ?canvas .
+    ?image_anno oa:hasBody ?image .
+    { ?image a dcmitype:Image . } UNION { ?image a dms:Image . } UNION {?image a dms:ImageChoice . } .
+}""", initNs=ns)
 def canvas_and_images_graph(graph, canvas_uri):
     canvas_uri = URIRef(canvas_uri)
 
     canvas_graph = Graph()
     canvas_graph += graph.triples((canvas_uri, None, None))
 
-    qres = graph.query("""SELECT ?image_anno ?image WHERE {
-        ?image_anno a oa:Annotation .
-        ?image_anno oa:hasTarget ?canvas .
-        ?image_anno oa:hasBody ?image .
-        { ?image a dcmitype:Image . } UNION { ?image a dms:Image . } UNION {?image a dms:ImageChoice . } .
-    }""", initNs=ns, initBindings={'canvas': canvas_uri})
+    qres = graph.query(canvas_and_images_graph_prepared_query, initBindings={'canvas': canvas_uri})
 
     for image_anno, image in qres:
         canvas_graph += graph.triples((image_anno, None, None))
@@ -29,16 +31,17 @@ def canvas_and_images_graph(graph, canvas_uri):
 
     return canvas_graph
 
+all_canvases_and_images_graph_prepared_query = prepareQuery("""SELECT DISTINCT ?canvas ?image_anno ?image WHERE {
+    { ?canvas a sc:Canvas .} UNION { ?canvas a dms:Canvas .} .
+    { ?image a dcmitype:Image . } UNION { ?image a dms:Image . } UNION {?image a dms:ImageChoice . } .
+    ?image_anno a oa:Annotation .
+    ?image_anno oa:hasTarget ?canvas .
+    ?image_anno oa:hasBody ?image .
+}""", initNs=ns)
 def all_canvases_and_images_graph(graph):
     canvas_graph = Graph()
 
-    qres = graph.query("""SELECT DISTINCT ?canvas ?image_anno ?image WHERE {
-        { ?canvas a sc:Canvas .} UNION { ?canvas a dms:Canvas .} .
-        { ?image a dcmitype:Image . } UNION { ?image a dms:Image . } UNION {?image a dms:ImageChoice . } .
-        ?image_anno a oa:Annotation .
-        ?image_anno oa:hasTarget ?canvas .
-        ?image_anno oa:hasBody ?image .
-    }""", initNs=ns, initBindings={})
+    qres = graph.query(all_canvases_and_images_graph_prepared_query, initBindings={})
 
     for canvas, image_anno, image in qres:
         canvas_graph += graph.triples((canvas, None, None))
