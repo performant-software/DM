@@ -40,6 +40,8 @@ sc.data.SyncService.prototype.requestSync = function() {
     this.postNewResources();
 
     this.putModifiedResources();
+
+    this.deleteDeletedResources();
 };
 
 sc.data.SyncService.prototype.createTextHttpUri = function() {
@@ -124,6 +126,26 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
     goog.structs.forEach(this.getModifiedResourceUris(), function(uri) {
         this.sendResource(uri, 'PUT');
     }, this);
+};
+
+sc.data.SyncService.prototype.deleteDeletedResources = function() {
+    var quadsToRemove = []
+
+    goog.structs.forEach(this.databroker.deletedResourceUris, function(uri) {
+        quadsToRemove = quadsToRemove.concat(this.databroker.deletedQuadsStore.query(sc.data.Term.wrapUri(uri), null, null, null));
+    });
+
+    if (quadsToRemove.length > 0) {
+        var currentProject = this.databroker.projectController.currentProject;
+        var url = this.restUrl(currentProject.uri, sc.data.SyncService.RESTYPE.project, null, null) + 'remove_triples';
+
+        this.sendQuads(quadsToRemove, url, 'PUT', function() {
+            this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
+            this.databroker.deletedResourceUris.clear();
+        }, function() {
+            // Error
+        });
+    }
 };
 
 sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {
