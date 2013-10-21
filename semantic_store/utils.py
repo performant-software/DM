@@ -1,6 +1,8 @@
 from django.http import HttpResponse
 from rdflib import Graph
 from semantic_store.namespaces import NS, bind_namespaces
+from datetime import datetime
+from contextlib import contextmanager
 
 METADATA_PREDICATES = (
     NS.rdf.type,
@@ -93,3 +95,11 @@ def metadata_triples(graph, subject=None):
     for predicate in METADATA_PREDICATES:
         for t in graph.triples((subject, predicate, None)):
             yield t
+
+@contextmanager
+def timed_block(description='untitled operation'):
+    start_time = datetime.now()
+    yield
+    end_time = datetime.now()
+    print '- %s excecuted in %s' % (description, end_time-start_time)
+
