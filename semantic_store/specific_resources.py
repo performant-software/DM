@@ -20,12 +20,6 @@ def specific_resource_subgraph(graph, specific_resource):
 
     return specific_resource_graph
 
-specific_resources_subgraph_prepared_query = prepareQuery("""SELECT ?specific_resource ?selector WHERE {
-    ?specific_resource a oa:SpecificResource .
-    ?specific_resource oa:hasSource ?source .
-    ?specific_resource oa:hasSelector ?selector .
-}""", initNs=ns)
-
 def specific_resources_subgraph(graph, source_uri, project_uri):
     specific_resources_graph = Graph()
 
@@ -34,9 +28,8 @@ def specific_resources_subgraph(graph, source_uri, project_uri):
     elif (source_uri, NS.rdf.type, NS.dcmitype.Text) in graph:
         source_type = NS.dcmitype.Text
 
-    qres = graph.query(specific_resources_subgraph_prepared_query, initBindings={'source': source_uri})
-
-    for specific_resource, selector in qres:
+    for specific_resource in graph.subjects(NS.oa.hasSource, source_uri):
+        selector = graph.value(specific_resource, NS.oa.hasSelector)
         specific_resources_graph += graph.triples((specific_resource, None, None))
         specific_resources_graph += graph.triples((selector, None, None))
 
@@ -52,24 +45,23 @@ def read_specific_resource(project_uri, specific_resource, source):
     specific_resource = URIRef(specific_resource)
 
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
-    project_graph = Graph(store=rdfstore(), identifier=project_identifier)
+    db_project_graph = Graph(store=rdfstore(), identifier=project_identifier)
 
-    memory_project_graph = Graph()
-    memory_project_graph += project_graph
+    project_graph = db_project_graph
 
     return_graph = Graph()
 
-    return_graph += memory_project_graph.triples((specific_resource, None, None))
+    return_graph += project_graph.triples((specific_resource, None, None))
 
-    selectors = memory_project_graph.objects(specific_resource, NS.oa.hasSelector)
+    selectors = project_graph.objects(specific_resource, NS.oa.hasSelector)
     for selector in selectors:
-        return_graph += memory_project_graph.triples((selector, None, None))
+        return_graph += project_graph.triples((selector, None, None))
 
-    if (URIRef(source), NS.rdf.type, NS.sc.Canvas) in memory_project_graph:
+    if (URIRef(source), NS.rdf.type, NS.sc.Canvas) in project_graph:
         return_graph.add((specific_resource, NS.ore.isDescribedBy, URIRef(uris.url("semantic_store_canvas_specific_resource", project_uri=project_uri, canvas_uri=source, specific_resource=specific_resource))))
-    elif (URIRef(source), NS.rdf.type, NS.dcmitype.Text) in memory_project_graph:
+    elif (URIRef(source), NS.rdf.type, NS.dcmitype.Text) in project_graph:
         return_graph.add((specific_resource, NS.ore.isDescribedBy, URIRef(uris.url("semantic_store_text_specific_resource", project_uri=project_uri, text_uri=source, specific_resource=specific_resource))))
 
-    return_graph += resource_annotation_subgraph(memory_project_graph, specific_resource)
+    return_graph += resource_annotation_subgraph(project_graph, specific_resource)
 
     return return_graph
