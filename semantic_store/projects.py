@@ -9,7 +9,7 @@ from rdflib import URIRef, Literal
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
-from semantic_store.utils import negotiated_graph_response, parse_request_into_graph, metadata_triples
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, metadata_triples
 from semantic_store.users import PERMISSION_PREDICATES, user_graph, user_metadata_graph
 from semantic_store.project_texts import sanitized_content
 from semantic_store import project_texts
@@ -125,7 +125,7 @@ def read_project(request, project_uri):
                 ret_graph.add((user_uri, perm_uri, project_uri))
             
             if len(ret_graph) > 0:
-                return negotiated_graph_response(request, ret_graph)
+                return NegotiatedGraphResponse(request, ret_graph)
             else:
                 return HttpResponseNotFound()
         else:
@@ -144,7 +144,7 @@ def update_project(request, uri):
 
             project_graph = update_project_graph(input_graph, uri)
 
-            return negotiated_graph_response(request, project_graph, status=201)
+            return NegotiatedGraphResponse(request, project_graph, status=201)
         else:
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
@@ -212,7 +212,7 @@ def delete_triples_from_project(request, uri):
                         removed.add(t)
                     project_metadata_g.remove(t)
 
-            return negotiated_graph_response(request, removed, close_graph=True)
+            return NegotiatedGraphResponse(request, removed, close_graph=True)
         else:
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:

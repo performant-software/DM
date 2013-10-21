@@ -6,7 +6,7 @@ from rdflib import Literal, URIRef, Graph
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
-from semantic_store.utils import parse_request_into_graph, negotiated_graph_response, metadata_triples
+from semantic_store.utils import parse_request_into_graph, NegotiatedGraphResponse, metadata_triples
 from semantic_store.annotations import resource_annotation_subgraph
 from semantic_store.specific_resources import specific_resources_subgraph
 

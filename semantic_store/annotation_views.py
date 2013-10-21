@@ -13,7 +13,7 @@ from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, bind_namespaces
 from semantic_store import uris
 from semantic_store import manuscripts
-from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph
 
 def graph():
     g = Graph()
@@ -100,7 +100,7 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     dest_g.close()
     annotations_g.close()
 
-    return negotiated_graph_response(request, stored_g, close_graph=True, status=201)
+    return NegotiatedGraphResponse(request, stored_g, close_graph=True, status=201)
 
 def get_annotations(request, graph_uri, anno_uris=None):
     if anno_uris is None:
@@ -136,7 +136,7 @@ def get_annotations(request, graph_uri, anno_uris=None):
     anno_g.close()
 
     if len(result_g) > 0:
-        return negotiated_graph_response(request, result_g, close_graph=True, status=200)
+        return NegotiatedGraphResponse(request, result_g, close_graph=True, status=200)
     else:
         result_g.close()
         return HttpResponse(status=204) # Not really a 404, just no content
