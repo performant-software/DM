@@ -298,7 +298,10 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handle
 
         this.parseRdf(data, type, function(quadBatch, done, error) {
             for (var i=0, len=quadBatch.length; i<len; i++) {
-                this.quadStore.addQuad(this.getBNodeHandledQuad(quadBatch[i], bNodeMapping));
+                var bNodeHandledQuad = this.getBNodeHandledQuad(quadBatch[i], bNodeMapping);
+                if (!this.deletedQuadsStore.containsQuad(bNodeHandledQuad)) {
+                    this.quadStore.addQuad(bNodeHandledQuad);
+                }
             }
 
             if (done) {
