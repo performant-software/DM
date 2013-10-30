@@ -117,7 +117,7 @@ goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], ['jquery.rdfque
 goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.structs.Set', 'sc.util.DefaultDict']);
 goog.addDependency('../../../sc/data/RDFQueryParser.js', ['sc.data.RDFQueryParser'], ['jquery.rdfquery', 'sc.data.Parser']);
 goog.addDependency('../../../sc/data/RDFQuerySerializer.js', ['sc.data.RDFQuerySerializer'], ['sc.data.Serializer']);
-goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'sc.data.Quad']);
+goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'sc.data.Quad', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict']);
 goog.addDependency('../../../sc/data/Serializer.js', ['sc.data.Serializer'], []);
 goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], ['goog.net.Cookies']);
 goog.addDependency('../../../sc/data/Term.js', ['sc.data.BNode', 'sc.data.Literal', 'sc.data.Term', 'sc.data.Uri'], ['goog.string']);
