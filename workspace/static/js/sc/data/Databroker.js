@@ -609,72 +609,15 @@ sc.data.Databroker.prototype.getDeferredResourceCollection = function(uris) {
     return collection;
 };
 
-sc.data.Databroker.prototype.dumpResource = function(uri) {
-    if (uri instanceof sc.data.Resource) uri = uri.uri;
-
-    var equivalentUris = this.getEquivalentUris(uri);
-    
-    var ddict = new sc.util.DefaultDict(function() {
-        return new sc.util.DefaultDict(function () {
-            return new goog.structs.Set();
-        });
-    });
-    
-    for (var i=0, len=equivalentUris.length; i<len; i++) {
-        var equivalentUri = sc.data.Term.wrapUri(equivalentUris[i]);
-
-        this.quadStore.forEachQuadMatchingQuery(
-            equivalentUri, null, null, null,
-            function(quad) {
-                ddict.get('__context__:' + (quad.context == null ? '__global__' : quad.context)).
-                    get(this.namespaces.prefix(quad.predicate)).
-                    add(sc.data.Term.isUri(quad.object) ? this.namespaces.prefix(quad.object) : quad.object);
-            }, this
-        );
-    }
-    
-    var dump = {};
-    
-    goog.structs.forEach(ddict, function(predicates, context) {
-        dump[context] = {};
-        goog.structs.forEach(predicates, function(objects, predicate) {
-            dump[context][predicate] = objects.getValues();
-        }, this);
-    }, this);
-    
-    return dump;
-};
-
-sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
-    var resource = this.getResource(r);
-    var quads = [];
-    goog.structs.forEach(this.getEquivalentUris(resource.uri), function(uri) {
-        this.quadStore.forEachQuadMatchingQuery(new sc.data.Uri(uri), null, null, null, function(quad) {
-            quads.push(quad);
-        }.bind(this));
-    }, this);
-
-    var serializer = new sc.data.TurtleSerializer(this);
-    serializer.compact = false;
-    var str = serializer.getTriplesString(quads);
-
-    if (str) {
-        return str;
-    }
-    else {
-        return new sc.data.Uri(resource.uri) + '\n  # No data\n  .';
-    }
-};
-
 sc.data.Databroker.prototype.getResource = function(uri) {
     goog.asserts.assert(uri != null, 'uri passed to sc.data.Databroker#getResource is null or undefined');
 
     if (uri instanceof sc.data.Resource) {
-        return uri;
+        return new sc.data.Resource(this, this.quadStore, uri.uri);
     }
     else {
         uri = sc.data.Term.unwrapUri(uri);
-        return new sc.data.Resource(this, uri);
+        return new sc.data.Resource(this, this.quadStore, uri);
     }
 };
 

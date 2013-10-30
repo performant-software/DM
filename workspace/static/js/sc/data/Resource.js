@@ -1,8 +1,11 @@
 goog.provide('sc.data.Resource');
 
 goog.require('goog.structs.Set');
+goog.require('sc.util.DefaultDict');
 goog.require('goog.array');
 goog.require('sc.data.Quad');
+goog.require('sc.data.TurtleSerializer');
+goog.require('sc.data.Term');
 
 /**
  * A convenient wrapper around the databroker methods for querying information
@@ -17,22 +20,77 @@ goog.require('sc.data.Quad');
  * resource.
  * @param {string} uri The uri of this resource.
  */
-sc.data.Resource = function(databroker, uri) {
+sc.data.Resource = function(databroker, quadStore, uri) {
     this.databroker = databroker;
+    this.namespaces = databroker.namespaces;
+    this.quadStore = quadStore;
     this.uri = uri;
     this.bracketedUri = sc.data.Term.wrapUri(uri);
 };
 
 sc.data.Resource.prototype.toString = function() {
-    return this.databroker.dumpResourceToTurtleString(this);
+    var quads = [];
+    goog.structs.forEach(this.getEquivalentUris(this.uri), function(uri) {
+        this.quadStore.forEachQuadMatchingQuery(new sc.data.Uri(uri), null, null, null, function(quad) {
+            quads.push(quad);
+        }.bind(this));
+    }, this);
+
+    var serializer = new sc.data.TurtleSerializer(this.databroker);
+    serializer.compact = false;
+    var str = serializer.getTriplesString(quads);
+
+    if (str) {
+        return str;
+    }
+    else {
+        return this.bracketedUri + '\n  # No data\n  .';
+    }
 };
 
 /**
- * @return {sc.data.Databroker} A reference to the databroker which owns this
+ * @return {sc.data.Databroker} A reference to the databroker which this resource uses.
  * resource.
  */
 sc.data.Resource.prototype.getDatabroker = function() {
     return this.databroker;
+};
+
+/**
+ * @return {sc.data.QuadStore} A reference to the quad store against which this resource queries.
+ */
+sc.data.Resource.prototype.getQuadStore = function() {
+    return this.quadStore;
+};
+
+sc.data.Resource.prototype.dump = function() {
+    var ddict = new sc.util.DefaultDict(function() {
+        return new sc.util.DefaultDict(function () {
+            return new goog.structs.Set();
+        });
+    });
+
+    goog.structs.forEach(this.getEquivalentUris(), function(equivalentUri) {
+        this.quadStore.forEachQuadMatchingQuery(
+            equivalentUri, null, null, null,
+            function(quad) {
+                ddict.get('__context__:' + (quad.context == null ? '__global__' : quad.context)).
+                    get(this.namespaces.prefix(quad.predicate)).
+                    add(sc.data.Term.isUri(quad.object) ? this.namespaces.prefix(quad.object) : quad.object);
+            }, this
+        );
+    }, this);
+    
+    var dump = {};
+    
+    goog.structs.forEach(ddict, function(predicates, context) {
+        dump[context] = {};
+        goog.structs.forEach(predicates, function(objects, predicate) {
+            dump[context][predicate] = objects.getValues();
+        }, this);
+    }, this);
+    
+    return dump;
 };
 
 /**
@@ -48,10 +106,23 @@ sc.data.Resource.prototype.getDatabroker = function() {
  */
 sc.data.Resource.prototype.getUnescapedPropertiesByPredicate = function(predicate) {
     if (predicate) {
-        return this.databroker.getPropertiesForResource(this.bracketedUri, predicate);
+        var properties = new goog.structs.Set();
+
+        goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+            properties.addAll(
+                this.quadStore.objectsSetMatchingQuery(
+                    uri,
+                    this.namespaces.autoExpand(predicate),
+                    null,
+                    null
+                )
+            );
+        }, this);
+
+        return properties.getValues();
     }
     else {
-        return this.databroker.dumpResource(this.uri);
+        return this.dump();
     }
 };
 
@@ -68,7 +139,7 @@ sc.data.Resource.prototype.getUnescapedPropertiesByPredicates = function(predica
         return properties.getValues();
     }
     else {
-        return this.databroker.dumpResource(this.uri);
+        return this.dump();
     }
 };
 
@@ -140,13 +211,13 @@ sc.data.Resource.prototype.getOneProperty = function(predicate) {
 };
 
 sc.data.Resource.prototype.hasProperty = function(predicate, object) {
-    predicate = this.databroker.namespaces.autoExpand(predicate);
-    object = this.databroker.namespaces.autoExpand(object);
+    predicate = this.namespaces.autoExpand(predicate);
+    object = this.namespaces.autoExpand(object);
 
     var numQuads = 0;
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        numQuads += this.databroker.quadStore.numQuadsMatchingQuery(sc.data.Term.wrapUri(uri), predicate, object);
+        numQuads += this.quadStore.numQuadsMatchingQuery(sc.data.Term.wrapUri(uri), predicate, object);
     }, this);
 
     return numQuads > 0;
@@ -157,7 +228,7 @@ sc.data.Resource.prototype.getResourcesByProperty = function(predicate) {
     var resources = [];
 
     goog.structs.forEach(properties, function(property) {
-        resources.push(this.databroker.getResource(property));
+        resources.push(new sc.data.Resource(this.databroker, this.quadStore, this.uri));
     }, this);
 
     return resources;
@@ -175,14 +246,12 @@ sc.data.Resource.prototype.getOneResourceByProperty = function(predicate) {
 };
 
 sc.data.Resource.prototype.hasPredicate = function(predicate) {
-    return this.databroker.getPropertiesForResource(
-                                    this.bracketedUri, predicate).length > 0;
+    return this.getUnescapedProperties(predicate).length > 0;
 };
 
 sc.data.Resource.prototype.hasAnyPredicate = function(possiblePredicates) {
     for (var i = 0, len = possiblePredicates.length; i < len; i++) {
-        var possiblePredicate = this.databroker.namespaces.
-            autoExpand(possiblePredicates[i]);
+        var possiblePredicate = this.namespaces.autoExpand(possiblePredicates[i]);
 
         if (this.hasPredicate(possiblePredicate)) {
             return true;
@@ -193,8 +262,8 @@ sc.data.Resource.prototype.hasAnyPredicate = function(possiblePredicates) {
 };
 
 sc.data.Resource.prototype.addProperty = function(predicate, object) {
-    predicate = this.databroker.namespaces.autoExpand(predicate);
-    object = this.databroker.namespaces.autoExpand(object);
+    predicate = this.namespaces.autoExpand(predicate);
+    object = this.namespaces.autoExpand(object);
     
     var quad = new sc.data.Quad(this.bracketedUri, predicate, object, null);
     
@@ -211,11 +280,11 @@ sc.data.Resource.prototype.setProperty = function(predicate, object) {
 };
 
 sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
-    var safePredicate = sc.data.Term.wrapUri(this.databroker.namespaces.autoExpand(predicate));
-    var safeObject = opt_object ? this.databroker.namespaces.autoExpand(opt_object) : null;
+    var safePredicate = sc.data.Term.wrapUri(this.namespaces.autoExpand(predicate));
+    var safeObject = opt_object ? this.namespaces.autoExpand(opt_object) : null;
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        this.databroker.quadStore.forEachQuadMatchingQuery(
+        this.quadStore.forEachQuadMatchingQuery(
             sc.data.Term.wrapUri(uri),
             safePredicate,
             safeObject,
@@ -234,7 +303,7 @@ sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
  */
 sc.data.Resource.prototype.delete = function() {
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        this.databroker.quadStore.forEachQuadMatchingQuery(
+        this.quadStore.forEachQuadMatchingQuery(
             uri, null, null, null, function(quad) {
                 this.databroker.deleteQuad(quad);
             }.bind(this)
@@ -280,13 +349,12 @@ sc.data.Resource.prototype.getTypes = function() {
 };
 
 sc.data.Resource.prototype.getTypesSet = function() {
-    return this.databroker.getPropertiesSetForResource(this.bracketedUri,
-                                                       'rdf:type');
+    return new goog.structs.Set(this.getTypes());
 };
 
 sc.data.Resource.prototype.hasType = function(type) {
     var types = this.getTypesSet();
-    var type = this.databroker.namespaces.autoExpand(type);
+    var type = this.namespaces.autoExpand(type);
 
     return types.contains(type);
 };
@@ -304,8 +372,7 @@ sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
     }
 
     for (var i = 0, len = typesToTest.length; i < len; i++) {
-        var possibleType = this.databroker.namespaces.
-            autoExpand(typesToTest[i]);
+        var possibleType = this.namespaces.autoExpand(typesToTest[i]);
 
         if (types.contains(possibleType)) {
             return true;
@@ -326,8 +393,7 @@ sc.data.Resource.prototype.hasAllTypes = function(possibleTypes) {
     }
 
     for (var i = 0, len = typesToTest.length; i < len; i++) {
-        var possibleType = this.databroker.namespaces.
-            autoExpand(typesToTest[i]);
+        var possibleType = this.namespaces.autoExpand(typesToTest[i]);
 
         possibleTypesSet.add(possibleType);
     }
@@ -348,10 +414,10 @@ sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
  */
 sc.data.Resource.prototype.getReferencingResources = function(predicate) {
     var uris = new goog.structs.Set();
-    var expandedPredicate = this.databroker.namespaces.autoExpand(predicate);
+    var expandedPredicate = this.namespaces.autoExpand(predicate);
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        this.databroker.quadStore.forEachQuadMatchingQuery(
+        this.quadStore.forEachQuadMatchingQuery(
             null, expandedPredicate, this.bracketedUri, null, function(quad) {
                 uris.add(quad.subject);
             }.bind(this));
@@ -359,7 +425,7 @@ sc.data.Resource.prototype.getReferencingResources = function(predicate) {
 
     var resources = [];
     goog.structs.forEach(uris, function(uri) {
-        var resource = this.databroker.getResource(uri);
+        var resource = new sc.data.Resource(this.databroker, this.quadStore, this.uri);
         resources.push(resource);
     }, this);
 
@@ -404,11 +470,9 @@ sc.data.Resource.prototype.equals = sc.data.Resource.prototype.isSameAs;
  * @return {Array.<string>} The equivalent uris.
  */
 sc.data.Resource.prototype.getEquivalentUris = function() {
-    return this.databroker.getEquivalentUris(this.bracketedUri);
-};
-
-sc.data.Resource.prototype.dump = function() {
-    return this.databroker.dumpResource(this.bracketedUri);
+    var s = this.quadStore.objectsSetMatchingQuery(this.bracketedUri, 'owl:sameAs', null);
+    s.add(this.bracketedUri);
+    return s;
 };
 
 sc.data.Resource.prototype.defer = function() {
