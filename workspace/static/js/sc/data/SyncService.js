@@ -1,6 +1,7 @@
 goog.provide('sc.data.SyncService');
 
 goog.require('goog.net.Cookies');
+goog.require('sc.data.ConjunctiveQuadStore');
 
 /**
  * @author sbradsha@drew.edu (Shannon Bradshaw)
@@ -111,7 +112,7 @@ sc.data.SyncService.prototype.getModifiedResourceUris = function() {
     var subjectsOfNewQuads = this.databroker.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
     subjectsOfNewQuads.addAll(this.databroker.deletedQuadsStore.subjectsSetMatchingQuery(null, null, null, null));
 
-    return subjectsOfNewQuads.difference(this.databroker.newResourceUris);
+    return subjectsOfNewQuads.difference(this.databroker.newResourceUris).difference(this.databroker.deletedResourceUris);
 };
 
 sc.data.SyncService.prototype.postNewResources = function() {
@@ -151,6 +152,9 @@ sc.data.SyncService.prototype.deleteDeletedResources = function() {
 sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {
     var resource = this.databroker.getResource(uri);
 
+    var conjunctiveStore = new sc.data.ConjunctiveQuadStore([this.databroker.quadStore, this.databroker.deletedQuadsStore]);
+    var conjunctiveResource = new sc.data.Resource(this.databroker, conjunctiveStore, uri);
+
     var dataModel = this.databroker.dataModel;
     var newQuadStore = this.databroker.newQuadStore;
     var deletedQuadsStore = this.databroker.deletedQuadsStore;
@@ -164,7 +168,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     var quadsToRemove = [];
     var url;
 
-    if (resource.hasAnyType(VOCABULARY.textTypes)) {
+    if (conjunctiveResource.hasAnyType(VOCABULARY.textTypes)) {
         resType = sc.data.SyncService.RESTYPE.text;
 
         quadsToPost = this.databroker.dataModel.findQuadsToSyncForText(resource);
@@ -174,7 +178,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         url = this.restUrl(currentProject.uri, resType, sc.data.Term.unwrapUri(uri), null);
     }
-    else if (resource.hasAnyType(VOCABULARY.canvasTypes)) {
+    else if (conjunctiveResource.hasAnyType(VOCABULARY.canvasTypes)) {
         resType = sc.data.SyncService.RESTYPE.project;
 
         quadsToPost = newQuadStore.query(resource.bracketedUri, null, null, null);
@@ -185,7 +189,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             method = 'PUT'
         }
     }
-    else if (resource.hasType('oa:SvgSelector')) {
+    else if (conjunctiveResource.hasType('oa:SvgSelector')) {
         resType = sc.data.SyncService.RESTYPE.project;
 
         quadsToPost = dataModel.findQuadsToSyncForSvgSelector(resource, newQuadStore);
@@ -196,7 +200,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             method = 'PUT'
         }
     }
-    else if (resource.hasType('oa:Annotation')) {
+    else if (conjunctiveResource.hasType('oa:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.project;
 
         quadsToPost = dataModel.findQuadsToSyncForAnno(resource.bracketedUri);
@@ -207,7 +211,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             method = 'PUT'
         }
     }
-    else if (resource.hasType('dm:Project') &&
+    else if (conjunctiveResource.hasType('dm:Project') &&
         projectController.userHasPermissionOverProject(null, resource, PERMISSIONS.update)) {
         var resType = sc.data.SyncService.RESTYPE.project;
 
@@ -219,7 +223,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             method = 'PUT'
         }
     }
-    else if (resource.hasType('foaf:Agent')){
+    else if (conjunctiveResource.hasType('foaf:Agent')){
         resType = sc.data.SyncService.RESTYPE.user;
         quadsToPost = dataModel.findQuadsToSyncForUser(resource, newQuadStore)
         quadsToRemove = dataModel.findQuadsToSyncForUser(resource, deletedQuadsStore)
@@ -227,7 +231,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         var username = resource.uri.split("/").pop()
         url = this.restUrl(null, resType, username, null) + "/";
     }
-    else if (resource.hasAnyType('oa:SpecificResource', 'oa:TextQuoteSelector')) {
+    else if (conjunctiveResource.hasAnyType('oa:SpecificResource', 'oa:TextQuoteSelector')) {
         //pass, these should be synced with either texts or annotations
     }
     else {
