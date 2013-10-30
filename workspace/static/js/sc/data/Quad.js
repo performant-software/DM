@@ -1,5 +1,4 @@
 goog.provide('sc.data.Quad');
-goog.require('jquery.rdfquery');
 
 /**
  * @class
@@ -43,4 +42,8 @@ sc.data.Quad.prototype.equals = function(other) {
 
 sc.data.Quad.prototype.toString = function() {
     return [this.subject, this.predicate, this.object, this.context, '.'].join(' ');
+};
+
+sc.data.Quad.prototype.toArray = function() {
+    return [this.subject, this.predicate, this.object, this.context];
 };

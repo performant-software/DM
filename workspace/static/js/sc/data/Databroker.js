@@ -10,6 +10,7 @@ goog.require('sc.data.Resource');
 goog.require('sc.data.Quad');
 goog.require('sc.data.BNode');
 goog.require('sc.data.QuadStore');
+goog.require('sc.data.Graph');
 goog.require('sc.data.DataModel');
 goog.require('sc.data.SyncService');
 goog.require('sc.data.RDFQueryParser');
@@ -612,12 +613,14 @@ sc.data.Databroker.prototype.getDeferredResourceCollection = function(uris) {
 sc.data.Databroker.prototype.getResource = function(uri) {
     goog.asserts.assert(uri != null, 'uri passed to sc.data.Databroker#getResource is null or undefined');
 
+    var graph = new sc.data.Graph(this.quadStore, null);
+
     if (uri instanceof sc.data.Resource) {
-        return new sc.data.Resource(this, this.quadStore, uri.uri);
+        return new sc.data.Resource(this, graph, uri.uri);
     }
     else {
         uri = sc.data.Term.unwrapUri(uri);
-        return new sc.data.Resource(this, this.quadStore, uri);
+        return new sc.data.Resource(this, graph, uri);
     }
 };
 
