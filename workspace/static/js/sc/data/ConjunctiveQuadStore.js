@@ -7,6 +7,8 @@ goog.require('sc.util.DefaultDict');
 goog.require('sc.data.BNode');
 
 /**
+ * @author  tandres@drew.edu (Tim Andres)
+ * 
  * @class
  * @extends {sc.data.QuadStore}
  * Allows for querying and manipulation of multiple quad stores at once. (Queries are performed live).

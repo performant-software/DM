@@ -153,7 +153,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     var resource = this.databroker.getResource(uri);
 
     var conjunctiveStore = new sc.data.ConjunctiveQuadStore([this.databroker.quadStore, this.databroker.deletedQuadsStore]);
-    var conjunctiveResource = new sc.data.Resource(this.databroker, conjunctiveStore, uri);
+    var graph = new sc.data.Graph(conjunctiveStore, null);
+    var conjunctiveResource = new sc.data.Resource(this.databroker, graph, uri);
 
     var dataModel = this.databroker.dataModel;
     var newQuadStore = this.databroker.newQuadStore;

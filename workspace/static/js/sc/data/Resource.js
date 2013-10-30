@@ -20,25 +20,25 @@ goog.require('sc.data.Term');
  * resource.
  * @param {string} uri The uri of this resource.
  */
-sc.data.Resource = function(databroker, quadStore, uri) {
+sc.data.Resource = function(databroker, graph, uri) {
     this.databroker = databroker;
     this.namespaces = databroker.namespaces;
-    this.quadStore = quadStore;
+    this.graph = graph;
     this.uri = uri;
     this.bracketedUri = sc.data.Term.wrapUri(uri);
 };
 
 sc.data.Resource.prototype.toString = function() {
-    var quads = [];
+    var triples = [];
     goog.structs.forEach(this.getEquivalentUris(this.uri), function(uri) {
-        this.quadStore.forEachQuadMatchingQuery(new sc.data.Uri(uri), null, null, null, function(quad) {
-            quads.push(quad);
+        this.graph.forEachTripleMatchingQuery(new sc.data.Uri(uri), null, null, function(triple) {
+            triples.push(triple);
         }.bind(this));
     }, this);
 
     var serializer = new sc.data.TurtleSerializer(this.databroker);
     serializer.compact = false;
-    var str = serializer.getTriplesString(quads);
+    var str = serializer.getTriplesString(triples);
 
     if (str) {
         return str;
@@ -57,26 +57,23 @@ sc.data.Resource.prototype.getDatabroker = function() {
 };
 
 /**
- * @return {sc.data.QuadStore} A reference to the quad store against which this resource queries.
+ * @return {sc.data.Graph} A reference to the RDF graph against which this resource queries.
  */
-sc.data.Resource.prototype.getQuadStore = function() {
-    return this.quadStore;
+sc.data.Resource.prototype.getGraph = function() {
+    return this.graph;
 };
 
 sc.data.Resource.prototype.dump = function() {
     var ddict = new sc.util.DefaultDict(function() {
-        return new sc.util.DefaultDict(function () {
-            return new goog.structs.Set();
-        });
+        return new goog.structs.Set();
     });
 
     goog.structs.forEach(this.getEquivalentUris(), function(equivalentUri) {
-        this.quadStore.forEachQuadMatchingQuery(
-            equivalentUri, null, null, null,
-            function(quad) {
-                ddict.get('__context__:' + (quad.context == null ? '__global__' : quad.context)).
-                    get(this.namespaces.prefix(quad.predicate)).
-                    add(sc.data.Term.isUri(quad.object) ? this.namespaces.prefix(quad.object) : quad.object);
+        this.graph.forEachTripleMatchingQuery(
+            equivalentUri, null, null,
+            function(triple) {
+                ddict.get(this.namespaces.prefix(triple.predicate)).
+                      add(sc.data.Term.isUri(triple.object) ? this.namespaces.prefix(triple.object) : triple.object);
             }, this
         );
     }, this);
@@ -94,7 +91,7 @@ sc.data.Resource.prototype.dump = function() {
 };
 
 /**
- * Returns the objects of all quads with this resource as a subject and the
+ * Returns the objects of all triples with this resource as a subject and the
  * given resource, or an object dictionary of values by predicate.
  * Angle brackets around urls, quotes around literals, and xml escaped
  * characters will be returned unmodified.
@@ -110,7 +107,7 @@ sc.data.Resource.prototype.getUnescapedPropertiesByPredicate = function(predicat
 
         goog.structs.forEach(this.getEquivalentUris(), function(uri) {
             properties.addAll(
-                this.quadStore.objectsSetMatchingQuery(
+                this.graph.objectsSetMatchingQuery(
                     uri,
                     this.namespaces.autoExpand(predicate),
                     null,
@@ -214,13 +211,13 @@ sc.data.Resource.prototype.hasProperty = function(predicate, object) {
     predicate = this.namespaces.autoExpand(predicate);
     object = this.namespaces.autoExpand(object);
 
-    var numQuads = 0;
+    var numTriples = 0;
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        numQuads += this.quadStore.numQuadsMatchingQuery(sc.data.Term.wrapUri(uri), predicate, object);
+        numTriples += this.graph.numTriplesMatchingQuery(sc.data.Term.wrapUri(uri), predicate, object);
     }, this);
 
-    return numQuads > 0;
+    return numTriples > 0;
 };
 
 sc.data.Resource.prototype.getResourcesByProperty = function(predicate) {
@@ -228,7 +225,7 @@ sc.data.Resource.prototype.getResourcesByProperty = function(predicate) {
     var resources = [];
 
     goog.structs.forEach(properties, function(property) {
-        resources.push(new sc.data.Resource(this.databroker, this.quadStore, this.uri));
+        resources.push(new sc.data.Resource(this.databroker, this.graph, this.uri));
     }, this);
 
     return resources;
@@ -265,7 +262,7 @@ sc.data.Resource.prototype.addProperty = function(predicate, object) {
     predicate = this.namespaces.autoExpand(predicate);
     object = this.namespaces.autoExpand(object);
     
-    var quad = new sc.data.Quad(this.bracketedUri, predicate, object, null);
+    var quad = new sc.data.Quad(this.bracketedUri, predicate, object, this.graph.context);
     
     this.databroker.addNewQuad(quad);
     
@@ -284,12 +281,12 @@ sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
     var safeObject = opt_object ? this.namespaces.autoExpand(opt_object) : null;
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        this.quadStore.forEachQuadMatchingQuery(
+        this.graph.forEachTripleMatchingQuery(
             sc.data.Term.wrapUri(uri),
             safePredicate,
             safeObject,
-            null,
-            function(quad) {
+            function(triple) {
+                var quad = triple.toQuad(this.graph.context);
                 this.databroker.deleteQuad(quad);
             }.bind(this)
         );
@@ -303,8 +300,9 @@ sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
  */
 sc.data.Resource.prototype.delete = function() {
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        this.quadStore.forEachQuadMatchingQuery(
-            uri, null, null, null, function(quad) {
+        this.graph.forEachTripleMatchingQuery(
+            uri, null, null, function(triple) {
+                var quad = triple.toQuad(this.graph.context);
                 this.databroker.deleteQuad(quad);
             }.bind(this)
         );
@@ -417,15 +415,15 @@ sc.data.Resource.prototype.getReferencingResources = function(predicate) {
     var expandedPredicate = this.namespaces.autoExpand(predicate);
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        this.quadStore.forEachQuadMatchingQuery(
-            null, expandedPredicate, this.bracketedUri, null, function(quad) {
-                uris.add(quad.subject);
+        this.graph.forEachTripleMatchingQuery(
+            null, expandedPredicate, this.bracketedUri, function(triple) {
+                uris.add(triple.subject);
             }.bind(this));
     }, this);
 
     var resources = [];
     goog.structs.forEach(uris, function(uri) {
-        var resource = new sc.data.Resource(this.databroker, this.quadStore, this.uri);
+        var resource = new sc.data.Resource(this.databroker, this.graph, this.uri);
         resources.push(resource);
     }, this);
 
@@ -470,7 +468,7 @@ sc.data.Resource.prototype.equals = sc.data.Resource.prototype.isSameAs;
  * @return {Array.<string>} The equivalent uris.
  */
 sc.data.Resource.prototype.getEquivalentUris = function() {
-    var s = this.quadStore.objectsSetMatchingQuery(this.bracketedUri, 'owl:sameAs', null);
+    var s = this.graph.objectsSetMatchingQuery(this.bracketedUri, 'owl:sameAs', null);
     s.add(this.bracketedUri);
     return s;
 };
