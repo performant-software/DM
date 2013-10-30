@@ -8,6 +8,7 @@ goog.require('goog.structs.Set');
 goog.require('sc.data.Resource');
 
 goog.require('sc.data.Quad');
+goog.require('sc.data.BNode');
 goog.require('sc.data.QuadStore');
 goog.require('sc.data.DataModel');
 goog.require('sc.data.SyncService');
@@ -50,6 +51,8 @@ sc.data.Databroker = function(options) {
     this.jqXhrsByUrl = new goog.structs.Map();
 
     this.rdfByUrl = new goog.structs.Map();
+
+    this._bNodeCounter = 0;
     
     this.newQuadStore = new sc.data.QuadStore();
     this.deletedQuadsStore = new sc.data.QuadStore();
@@ -263,6 +266,12 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     return deferred;
 };
 
+sc.data.Databroker.prototype.getNextBNode = function() {
+    var node = new sc.data.BNode(this._bNodeCounter);
+    this._bNodeCounter ++;
+    return node;
+};
+
 /**
  * Returns a quad with Blank Nodes guaranteed to be unique in the main quad store.
  * @param  {sc.data.Quad} quad             The quad to make unique
@@ -279,7 +288,7 @@ sc.data.Databroker.prototype.getBNodeHandledQuad = function(quad, bNodeMapping) 
                 modifiedQuad[prop] = bNodeMapping.get(quad[prop]);
             }
             else {
-                var newBNode = this.quadStore.getNextBNode();
+                var newBNode = this.getNextBNode();
                 modifiedQuad[prop] = newBNode;
                 bNodeMapping.set(quad[prop], newBNode);
             }
