@@ -140,7 +140,7 @@ sc.data.SyncService.prototype.deleteDeletedResources = function() {
         var currentProject = this.databroker.projectController.currentProject;
         var url = this.restUrl(currentProject.uri, sc.data.SyncService.RESTYPE.project, null, null) + 'remove_triples';
 
-        this.sendQuads(quadsToRemove, url, 'PUT', function() {
+        this.sendQuads(quadsToRemove, url, 'PUT', null, function() {
             this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
             this.databroker.deletedResourceUris.clear();
         }, function() {
