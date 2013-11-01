@@ -255,7 +255,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
             }, this);
         }, this);
 
-        jQuery(this.loadingDiv).fadeOut(200);
+        jQuery(this.loadingDiv).hide();
 
         if (bodyUris.getCount() + targetUris.getCount() == 0/* && deferredResource.state() == 'resolved'*/) {
             jQuery(this.noAnnosDiv).show();
