@@ -11,11 +11,11 @@ urlpatterns = patterns('',
         semantic_store.views.project_annotations, 
         name="semantic_store_project_annotations"),
 
-    url(r'^projects/(?P<project_uri>[^/]+)/texts(?:/(?P<text_uri>[^/]+))/specific_resource/(?P<specific_resource>[^/]+)$', 
+    url(r'^projects/(?P<project_uri>[^/]+)/texts(?:/(?P<text_uri>[^/]+))/specific_resource/(?P<specific_resource>[^/]+)/?$', 
         semantic_store.views.text_specific_resource, 
         name="semantic_store_text_specific_resource"),
 
-    url(r'^projects/(?P<project_uri>[^/]+)/texts(?:/(?P<text_uri>[^/]+))?/$', 
+    url(r'^projects/(?P<project_uri>[^/]+)/texts(?:/(?P<text_uri>[^/]+))?/?$', 
         semantic_store.views.project_texts, 
         name="semantic_store_project_texts"),
 
