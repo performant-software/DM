@@ -299,5 +299,5 @@ sc.data.SyncService.prototype.getCsrfToken = function() {
 };
 
 sc.data.SyncService.prototype.hasUnsavedChanges = function() {
-    return this.databroker.newQuadStore.getCount() !== 0 || this.databroker.deletedResourceUris.getCount() !== 0;
+    return this.databroker.newResourceUris.getCount() !== 0 || this.databroker.deletedResourceUris.getCount() !== 0 || this.getModifiedResourceUris().getCount() !== 0;
 };
