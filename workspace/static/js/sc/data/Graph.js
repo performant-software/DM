@@ -46,7 +46,7 @@ sc.data.Graph.prototype._queryReturningSet = sc.data.Graph.prototype.queryReturn
  * @return {array.<sc.data.Triple>}          A list of triples matching the query.
  */
 sc.data.Graph.prototype.query = function(subject, predicate, object) {
-    return this.queryReturningSet(subject, predicate, object, context).getValues();
+    return this.queryReturningSet(subject, predicate, object, this.context).getValues();
 };
 
 /**
