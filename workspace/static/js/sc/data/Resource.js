@@ -423,7 +423,7 @@ sc.data.Resource.prototype.getReferencingResources = function(predicate) {
 
     var resources = [];
     goog.structs.forEach(uris, function(uri) {
-        var resource = new sc.data.Resource(this.databroker, this.graph, this.uri);
+        var resource = new sc.data.Resource(this.databroker, this.graph, uri);
         resources.push(resource);
     }, this);
 
