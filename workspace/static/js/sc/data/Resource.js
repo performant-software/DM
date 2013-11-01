@@ -225,7 +225,7 @@ sc.data.Resource.prototype.getResourcesByProperty = function(predicate) {
     var resources = [];
 
     goog.structs.forEach(properties, function(property) {
-        resources.push(new sc.data.Resource(this.databroker, this.graph, this.uri));
+        resources.push(new sc.data.Resource(this.databroker, this.graph, property));
     }, this);
 
     return resources;
