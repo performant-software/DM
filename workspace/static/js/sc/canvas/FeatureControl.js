@@ -148,9 +148,11 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
         this.databroker.createUuid(), 'oa:SpecificResource');
     specificResource.addProperty('oa:hasSource', '<' + canvasUri + '>');
     specificResource.addProperty('oa:hasSelector', selector.bracketedUri);
+    specificResource.addProperty('dc:creator', this.databroker.user);
 
     var annotation = this.databroker.createResource(null, 'oa:Annotation');
     annotation.addProperty('oa:hasTarget', specificResource.bracketedUri);
+    annotation.addProperty('dc:creator', this.databroker.user);
 
     this.resetFeature();
 };
