@@ -42,6 +42,17 @@ sc.data.Databroker = function(options) {
     this.quadStore = this.options.quadStore || new sc.data.QuadStore();
     this.syncService = this.options.syncService || new sc.data.SyncService(this);
 
+    goog.events.listen(window, 'beforeunload', function(event) {
+        if (this.syncService.hasUnsavedChanges()) {
+            message = 'Not all changes have been synchronized with the server yet. Please wait a few seconds before leaving the page.';
+
+            this.sync();
+
+            (event || window.event).returnValue = message;
+            return message;
+        }
+    }, false, this);
+
     this._setupParsersAndSerializers();
 
     this.requestedUrls = new goog.structs.Set();
