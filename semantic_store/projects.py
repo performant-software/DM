@@ -144,7 +144,7 @@ def update_project(request, uri):
 
             project_graph = update_project_graph(input_graph, uri)
 
-            return NegotiatedGraphResponse(request, project_graph, status=201)
+            return NegotiatedGraphResponse(request, project_graph, status=200)
         else:
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
