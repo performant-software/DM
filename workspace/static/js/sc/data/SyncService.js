@@ -145,6 +145,11 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
         var conjunctiveResource = new sc.data.Resource(this.databroker, graph, uri);
         var resource = this.databroker.getResource(uri);
 
+        if (resource.hasType('foaf:Agent')) {
+            this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri, this.databroker.namespaces.expand('dm', 'lastOpenProject'), null, null);
+            this.databroker.deletedQuadsStore.removeQuadsMatchingQuery(resource.bracketedUri, this.databroker.namespaces.expand('dc', 'modified'), null, null);
+        }
+
         if (conjunctiveResource.hasAnyType('oa:TextQuoteSelector', 'oa:SvgSelector')) {
             var specificResource = resource.getReferencingResources('oa:hasSelector')[0];
             if (specificResource) {
