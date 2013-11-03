@@ -25,3 +25,8 @@ def resource_annotation_subgraph(graph, resource_uri):
                 subgraph += metadata_triples(graph, resource)
 
     return subgraph
+
+def blank_annotation_uris(graph):
+    for uri in graph.subjects(NS.rdf.type, NS.oa.Annotation):
+        if len(graph.triples((uri, NS.oa.hasTarget, None))) + len(graph.triples((uri, NS.oa.hasBody, None))) == 0:
+            yield uri
