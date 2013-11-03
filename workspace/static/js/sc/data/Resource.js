@@ -259,22 +259,22 @@ sc.data.Resource.prototype.hasAnyPredicate = function(possiblePredicates) {
 };
 
 sc.data.Resource.prototype.markModificationTime = function() {
-    var dcModified = this.namespaces.expand('dc', 'modified');
+    // var dcModified = this.namespaces.expand('dc', 'modified');
 
-    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
-        this.graph.forEachTripleMatchingQuery(
-            uri,
-            dcModified,
-            null,
-            function(triple) {
-                var quad = triple.toQuad(this.graph.context);
-                this.databroker.deleteQuad(quad);
-            }.bind(this)
-        );
-    }, this);
+    // goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+    //     this.graph.forEachTripleMatchingQuery(
+    //         uri,
+    //         dcModified,
+    //         null,
+    //         function(triple) {
+    //             var quad = triple.toQuad(this.graph.context);
+    //             this.databroker.deleteQuad(quad);
+    //         }.bind(this)
+    //     );
+    // }, this);
 
-    var quad = new sc.data.Quad(this.bracketedUri, dcModified, sc.data.DateTimeLiteral(new Date()).n3(), this.graph.context);
-    this.databroker.addNewQuad(quad);
+    // var quad = new sc.data.Quad(this.bracketedUri, dcModified, sc.data.DateTimeLiteral(new Date()).n3(), this.graph.context);
+    // this.databroker.addNewQuad(quad);
 };
 
 sc.data.Resource.prototype.addProperty = function(predicate, object) {
