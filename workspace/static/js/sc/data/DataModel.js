@@ -402,7 +402,6 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
     var target = this.databroker.getResource(targetUri);
 
     var anno = this.databroker.createResource(null, 'oa:Annotation');
-    anno.addProperty('dc:creator', this.databroker.user);
 
     if (opt_annoType) {
         anno.addProperty('rdf:type', opt_annoType);

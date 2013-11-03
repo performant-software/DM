@@ -184,7 +184,7 @@ def remove_triples_from_user(request, username):
 
                 revoke_permission_by_uri(perm, project, user=user)
             else:
-                print "Triple %s was rejected to be removed from user graph" % unicode(triple)
+                print "Triple %s was rejected to be removed from user graph" % unicode(t)
 
     return HttpResponse(status=204)
 
