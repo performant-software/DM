@@ -245,3 +245,18 @@ sc.data.Graph.prototype.getTriples = function() {
 sc.data.Graph.prototype.getCount = function() {
     return this.numTriplesMatchingQuery(null, null, null);
 };
+
+sc.data.Graph.prototype.n3 = function() {
+    var serializer = new sc.data.TurtleSerializer(goog.global.databroker || new sc.data.Databroker());
+    serializer.compact = false;
+    var str = serializer.getTriplesString(this.getTriples());
+
+    if (str) {
+        return str;
+    }
+    else {
+        return '# No data\n  .';
+    }
+};
+
+sc.data.Graph.prototype.toString = sc.data.Graph.prototype.n3;
