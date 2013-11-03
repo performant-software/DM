@@ -258,6 +258,25 @@ sc.data.Resource.prototype.hasAnyPredicate = function(possiblePredicates) {
     return false;
 };
 
+sc.data.Resource.prototype.markModificationTime = function() {
+    var dcModified = this.namespaces.expand('dc', 'modified');
+
+    goog.structs.forEach(this.getEquivalentUris(), function(uri) {
+        this.graph.forEachTripleMatchingQuery(
+            uri,
+            dcModified,
+            null,
+            function(triple) {
+                var quad = triple.toQuad(this.graph.context);
+                this.databroker.deleteQuad(quad);
+            }.bind(this)
+        );
+    }, this);
+
+    var quad = new sc.data.Quad(this.bracketedUri, dcModified, sc.data.DateTimeLiteral(new Date()).n3(), this.graph.context);
+    this.databroker.addNewQuad(quad);
+};
+
 sc.data.Resource.prototype.addProperty = function(predicate, object) {
     predicate = this.namespaces.autoExpand(predicate);
     object = this.namespaces.autoExpand(object);
@@ -265,6 +284,8 @@ sc.data.Resource.prototype.addProperty = function(predicate, object) {
     var quad = new sc.data.Quad(this.bracketedUri, predicate, object, this.graph.context);
     
     this.databroker.addNewQuad(quad);
+
+    this.markModificationTime();
     
     return this;
 };
@@ -282,7 +303,7 @@ sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
 
     goog.structs.forEach(this.getEquivalentUris(), function(uri) {
         this.graph.forEachTripleMatchingQuery(
-            sc.data.Term.wrapUri(uri),
+            uri,
             safePredicate,
             safeObject,
             function(triple) {
@@ -291,6 +312,8 @@ sc.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {
             }.bind(this)
         );
     }, this);
+
+    this.markModificationTime();
 
     return this;
 };

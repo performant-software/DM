@@ -642,6 +642,12 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
         throw "Resource " + resource.uri + " already exists";
     }
 
+    if (this.user) {
+        resource.addProperty('dc:creator', this.user);
+    }
+
+    resource.addProperty('dc:created', sc.data.DateTimeLiteral(new Date()));
+
     if (type) {
         resource.addProperty('rdf:type', type);
     }
