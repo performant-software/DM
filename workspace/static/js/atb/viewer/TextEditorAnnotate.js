@@ -214,7 +214,11 @@ atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function()
     	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element);
     	var highlightResource = this.databroker.getResource(highlightUri);
 
-    	highlightResource.setProperty('oa:exact', sc.data.Term.wrapLiteral(jQuery(element).text()));
+    	var text = jQuery(element).text();
+
+    	if (highlightResource.getOneProperty('oa:exact') != text) {
+    		highlightResource.setProperty('oa:exact', sc.data.Term.wrapLiteral(text));
+    	}
     }, this);
 };
 
