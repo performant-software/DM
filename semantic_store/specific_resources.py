@@ -65,3 +65,8 @@ def read_specific_resource(project_uri, specific_resource, source):
     return_graph += resource_annotation_subgraph(project_graph, specific_resource)
 
     return return_graph
+
+def blank_specific_resources(graph):
+    for uri in graph.subjects(NS.rdf.type, NS.oa.SpecificResource):
+        if len(graph.triples((uri, NS.oa.hasSelector, None))) == 0 or len(graph.triples((uri, NS.oa.hasSource, None))) == 0:
+            yield uri
