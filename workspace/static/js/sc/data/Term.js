@@ -330,6 +330,6 @@ sc.data.DateTimeLiteral = function(date) {
     var s = goog.string.buildString(date.getUTCFullYear(), '-', padNumber(date.getUTCMonth(), 2), '-', padNumber(date.getUTCDate(), 2),
         'T', padNumber(date.getUTCHours(), 2), ':', padNumber(date.getUTCMinutes(), 2), ':', padNumber(date.getUTCSeconds(), 2), 'Z');
 
-    sc.data.Literal.call(this, s, 'xsd:dateTime');
+    sc.data.Literal.call(this, s, 'http://www.w3.org/2001/XMLSchema/dateTime');
 };
 goog.inherits(sc.data.DateTimeLiteral, sc.data.Literal);

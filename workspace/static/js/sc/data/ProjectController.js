@@ -123,7 +123,11 @@ sc.data.ProjectController.prototype.selectProject = function(project) {
 
     if (!project.equals(this.currentProject)) {
         this.currentProject = project;
-        this.databroker.user.setProperty('dm:lastOpenProject', this.currentProject.bracketedUri);
+
+        if (!this.databroker.user.getOneUnescapedProperty('dm:lastOpenProject') != this.currentProject.bracketedUri) {
+            this.databroker.user.setProperty('dm:lastOpenProject', this.currentProject.bracketedUri);
+        }
+
         this.fireProjectSelected();
         return true;
     }

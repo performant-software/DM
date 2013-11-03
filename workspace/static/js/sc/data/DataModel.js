@@ -481,6 +481,19 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri, opt_quadStore
     return quadsToPost.getValues();
 };
 
+sc.data.DataModel.prototype.findQuadsToSyncForSpecificResource = function(uri, opt_quadStore) {
+    var specificResource = this.databroker.getResource(uri);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+
+    var quadsToPost = quadStore.queryReturningSet(specificResource.bracketedUri, null, null, null);
+
+    goog.structs.forEach(specificResource.getProperties('oa:hasSelector'), function(selectorUri) {
+        quadsToPost.addAll(quadStore.queryReturningSet(sc.data.Term.wrapUri(selectorUri), null, null, null));
+    }, this);
+
+    return quadsToPost.getValues();
+};
+
 sc.data.DataModel.prototype.findQuadsToSyncForProject = function(project, opt_quadStore) {
     project = this.databroker.getResource(project);
     var quadStore = opt_quadStore || this.databroker.quadStore;
