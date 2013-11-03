@@ -116,16 +116,47 @@ sc.data.SyncService.prototype.getModifiedResourceUris = function() {
 };
 
 sc.data.SyncService.prototype.postNewResources = function() {
+    var conjunctiveStore = new sc.data.ConjunctiveQuadStore([this.databroker.quadStore, this.databroker.deletedQuadsStore]);
+    var graph = new sc.data.Graph(conjunctiveStore, null);
+
+    var urisToRemove = new goog.structs.Set();
+
     goog.structs.forEach(this.databroker.newResourceUris, function(uri) {
-        this.sendResource(uri, 'POST', function() {
-            this.databroker.newResourceUris.remove(uri);
-        }.bind(this));
+        var conjunctiveResource = new sc.data.Resource(this.databroker, graph, uri);
+
+        if (conjunctiveResource.hasAnyType('oa:SpecificResource', 'oa:TextQuoteSelector', 'oa:SvgSelector')) {
+            urisToRemove.add(uri);
+        }
+        else {
+            this.sendResource(uri, 'POST', function() {
+                this.databroker.newResourceUris.remove(uri);
+            }.bind(this));
+        }
     }, this);
+
+    this.databroker.newResourceUris.removeAll(urisToRemove);
 };
 
 sc.data.SyncService.prototype.putModifiedResources = function() {
+    var conjunctiveStore = new sc.data.ConjunctiveQuadStore([this.databroker.quadStore, this.databroker.deletedQuadsStore]);
+    var graph = new sc.data.Graph(conjunctiveStore, null);
+
     goog.structs.forEach(this.getModifiedResourceUris(), function(uri) {
-        this.sendResource(uri, 'PUT');
+        var conjunctiveResource = new sc.data.Resource(this.databroker, graph, uri);
+        var resource = this.databroker.getResource(uri);
+
+        if (conjunctiveResource.hasAnyType('oa:TextQuoteSelector', 'oa:SvgSelector')) {
+            var specificResource = resource.getReferencingResources('oa:hasSelector')[0];
+            if (specificResource) {
+                this.sendResource(specificResource.uri, 'PUT');
+            }
+        }
+        else if (conjunctiveResource.getProperties('rdf:type').length == 0) {
+            this.databroker.newQuadStore.removeQuadsMatchingQuery(resource.bracketedUri, null, null, null);
+        }
+        else {
+            this.sendResource(uri, 'PUT');
+        }
     }, this);
 };
 
@@ -190,17 +221,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             method = 'PUT'
         }
     }
-    else if (conjunctiveResource.hasType('oa:SvgSelector')) {
-        resType = sc.data.SyncService.RESTYPE.project;
-
-        quadsToPost = dataModel.findQuadsToSyncForSvgSelector(resource, newQuadStore);
-        quadsToRemove = dataModel.findQuadsToSyncForSvgSelector(resource, deletedQuadsStore);
-
-        url = this.restUrl(currentProject.uri, resType, null, null);
-        if (method == 'POST') {
-            method = 'PUT'
-        }
-    }
     else if (conjunctiveResource.hasType('oa:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.project;
 
@@ -232,11 +252,21 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         var username = resource.uri.split("/").pop()
         url = this.restUrl(null, resType, username, null) + "/";
     }
-    else if (conjunctiveResource.hasAnyType('oa:SpecificResource', 'oa:TextQuoteSelector')) {
-        //pass, these should be synced with either texts or annotations
+    else if (conjunctiveResource.hasType('oa:SpecificResource')) {
+        resType = sc.data.SyncService.RESTYPE.project;
+        quadsToPost = dataModel.findQuadsToSyncForSpecificResource(resource, newQuadStore);
+        quadsToRemove = dataModel.findQuadsToSyncForSpecificResource(resource, deletedQuadsStore);
+
+        url = this.restUrl(currentProject.uri, resType, null, null);
+        if (method == 'POST') {
+            method = 'PUT';
+        }
+    }
+    else if (conjunctiveResource.hasAnyType('oa:TextQuoteSelector', 'oa:SvgSelector')) {
+        // pass
     }
     else {
-        console.error("Don't know how to sync resource " + resource);
+        console.error("Don't know how to sync resource " + conjunctiveResource);
         return;
     }
 

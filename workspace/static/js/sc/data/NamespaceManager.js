@@ -18,7 +18,7 @@ sc.data.NamespaceManager.DEFAULT_NAMESPACES = {
     'dc': 'http://purl.org/dc/elements/1.1/',
     'dcterms': 'http://purl.org/dc/terms/',
     'dctypes': 'http://purl.org/dc/dcmitype/',
-    'xsd': 'http://www.w3.org/2001/XMLSchema',
+    'xsd': 'http://www.w3.org/2001/XMLSchema/',
     'ore': 'http://www.openarchives.org/ore/terms/',
     'tei': 'http://www.tei-c.org/ns/1.0/',
     'exif': 'http://www.w3.org/2003/12/exif/ns#',
