@@ -39,13 +39,13 @@ sc.data.ProjectController.prototype.findUsersInProject = function(project) {
         project = this.databroker.getResource(project);
     }
 
-    var userUris = [];
+    var userUris = new goog.structs.Set();
 
     goog.structs.forEach(project.getReferencingResources(sc.data.ProjectController.PERMISSIONS.permission), function(user) {
-        userUris.push(user.uri);
+        userUris.add(user.uri);
     }, this);
 
-    return userUris;
+    return userUris.getValues();
 };
 
 sc.data.ProjectController.prototype.grantPermissionsToUser = function(user, project, permissions) {
