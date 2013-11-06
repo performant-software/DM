@@ -30,7 +30,7 @@ def get_project_metadata_graph(project_uri):
 def create_project_from_request(request):
     try:
         g = parse_request_into_graph(request)
-    except ParserError as e:
+    except (ParserError, SyntaxError) as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     create_project(g)
@@ -145,7 +145,7 @@ def update_project(request, uri):
         if permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 input_graph = parse_request_into_graph(request)
-            except ParserError as e:
+            except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
             update_project_graph(input_graph, uri)
@@ -201,7 +201,7 @@ def delete_triples_from_project(request, uri):
 
             try:
                 g = parse_request_into_graph(request)
-            except ParserError as e:
+            except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
             project_g = get_project_graph(uri)

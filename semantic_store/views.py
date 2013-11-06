@@ -28,7 +28,7 @@ from os import listdir
 
 def check_project_resource_permissions(fn):
     def inner(request, *args, **kwargs):
-        project_uri = kwargs['project_uri'] or kwargs['uri']
+        project_uri = kwargs['project_uri'] if 'project_uri' in kwargs else kwargs['uri']
 
         if request.user.is_authenticated():
             if request.method == 'GET' or request.method == 'HEAD':
@@ -271,7 +271,7 @@ def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource
     else:
         return HttpResponseNotAllowed(('GET'))
 
-@check_project_resource_permissions
+# @check_project_resource_permissions
 def specific_resource_graph(request, project_uri, specific_resource, source):
     if request.method == 'GET':
         return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source), close_graph=True)

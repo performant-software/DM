@@ -51,7 +51,7 @@ def create_project_text_from_request(request, project_uri):
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 g = parse_request_into_graph(request)
-            except ParserError as e:
+            except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
             else:
                 text_uri = URIRef(uris.uuid())
@@ -142,8 +142,8 @@ def update_project_text_from_request(request, project_uri, text_uri):
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 g = parse_request_into_graph(request)
-            except ParserError:
-                return HttpResponse(status=400, content="Unable to parse serialization.")
+            except (ParserError, SyntaxError) as e:
+                return HttpResponse(status=400, content="Unable to parse serialization. %s" % e)
             else:
                 # On successful parse, send to basic method
                 update_project_text(g, project_uri, text_uri, request.user)
