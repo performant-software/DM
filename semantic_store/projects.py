@@ -142,9 +142,9 @@ def update_project(request, uri):
             except ParserError as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-            project_graph = update_project_graph(input_graph, uri)
+            update_project_graph(input_graph, uri)
 
-            return NegotiatedGraphResponse(request, project_graph, status=200)
+            return HttpResponse(status=204)
         else:
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
@@ -176,8 +176,6 @@ def update_project_graph(g, identifier):
 
         for triple in g.triples((identifier, NS.ore.aggregates, None)):
             project_metadata_g.add(triple)
-
-        return project_g
 
 def delete_project(uri):
     identifier = uris.uri("semantic_store_projects", project_uri=uri)
