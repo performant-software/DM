@@ -118,7 +118,7 @@ def update_user(request, username):
     if request.user.is_authenticated():
         try:
             input_graph = parse_request_into_graph(request)
-        except ParserError as e:
+        except (ParserError, SyntaxError) as e:
             return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
         if permission_updates_are_allowed(request, input_graph):
@@ -173,7 +173,7 @@ def remove_triples_from_user(request, username):
 
     try:
         input_graph = parse_request_into_graph(request)
-    except ParserError as e:
+    except (ParserError, SyntaxError) as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     with transaction.commit_on_success():
