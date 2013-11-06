@@ -106,14 +106,15 @@ def update_project_text(g, p_uri, t_uri, user):
     text_uri = URIRef(t_uri)
 
     title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or Literal("")
-    content = g.value(text_uri, NS.cnt.chars) or Literal("")
+    content_value = g.value(text_uri, NS.cnt.chars)
+    if content_value:
+        content = sanitized_content(content_value)
+    else:
+        content = ''
 
     with transaction.commit_on_success():
-        for text in Text.objects.filter(identifier=t_uri, valid=True).only('valid'):
-            text.valid = False
-            text.save()
-
-        text = Text.objects.create(identifier=t_uri, title=title, content=sanitized_content(content), last_user=user)
+        Text.objects.filter(identifier=t_uri, valid=True).update(valid=False)
+        text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user)
 
         project_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
         project_g.set((text_uri, NS.dc.title, title))
@@ -123,7 +124,9 @@ def update_project_text(g, p_uri, t_uri, user):
         project_metadata_g.set((text_uri, NS.dc.title, title))
         project_metadata_g.set((text_uri, NS.rdfs.label, title))
 
-        for t in specific_resources_subgraph(g, text_uri, p_uri):
+    specific_resource_triples = specific_resources_subgraph(g, text_uri, p_uri)
+    with transaction.commit_on_success():
+        for t in specific_resource_triples:
             project_g.add(t)
 
         for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
@@ -144,7 +147,7 @@ def update_project_text_from_request(request, project_uri, text_uri):
             else:
                 # On successful parse, send to basic method
                 update_project_text(g, project_uri, text_uri, request.user)
-                return read_project_text(project_uri, text_uri)
+                return HttpResponse(status=204)
         else:
             return HttpResponseForbidden()
     else:
