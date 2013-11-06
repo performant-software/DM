@@ -21,6 +21,12 @@ from datetime import datetime
 
 PROJECT_TYPES = (NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project)
 
+def get_project_graph(project_uri):
+    return Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project_uri))
+
+def get_project_metadata_graph(project_uri):
+    return Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+
 def create_project_from_request(request):
     try:
         g = parse_request_into_graph(request)
@@ -78,8 +84,8 @@ def add_is_described_bys(request, project_uri, graph):
         graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
 def build_project_metadata_graph(project_uri):
-    metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
-    project_graph = Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project_uri))
+    metadata_graph = get_project_metadata_graph(project_uri)
+    project_graph = get_project_graph(project_uri)
     project_memory_graph = Graph()
     project_memory_graph += project_graph
 
@@ -109,7 +115,7 @@ def read_project(request, project_uri):
     if request.user.is_authenticated():
         if permissions.has_permission_over(project_uri, user=request.user, permission=NS.perm.mayRead):
             identifier = uris.uri('semantic_store_projects', uri=project_uri)
-            store_metadata_graph = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+            store_metadata_graph = get_project_metadata_graph(project_uri)
             ret_graph = Graph()
             ret_graph += store_metadata_graph
 
@@ -154,8 +160,8 @@ def update_project_graph(g, identifier):
     uri = uris.uri('semantic_store_projects', uri=identifier)
 
     with transaction.commit_on_success():
-        project_g = Graph(store=rdfstore(), identifier=uri)
-        project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(identifier))
+        project_g = get_project_graph(identifier)
+        project_metadata_g = get_project_metadata_graph(identifier)
 
         #Prevent duplicate metadata
         if (URIRef(identifier), NS.dc.title, None) in g:
@@ -178,30 +184,28 @@ def update_project_graph(g, identifier):
             project_metadata_g.add(triple)
 
 def delete_project(uri):
-    identifier = uris.uri("semantic_store_projects", project_uri=uri)
-    graph = Graph(store=rdfstore(), identifier=identifier)
-    for t in graph:
-        graph.remove()
-
-    User.objects.filter(identifier=uri).delete()
+    project_graph = get_project_graph(uri)
+    metadata_graph = get_project_metadata_graph(uri)
+    
+    with transaction.commit_on_success():
+        project_graph.remove((None, None, None))
+        metadata_graph.remove((None, None, None))
 
     return HttpResponse("Successfully deleted project with uri %s."%uri)
 
 def delete_triples_from_project(request, uri):
     if request.user.is_authenticated():
         if permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate):
-            g = Graph()
             removed = Graph()
             bind_namespaces(removed)
 
             try:
-                parse_request_into_graph(request, g)
+                g = parse_request_into_graph(request)
             except ParserError as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-            project_uri = uris.uri('semantic_store_projects', uri=uri)
-            project_g = Graph(store=rdfstore(), identifier=project_uri)
-            project_metadata_g = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(uri))
+            project_g = get_project_graph(uri)
+            project_metadata_g = get_project_metadata_graph(uri)
 
             with transaction.commit_on_success():
                 for t in g:

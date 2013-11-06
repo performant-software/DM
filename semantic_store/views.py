@@ -20,7 +20,7 @@ from semantic_store.projects import create_project_from_request, create_project,
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
 from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples
-from semantic_store.specific_resources import read_specific_resource
+from semantic_store.specific_resources import read_specific_resource, update_specific_resource
 
 from project_texts import create_project_text_from_request, read_project_text, update_project_text_from_request, remove_project_text
 
@@ -271,5 +271,10 @@ def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource
     else:
         return HttpResponseNotAllowed(('GET'))
 
+@check_project_resource_permissions
 def specific_resource_graph(request, project_uri, specific_resource, source):
-    return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source), close_graph=True)
+    if request.method == 'GET':
+        return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source), close_graph=True)
+    elif request.method == 'PUT':
+        g = parse_request_into_graph(request)
+        update_specific_resource(g, URIRef(project_uri), URIRef(specific_resource))
