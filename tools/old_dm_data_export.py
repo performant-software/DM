@@ -1,8 +1,7 @@
 #Note(tandres): This script is intended to be run from the shell of the old annotation_store, not the new dm django project
 
-from rdflib.term import URIRef, Literal
-from rdflib.namespace import Namespace
-from rdflib.graph import Graph
+from rdflib import Graph, RDFS, RDF, Literal, URIRef, Namespace
+
 from annotation_store.webservice.models import *
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -21,21 +20,21 @@ IMG_SRC = settings.MEDIA_URL + 'user_images/'
 HIGHLIGHT_CLASS = 'atb-editor-textannotation'
 
 # Namespaces we will be using, declared globally for easy reference
-OA    = Namespace("http://www.w3.org/ns/oa#")
-SC    = Namespace("http://www.shared-canvas.org/ns/")
-RDF   = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-ORE   = Namespace("http://www.openarchives.org/ore/terms/")
-DC    = Namespace("http://purl.org/dc/elements/1.1/")
+OA = Namespace("http://www.w3.org/ns/oa#")
+SC = Namespace("http://www.shared-canvas.org/ns/")
+ORE = Namespace("http://www.openarchives.org/ore/terms/")
+DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTYPES = Namespace("http://purl.org/dc/dcmitype/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
-EXIF  = Namespace("http://www.w3.org/2003/12/exif/ns#")
-CNT   = Namespace("http://www.w3.org/2011/content#")
-PERM  = Namespace("http://vocab.ox.ac.uk/perm#")
-FOAF  = Namespace("http://xmlns.com/foaf/0.1/")
-IMGS  = Namespace(IMG_SRC)
-DM    = Namespace("http://dm.drew.edu/ns/")
+EXIF = Namespace("http://www.w3.org/2003/12/exif/ns#")
+CNT = Namespace("http://www.w3.org/2011/content#")
+PERM = Namespace("http://vocab.ox.ac.uk/perm#")
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+IMGS = Namespace(IMG_SRC)
+DM = Namespace("http://dm.drew.edu/ns/")
+
 # Integer type for the height/width declarations
-INT     = "http://www.w3.org/2001/XMLSchema#integer"
+INT = "http://www.w3.org/2001/XMLSchema#integer"
 
 TYPE_URI = {
     'text': DCTYPES.Text,
@@ -56,9 +55,13 @@ SVG     = {
     'circle':"<circle fill=\'rgba(15, 108, 214, 0.6)\'  stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' cx=\'%s\' cy=\'%s\' r=\'%s\' />",
     'polyline':"<polyline fill=\'none\' stroke=\'rgba(3, 75, 158, 0.7)\' stroke-width=\'%s\' points=\'%s\' />",
 }
+
+URL_BASE = 'http://dm.drew.edu/'
+
 # URL for the base of user URIs
 # Hard-coded to be understood properly in the new version
-USER_URL_BASE = 'http://dm.drew.edu/store/users/'
+USER_URL_BASE = URL_BASE + 'store/users/'
+
 # Dictionary for mapping User object to a custom uuid, which is the uuid of the
 #  user's default project
 user_mapping = {}
@@ -66,11 +69,6 @@ user_mapping = {}
 # Dictionary for mapping each r_id of an item to a custom uuid so as to be
 #  understood by the new version
 r_id_mapping = {}
-
-# These are r_ids which should be annos, except that no triples
-#  about them exist
-# Used by get_mapped_uri
-bad_r_ids = ("95470", "235609", "275822", "275857", "275860", "275865", "279188", "279205", "279228", "280257", "281629", "284706", "284718", "284721", "284912", "285385", "286279", "286284", "263621")
 
 
 def complete_user_graph(name):
@@ -85,6 +83,7 @@ def complete_user_graph(name):
     # Add all the data to everything_graph
     # Each of these methods returns a Graph object, which is implemented so
     #  that the += syntax is a valid operation
+    everything_graph += handle_user(user)
     everything_graph += handle_canvases(user)
     everything_graph += handle_circles(user)
     everything_graph += handle_polygons(user)
@@ -92,13 +91,15 @@ def complete_user_graph(name):
     everything_graph += handle_constraints(user)
     everything_graph += handle_images(user)
     everything_graph += handle_texts(user)
-    everything_graph += handle_user(user)
-
-    # Annos are special because we need to check that there is information
-    #  about them in the larger graph as well
-    everything_graph += handle_annos(user, everything_graph)
+    everything_graph += handle_annos(user)
 
     correct_selector_annos(everything_graph)
+
+    broken_specific_resources = remove_broken_specific_resources(everything_graph)
+    print "Removed %s broken specific resources" % len(broken_specific_resources)
+
+    empty_annos, broken_triples = remove_broken_annotations(everything_graph)
+    print "Removed %s broken annotation targets and bodies, and %s empty annos" % (len(broken_triples), len(empty_annos))
 
     return everything_graph
 
@@ -115,11 +116,9 @@ def multiprocess_export_all_users(path_to_export_folder):
 
         result = pool.apply_async(complete_user_graph, (username,), callback=user_serialization_callback)
 
-    usernames = [user.username for user in User.objects.all()]
-
-    pool = Pool(processes=10)
-    for username in usernames:
-        with_username(username)
+    pool = Pool()
+    for user in User.objects.all():
+        with_username(user.username)
 
     pool.close()
     pool.join()
@@ -135,14 +134,46 @@ def export_all_users(path_to_export_folder):
         print "  Done."
 
 
+def remove_broken_specific_resources(graph):
+    broken_specific_resources = []
+
+    for specific_resource in graph.subjects(RDF.type, OA.SpecificResource):
+        selector = graph.value(specific_resource, OA.hasSelector)
+        source = graph.value(specific_resource, OA.hasSource)
+
+        if (selector, None, None) not in graph or (source, None, None) not in graph:
+            broken_specific_resources.append(specific_resource)
+            graph.remove((specific_resource, None, None))
+
+    return broken_specific_resources
+
+def remove_broken_annotations(graph):
+    empty_annos = []
+    broken_triples = []
+
+    for anno in graph.subjects(RDF.type, OA.Annotation):
+        for target in graph.objects(anno, OA.hasTarget):
+            if (target, None, None) not in graph:
+                graph.remove((anno, OA.hasTarget, target))
+                broken_triples.append((anno, OA.hasTarget, target))
+
+        for body in graph.objects(anno, OA.hasBody):
+            if (body, None, None) not in graph:
+                graph.remove((anno, OA.hasBody, body))
+                broken_triples.append((anno, OA.hasBody, body))
+
+        if (anno, OA.hasBody, None) not in graph and (anno, OA.hasTarget, None) not in graph:
+            graph.remove((anno, None, None))
+            empty_annos.append(anno)
+
+    return empty_annos, broken_triples
+
 # Canvases, although gotten by username, are structured as global data
 # ((only gotten by username to shorten query time for testing purposes))
 def handle_canvases(user):
     graph = instantiate_graph()
-    canvases = Canvas.objects.filter(user=user, valid=True, most_recent=True)
 
-    for i in range(len(canvases)):
-        canvas = canvases[i]
+    for canvas in Canvas.objects.filter(user=user, valid=True, most_recent=True):
         graph += add_canvas(canvas, get_mapped_user_default_project(user))
     
     return graph
@@ -171,12 +202,10 @@ def add_canvas(canvas, project):
 # Returns data in a graph
 def handle_circles(user):
     graph = instantiate_graph()
-    circles = Circle.objects.filter(user=user, valid=True, most_recent=True)
 
-    for i in range(len(circles)):
+    for circle in Circle.objects.filter(user=user, valid=True, most_recent=True):
         # Get r_id; make a uri out of it
         # We need the unchanged r_id to ask the annotations for where this circle belongs
-        circle = circles[i]
         r_id = circle.r_id
         uri = get_mapped_uri(r_id)
 
@@ -201,12 +230,10 @@ def handle_circles(user):
 # Returns data in a graph
 def handle_polygons(user):
     graph = instantiate_graph()
-    polygons = Polygon.objects.filter(user=user, valid=True, most_recent=True)
 
-    for i in range(len(polygons)):
+    for polygon in Polygon.objects.filter(user=user, valid=True, most_recent=True):
         # Get r_id; make a uri out of it
         # We need the unchanged r_id to ask the annotations for where this polygon belongs
-        polygon = polygons[i]
         r_id = polygon.r_id
         uri = get_mapped_uri(r_id)
 
@@ -230,12 +257,10 @@ def handle_polygons(user):
 # Returns data in a graph
 def handle_polylines(user):
     graph = instantiate_graph()
-    polylines = Polyline.objects.filter(user=user, valid=True, most_recent=True)
 
-    for i in range(len(polylines)):
+    for polyline in Polyline.objects.filter(user=user, valid=True, most_recent=True):
         # Get r_id; make a uri out of it
         # We need the unchanged r_id to ask the annotations for where this polyline belongs
-        polyline = polylines[i]
         r_id = polyline.r_id
         uri = get_mapped_uri(r_id)
 
@@ -256,9 +281,8 @@ def handle_constraints(user):
     graph = instantiate_graph()
     constraints = Constraint.objects.filter(user=user, valid=True, most_recent=True)
 
-    for i in range(len(constraints)):
+    for constraint in Constraint.objects.filter(user=user, valid=True, most_recent=True):
         # We need the r_id in order to look up Triples about the constraint
-        constraint = constraints[i]
         r_id = constraint.r_id
         uri = get_mapped_uri(r_id)
 
@@ -286,12 +310,9 @@ def get_image_src(image):
 # Gets all images owned by <user> and collects the data in a Graph
 def handle_images(user):
     graph = instantiate_graph()
-    images = Image.objects.filter(user=user, valid=True, most_recent=True)
 
-    for i in range(len(images)):
+    for image in Image.objects.filter(user=user, valid=True, most_recent=True):
         # For images, the uri is the url at which the image exists
-        image = images[i]
-
         uri = get_image_src(image)
 
         # Map this r_id to this uri
@@ -317,11 +338,9 @@ def handle_images(user):
 # Each content will be parsed for possible highlights
 def handle_texts(user):
     graph = instantiate_graph()
-    texts = Text.objects.filter(user=user, valid=True, most_recent=True)
 
-    for i in range(len(texts)):
+    for text in Text.objects.filter(user=user, valid=True, most_recent=True):
         # Generate and/or find uri
-        text = texts[i]
         uri = get_mapped_uri(text.r_id)
 
         # Add relevant data to graph
@@ -355,6 +374,17 @@ def sanitize_html(soup):
 
     for script in soup.find_all('script'):
         script.extract()
+
+    # Scrub javascript event attributes
+    for tag in soup.find_all(True):
+        for attr in tag.attrs.keys():
+            if attr.startswith('on'):
+                del tag.attrs[attr]
+
+    # Scrub javascript links
+    for a in soup.find_all('a'):
+        if 'href' in a.attrs and a['href'].startswith('javascript:'):
+            a.replace_with(unicode(s) for s in a.contents)
 
 
 # Finds highlights within text which is wrapped with span tags, then adds the data to a graph
@@ -398,29 +428,21 @@ def parse_for_highlights(content, content_uri):
 
 # Get all annotations belonging to <user> and link them to that user's project
 # Still need to consider what happens when there is a most recent, valid annotation that points to resource(s) that are not most recent/valid
-def handle_annos(user, parent_graph):
+def handle_annos(user):
     graph = instantiate_graph()
-    annos = Anno.objects.filter(user = user, most_recent = True, valid = True)
 
-    for i in range(len(annos)):
+    for anno in Anno.objects.filter(user = user, most_recent = True, valid = True):
         # We need the r_id to ask the triples for information about the anno
-        anno = annos[i]
         r_id = anno.r_id
         uri = get_mapped_uri(r_id)
 
         target_resources = []
         for target in Triple.objects.filter(subj=r_id, pred='oac:hasTarget', most_recent=True, valid=True):
-            try:
-                target_resources.append(Resource.objects.get(r_id=target.obj))
-            except ObjectDoesNotExist:
-                pass
+            target_resources += Resource.objects.filter(r_id=target.obj)
 
         body_resources = []
         for body in Triple.objects.filter(subj=r_id, pred='oac:hasBody', most_recent=True, valid=True):
-            try:
-                body_resources.append(Resource.objects.get(r_id=body.obj))
-            except ObjectDoesNotExist:
-                pass
+            body_resources += Resource.objects.filter(r_id=body.obj)
 
         if (len(target_resources) > 0) and (len(body_resources) > 0):
             graph.add((uri, RDF.type, OA.Annotation))
@@ -503,9 +525,11 @@ def handle_user(user):
     graph.add((user_uri, PERM.mayAugment, project_uri))
     graph.add((user_uri, PERM.mayAdminister, project_uri))
     graph.add((user_uri, PERM.mayCreateChildrenOf, project_uri))
+    graph.add((user_uri, DM.lastOpenProject, project_uri))
+
     graph.add((user_uri, RDF['type'], TYPE_URI['agent']))
     graph.add((user_uri, FOAF['mbox'], URIRef("mailto:"+user.email)))
-    graph.add((user_uri, DM.lastOpenProject, project_uri))
+    graph.add((user_uri, RDFS.label, Literal(user.username)))
 
     return graph
 
@@ -606,40 +630,38 @@ def get_mapped_uri(r_id):
     # Look for the r_id in the r_id mapping
     # If it's a new r_id, create custom uri and map it to r_id
 
-    if r_id not in bad_r_ids:
-        try:
-            uri = r_id_mapping[r_id]
-        except KeyError:
-            # Create custom uri and map it to the r_id
-            uri = uuid4().urn
-            r_id_mapping[r_id]=uri
+    r_id = str(r_id)
 
-        return URIRef(uri)
+    try:
+        uri = r_id_mapping[r_id]
+    except KeyError:
+        # Create custom uri and map it to the r_id
+        uri = uuid4().urn
+        r_id_mapping[r_id]=uri
 
-    return None
+    return URIRef(uri)
 
 # Maps each user to a custom uri
 # This may be better thought of as mapping a user to the uri of their project
 def map_users():
-    users = User.objects.filter()
-    for i in range(len(users)):
-        get_mapped_user_default_project(users[i])
+    for user in User.objects.all():
+        get_mapped_user_default_project(user)
 
 # Create a new Graph object and bind all of the namespaces we will be using
 def instantiate_graph():
     g = Graph()
 
-    g.bind('rdf',     RDF)
-    g.bind('ore',     ORE)
-    g.bind('dc',      DC)
-    g.bind('exif',    EXIF)
-    g.bind('cnt',     CNT)
-    g.bind('perm',    PERM)
-    g.bind('oa',      OA)
-    g.bind('foaf',    FOAF)
-    g.bind('sc',      SC)
-    g.bind('dm_img',  IMG_SRC)
-    g.bind('dm',      DM)
+    g.bind('rdf', RDF)
+    g.bind('ore', ORE)
+    g.bind('dc', DC)
+    g.bind('exif', EXIF)
+    g.bind('cnt', CNT)
+    g.bind('perm', PERM)
+    g.bind('oa', OA)
+    g.bind('foaf', FOAF)
+    g.bind('sc', SC)
+    g.bind('dm_img', IMG_SRC)
+    g.bind('dm', DM)
     g.bind('dctypes', DCTYPES)
     g.bind('dcterms', DCTERMS)
 

@@ -248,7 +248,9 @@ sc.ProjectViewer.prototype._buildAddUser = function(fragment) {
 
         if (permissionsToGrant.length > 0) {
             if (!user.hasType('foaf:Agent')) {
-                user.addProperty('rdf:type', 'foaf:Agent');
+                this.databroker.quadStore.addQuad(
+                    new sc.data.Quad(user.bracketedUri, this.databroker.namespaces.expand('rdf', 'type'), this.databroker.namespaces.expand('foaf', 'Agent'), null)
+                );
             }
 
             this.projectController.grantPermissionsToUser(user, null, permissionsToGrant);
@@ -343,18 +345,43 @@ sc.ProjectViewer.prototype.updatePermissionsUI = function() {
 };
 
 sc.ProjectViewer.prototype.updateEditUI = function() {
-    var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
-    $(this.titleInput).val(projectTitle);
-    $(this.descriptionInput).val(this.projectController.currentProject.getOneProperty('dcterms:description') || '');
+    if (this.projectController.currentProject) {
+        var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
+        $(this.titleInput).val(projectTitle);
+        $(this.descriptionInput).val(this.projectController.currentProject.getOneProperty('dcterms:description') || '');
 
-    this.updatePermissionsUI();
+        if (!this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+            this.titleInput.disabled = true;
+            this.titleInput.title = "You need admin permissions to change the project's title";
+        }
+        else {
+            this.titleInput.disabled = false;
+            this.titleInput.title = "";
+        }
+
+        if (!this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+            this.descriptionInput.disabled = true;
+            this.descriptionInput.title = "You need modify permissions to change the project's description";
+        }
+        else {
+            this.descriptionInput.disabled = false;
+            this.descriptionInput.title = "";
+        }
+
+        this.updatePermissionsUI();
+    }
 };
 
 sc.ProjectViewer.prototype.updateModalUI = function() {
-    this.workingResources.loadManifest(this.projectController.currentProject.uri);
+    if (this.projectController.currentProject) {
+        this.workingResources.loadManifest(this.projectController.currentProject.uri);
 
-    var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
-    $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
+        var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
+        $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
+    }
+    else {
+        $(this.modalTitle).text('No project selected');
+    }
 
     this.updateEditUI();
 };
@@ -448,11 +475,19 @@ sc.ProjectViewer.prototype.switchToProject = function(project) {
         return false;
     }
 
+    var deferredProject = project.defer();
+
+    var performSwitch = function() {
+        deferredProject.done(function() {
+            this.projectController.selectProject(project);
+            this.workingResources.loadManifest(project.uri);
+        }.bind(this));
+    }.bind(this);
+
     if (!viewerGrid.isEmpty()) {
         if (confirm('Are you sure you want to switch projects? All your open resources from the current project will be closed.')) {
             viewerGrid.closeAllContainers();
-            this.projectController.selectProject(project);
-            this.workingResources.loadManifest(project.uri, true);
+            performSwitch();
             return true;
         }
         else {
@@ -460,8 +495,7 @@ sc.ProjectViewer.prototype.switchToProject = function(project) {
         }
     }
     else {
-        this.projectController.selectProject(project);
-        this.workingResources.loadManifest(project.uri, true);
+        performSwitch();
         return true;
     }
 };
@@ -481,6 +515,11 @@ sc.ProjectViewer.prototype.openViewerForResource = function(resource) {
 
     var viewer = atb.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
     container.setViewer(viewer);
+
+    if (goog.isFunction(viewer.makeUneditable) &&
+        !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+        viewer.makeUneditable();
+    }
 
     viewer.loadResourceByUri(resource.uri);
     container.autoResize();
@@ -523,8 +562,12 @@ sc.ProjectViewer.prototype.saveEdits = function() {
     var title = $(this.titleInput).val();
     var description = $(this.descriptionInput).val();
 
-    this.databroker.dataModel.setTitle(this.projectController.currentProject, title);
-    this.projectController.currentProject.setProperty('dcterms:description', sc.data.Literal(description));
+    if (this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+        this.databroker.dataModel.setTitle(this.projectController.currentProject, title);
+    }
+    if (this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+        this.projectController.currentProject.setProperty('dcterms:description', sc.data.Literal(description));
+    }
 
     goog.structs.forEach(this.permissionsRows, function(row) {
         var cells = $(row).children();
@@ -536,34 +579,36 @@ sc.ProjectViewer.prototype.saveEdits = function() {
 
         var userUri = $(row).attr('about');
 
-        if (readCheck.checked) {
-            if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
-                this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+        if (this.databroker.user.equals(userUri) || this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+            if (readCheck.checked) {
+                if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
+                    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+                }
             }
-        }
-        else {
-            if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
-                this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+            else {
+                if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.read)) {
+                    this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+                }
             }
-        }
-        if (modifyCheck.checked) {
-            if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
-                this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+            if (modifyCheck.checked) {
+                if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
+                    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+                }
             }
-        }
-        else {
-            if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
-                this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+            else {
+                if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.update)) {
+                    this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+                }
             }
-        }
-        if (adminCheck.checked) {
-            if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
-                this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+            if (adminCheck.checked) {
+                if (!this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+                    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+                }
             }
-        }
-        else {
-            if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
-                this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+            else {
+                if (this.projectController.userHasPermissionOverProject(userUri, null, sc.data.ProjectController.PERMISSIONS.administer)) {
+                    this.projectController.revokePermissionsFromUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+                }
             }
         }
     }, this);
@@ -573,8 +618,7 @@ sc.ProjectViewer.prototype.saveEdits = function() {
 };
 
 sc.ProjectViewer.prototype.createNewText = function() {
-    var textResource = this.databroker.createResource(null, 'dctypes:Text');
-    this.databroker.dataModel.setTitle(textResource, 'Untitled text document');
+    var textResource = this.databroker.dataModel.createText('Untitled text document', '');
 
     this.projectController.addResourceToProject(textResource);
 

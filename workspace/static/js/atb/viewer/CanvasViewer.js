@@ -462,8 +462,8 @@ atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
     goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
         anno.deleteProperty('oa:hasTarget', specificResource);
     }, this);
-    selectorResource.deleteAllProperties();
-    specificResource.deleteAllProperties();
+    selectorResource.delete();
+    specificResource.delete();
     
     var event = new goog.events.Event('resource-deleted', uri);
     var eventDispatcher = this.clientApp.getEventDispatcher();

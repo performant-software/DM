@@ -31,7 +31,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-#    'south',
+    'south',
     'semantic_store',
     'accounts',
     'workspace',
@@ -48,9 +48,15 @@ INSTALLED_APPS = (
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        }
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
+            'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         }
     },
@@ -105,8 +111,6 @@ URI_MINT_BASE = 'http://dm.drew.edu'
 #FTS_BACKEND = 'pgsql://' # or 'simple://' # or 'dummy://' 
 #FTS_CONFIGURE_ALL_BACKENDS = False
 #DATABASE_ENGINE = 'postgresql_psycopg2'
-
-LOGIN_REDIRECT_URL = '/'
 
 ROOT_URLCONF = 'urls'
 

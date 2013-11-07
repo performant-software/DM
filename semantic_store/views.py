@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
@@ -10,19 +10,40 @@ from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef
 from rdflib.util import guess_format
 
-from semantic_store import collection
+from semantic_store import collection, permissions
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.utils import negotiated_graph_response, parse_request_into_graph
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
 from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
+from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples
+from semantic_store.specific_resources import read_specific_resource
 
 from project_texts import create_project_text_from_request, read_project_text, update_project_text_from_request, remove_project_text
 
 from os import listdir
+
+def check_project_resource_permissions(fn):
+    def inner(request, *args, **kwargs):
+        project_uri = kwargs['project_uri'] or kwargs['uri']
+
+        if request.user.is_authenticated():
+            if request.method == 'GET' or request.method == 'HEAD':
+                if permissions.has_permission_over(project_uri, user=request.user, permission=NS.perm.mayRead):
+                    return fn(request, *args, **kwargs)
+                else:
+                    return HttpResponseForbidden()
+            elif request.method in ('POST', 'PUT', 'DELETE'):
+                if permissions.has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
+                    return fn(request, *args, **kwargs)
+                else:
+                    return HttpResponseForbidden()
+        else:
+            return HttpResponse(status=401)
+    return inner
 
 @login_required
 def projects(request, uri=None):
@@ -50,7 +71,6 @@ def projects(request, uri=None):
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
 
-@csrf_exempt
 def annotations(request, dest_graph_uri=None, anno_uri=None):
     if request.method == 'POST':
         if anno_uri:
@@ -74,7 +94,7 @@ def annotations(request, dest_graph_uri=None, anno_uri=None):
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
-@csrf_exempt        
+        
 def project_annotations(request, project_uri=None, anno_uri=None):
     return annotations(request, project_uri, anno_uri)
 
@@ -103,7 +123,7 @@ def resources(request, uri, ext=None):
             g.add((URIRef(anno_uri), NS.rdf['type'], NS.ore['Aggregation']))
             g.add((URIRef(anno_uri), NS.rdf['type'], NS.rdf['List']))
             g.add((URIRef(anno_uri), NS.rdf['type'], NS.dms['AnnotationList']))
-        return negotiated_graph_response(request, g)
+        return NegotiatedGraphResponse(request, g)
     else:
         main_graph_store = ConjunctiveGraph(store=rdfstore(), 
                                       identifier=default_identifier)
@@ -115,15 +135,13 @@ def resources(request, uri, ext=None):
         for t in main_graph.triples((URIRef(uri), None, None)):
             g.add(t)
         if len(g) > 0:
-            return negotiated_graph_response(request, g)
+            return NegotiatedGraphResponse(request, g)
         else:
             return HttpResponseNotFound()
 
-@csrf_exempt
 def import_old_data(request):
     everything_graph = Graph()
     bind_namespaces(everything_graph)
-    host = request.get_host()
 
     # Either gather post data (must be one project/user graph at a time)
     if request.method == 'POST':
@@ -134,7 +152,7 @@ def import_old_data(request):
         # Create each user's default project
         # Due to the structure of the data when exported from the old system, this also
         #  add each annotation to the project as an aggregated resource
-        create_project(everything_graph, host)
+        create_project(everything_graph)
 
     # or serialize from a folder, where each file is one project/user graph
     else:
@@ -149,7 +167,7 @@ def import_old_data(request):
                 print "Failed to decode file '%s' with error message '%s'"%(file_name, e.args[-1])
             else:
                 add_all_users(everything_graph)
-                create_project(everything_graph, host)
+                create_project(everything_graph)
         
 
     return HttpResponse("I finished migrating data without errors.")
@@ -187,26 +205,22 @@ def add_all_users(graph):
 
 
 def remove_project_triples(request, uri):
-    g = delete_triples_from_project(request, uri)
-    return negotiated_graph_response(request, g, close_graph=True)
+    return delete_triples_from_project(request, uri)
 
-
+@check_project_resource_permissions
 def project_texts(request, project_uri, text_uri):
     if request.method == 'POST':
-        create_project_text_from_request(request, project_uri)
-        g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        return create_project_text_from_request(request, project_uri)
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        return NegotiatedGraphResponse(request, g, close_graph=True)
     elif request.method == 'PUT':
         update_project_text_from_request(request, project_uri, text_uri)
         g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        return NegotiatedGraphResponse(request, g, close_graph=True)
     elif request.method == 'DELETE':
         remove_project_text(project_uri, text_uri)
-        g = read_project_text(project_uri, text_uri)
-        return negotiated_graph_response(request, g, close_graph=True)
+        return HttpResponse(status=204)
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
@@ -224,5 +238,38 @@ def users(request, username=None):
         return HttpResponseNotAllowed(['PUT', 'GET'])
 
 def remove_user_triples(request, username):
-    g = remove_triples_from_user(request, username)
-    return negotiated_graph_response(request, g)
+    return remove_triples_from_user(request, username)
+
+@check_project_resource_permissions
+def project_canvases(request, project_uri, canvas_uri):
+    if request.method == 'GET':
+        return NegotiatedGraphResponse(request, read_canvas(request, project_uri, canvas_uri), close_graph=True)
+    elif request.method == 'PUT':
+        input_graph = parse_request_into_graph(request)
+        return NegotiatedGraphResponse(request, update_canvas(project_uri, canvas_uri, input_graph), close_graph=True)
+    else:
+        return HttpResponseNotAllowed(('GET', 'PUT'))
+
+@check_project_resource_permissions
+def remove_project_canvas_triples(request, project_uri, canvas_uri):
+    if request.method == 'PUT':
+        return NegotiatedGraphResponse(request, remove_canvas_triples(project_uri, canvas_uri, input_graph), close_graph=True)
+    else:
+        return HttpResponseNotAllowed(('PUT'))
+
+@check_project_resource_permissions
+def text_specific_resource(request, project_uri, text_uri, specific_resource):
+    if request.method == 'GET':
+        return specific_resource_graph(request, project_uri, specific_resource, text_uri)
+    else:
+        return HttpResponseNotAllowed(('GET'))
+
+@check_project_resource_permissions
+def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource):
+    if request.method == 'GET':
+        return specific_resource_graph(request, project_uri, specific_resource, canvas_uri)
+    else:
+        return HttpResponseNotAllowed(('GET'))
+
+def specific_resource_graph(request, project_uri, specific_resource, source):
+    return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source), close_graph=True)

@@ -8,7 +8,9 @@ goog.require('goog.structs.Set');
 goog.require('sc.data.Resource');
 
 goog.require('sc.data.Quad');
+goog.require('sc.data.BNode');
 goog.require('sc.data.QuadStore');
+goog.require('sc.data.Graph');
 goog.require('sc.data.DataModel');
 goog.require('sc.data.SyncService');
 goog.require('sc.data.RDFQueryParser');
@@ -40,6 +42,17 @@ sc.data.Databroker = function(options) {
     this.quadStore = this.options.quadStore || new sc.data.QuadStore();
     this.syncService = this.options.syncService || new sc.data.SyncService(this);
 
+    goog.events.listen(window, 'beforeunload', function(event) {
+        if (this.syncService.hasUnsavedChanges()) {
+            message = 'Not all changes have been synchronized with the server yet. Please wait a few seconds before leaving the page.';
+
+            this.sync();
+
+            (event || window.event).returnValue = message;
+            return message;
+        }
+    }, false, this);
+
     this._setupParsersAndSerializers();
 
     this.requestedUrls = new goog.structs.Set();
@@ -50,6 +63,8 @@ sc.data.Databroker = function(options) {
     this.jqXhrsByUrl = new goog.structs.Map();
 
     this.rdfByUrl = new goog.structs.Map();
+
+    this._bNodeCounter = 0;
     
     this.newQuadStore = new sc.data.QuadStore();
     this.deletedQuadsStore = new sc.data.QuadStore();
@@ -57,6 +72,7 @@ sc.data.Databroker = function(options) {
     this.user = this.options.user;
 
     this.newResourceUris = new goog.structs.Set();
+    this.deletedResourceUris = new goog.structs.Set();
 
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
 
@@ -262,6 +278,12 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     return deferred;
 };
 
+sc.data.Databroker.prototype.getNextBNode = function() {
+    var node = new sc.data.BNode(this._bNodeCounter);
+    this._bNodeCounter ++;
+    return node;
+};
+
 /**
  * Returns a quad with Blank Nodes guaranteed to be unique in the main quad store.
  * @param  {sc.data.Quad} quad             The quad to make unique
@@ -278,7 +300,7 @@ sc.data.Databroker.prototype.getBNodeHandledQuad = function(quad, bNodeMapping) 
                 modifiedQuad[prop] = bNodeMapping.get(quad[prop]);
             }
             else {
-                var newBNode = this.quadStore.getNextBNode();
+                var newBNode = this.getNextBNode();
                 modifiedQuad[prop] = newBNode;
                 bNodeMapping.set(quad[prop], newBNode);
             }
@@ -297,7 +319,10 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handle
 
         this.parseRdf(data, type, function(quadBatch, done, error) {
             for (var i=0, len=quadBatch.length; i<len; i++) {
-                this.quadStore.addQuad(this.getBNodeHandledQuad(quadBatch[i], bNodeMapping));
+                var bNodeHandledQuad = this.getBNodeHandledQuad(quadBatch[i], bNodeMapping);
+                if (!this.deletedQuadsStore.containsQuad(bNodeHandledQuad)) {
+                    this.quadStore.addQuad(bNodeHandledQuad);
+                }
             }
 
             if (done) {
@@ -367,8 +392,12 @@ sc.data.Databroker.prototype.registerSerializer = function(serializer) {
  * @param {sc.data.Quad} quad The quad to be added.
  */
 sc.data.Databroker.prototype.addNewQuad = function(quad) {
+    var isActuallyNew = !this.quadStore.containsQuad(quad);
+
     this.quadStore.addQuad(quad);
-    this.newQuadStore.addQuad(quad);
+    if (isActuallyNew) {
+        this.newQuadStore.addQuad(quad);
+    }
 
     return this;
 };
@@ -430,7 +459,7 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
                 allUris.addAll(this.dataModel.findManuscriptAggregationUris(manifestUri));
             }, this);
         }
-        else if (resource.hasAnyType('oa:SpecificResource')) {
+        else if (resource.hasAnyType('oa:SpecificResource') && this.getResourceDescribers(resource.uri) === 0) {
             allUris.add(resource.getOneProperty('oa:hasSource'));
         }
     }
@@ -592,72 +621,17 @@ sc.data.Databroker.prototype.getDeferredResourceCollection = function(uris) {
     return collection;
 };
 
-sc.data.Databroker.prototype.dumpResource = function(uri) {
-    if (uri instanceof sc.data.Resource) uri = uri.uri;
-
-    var equivalentUris = this.getEquivalentUris(uri);
-    
-    var ddict = new sc.util.DefaultDict(function() {
-        return new sc.util.DefaultDict(function () {
-            return new goog.structs.Set();
-        });
-    });
-    
-    for (var i=0, len=equivalentUris.length; i<len; i++) {
-        var equivalentUri = sc.data.Term.wrapUri(equivalentUris[i]);
-
-        this.quadStore.forEachQuadMatchingQuery(
-            equivalentUri, null, null, null,
-            function(quad) {
-                ddict.get('__context__:' + (quad.context == null ? '__global__' : quad.context)).
-                    get(this.namespaces.prefix(quad.predicate)).
-                    add(sc.data.Term.isUri(quad.object) ? this.namespaces.prefix(quad.object) : quad.object);
-            }, this
-        );
-    }
-    
-    var dump = {};
-    
-    goog.structs.forEach(ddict, function(predicates, context) {
-        dump[context] = {};
-        goog.structs.forEach(predicates, function(objects, predicate) {
-            dump[context][predicate] = objects.getValues();
-        }, this);
-    }, this);
-    
-    return dump;
-};
-
-sc.data.Databroker.prototype.dumpResourceToTurtleString = function(r) {
-    var resource = this.getResource(r);
-    var quads = [];
-    goog.structs.forEach(this.getEquivalentUris(resource.uri), function(uri) {
-        this.quadStore.forEachQuadMatchingQuery(new sc.data.Uri(uri), null, null, null, function(quad) {
-            quads.push(quad);
-        }.bind(this));
-    }, this);
-
-    var serializer = new sc.data.TurtleSerializer(this);
-    serializer.compact = false;
-    var str = serializer.getTriplesString(quads);
-
-    if (str) {
-        return str;
-    }
-    else {
-        return new sc.data.Uri(resource.uri) + '\n  # No data\n  .';
-    }
-};
-
 sc.data.Databroker.prototype.getResource = function(uri) {
     goog.asserts.assert(uri != null, 'uri passed to sc.data.Databroker#getResource is null or undefined');
 
+    var graph = new sc.data.Graph(this.quadStore, null);
+
     if (uri instanceof sc.data.Resource) {
-        return uri;
+        return new sc.data.Resource(this, graph, uri.uri);
     }
     else {
         uri = sc.data.Term.unwrapUri(uri);
-        return new sc.data.Resource(this, uri);
+        return new sc.data.Resource(this, graph, uri);
     }
 };
 
@@ -667,6 +641,12 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
     if (this.hasResourceData(resource)) {
         throw "Resource " + resource.uri + " already exists";
     }
+
+    if (this.user) {
+        resource.addProperty('dc:creator', this.user);
+    }
+
+    resource.addProperty('dc:created', sc.data.DateTimeLiteral(new Date()));
 
     if (type) {
         resource.addProperty('rdf:type', type);

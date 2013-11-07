@@ -2,7 +2,6 @@ goog.provide('sc.data.QuadStore');
 
 goog.require('goog.structs.Set');
 goog.require('sc.util.DefaultDict');
-goog.require('sc.data.BNode');
 
 /**
  * An indexed store of {sc.data.Quad} Quads (triples with a context),
@@ -20,8 +19,6 @@ sc.data.QuadStore = function(opt_quads) {
     this.indexedQuads = new sc.util.DefaultDict(function() {
         return new goog.structs.Set();
     });
-
-    this._bNodeCounter = 0;
 
     if (opt_quads) {
         this.addQuads(opt_quads);
@@ -284,12 +281,6 @@ sc.data.QuadStore.prototype.objectsMatchingQuery = function(subject, predicate, 
  */
 sc.data.QuadStore.prototype.contextsMatchingQuery = function(subject, predicate, object, context) {
     return this.contextsSetMatchingQuery(subject, predicate, object, context).getValues();
-};
-
-sc.data.QuadStore.prototype.getNextBNode = function() {
-    var node = new sc.data.BNode(this._bNodeCounter);
-    this._bNodeCounter ++;
-    return node;
 };
 
 /**

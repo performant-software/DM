@@ -9,7 +9,7 @@ class ProjectPermissionAdmin(admin.ModelAdmin):
 admin.site.register(ProjectPermission, ProjectPermissionAdmin)
 
 class TextAdmin(admin.ModelAdmin):
-    list_display = ('identifier', 'title', 'valid', 'timestamp',)
+    list_display = ('identifier', 'title', 'valid', 'timestamp', 'last_user')
     list_editable = ('title', 'valid',)
     list_filter = ('valid',)
     search_fields = ('title', 'content',)

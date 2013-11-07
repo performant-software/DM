@@ -177,20 +177,20 @@ atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
-	var highlight = this.databroker.getResource(highlightUri);
+	var highlight = this.databroker.createResource(highlightUri);
     highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
     highlight.addProperty('oa:exact', sc.data.Term.wrapLiteral(range.getText()));
-    // Need a solution for keeping this up to date
+    
     // TODO
     // highlight.addProperty('oa:prefix')
     // highlight.addProperty('oa:suffix')
     
-    var specificResource = this.databroker.getResource(this.databroker.createUuid());
+    var specificResource = this.databroker.createResource(this.databroker.createUuid());
     specificResource.addProperty('rdf:type', 'oa:SpecificResource');
     specificResource.addProperty('oa:hasSource', this.getTextResource().bracketedUri);
     specificResource.addProperty('oa:hasSelector', highlight.bracketedUri);
 
-    var anno = this.databroker.getResource(this.databroker.createUuid());
+    var anno = this.databroker.createResource(this.databroker.createUuid());
     anno.addProperty('rdf:type', 'oa:Annotation');
     anno.addProperty('oa:hasTarget', this.getTextResource().bracketedUri);
 
@@ -204,8 +204,8 @@ atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highl
     goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
     	anno.deleteProperty('oa:hasTarget', specificResource);
     }, this);
-    highlight.deleteAllProperties();
-    specificResource.deleteAllProperties();
+    highlight.delete();
+    specificResource.delete();
 };
 
 atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {
@@ -214,7 +214,11 @@ atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function()
     	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(element);
     	var highlightResource = this.databroker.getResource(highlightUri);
 
-    	highlightResource.setProperty('oa:exact', sc.data.Term.wrapLiteral(jQuery(element).text()));
+    	var text = jQuery(element).text();
+
+    	if (highlightResource.getOneProperty('oa:exact') != text) {
+    		highlightResource.setProperty('oa:exact', sc.data.Term.wrapLiteral(text));
+    	}
     }, this);
 };
 
@@ -230,6 +234,8 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 
 	var highlightUri = this.databroker.createUuid();
 	var highlightResource = this.createHighlightResource(highlightUri, range);
+
+	this.viewer.unsavedChanges = true;
 	
 	var TypeElement = Node.ELEMENT_NODE;
 	var TypeText = Node.TEXT_NODE;
@@ -436,7 +442,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	// Check for click listeners so that they aren't fired multiple times
 	if(!goog.events.hasListener(object, goog.events.EventType.CLICK)) {
 		goog.events.listen(object, goog.events.EventType.CLICK, function(mouseEvent) {
-			event.stopPropagation();
+			mouseEvent.stopPropagation();
 
             this.selectAnnotationSpan(object, mouseEvent);
 			return this.handleHighlightClick(object, mouseEvent);
@@ -651,8 +657,11 @@ atb.viewer.TextEditorAnnotate.prototype.flashSpanHighlight = function (tag) {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
+	var selectorUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag);
+	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(selectorUri);
+
     var eventDispatcher = this.viewer.clientApp.getEventDispatcher();
-    var event = new atb.events.ResourceClick(atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag), eventDispatcher, this.viewer);
+    var event = new atb.events.ResourceClick(specificResourceUri, eventDispatcher, this.viewer);
     
     eventDispatcher.dispatchEvent(event);
 };

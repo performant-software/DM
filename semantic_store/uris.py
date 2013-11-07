@@ -1,4 +1,5 @@
 from uuid import uuid4
+from urlparse import urljoin
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
@@ -9,11 +10,14 @@ def uri(viewname, **kwargs):
                  + reverse(viewname, kwargs=kwargs))
     return uri
 
-def url(host, viewname, **kwargs):
+def url(viewname, **kwargs):
     url = URIRef("http://" 
-                 + host
+                 + settings.STORE_HOST
                  + reverse(viewname, kwargs=kwargs))
     return url
 
 def uuid():
     return URIRef(uuid4().urn)
+
+def project_metadata_graph_identifier(project_uri):
+    return URIRef(uri('semantic_store_projects', uri=project_uri) + '/metadata')

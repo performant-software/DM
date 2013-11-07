@@ -1,12 +1,16 @@
 from django.http import HttpResponse
+from django.conf import settings
 from rdflib import Graph
-from semantic_store.namespaces import NS
+from semantic_store.namespaces import NS, bind_namespaces
+from datetime import datetime
+from contextlib import contextmanager
 
 METADATA_PREDICATES = (
     NS.rdf.type,
     NS.ore.isDescribedBy,
     NS.rdfs.label,
     NS.dc.title,
+    NS.dcterms.description,
     NS.exif.width,
     NS.exif.height,
     NS.oa.exact
@@ -32,35 +36,51 @@ def accept_mimetypes(accept_string):
         format = part[:index_of_semicolon] if index_of_semicolon != -1 else part
         yield format
 
+class NegotiatedGraphResponse(HttpResponse):
+    default_format = 'turtle'
+    default_type = 'text'
 
-def negotiated_graph_response(request, graph, close_graph=False, **kwargs):
-    mimetypes = accept_mimetypes(request.META['HTTP_ACCEPT'])
+    def __init__(self, request, graph, close_graph=False, *args, **kwargs):
+        mimetypes = list(accept_mimetypes(request.META['HTTP_ACCEPT']))
 
-    for mimetype in mimetypes:
-        format = mimetype[mimetype.rfind('/') + 1:].strip()
+        if settings.DEBUG and mimetypes[0].strip().lower().endswith('html'):
+            format = NegotiatedGraphResponse.default_format
+            kwargs['mimetype'] = '%s/%s' % (NegotiatedGraphResponse.default_type, NegotiatedGraphResponse.default_format)
+        else:
+            for mimetype in mimetypes:
+                format = mimetype[mimetype.rfind('/') + 1:].strip().lower()
 
-        if format in RDFLIB_SERIALIZER_FORMATS:
-            serialization = graph.serialize(format=format)
+                if format in RDFLIB_SERIALIZER_FORMATS:
+                    kwargs['mimetype'] = '%s/%s' % (NegotiatedGraphResponse.default_type, NegotiatedGraphResponse.default_format)
+                    break
+            else:
+                format = NegotiatedGraphResponse.default_format
+                kwargs['mimetype'] = '%s/%s' % (NegotiatedGraphResponse.default_type, NegotiatedGraphResponse.default_format)
 
-            if close_graph:
-                graph.close()
+        super(NegotiatedGraphResponse, self).__init__(self, *args, **kwargs)
 
-            return HttpResponse(serialization, mimetype=mimetype, **kwargs)
+        bind_namespaces(graph)
+        self.content = graph.serialize(format=format)
 
-    serialization = graph.serialize(format='turtle')
+        # Note(tandres): Tried this to make it more memory efficient, but I encountered infinite recursion in django's HttpResponse write method
+        # graph.serialize(self, format=format)
 
-    if close_graph:
-        graph.close()
+        if close_graph:
+            graph.close()
 
-    return HttpResponse(serialization, mimetype='text/turtle', **kwargs)
 
-def parse_into_graph(graph, **kwargs):
+def parse_into_graph(graph=None, **kwargs):
+    if graph is None:
+        graph = Graph()
+
     temp_graph = Graph()
     temp_graph.parse(**kwargs)
     for triple in temp_graph:
         graph.add(triple)
 
-def parse_request_into_graph(request, graph):
+    return graph
+
+def parse_request_into_graph(request, graph=None):
     mimetype = request.META['CONTENT_TYPE']
 
     format = mimetype[mimetype.rfind('/') + 1:].strip()
@@ -72,4 +92,17 @@ def parse_request_into_graph(request, graph):
     if format.startswith('rdf+'):
         format = format[4:]
 
-    parse_into_graph(graph, format=format, data=request.body)
+    return parse_into_graph(graph, format=format, data=request.body)
+
+def metadata_triples(graph, subject=None):
+    for predicate in METADATA_PREDICATES:
+        for t in graph.triples((subject, predicate, None)):
+            yield t
+
+@contextmanager
+def timed_block(description='untitled operation'):
+    start_time = datetime.now()
+    yield
+    end_time = datetime.now()
+    print '- %s excecuted in %s' % (description, end_time-start_time)
+
