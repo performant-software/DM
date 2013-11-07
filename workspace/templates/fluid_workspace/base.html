@@ -77,11 +77,11 @@
             <ul class="dropdown-menu">
               <li><a href="#">my account</a></li>
               <li class="divider"></li>
-              <li><a href="{% url accounts.views.sign_out %}">logout</a></li>
+              <li><a href="{% url "accounts.views.sign_out" %}">logout</a></li>
             </ul>
           </li>
           {% else %}
-          <li><a href="{% url accounts.views.sign_in %}">login</a></li>
+          <li><a href="{% url "accounts.views.sign_in" %}">login</a></li>
           {% endif %}
         </ul>
       </div>

@@ -214,42 +214,34 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
 
     var specificResourceUris = databroker.getUrisWithProperty(
         'oa:hasSource', '<' + canvas.uri + '>');
-    for (var i=0; i<specificResourceUris.length; i++) {
-        var specificResource = databroker.getResource(specificResourceUris[i]);
+    // for (var i=0; i<specificResourceUris.length; i++) {
+    //     var specificResource = databroker.getResource(specificResourceUris[i]);
 
-        if (!specificResource.hasType('oa:SpecificResource')) {
-            goog.array.removeAt(specificResourceUris, i);
-            i--;
+    //     if (!specificResource.hasType('oa:SpecificResource')) {
+    //         goog.array.removeAt(specificResourceUris, i);
+    //         i--;
 
-            // In the future, this should also check that there exists an annotation which targets the specific resource
-        }
-    }
+    //         // In the future, this should also check that there exists an annotation which targets the specific resource
+    //     }
+    // }
 
     for (var i=0, len=specificResourceUris.length; i<len; i++) {
         var specificResource = databroker.getResource(specificResourceUris[i]);
-
-        var selectorUris = specificResource.getProperties('oa:hasSelector');
-        for (var j=0, lenj=selectorUris.length; j<lenj; j++) {
-            var selector = databroker.getResource(selectorUris[j]);
-
-            if (!selector.hasType('oa:SvgSelector')) {
-                continue;
-            }
-
-            if (selector.hasType('cnt:ContentAsText')) {
+        var selectorUri = specificResource.getOneProperty('oa:hasSelector');
+        if (selectorUri) {
+            var selector = databroker.getResource(selectorUri);
+            if (selector.hasType('oa:SvgSelector')) {
                 var svgText = selector.getOneProperty('cnt:chars');
 
                 if (svgText) {
-                    if (canvas.hasFeature(selector.getUri())) {
-                        canvas.removeObjectByUri(selector.getUri());
-                    }
+                    // if (canvas.hasFeature(selector.getUri())) {
+                    //     canvas.removeObjectByUri(selector.getUri());
+                    // }
 
-                    canvas.addFeatureFromSVGString(svgText, selector.getUri());
+                    if (!canvas.hasFeature(selector.getUri())) {
+                        canvas.addFeatureFromSVGString(svgText, selector.getUri());
+                    }
                 }
-            }
-            else {
-                // The selector uri should be treated as a url to an svg document
-                // TODO
             }
         }
     }

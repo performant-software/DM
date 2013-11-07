@@ -34,6 +34,8 @@ def bind_namespaces(g):
         if (prefix, namespace) not in g.namespaces():
             g.bind(prefix, namespace, True)
 
+    return g
+
 OLD_OA_BASE = 'http://www.openannotation.org/ns/'
 NEW_OA_BASE = 'http://www.w3.org/ns/oa#'
 

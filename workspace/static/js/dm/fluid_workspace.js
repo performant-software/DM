@@ -105,30 +105,6 @@ var openCanvas = function(uri, urisInOrder, index) {
     viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
 };
 
-var setupCurrentProject = function(clientApp, username) {
-    var db = goog.global.databroker;
-    var uri = db.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
-    db.getDeferredResource(uri).done(function(resource){
-        var uris = db.getResource(uri).getProperties('perm:hasPermissionOver');
-        for (var i=0; i<uris.length; i++) {
-            // db.allProjects.push(uris[i]);
-        }
-
-        var pm = goog.global.projectManager;
-
-        var lastOpen = db.getResource(uri).getOneProperty('dm:lastOpenProject')
-
-        if (lastOpen){
-            pm.selectProject(lastOpen) 
-        }
-        else{
-            pm.sendNewData("Default Project", null, [username,])
-        }
-
-        pm.addAllUserProjects(username, true)
-    })
-}
-
 var GRID_BOTTOM_MARGIN = 20;
 var GRID_LEFT_MARGIN = 20;
 var GRID_RIGHT_MARGIN = 20;
@@ -154,9 +130,26 @@ var setupUser = function(databroker, username) {
     var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
     databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
 
-    databroker.user.defer().done(function() {
+    var selectProject = function() {
+        if (goog.global.projectViewer) {
+            projectViewer.updateButtonUI();
+        }
         databroker.projectController.autoSelectProject();
-    });
+        if (databroker.projectController.currentProject) {
+            var deferredProject = databroker.projectController.currentProject.defer();
+
+            var updateUI = function() {
+                if (goog.global.projectViewer) {
+                    projectViewer.updateButtonUI();
+                    projectViewer.updateModalUI();
+                }
+            };
+
+            deferredProject.progress(updateUI).done(updateUI);
+        }
+    };
+
+    databroker.user.defer().done(selectProject);
 };
 
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl) {

@@ -1,6 +1,6 @@
 # project urls module
 
-from django.conf.urls.defaults import patterns, url, include
+from django.conf.urls import patterns, url, include
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static

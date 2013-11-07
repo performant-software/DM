@@ -401,14 +401,7 @@ sc.data.DataModel.prototype.createAnno = function(bodyUri, targetUri, opt_annoTy
     var body = this.databroker.getResource(bodyUri);
     var target = this.databroker.getResource(targetUri);
 
-    var currentBodyAnnos = body.getReferencingResources('oa:hasBody');
-
-    if (currentBodyAnnos.length > 0) {
-        var anno = currentBodyAnnos[0];
-    }
-    else {
-        var anno = this.databroker.createResource(null, 'oa:Annotation');
-    }
+    var anno = this.databroker.createResource(null, 'oa:Annotation');
 
     if (opt_annoType) {
         anno.addProperty('rdf:type', opt_annoType);
@@ -439,7 +432,7 @@ sc.data.DataModel.prototype.unlinkTargetFromAnno = function(anno, target, opt_de
 
     if (opt_deleteIfEmpty) {
         if (anno.getProperties('oa:hasTarget').length == 0 && anno.getProperties('oa:hasBody').length <= 1) {
-            anno.deleteAllProperties();
+            anno.delete();
         }
     }
 };
@@ -448,11 +441,11 @@ sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_delete
     anno = this.databroker.getResource(anno);
     body = this.databroker.getResource(body);
 
-    anno.deleteProperty('oa:hasBody', target);
+    anno.deleteProperty('oa:hasBody', body);
 
     if (opt_deleteIfEmpty) {
         if (anno.getProperties('oa:hasBody').length == 0 && anno.getProperties('oa:hasTarget').length <= 1) {
-            anno.deleteAllProperties();
+            anno.delete();
         }
     }
 };
@@ -484,6 +477,19 @@ sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri, opt_quadStore
 
         quadsToPost.addAll(quadStore.queryReturningSet(body.bracketedUri, null, null, null));
     }
+
+    return quadsToPost.getValues();
+};
+
+sc.data.DataModel.prototype.findQuadsToSyncForSpecificResource = function(uri, opt_quadStore) {
+    var specificResource = this.databroker.getResource(uri);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+
+    var quadsToPost = quadStore.queryReturningSet(specificResource.bracketedUri, null, null, null);
+
+    goog.structs.forEach(specificResource.getProperties('oa:hasSelector'), function(selectorUri) {
+        quadsToPost.addAll(quadStore.queryReturningSet(sc.data.Term.wrapUri(selectorUri), null, null, null));
+    }, this);
 
     return quadsToPost.getValues();
 };
@@ -526,6 +532,21 @@ sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStor
     return quads;
 };
 
+sc.data.DataModel.prototype.findQuadsToSyncForSvgSelector = function(selector, opt_quadStore) {
+    selector = this.databroker.getResource(selector);
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+
+    var specificResourceUri = quadStore.subjectsMatchingQuery(null, this.databroker.namespaces.expand('oa', 'hasSelector'), selector.bracketedUri, null)[0];
+
+    var quads = quadStore.query(selector.bracketedUri, null, null, null);
+    
+    if (specificResourceUri) {
+        quads = quads.concat(quadStore.query(specificResourceUri, null, null, null));
+    }
+
+    return quads;
+};
+
 sc.data.DataModel.prototype.findResourcesForCanvas = function(canvasUri) {
     var resources = new goog.structs.Set();
     canvasUri = sc.data.Term.wrapUri(canvasUri);
@@ -548,7 +569,8 @@ sc.data.DataModel.prototype.findSpecificResourcesInResource = function(resource,
 };
 
 sc.data.DataModel.prototype.createText = function(opt_title, opt_content) {
-    var text = this.databroker.createResource(null, 'dctypes:Text');
+    var text = this.databroker.createResource();
+    text.addProperty('rdf:type', 'dctypes:Text');
     text.addProperty('rdf:type', 'cnt:ContentAsText');
     text.addProperty('dc:format', '"text/html"');
 
