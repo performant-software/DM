@@ -65,8 +65,8 @@ class NegotiatedGraphResponse(HttpResponse):
         # Note(tandres): Tried this to make it more memory efficient, but I encountered infinite recursion in django's HttpResponse write method
         # graph.serialize(self, format=format)
 
-        if close_graph:
-            graph.close()
+        # if close_graph:
+        #     graph.close()
 
 
 def parse_into_graph(graph=None, **kwargs):

@@ -129,7 +129,7 @@ def update_project_text(g, p_uri, t_uri, user):
         for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
             project_g.set(t)
 
-    project_g.close()
+    # project_g.close()
 
 # Updates a project's text to match data in a (PUT) request
 # This function parses the data and then sends it to update_project_text which accepts a
@@ -177,5 +177,5 @@ def remove_project_text(project_uri, text_uri):
             text.valid = False
             text.save()
 
-    project_g.close()
+    # project_g.close()
 
