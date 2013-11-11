@@ -68,5 +68,5 @@ class Command(BaseCommand):
         localize_describes(store_host, col_uri, col_url, rep_g)
         harvest_collection(col_url, col_uri, store_host, manifest_file)
 
-        rep_g.close()
+        # rep_g.close()
                 

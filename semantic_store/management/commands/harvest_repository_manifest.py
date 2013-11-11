@@ -72,6 +72,6 @@ class Command(BaseCommand):
             for agg_uri, agg_url in agg_uris_urls:
                 self.localize_describes(agg_uri, agg_url, rep_g)
 
-            rep_g.close()
+            # rep_g.close()
         
                 

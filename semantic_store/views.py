@@ -108,7 +108,7 @@ def resources(request, uri, ext=None):
     store_g = Graph(store=rdfstore(), identifier=URIRef(uri))
     g = Graph()
     g += store_g
-    store_g.close()
+    # store_g.close()
     if len(g) > 0:
         for i in perms:
             anno_uri = settings.URI_MINT_BASE \
