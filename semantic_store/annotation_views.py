@@ -83,7 +83,7 @@ def create_or_update_annotations(request, dest_graph_uri=None, anno_uri=None):
     annotations_g = graph()
     try:
         parse_request_into_graph(request, annotations_g)
-    except ParserError as e:
+    except (ParserError, SyntaxError) as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
     anno_uris = annotation_uris(annotations_g)
     if not anno_uris:
