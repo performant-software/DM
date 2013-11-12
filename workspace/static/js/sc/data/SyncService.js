@@ -279,8 +279,12 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
             // Success
             this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
-        }.bind(this), function() {
+        }.bind(this), function(jqXHR, textStatus, errorThrown) {
             // Error
+            if (goog.string.startsWith(textStatus, '4')) {
+                console.error('The following quads returned a 4xx series error when being sent to url: ' + url, quadsToPost, errorThrown);
+                this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
+            }
         }.bind(this));
     }
 
@@ -293,8 +297,13 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             if (goog.isFunction(successHandler)) {
                 successHandler();
             }
-        }.bind(this), function() {
-            // Error handling here
+        }.bind(this), function(jqXHR, textStatus, errorThrown) {
+            // Error
+            if (goog.string.startsWith(textStatus, '4')) {
+                console.error('The following quads returned a 4xx series error when being sent to url: ' + url, quadsToPost, errorThrown);
+                this.databroker.newQuadStore.removeQuads(quadsToPost);
+                this.databroker.newResourceUris.remove(uri);
+            }
         }.bind(this));
     }
 };

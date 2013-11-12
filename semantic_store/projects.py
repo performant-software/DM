@@ -21,16 +21,30 @@ from datetime import datetime
 
 PROJECT_TYPES = (NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project)
 
+def get_project_graph(project_uri):
+    """Returns the database graph used to store general information about the project with the given uri"""
+    return Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project_uri))
+
+def get_project_metadata_graph(project_uri):
+    """
+    Returns the database graph used as a cache to be returned when just the project contents overview is requested
+    This should essentially contain the project title and description, what it aggregates, and just enough information
+    for a GUI to render those contents (titles for texts, titles and image annos for canvases, etc.)
+    """
+    return Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+
 def create_project_from_request(request):
+    """Takes a graph via an http request, and creates a project in the database (and the metadata cache) from an input graph"""
     try:
         g = parse_request_into_graph(request)
-    except ParserError as e:
+    except (ParserError, SyntaxError) as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
     create_project(g)
     return HttpResponse("Successfully created the project.")
 
 def create_project(g):
+    """Creates a project in the database (and the metadata cache) from an input graph"""
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
@@ -78,8 +92,14 @@ def add_is_described_bys(request, project_uri, graph):
         graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
 def build_project_metadata_graph(project_uri):
-    metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
-    project_graph = Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project_uri))
+    """
+    Takes an entire project graph (with every triple in the project in it), and builds out the metadata cache graph with just
+    enough information to render the project in a GUI.
+    This should really only be called when importing a full project from a file, or to rebuild the cache. The cache should otherwise
+    be maintained with each update, as it is very expensive to rebuild this cache.
+    """
+    metadata_graph = get_project_metadata_graph(project_uri)
+    project_graph = get_project_graph(project_uri)
     project_memory_graph = Graph()
     project_memory_graph += project_graph
 
@@ -104,12 +124,13 @@ def build_project_metadata_graph(project_uri):
         return metadata_graph
 
 def read_project(request, project_uri):
+    """Returns a HttpResponse of the cached project metadata graph"""
     project_uri = URIRef(project_uri)
 
     if request.user.is_authenticated():
         if permissions.has_permission_over(project_uri, user=request.user, permission=NS.perm.mayRead):
             identifier = uris.uri('semantic_store_projects', uri=project_uri)
-            store_metadata_graph = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+            store_metadata_graph = get_project_metadata_graph(project_uri)
             ret_graph = Graph()
             ret_graph += store_metadata_graph
 
@@ -135,27 +156,30 @@ def read_project(request, project_uri):
 
 
 def update_project(request, uri):
+    """Updates the project and metadata graph from a put or post request"""
     if request.user.is_authenticated():
         if permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 input_graph = parse_request_into_graph(request)
-            except ParserError as e:
+            except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-            project_graph = update_project_graph(input_graph, uri)
+            update_project_graph(input_graph, uri)
 
-            return NegotiatedGraphResponse(request, project_graph, status=200)
+            return HttpResponse(status=204)
         else:
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
         return HttpResponse(status=401)
 
 def update_project_graph(g, identifier):
+    """Updates the main project graph and the metadata graph from an input graph"""
+
     uri = uris.uri('semantic_store_projects', uri=identifier)
 
     with transaction.commit_on_success():
-        project_g = Graph(store=rdfstore(), identifier=uri)
-        project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(identifier))
+        project_g = get_project_graph(identifier)
+        project_metadata_g = get_project_metadata_graph(identifier)
 
         #Prevent duplicate metadata
         if (URIRef(identifier), NS.dc.title, None) in g:
@@ -177,33 +201,36 @@ def update_project_graph(g, identifier):
         for triple in g.triples((identifier, NS.ore.aggregates, None)):
             project_metadata_g.add(triple)
 
-        return project_g
+            aggregate_uri = triple[2]
+            for t in metadata_triples(g, aggregate_uri):
+                project_metadata_g.add(t)
 
 def delete_project(uri):
-    identifier = uris.uri("semantic_store_projects", project_uri=uri)
-    graph = Graph(store=rdfstore(), identifier=identifier)
-    for t in graph:
-        graph.remove()
+    """Deletes a project with the given URI. (Cascades project permissions as well)"""
+    project_graph = get_project_graph(uri)
+    metadata_graph = get_project_metadata_graph(uri)
+    
+    with transaction.commit_on_success():
+        project_graph.remove((None, None, None))
+        metadata_graph.remove((None, None, None))
 
-    User.objects.filter(identifier=uri).delete()
-
-    return HttpResponse("Successfully deleted project with uri %s."%uri)
+        ProjectPermission.objects.filter(identifier=uri).delete()
 
 def delete_triples_from_project(request, uri):
+    """Deletes the triples in a graph provided by a request object from the project graph.
+    Returns an HttpResponse of all the triples which were successfully removed from the graph."""
     if request.user.is_authenticated():
         if permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate):
-            g = Graph()
             removed = Graph()
             bind_namespaces(removed)
 
             try:
-                parse_request_into_graph(request, g)
-            except ParserError as e:
+                g = parse_request_into_graph(request)
+            except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-            project_uri = uris.uri('semantic_store_projects', uri=uri)
-            project_g = Graph(store=rdfstore(), identifier=project_uri)
-            project_metadata_g = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(uri))
+            project_g = get_project_graph(uri)
+            project_metadata_g = get_project_metadata_graph(uri)
 
             with transaction.commit_on_success():
                 for t in g:

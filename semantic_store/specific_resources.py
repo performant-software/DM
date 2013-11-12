@@ -66,6 +66,18 @@ def read_specific_resource(project_uri, specific_resource, source):
 
     return return_graph
 
+def update_specific_resource(graph, project_uri, specific_resource_uri):
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    db_project_graph = Graph(store=rdfstore(), identifier=project_identifier)
+
+    with transaction.commit_on_success():
+        for t in specific_resource_subgraph(graph, specific_resource_uri):
+            db_project_graph.add(t)
+
+            for selector in graph.objects(specific_resource_uri, NS.oa.hasSelector):
+                for i in graph.triples((selector, None, None)):
+                    db_project_graph.set(i)
+
 def blank_specific_resources(graph):
     for uri in graph.subjects(NS.rdf.type, NS.oa.SpecificResource):
         if len(graph.triples((uri, NS.oa.hasSelector, None))) == 0 or len(graph.triples((uri, NS.oa.hasSource, None))) == 0:
