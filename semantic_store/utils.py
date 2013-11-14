@@ -40,7 +40,7 @@ class NegotiatedGraphResponse(HttpResponse):
     default_format = 'turtle'
     default_type = 'text'
 
-    def __init__(self, request, graph, close_graph=False, *args, **kwargs):
+    def __init__(self, request, graph, *args, **kwargs):
         mimetypes = list(accept_mimetypes(request.META['HTTP_ACCEPT']))
 
         if settings.DEBUG and mimetypes[0].strip().lower().endswith('html'):
@@ -64,9 +64,6 @@ class NegotiatedGraphResponse(HttpResponse):
 
         # Note(tandres): Tried this to make it more memory efficient, but I encountered infinite recursion in django's HttpResponse write method
         # graph.serialize(self, format=format)
-
-        # if close_graph:
-        #     graph.close()
 
 
 def parse_into_graph(graph=None, **kwargs):

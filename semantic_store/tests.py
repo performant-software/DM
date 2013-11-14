@@ -154,7 +154,6 @@ class TestProjects(unittest.TestCase):
         self.partial_manuscript_g = self.partial_manuscript_graph(self.manuscript)
 
     def tearDown(self):
-        # self.g.close()
         pass
 
 
@@ -245,7 +244,6 @@ class TestSingleAnnotation(unittest.TestCase):
             self.assertEqual(response.status_code, 201)
 
     def tearDown(self):
-        # self.g.close()
         pass
 
     def setUp(self):
@@ -282,7 +280,6 @@ class TestSearchAnnotations(unittest.TestCase):
                 validate_return_content(self, response, g)
 
     def tearDown(self):
-        # self.g.close()
         pass
 
     def setUp(self):
@@ -306,8 +303,7 @@ class TestDataUpdate(unittest.TestCase):
         self.old_oa = Namespace('http://www.openannotation.org/ns/')
         self.new_oa = Namespace('http://www.w3.org/ns/oa#')
 
-    def teardown(self):
-        # self.g.close()        
+    def teardown(self):        
         pass
 
     def test_oa_namespace_update(self):
