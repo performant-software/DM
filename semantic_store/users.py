@@ -89,7 +89,7 @@ def read_user(request, username=None):
         else:
             graph = user_graph(request, user=user)
 
-            return NegotiatedGraphResponse(request, graph, close_graph=True)
+            return NegotiatedGraphResponse(request, graph)
     else:
         return read_all_users(request)
 

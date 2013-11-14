@@ -12,6 +12,4 @@ def canvases(uri):
     if len(subjs) == 0:
         subjs = [str(i) for i in g.subjects(NS.rdf['type'], NS.dms['Canvas'])]
 
-    g.close()
-
     return subjs

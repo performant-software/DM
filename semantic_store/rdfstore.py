@@ -1,17 +1,13 @@
-from rdflib import plugin, URIRef
-from rdflib.plugin import register
+from rdflib import plugin, URIRef, Literal
 from rdflib.store import Store
 from django.conf import settings
 
+plugin.register('SQLAlchemy', Store, 'rdflib_sqlalchemy.SQLAlchemy', 'SQLAlchemy')
 
-register('PostgreSQL', Store, 'semantic_store.PostgreSQL', 'PostgreSQL')
+default_identifier = URIRef(settings.RDFLIB_STORE_GRAPH_URI)   
 
-default_identifier = URIRef(settings.RDFLIB_STORE_GRAPH_URI)        
+store = plugin.get('SQLAlchemy', Store)(identifier=default_identifier)
+store.open(Literal(settings.RDFLIB_DB_URI))     
 
 def rdfstore():
-    pgplugin = plugin.get('PostgreSQL', Store)
-    store = pgplugin(identifier=default_identifier)
-    store.open()
     return store
-
-

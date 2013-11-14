@@ -108,7 +108,7 @@ def resources(request, uri, ext=None):
     store_g = Graph(store=rdfstore(), identifier=URIRef(uri))
     g = Graph()
     g += store_g
-    store_g.close()
+
     if len(g) > 0:
         for i in perms:
             anno_uri = settings.URI_MINT_BASE \
@@ -129,7 +129,6 @@ def resources(request, uri, ext=None):
                                       identifier=default_identifier)
         main_graph = Graph()
         main_graph += main_graph_store
-        main_graph_store.close()
         g = Graph()
         bind_namespaces(g)
         for t in main_graph.triples((URIRef(uri), None, None)):
@@ -213,11 +212,11 @@ def project_texts(request, project_uri, text_uri):
         return create_project_text_from_request(request, project_uri)
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
-        return NegotiatedGraphResponse(request, g, close_graph=True)
+        return NegotiatedGraphResponse(request, g)
     elif request.method == 'PUT':
         update_project_text_from_request(request, project_uri, text_uri)
         g = read_project_text(project_uri, text_uri)
-        return NegotiatedGraphResponse(request, g, close_graph=True)
+        return NegotiatedGraphResponse(request, g)
     elif request.method == 'DELETE':
         remove_project_text(project_uri, text_uri)
         return HttpResponse(status=204)
@@ -243,17 +242,17 @@ def remove_user_triples(request, username):
 @check_project_resource_permissions
 def project_canvases(request, project_uri, canvas_uri):
     if request.method == 'GET':
-        return NegotiatedGraphResponse(request, read_canvas(request, project_uri, canvas_uri), close_graph=True)
+        return NegotiatedGraphResponse(request, read_canvas(request, project_uri, canvas_uri))
     elif request.method == 'PUT':
         input_graph = parse_request_into_graph(request)
-        return NegotiatedGraphResponse(request, update_canvas(project_uri, canvas_uri, input_graph), close_graph=True)
+        return NegotiatedGraphResponse(request, update_canvas(project_uri, canvas_uri, input_graph))
     else:
         return HttpResponseNotAllowed(('GET', 'PUT'))
 
 @check_project_resource_permissions
 def remove_project_canvas_triples(request, project_uri, canvas_uri):
     if request.method == 'PUT':
-        return NegotiatedGraphResponse(request, remove_canvas_triples(project_uri, canvas_uri, input_graph), close_graph=True)
+        return NegotiatedGraphResponse(request, remove_canvas_triples(project_uri, canvas_uri, input_graph))
     else:
         return HttpResponseNotAllowed(('PUT'))
 
@@ -274,7 +273,7 @@ def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource
 # @check_project_resource_permissions
 def specific_resource_graph(request, project_uri, specific_resource, source):
     if request.method == 'GET':
-        return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source), close_graph=True)
+        return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source))
     elif request.method == 'PUT':
         g = parse_request_into_graph(request)
         update_specific_resource(g, URIRef(project_uri), URIRef(specific_resource))

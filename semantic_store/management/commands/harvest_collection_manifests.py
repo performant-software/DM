@@ -67,6 +67,4 @@ class Command(BaseCommand):
         rep_g.add((col_uri, NS.ore['isDescribedBy'], URIRef(col_url)))
         localize_describes(store_host, col_uri, col_url, rep_g)
         harvest_collection(col_url, col_uri, store_host, manifest_file)
-
-        rep_g.close()
                 
