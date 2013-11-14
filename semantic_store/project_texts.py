@@ -56,7 +56,7 @@ def create_project_text_from_request(request, project_uri):
             else:
                 text_uri = URIRef(uris.uuid())
                 update_project_text(g, project_uri, text_uri, request.user)
-                return NegotiatedGraphResponse(request, read_project_text(project_uri, text_uri), close_graph=True)
+                return NegotiatedGraphResponse(request, read_project_text(project_uri, text_uri))
         else:
             return HttpResponseForbidden()
     else:
@@ -132,8 +132,6 @@ def update_project_text(g, p_uri, t_uri, user):
         for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
             project_g.set(t)
 
-    project_g.close()
-
 # Updates a project's text to match data in a (PUT) request
 # This function parses the data and then sends it to update_project_text which accepts a
 #  graph object instead of a request object
@@ -179,6 +177,4 @@ def remove_project_text(project_uri, text_uri):
         for text in Text.objects.filter(identifier=text_uri, valid=True).only('valid'):
             text.valid = False
             text.save()
-
-    project_g.close()
 

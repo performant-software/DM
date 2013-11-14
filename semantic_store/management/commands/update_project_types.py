@@ -31,5 +31,3 @@ class Command(BaseCommand):
                         project_graph.add((project, NS.rdf.type, NS.foaf.Project))
                         project_graph.add((project, NS.rdf.type, NS.dm.Project))
 
-        store.close()
-

@@ -66,8 +66,6 @@ def harvest_collection(col_url, col_uri, store_host, manifest_file=None):
             localize_describes(store_host, res_uri, res_url, res_g)
             localize_describes(store_host, res_uri, res_url, col_g)
 
-    col_g.close()
-
 
 def harvest_repository(rep_uri, rep_url, store_host, manifest_file=None):
     store_host = clean_store_host(store_host)
@@ -78,5 +76,4 @@ def harvest_repository(rep_uri, rep_url, store_host, manifest_file=None):
         agg_uris_urls = collection.aggregated_uris_urls(rep_uri, rep_g)
         for agg_uri, agg_url in agg_uris_urls:
             harvest_collection(agg_url, agg_uri, store_host, manifest_file)
-    rep_g.close()
     

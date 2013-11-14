@@ -18,5 +18,3 @@ class Command(BaseCommand):
             graph = Graph(store=store, identifier=identifier)
             update_old_namespaces(graph)
             graph.bind('oa', NS.oa)
-
-        store.close()
