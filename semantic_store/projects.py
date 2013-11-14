@@ -239,7 +239,7 @@ def delete_triples_from_project(request, uri):
                         removed.add(t)
                     project_metadata_g.remove(t)
 
-            return NegotiatedGraphResponse(request, removed, close_graph=True)
+            return NegotiatedGraphResponse(request, removed)
         else:
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
