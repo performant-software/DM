@@ -258,17 +258,17 @@ def remove_project_canvas_triples(request, project_uri, canvas_uri):
 
 @check_project_resource_permissions
 def text_specific_resource(request, project_uri, text_uri, specific_resource):
-    if request.method == 'GET':
+    if request.method == 'GET' or request.method == 'PUT':
         return specific_resource_graph(request, project_uri, specific_resource, text_uri)
     else:
-        return HttpResponseNotAllowed(('GET'))
+        return HttpResponseNotAllowed(('GET', 'PUT'))
 
 @check_project_resource_permissions
 def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource):
-    if request.method == 'GET':
+    if request.method == 'GET' or request.method == 'PUT':
         return specific_resource_graph(request, project_uri, specific_resource, canvas_uri)
     else:
-        return HttpResponseNotAllowed(('GET'))
+        return HttpResponseNotAllowed(('GET', 'PUT'))
 
 # @check_project_resource_permissions
 def specific_resource_graph(request, project_uri, specific_resource, source):
