@@ -63,7 +63,7 @@ def canvas_subgraph(graph, canvas_uri, project_uri):
 
     return canvas_graph
 
-def read_canvas(request, project_uri, canvas_uri):
+def generate_canvas_graph(project_uri, canvas_uri):
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
     db_project_graph = Graph(store=rdfstore(), identifier=project_identifier)
 
@@ -83,6 +83,25 @@ def read_canvas(request, project_uri, canvas_uri):
             memory_graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
 
     return memory_graph
+
+def update_canvas_graph(project_uri, canvas_uri):
+    identifier = uris.uri("semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas_uri)
+    canvas_graph = Graph(rdfstore(), identifier=identifier)
+
+    with transaction.commit_on_success():
+        for t in generate_canvas_graph(project_uri, canvas_uri):
+            canvas_graph.add(t)
+
+        return canvas_graph
+
+def read_canvas(request, project_uri, canvas_uri):
+    identifier = uris.uri("semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas_uri)
+    graph = Graph(rdfstore(), identifier=identifier)
+    
+    if len(graph)==0:
+            graph = update_canvas_graph(project_uri, canvas_uri)
+
+    return graph
 
 def update_canvas(project_uri, canvas_uri, input_graph):
     project_uri = URIRef(project_uri)
