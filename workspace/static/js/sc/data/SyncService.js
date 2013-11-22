@@ -349,7 +349,7 @@ sc.data.SyncService.prototype.hasUnsavedChanges = function() {
 sc.data.SyncService.prototype.getProjectDownloadUrl = function(projectUri, opt_extension) {
     var url = this.restUrl(projectUri, sc.data.SyncService.RESTYPE.project, null, null);
 
-    url += 'download.' + (opt_extension || 'xml');
+    url += 'download.' + (opt_extension || 'ttl');
 
     return url;
 };
