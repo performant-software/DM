@@ -11,7 +11,7 @@ from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
 from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, metadata_triples
 from semantic_store.users import PERMISSION_PREDICATES, user_graph, user_metadata_graph
-from semantic_store.project_texts import sanitized_content
+from semantic_store.project_texts import sanitized_content, text_graph_from_model
 from semantic_store import project_texts
 from semantic_store import canvases
 from semantic_store.models import ProjectPermission
@@ -272,4 +272,14 @@ def add_project_types(graph, project_uri):
 
     for t in PROJECT_TYPES:
         graph.add((project_uri, NS.rdf.type, t))
+
+def project_export_graph(project_uri):
+    db_project_graph = get_project_graph(project_uri)
+    export_graph = Graph()
+    export_graph += db_project_graph
+
+    for text_uri in db_project_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
+        export_graph += text_graph_from_model(text_uri)
+
+    return export_graph
 
