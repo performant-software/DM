@@ -345,3 +345,11 @@ sc.data.SyncService.prototype.getCsrfToken = function() {
 sc.data.SyncService.prototype.hasUnsavedChanges = function() {
     return this.databroker.newResourceUris.getCount() !== 0 || this.databroker.deletedResourceUris.getCount() !== 0 || this.getModifiedResourceUris().getCount() !== 0;
 };
+
+sc.data.SyncService.prototype.getProjectDownloadUrl = function(projectUri, opt_extension) {
+    var url = this.restUrl(projectUri, sc.data.SyncService.RESTYPE.project, null, null);
+
+    url += 'download.' + (opt_extension || 'xml');
+
+    return url;
+};

@@ -127,9 +127,14 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     nav.appendChild(newTextButtonLi);
     var editButtonLi = this.domHelper.createDom('li', {}, 
         this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-        this.domHelper.createDom('span', {'class': 'icon-cog'}), ' Edit Project Info and Sharing'));
+            this.domHelper.createDom('span', {'class': 'icon-cog'}), ' Edit Project Info and Sharing'));
     goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
     nav.appendChild(editButtonLi);
+    var downloadButtonLi = this.domHelper.createDom('li', {},
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+            this.domHelper.createDom('span', {'class': 'icon-download'}), ' Download'))
+    goog.events.listen(downloadButtonLi, 'click', this._handleDownloadButtonClick, false, this);
+    nav.appendChild(downloadButtonLi);
     this.modalHeader.appendChild(nav);
     this.modalElement.appendChild(this.modalHeader);
 
@@ -554,6 +559,14 @@ sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {
 
     this.editZippy.expand();
     this.workingResourcesZippy.collapse();
+};
+
+sc.ProjectViewer.prototype._handleDownloadButtonClick = function(event) {
+    event.stopPropagation();
+
+    var downloadUrl = this.databroker.syncService.getProjectDownloadUrl(this.projectController.currentProject.uri);
+
+    var w = window.open(downloadUrl)
 };
 
 sc.ProjectViewer.prototype._handleNewTextButtonClick = function(event) {
