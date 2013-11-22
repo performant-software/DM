@@ -39,6 +39,10 @@ urlpatterns = patterns('',
         semantic_store.views.remove_project_triples,
         name="semantic_store_projects_remove_triples"),
 
+    url(r'^projects(?:/(?P<project_uri>[^/]+))/download\.(?P<extension>[\w\d]+)$',
+        semantic_store.views.ProjectDownload.as_view(),
+        name="semantic_store_projects_download"),
+
     url(r'^projects(?:/(?P<uri>[^/]+)/)?/?$', 
         semantic_store.views.projects,
         name="semantic_store_projects"),

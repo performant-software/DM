@@ -1,22 +1,33 @@
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
+from django.http import (
+    HttpResponse,
+    HttpResponseNotAllowed,
+    HttpResponseBadRequest,
+    HttpResponseNotFound,
+    HttpResponseForbidden,
+    StreamingHttpResponse
+)
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.base import View
 from django.contrib.auth.models import User
+from django.utils.text import slugify
+from django.utils.decorators import method_decorator
 
 from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import URIRef
 from rdflib.util import guess_format
+import rdflib.plugin
 
 from semantic_store import collection, permissions
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
-from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project
+from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
 from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples
@@ -277,3 +288,25 @@ def specific_resource_graph(request, project_uri, specific_resource, source):
     elif request.method == 'PUT':
         g = parse_request_into_graph(request)
         update_specific_resource(g, URIRef(project_uri), URIRef(specific_resource))
+
+class ProjectDownload(View):
+    @method_decorator(check_project_resource_permissions)
+    def get(self, request, project_uri, extension):
+        format = 'turtle' if extension.lower() == 'ttl' else extension
+        if format not in RDFLIB_SERIALIZER_FORMATS:
+            return HttpResponseBadRequest()
+
+        project_uri = URIRef(project_uri)
+        db_project_graph = get_project_graph(project_uri)
+
+        def serialization_iterator(project_uri, format):
+            yield ''
+            export_graph = project_export_graph(project_uri)
+            yield export_graph.serialize(format=format)
+
+        project_title = db_project_graph.value(project_uri, NS.dc.title)
+
+        response = StreamingHttpResponse(serialization_iterator(project_uri, format), mimetype='text/%s' % extension)
+        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (slugify(project_title or 'untitled_project'), extension)
+
+        return response
