@@ -304,9 +304,9 @@ class ProjectDownload(View):
             export_graph = project_export_graph(project_uri)
             yield export_graph.serialize(format=format)
 
-        project_title = db_project_graph.value(project_uri, NS.dc.title)
+        project_title = db_project_graph.value(project_uri, NS.dc.title) or 'untitled project'
 
         response = StreamingHttpResponse(serialization_iterator(project_uri, format), mimetype='text/%s' % extension)
-        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (slugify(project_title or 'untitled_project'), extension)
+        response['Content-Disposition'] = 'attachment; filename=%s.%s' % (slugify(project_title), extension)
 
         return response
