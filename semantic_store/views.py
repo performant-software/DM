@@ -24,7 +24,7 @@ import rdflib.plugin
 from semantic_store import collection, permissions
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
 from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph
@@ -304,8 +304,7 @@ class ProjectDownload(View):
             export_graph = project_export_graph(project_uri)
             yield export_graph.serialize(format=format)
 
-        project_title = db_project_graph.value(project_uri, NS.dc.title)\
-            or db_project_graph.value(project_uri, NS.rdfs.label) or u'untitled project'
+        project_title = get_title(db_project_graph, project_uri) or u'untitled project'
 
         response = StreamingHttpResponse(serialization_iterator(project_uri, format), mimetype='text/%s' % extension)
         response['Content-Disposition'] = 'attachment; filename=%s.%s' % (slugify(project_title), extension)
