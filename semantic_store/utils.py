@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.conf import settings
-from rdflib import Graph
+from rdflib import Graph, URIRef, Literal
 from semantic_store.namespaces import NS, bind_namespaces
 from datetime import datetime
 from contextlib import contextmanager
@@ -66,12 +66,14 @@ class NegotiatedGraphResponse(HttpResponse):
         # graph.serialize(self, format=format)
 
 
-def parse_into_graph(graph=None, **kwargs):
+def parse_into_graph(graph=None, *args, **kwargs):
     if graph is None:
         graph = Graph()
+        temp_graph = graph
+    else:
+        temp_graph = Graph()
 
-    temp_graph = Graph()
-    temp_graph.parse(**kwargs)
+    temp_graph.parse(*args, **kwargs)
     for triple in temp_graph:
         graph.add(triple)
 
@@ -96,10 +98,18 @@ def metadata_triples(graph, subject=None):
         for t in graph.triples((subject, predicate, None)):
             yield t
 
+def get_title(graph, subject):
+    return graph.value(subject, NS.dc.title) or graph.value(subject, NS.rdfs.label)
+
+def set_title(graph, subject, title):
+    title = Literal(title)
+    graph.set((subject, NS.dc.title, title))
+    graph.set((subject, NS.rdfs.label, title))
+
 @contextmanager
 def timed_block(description='untitled operation'):
     start_time = datetime.now()
     yield
     end_time = datetime.now()
-    print '- %s excecuted in %s' % (description, end_time-start_time)
+    print '- %s excecuted in %ss' % (description, end_time-start_time)
 
