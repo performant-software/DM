@@ -545,10 +545,12 @@ atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function (
 };
 
 atb.viewer.TextEditorAnnotate.OA_EXACT_URI = 'http://www.w3.org/ns/oa#exact';
+atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE = 'http://www.w3.org/ns/oa#TextQuoteSelector';
 
 atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(element, uri) {
 	jQuery(element).attr('about', uri);
     jQuery(element).attr('property', atb.viewer.TextEditorAnnotate.OA_EXACT_URI);
+    jQuery(element).attr('typeof', atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE)
 };
 
 
