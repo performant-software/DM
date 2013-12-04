@@ -72,10 +72,12 @@ def text_graph_from_model(text_uri):
     else:
         text_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
         text_g.add((text_uri, NS.rdf.type, NS.cnt.ContentAsChars))
-        
+
         text_g.set((text_uri, NS.dc.title, Literal(text.title)))
         text_g.set((text_uri, NS.rdfs.label, Literal(text.title)))
         text_g.set((text_uri, NS.cnt.chars, Literal(text.content)))
+
+        text_g.set((text_uri, NS.dc.modified, Literal(text.timestamp)))
 
     return text_g
 

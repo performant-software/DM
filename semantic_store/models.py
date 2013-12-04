@@ -22,3 +22,8 @@ class Text(models.Model):
     valid = models.BooleanField(default=True, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     last_user = models.ForeignKey(User)
+
+    class Meta:
+        index_together = (
+            ('identifier', 'valid'),
+        )
