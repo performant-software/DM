@@ -404,6 +404,7 @@ def parse_for_highlights(content, content_uri):
             span['class'] = HIGHLIGHT_CLASS
             span['about'] =  selector_uri
             span['property'] = str(OA.exact)
+            span['typeof'] = str(OA.TextQuoteSelector)
                     
             # Add information about highlight
             graph.add((specific_resource_uri, OA['hasSource'], content_uri))
