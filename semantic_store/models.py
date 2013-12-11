@@ -15,6 +15,9 @@ class ProjectPermission(models.Model):
     class Meta:
         unique_together = ('user', 'identifier', 'permission')
 
+    def __unicode__(self):
+        return 'User %s may %s project %s' % (self.user, self.get_permission_display().lower(), self.identifier)
+
 class Text(models.Model):
     identifier = models.CharField(max_length=2000, db_index=True)
     title = models.CharField(max_length=200, blank=True, null=True, db_index=True)
@@ -26,4 +29,13 @@ class Text(models.Model):
     class Meta:
         index_together = (
             ('identifier', 'valid'),
+        )
+
+    def __unicode__(self):
+        return '"%s", uri:"%s" version %s (%s %s by %s)' % (
+            self.title,
+            self.identifier,
+            self.id,
+            self.timestamp,
+            ('valid' if self.valid else 'invalid'), self.last_user
         )
