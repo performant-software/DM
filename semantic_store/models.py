@@ -14,6 +14,9 @@ class ProjectPermission(models.Model):
 
     class Meta:
         unique_together = ('user', 'identifier', 'permission')
+        index_together = (
+            ('user', 'identifier', 'permission'), # since DM constantly checks this to see if a user has proper permissions
+        )
 
     def __unicode__(self):
         return 'User %s may %s project %s' % (self.user, self.get_permission_display().lower(), self.identifier)
