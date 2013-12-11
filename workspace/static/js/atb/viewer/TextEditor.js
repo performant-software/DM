@@ -127,7 +127,7 @@ atb.viewer.TextEditor.prototype.onTextPasted = function()
 {
 	//this.fixPastedSpans();
 	
-	this.applyFormattingRules();
+	// this.applyFormattingRules();
 };
 
 /**
