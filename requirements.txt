@@ -1,0 +1,5 @@
+django
+django-south
+rdflib
+rdflib-sqlalchemy
+beautifulsoup4
