@@ -28,5 +28,9 @@ def resource_annotation_subgraph(graph, resource_uri):
 
 def blank_annotation_uris(graph):
     for uri in graph.subjects(NS.rdf.type, NS.oa.Annotation):
-        if len(graph.triples((uri, NS.oa.hasTarget, None))) + len(graph.triples((uri, NS.oa.hasBody, None))) == 0:
+        if not ((uri, NS.oa.hasTarget, None) in graph or (uri, NS.oa.hasBody, None) in graph):
             yield uri
+
+def remove_blank_annotations(graph):
+    for uri in blank_annotation_uris(graph):
+        graph.remove((uri, None, None))
