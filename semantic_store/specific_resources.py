@@ -98,4 +98,4 @@ def orphaned_selectors(graph):
 
 def remove_invalid_triples(graph):
     for uri in itertools.chain(blank_specific_resources(graph), orphaned_selectors(graph)):
-        graph.remove(uri)
+        graph.remove((uri, None, None))
