@@ -9,6 +9,13 @@ from semantic_store.utils import metadata_triples
 from semantic_store.annotations import resource_annotation_subgraph
 from semantic_store import uris
 
+import itertools
+
+SELECTOR_TYPES = (
+    NS.oa.TextQuoteSelector,
+    NS.oa.SVGSelector
+)
+
 def specific_resource_subgraph(graph, specific_resource):
     specific_resource_graph = Graph()
 
@@ -80,5 +87,15 @@ def update_specific_resource(graph, project_uri, specific_resource_uri):
 
 def blank_specific_resources(graph):
     for uri in graph.subjects(NS.rdf.type, NS.oa.SpecificResource):
-        if len(graph.triples((uri, NS.oa.hasSelector, None))) == 0 or len(graph.triples((uri, NS.oa.hasSource, None))) == 0:
+        if (uri, NS.oa.hasSelector, None) not in graph and (uri, NS.oa.hasSource, None) not in graph:
             yield uri
+
+def orphaned_selectors(graph):
+    for selector_type in SELECTOR_TYPES:
+        for selector in graph.subjects(NS.rdf.type, selector_type):
+            if (None, NS.oa.hasSelector, selector) not in graph:
+                yield selector
+
+def remove_invalid_triples(graph):
+    for uri in itertools.chain(blank_specific_resources(graph), orphaned_selectors(graph)):
+        graph.remove(uri)
