@@ -129,6 +129,9 @@ def update_project_text(g, p_uri, t_uri, user):
         project_g.set((text_uri, NS.dc.title, title))
         project_g.set((text_uri, NS.rdfs.label, title))
 
+        text_url = URIRef(uris.url('semantic_store_project_texts', project_uri=p_uri, text_uri=text_uri))
+        project_g.set((text_uri, NS.ore.isDescribedBy, text_url))
+
         if (URIRef(p_uri), NS.ore.aggregates, text_uri):
             project_metadata_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
             project_metadata_g.set((text_uri, NS.dc.title, title))
