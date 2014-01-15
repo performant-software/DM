@@ -2,7 +2,7 @@ from haystack import indexes
 from semantic_store.models import Text
 
 class TextIndex(indexes.SearchIndex, indexes.Indexable):
-    text = indexes.CharField(document=True, model_attr='content')
+    text = indexes.CharField(document=True, use_template=True)
     title = indexes.CharField(model_attr='title')
     timestamp = indexes.CharField(model_attr='timestamp')
 
