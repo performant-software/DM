@@ -123,7 +123,7 @@ def update_project_text(g, p_uri, t_uri, user):
 
     with transaction.commit_on_success():
         Text.objects.filter(identifier=t_uri, valid=True).update(valid=False)
-        text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user)
+        text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user, project=p_uri)
 
         project_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
         project_g.set((text_uri, NS.dc.title, title))

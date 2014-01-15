@@ -23,6 +23,7 @@ class ProjectPermission(models.Model):
 
 class Text(models.Model):
     identifier = models.CharField(max_length=2000, db_index=True)
+    project = models.CharField(max_length=2000, null=True)
     title = models.CharField(max_length=200, blank=True, null=True, db_index=True)
     content = models.TextField(blank=True, null=True)
     valid = models.BooleanField(default=True, db_index=True)

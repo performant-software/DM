@@ -5,6 +5,7 @@ class TextIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.CharField(document=True, use_template=True)
     title = indexes.CharField(model_attr='title')
     timestamp = indexes.CharField(model_attr='timestamp')
+    project = indexes.CharField(model_attr='project')
 
     def get_model(self):
         return Text
