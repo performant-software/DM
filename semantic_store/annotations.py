@@ -7,14 +7,16 @@ from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import metadata_triples, timed_block
 
+from itertools import chain
+
 def resource_annotation_subgraph(graph, resource_uri):
     subgraph = Graph()
 
-    annos = list(graph.subjects(NS.oa.hasTarget, resource_uri)) + list(graph.subjects(NS.oa.hasBody, resource_uri))
+    annos = chain(graph.subjects(NS.oa.hasTarget, resource_uri), graph.subjects(NS.oa.hasBody, resource_uri))
     for anno in annos:
         subgraph += graph.triples((anno, None, None))
 
-        for resource in list(graph.objects(anno, NS.oa.hasBody)) + list(graph.objects(anno, NS.oa.hasTarget)):
+        for resource in chain(graph.objects(anno, NS.oa.hasBody), graph.objects(anno, NS.oa.hasTarget)):
             if (resource, NS.rdf.type, NS.oa.SpecificResource) in graph:
                 source = graph.value(resource, NS.oa.hasSource)
                 selector = graph.value(resource, NS.oa.hasSelector)
