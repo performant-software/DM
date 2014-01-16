@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from bs4 import BeautifulSoup
+
 class ProjectPermission(models.Model):
     PERMISSION_CHOICES = (
         ('r', 'Read'),
@@ -43,3 +45,7 @@ class Text(models.Model):
             self.timestamp,
             ('valid' if self.valid else 'invalid'), self.last_user
         )
+
+    def plain_content(self):
+        soup = BeautifulSoup(self.content)
+        return soup.body.get_text()
