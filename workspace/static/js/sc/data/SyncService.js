@@ -26,7 +26,8 @@ sc.data.SyncService.DEFAULT_OPTIONS = {
     restProjectPath: 'projects',
     restResourcePath: 'resources',
     restAnnotationPath: 'annotations',
-    restUserPath: 'users'
+    restUserPath: 'users',
+    restSearchPath: 'search'
 };
 
 sc.data.SyncService.RESTYPE = {
@@ -34,7 +35,8 @@ sc.data.SyncService.RESTYPE = {
     'project': 1, 
     'annotation': 2, 
     'user': 3, 
-    'resource': 4
+    'resource': 4,
+    'search': 5
 };
 
 sc.data.SyncService.prototype.requestSync = function() {
@@ -80,6 +82,9 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
     }
     else if (resType == sc.data.SyncService.RESTYPE.project) {
         // pass
+    }
+    else if (resType == sc.data.SyncService.RESTYPE.search) {
+        url += this.options.restSearchPath.replace(/^\/+|\/+$/g, "");
     }
 
     if (resUri != null) {
