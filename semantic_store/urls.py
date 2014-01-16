@@ -43,6 +43,10 @@ urlpatterns = patterns('',
         semantic_store.views.ProjectDownload.as_view(),
         name="semantic_store_projects_download"),
 
+    url(r'^projects(?:/(?P<project_uri>[^/]+))/search$',
+        semantic_store.views.TextSearch.as_view(),
+        name="semantic_store_text_search"),
+
     url(r'^projects(?:/(?P<uri>[^/]+)/)?/?$', 
         semantic_store.views.projects,
         name="semantic_store_projects"),

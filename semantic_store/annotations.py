@@ -28,11 +28,20 @@ def resource_annotation_subgraph(graph, resource_uri):
 
     return subgraph
 
+def is_blank_annotation(graph, uri):
+    return not ((uri, NS.oa.hasTarget, None) in graph or (uri, NS.oa.hasBody, None) in graph)
+
 def blank_annotation_uris(graph):
     for uri in graph.subjects(NS.rdf.type, NS.oa.Annotation):
-        if not ((uri, NS.oa.hasTarget, None) in graph or (uri, NS.oa.hasBody, None) in graph):
+        if is_blank_annotation(graph, uri):
             yield uri
 
 def remove_blank_annotations(graph):
     for uri in blank_annotation_uris(graph):
         graph.remove((uri, None, None))
+
+def has_annotation_link(graph, uri):
+    """Returns true if there is an annotation in the graph which has the given uri as a target or body"""
+    uri = URIRef(uri)
+
+    return (None, NS.oa.hasBody, uri) in graph or (None, NS.oa.hasTarget, uri) in graph
