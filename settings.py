@@ -35,6 +35,7 @@ INSTALLED_APPS = (
     'semantic_store',
     'accounts',
     'workspace',
+    'haystack',
 #    'fts',
 #    'django_rdflib',
 #    'rdflib_postgresql',
@@ -122,4 +123,4 @@ SOUTH_TESTS_MIGRATE = False
 # user.is_staff = True
 # user.save()
 
-
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'

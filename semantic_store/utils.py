@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.conf import settings
+from django.utils import simplejson
 from rdflib import Graph, URIRef, Literal
 from semantic_store.namespaces import NS, bind_namespaces
 from datetime import datetime
@@ -65,6 +66,13 @@ class NegotiatedGraphResponse(HttpResponse):
         # Note(tandres): Tried this to make it more memory efficient, but I encountered infinite recursion in django's HttpResponse write method
         # graph.serialize(self, format=format)
 
+class JsonResponse(HttpResponse):
+    def __init__(self, content, mimetype='application/json', *args, **kwargs):
+        super(JsonResponse, self).__init__(mimetype=mimetype, *args, **kwargs)
+        if settings.DEBUG:
+            simplejson.dump(content, self, indent=4)
+        else:
+            simplejson.dump(content, self)
 
 def parse_into_graph(graph=None, *args, **kwargs):
     if graph is None:

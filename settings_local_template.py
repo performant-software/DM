@@ -71,4 +71,11 @@ LOGIN_REDIRECT_URL = '/'
 #IMAGE_DEFAULT_FORMAT='JPEG'
 #IMAGE_DEFAULT_QUALITY=100
 
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+        'INCLUDE_SPELLING': True
+    },
+}
+
 

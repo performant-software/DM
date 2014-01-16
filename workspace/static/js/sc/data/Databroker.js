@@ -23,6 +23,7 @@ goog.require('sc.util.DeferredCollection');
 goog.require('sc.data.NamespaceManager');
 goog.require('sc.data.Term');
 goog.require('sc.data.ProjectController');
+goog.require('sc.data.SearchController');
 
 
 /**
@@ -78,6 +79,7 @@ sc.data.Databroker = function(options) {
 
     this.dataModel = new sc.data.DataModel(this);
     this.projectController = new sc.data.ProjectController(this);
+    this.searchController = new sc.data.SearchController(this);
 };
 
 sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
@@ -315,26 +317,30 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handle
     var type = sc.data.Parser.parseContentType(responseHeaders);
 
     window.setTimeout(function() {
-        var bNodeMapping = new goog.structs.Map();
-
-        this.parseRdf(data, type, function(quadBatch, done, error) {
-            for (var i=0, len=quadBatch.length; i<len; i++) {
-                var bNodeHandledQuad = this.getBNodeHandledQuad(quadBatch[i], bNodeMapping);
-                if (!this.deletedQuadsStore.containsQuad(bNodeHandledQuad)) {
-                    this.quadStore.addQuad(bNodeHandledQuad);
-                }
-            }
-
-            if (done) {
-                window.setTimeout(function() {
-                    handler(jqXhr, data);
-                }, 1);
-            }
-            if (error) {
-                console.error(error);
-            }
-        }.bind(this));
+        this.processRdfData(data, type, handler)
     }.bind(this), 1);
+};
+
+sc.data.Databroker.prototype.processRdfData = function(data, format, handler) {
+    var bNodeMapping = new goog.structs.Map();
+
+    this.parseRdf(data, format, function(quadBatch, done, error) {
+        for (var i=0, len=quadBatch.length; i<len; i++) {
+            var bNodeHandledQuad = this.getBNodeHandledQuad(quadBatch[i], bNodeMapping);
+            if (!this.deletedQuadsStore.containsQuad(bNodeHandledQuad)) {
+                this.quadStore.addQuad(bNodeHandledQuad);
+            }
+        }
+
+        if (done) {
+            window.setTimeout(function() {
+                handler(data);
+            }, 1);
+        }
+        if (error) {
+            console.error(error);
+        }
+    }.bind(this));
 };
 
 sc.data.Databroker.prototype.parseRdf = function(data, format, handler) {

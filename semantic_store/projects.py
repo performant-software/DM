@@ -283,3 +283,7 @@ def project_export_graph(project_uri):
 
     return export_graph
 
+def is_top_level_project_resource(project_uri, uri):
+    db_project_graph = get_project_graph(project_uri)
+    return (URIRef(project_uri), NS.ore.aggregates, uri) in db_project_graph
+
