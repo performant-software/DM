@@ -23,6 +23,7 @@ goog.require('sc.util.DeferredCollection');
 goog.require('sc.data.NamespaceManager');
 goog.require('sc.data.Term');
 goog.require('sc.data.ProjectController');
+goog.require('sc.data.SearchController');
 
 
 /**
@@ -78,6 +79,7 @@ sc.data.Databroker = function(options) {
 
     this.dataModel = new sc.data.DataModel(this);
     this.projectController = new sc.data.ProjectController(this);
+    this.searchController = new sc.data.SearchController(this);
 };
 
 sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
