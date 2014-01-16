@@ -314,6 +314,10 @@ class ProjectDownload(View):
 class TextSearch(View):
     @method_decorator(check_project_resource_permissions)
     def get(self, request, project_uri):
-        query = request.GET['q']
+        try:
+            query = request.GET['q']
+        except KeyError:
+            return HttpResponseBadRequest('"q" (search query string) is a required GET parameter')
+        
         return JsonResponse(text_search.get_response(project_uri, query))
 
