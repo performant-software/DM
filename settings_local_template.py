@@ -74,6 +74,7 @@ LOGIN_REDIRECT_URL = '/'
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
+        'INCLUDE_SPELLING': True
     },
 }
 
