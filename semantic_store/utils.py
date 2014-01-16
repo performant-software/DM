@@ -69,7 +69,10 @@ class NegotiatedGraphResponse(HttpResponse):
 class JsonResponse(HttpResponse):
     def __init__(self, content, mimetype='application/json', *args, **kwargs):
         super(JsonResponse, self).__init__(mimetype=mimetype, *args, **kwargs)
-        simplejson.dump(content, self, indent=(4 if settings.DEBUG else None))
+        if settings.DEBUG:
+            simplejson.dump(content, self, indent=4)
+        else:
+            simplejson.dump(content, self)
 
 def parse_into_graph(graph=None, *args, **kwargs):
     if graph is None:
