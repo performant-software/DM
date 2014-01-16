@@ -44,7 +44,4 @@ def has_annotation_link(graph, uri):
     """Returns true if there is an annotation in the graph which has the given uri as a target or body"""
     uri = URIRef(uri)
 
-    for anno_uri in chain(graph.subjects(NS.oa.hasBody, uri), graph.subjects(NS.oa.hasTarget, uri)):
-        if not is_blank_annotation(graph, anno_uri):
-            return True
-    return False
+    return (None, NS.oa.hasBody, uri) in graph or (None, NS.oa.hasTarget, uri) in graph
