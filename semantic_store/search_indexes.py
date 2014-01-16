@@ -12,4 +12,4 @@ class TextIndex(indexes.SearchIndex, indexes.Indexable):
         return Text
 
     def index_queryset(self, using=None):
-        return self.get_model().objects.filter(valid=True)
+        return self.get_model().objects.filter(valid=True).exclude(project__isnull=True)

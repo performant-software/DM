@@ -1,6 +1,7 @@
 django
 django-south
 django-haystack
+pysolr
 rdflib
 rdflib-sqlalchemy
 beautifulsoup4
