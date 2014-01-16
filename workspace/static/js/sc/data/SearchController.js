@@ -16,10 +16,8 @@ sc.data.SearchController.prototype.query = function(query, callback) {
         'url': this.getSearchUrl(query),
         'type': 'GET',
         'success': function(data, textStatus, jqXHR) {
-            this.databroker.parseRdf(data['n3'], 'n3', function(triples, done) {
-                if (done) {
-                    callback(data['results'], data['spelling_suggestion']);
-                }
+            this.databroker.processRdfData(data['n3'], 'n3', function() {
+                callback(data['results'], data['spelling_suggestion']);
             });
         }.bind(this)
     });
