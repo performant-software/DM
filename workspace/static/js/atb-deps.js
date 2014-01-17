@@ -86,6 +86,7 @@ goog.addDependency('../../../sc/RepoBrowser.js', ['sc.RepoBrowser'], ['goog.even
 goog.addDependency('../../../sc/RepoBrowserFolio.js', ['sc.RepoBrowserFolio'], ['sc.RepoBrowserItem']);
 goog.addDependency('../../../sc/RepoBrowserItem.js', ['sc.RepoBrowserItem'], []);
 goog.addDependency('../../../sc/RepoBrowserManuscript.js', ['sc.RepoBrowserManuscript'], ['goog.dom', 'goog.math.Size', 'goog.ui.AnimatedZippy', 'sc.RepoBrowserItem']);
+goog.addDependency('../../../sc/SearchViewer.js', ['sc.SearchViewer'], ['goog.dom.DomHelper']);
 goog.addDependency('../../../sc/canvas/CanvasToolbar.js', ['sc.canvas.CanvasToolbar'], ['goog.dom', 'goog.events', 'goog.structs.Map', 'goog.ui.ToggleButton', 'goog.ui.Toolbar', 'goog.ui.ToolbarSeparator', 'goog.ui.editor.ToolbarFactory', 'sc.canvas.DragFeatureControl', 'sc.canvas.DrawCircleControl', 'sc.canvas.DrawEllipseControl', 'sc.canvas.DrawLineControl', 'sc.canvas.DrawPolygonControl', 'sc.canvas.DrawRectControl', 'sc.canvas.ImageChoicePicker', 'sc.canvas.PageChooser', 'sc.canvas.PanZoomGesturesControl']);
 goog.addDependency('../../../sc/canvas/CanvasViewer.js', ['sc.canvas.CanvasViewer'], ['goog.dom', 'goog.events', 'goog.math.Size', 'sc.canvas.CanvasToolbar', 'sc.canvas.DragFeatureControl', 'sc.canvas.FabricCanvas', 'sc.canvas.FabricCanvasFactory', 'sc.canvas.FabricCanvasViewport', 'sc.canvas.ZoomSliderControl']);
 goog.addDependency('../../../sc/canvas/CommentedCanvasViewer.js', ['sc.canvas.CommentedCanvasViewer'], ['goog.events', 'sc.CommentViewer', 'sc.canvas.CanvasViewer']);
@@ -108,7 +109,7 @@ goog.addDependency('../../../sc/canvas/PanZoomGesturesControl.js', ['sc.canvas.P
 goog.addDependency('../../../sc/canvas/ZoomSliderControl.js', ['sc.canvas.ZoomSliderControl'], ['sc.canvas.Control']);
 goog.addDependency('../../../sc/data/ConjunctiveQuadStore.js', ['sc.data.ConjunctiveQuadStore'], ['goog.structs.Set', 'sc.data.BNode', 'sc.data.QuadStore', 'sc.util.DefaultDict']);
 goog.addDependency('../../../sc/data/DataModel.js', ['sc.data.DataModel'], ['goog.structs.Map', 'goog.structs.Set']);
-goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.BNode', 'sc.data.DataModel', 'sc.data.Graph', 'sc.data.N3Parser', 'sc.data.NamespaceManager', 'sc.data.ProjectController', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SearchController', 'sc.data.SyncService', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict', 'sc.util.DeferredCollection']);
+goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.BNode', 'sc.data.DataModel', 'sc.data.Graph', 'sc.data.N3Parser', 'sc.data.NamespaceManager', 'sc.data.ProjectController', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SearchClient', 'sc.data.SyncService', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict', 'sc.util.DeferredCollection']);
 goog.addDependency('../../../sc/data/Graph.js', ['sc.data.Graph'], ['sc.data.Quad', 'sc.data.Triple']);
 goog.addDependency('../../../sc/data/N3Parser.js', ['sc.data.N3Parser'], ['goog.asserts', 'n3.parser', 'sc.data.Parser']);
 goog.addDependency('../../../sc/data/NamespaceManager.js', ['sc.data.NamespaceManager'], ['goog.string', 'goog.structs.Map']);
@@ -119,7 +120,7 @@ goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goo
 goog.addDependency('../../../sc/data/RDFQueryParser.js', ['sc.data.RDFQueryParser'], ['jquery.rdfquery', 'sc.data.Parser']);
 goog.addDependency('../../../sc/data/RDFQuerySerializer.js', ['sc.data.RDFQuerySerializer'], ['sc.data.Serializer']);
 goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'sc.data.Quad', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict']);
-goog.addDependency('../../../sc/data/SearchController.js', ['sc.data.SearchController'], ['goog.object']);
+goog.addDependency('../../../sc/data/SearchClient.js', ['sc.data.SearchClient'], ['goog.object']);
 goog.addDependency('../../../sc/data/Serializer.js', ['sc.data.Serializer'], []);
 goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], ['goog.net.Cookies', 'sc.data.ConjunctiveQuadStore']);
 goog.addDependency('../../../sc/data/Term.js', ['sc.data.BNode', 'sc.data.DateTimeLiteral', 'sc.data.Literal', 'sc.data.Term', 'sc.data.Uri'], ['goog.string']);
