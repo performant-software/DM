@@ -76,7 +76,11 @@ sc.SearchViewer.prototype._buildModalHeader = function() {
         'autocomplete': 'off'
     });
     jQuery(this.searchField).typeahead({
-        'source': this.searchClient.autocomplete.bind(this.searchClient),
+        'source': function(query, callback) {
+            this.searchClient.autocomplete(query, function(suggestions) {
+                callback([query].concat(suggestions));
+            });
+        }.bind(this),
         'matcher': function(query) {return true;},
         'updater': function(item) {
             this.query(item);
