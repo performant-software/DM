@@ -61,5 +61,5 @@ def get_response(project_uri, query_string, include_n3=True):
     return d
 
 def get_autocomplete(project_uri, query_string):
-    query_set = SearchQuerySet().models(Text).filter(project__exact=project_uri).autocomplete(content_auto=query_string)[:5]
+    query_set = SearchQuerySet().models(Text).filter(project__exact=project_uri).autocomplete(content_auto=query_string)[:7]
     return [result.title for result in query_set]
