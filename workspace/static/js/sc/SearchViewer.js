@@ -41,17 +41,7 @@ sc.SearchViewer.prototype.render = function(parent) {
 sc.SearchViewer.prototype._buildModal = function() {
     // Header
     this.modalHeader = this.domHelper.createDom('div', {'class': 'modal-header'});
-    var closeButton = this.domHelper.createDom('button', {'class': 'close'}, '×');
-    $(closeButton).attr({
-        'data-dismiss': 'modal',
-        'aria-hidden': 'true'
-    });
-    // this.modalTitle = this.domHelper.createDom('h3', {}, 'Search');
-    this.modalHeader.appendChild(closeButton);
-    // this.modalHeader.appendChild(this.modalTitle);
-    this.searchField = this.domHelper.createDom('input', {'type': 'text', 'class': 'search-query sc-SearchViewer-searchField', 'placeholder': 'Search...'});
-    goog.events.listen(this.searchField, 'keydown', this._handleSearchFieldKeydown, false, this);
-    this.modalHeader.appendChild(this.searchField);
+    this._buildModalHeader();
     this.element.appendChild(this.modalHeader);
 
     // Body
@@ -68,6 +58,33 @@ sc.SearchViewer.prototype._buildModal = function() {
     });
     this.modalFooter.appendChild(footerCloseButton);
     this.element.appendChild(this.modalFooter);
+};
+
+sc.SearchViewer.prototype._buildModalHeader = function() {
+    var closeButton = this.domHelper.createDom('button', {'class': 'close'}, '×');
+    $(closeButton).attr({
+        'data-dismiss': 'modal',
+        'aria-hidden': 'true'
+    });
+    // this.modalTitle = this.domHelper.createDom('h3', {}, 'Search');
+    this.modalHeader.appendChild(closeButton);
+    // this.modalHeader.appendChild(this.modalTitle);
+    this.searchField = this.domHelper.createDom('input', {
+        'type': 'text',
+        'class': 'search-query sc-SearchViewer-searchField',
+        'placeholder': 'Search...',
+        'autocomplete': 'off'
+    });
+    jQuery(this.searchField).typeahead({
+        'source': this.searchClient.autocomplete.bind(this.searchClient),
+        'matcher': function(query) {return true;},
+        'updater': function(item) {
+            this.query(item);
+            return item;
+        }.bind(this)
+    });
+    goog.events.listen(this.searchField, 'keydown', this._handleSearchFieldKeydown, false, this);
+    this.modalHeader.appendChild(this.searchField);
 };
 
 sc.SearchViewer.prototype._buildModalBody = function() {
