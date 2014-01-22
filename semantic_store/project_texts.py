@@ -122,7 +122,13 @@ def update_project_text(g, p_uri, t_uri, user):
         content = ''
 
     with transaction.commit_on_success():
-        Text.objects.filter(identifier=t_uri, valid=True).update(valid=False)
+        for t in Text.objects.filter(identifier=t_uri, valid=True):
+            t.valid = False
+            t.save()
+            # While it looks like this would be better with a QuerySet update, we need to fire the save
+            # events to keep the search index up to date. In all forseeable cases, this should only execute
+            # for one Text object anyway.
+
         text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user, project=p_uri)
 
         project_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))

@@ -48,4 +48,5 @@ class Text(models.Model):
 
     def plain_content(self):
         soup = BeautifulSoup(self.content)
-        return soup.body.get_text()
+
+        return ' '.join(soup.body.stripped_strings)
