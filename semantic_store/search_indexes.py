@@ -14,3 +14,14 @@ class TextIndex(indexes.SearchIndex, indexes.Indexable):
 
     def index_queryset(self, using=None):
         return self.get_model().objects.filter(valid=True).exclude(project__isnull=True)
+
+    def update_object(self, instance, using=None, **kwargs):
+        if self.should_update(instance, **kwargs):
+            backend = self._get_backend(using)
+
+            if backend is not None:
+                print "Updating %s" % instance
+                if instance.valid:
+                    backend.update(self, [instance])
+                else:
+                    backend.remove(instance, **kwargs)
