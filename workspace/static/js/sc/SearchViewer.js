@@ -39,6 +39,10 @@ sc.SearchViewer.prototype.render = function(parent) {
 };
 
 sc.SearchViewer.prototype._buildModal = function() {
+    jQuery(this.element).on('shown', function(event) {
+        this.searchField.focus();
+    }.bind(this));
+
     // Header
     this.modalHeader = this.domHelper.createDom('div', {'class': 'modal-header'});
     this._buildModalHeader();
