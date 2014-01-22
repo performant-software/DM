@@ -96,7 +96,14 @@ sc.SearchViewer.prototype._buildModalHeader = function() {
 };
 
 sc.SearchViewer.prototype._buildModalBody = function() {
+    this.searchDetailsDiv = this.domHelper.createDom('div', {'class': 'sc-SearchViewer-search-details'});
+    this.modalBody.appendChild(this.searchDetailsDiv);
+
     this.workingResources.render(this.modalBody);
+
+    this.messageDiv = this.domHelper.createDom('div', {'class': 'sc-SearchViewer-message'});
+    jQuery(this.messageDiv).hide();
+    this.modalBody.appendChild(this.messageDiv);
 };
 
 sc.SearchViewer.prototype.showModal = function() {
@@ -147,18 +154,50 @@ sc.SearchViewer.prototype._handleSearchFieldKeydown = function(event) {
     }
 };
 
+sc.SearchViewer.prototype.setSearchDetails = function(query, results, spellingSuggestion) {
+    this.clearSearchDetails();
+
+    jQuery(this.searchDetailsDiv).text('Showing ' + results.length + ' results for \u201c' + query + '\u201d');
+
+    if (spellingSuggestion) {
+        var didYouMean = this.domHelper.createDom('span', {'class': 'sc-SearchViewer-spelling-suggestion'},
+            'Did you mean \u201c' + spellingSuggestion + '\u201d');
+        goog.events.listen(didYouMean, 'click', function(event) {
+            event.stopPropagation();
+            this.searchField.value = spellingSuggestion;
+            this.query(spellingSuggestion);
+        }, false, this);
+        jQuery(this.searchDetailsDiv).append('. ').append(didYouMean);
+    }
+};
+
+sc.SearchViewer.prototype.clearSearchDetails = function() {
+    jQuery(this.searchDetailsDiv).empty();
+};
+
 sc.SearchViewer.prototype.query = function(query) {
-    this.searchClient.query(query, function(results, queryReturned, spellingSuggestion) {
-        if (results.length > 0) {
-            this.setResults(results);
-        }
-        else {
-            this.clearResults();
-            // Show no results message
-        }
-    }.bind(this), function(textStatus) {
-        // Show network error message
-    }.bind(this));
+    if (query.length > 0) {
+        this.searchClient.query(query, function(results, spellingSuggestion, queryReturned) {
+            if (results.length > 0 || spellingSuggestion) {
+                this.hideMessage();
+                this.setSearchDetails(queryReturned, results, spellingSuggestion);
+                this.setResults(results);
+            }
+            else {
+                this.clearResults();
+                this.clearSearchDetails();
+                this.showMessage('No search results for \u201c' + query + '\u201d');
+            }
+        }.bind(this), function(textStatus) {
+            this.showMessage('Network Error: ' + textStatus);
+        }.bind(this));
+    }
+    else {
+        this.clearResults();
+        this.clearSearchDetails();
+        this.showMessage('Enter a search query above');
+        this.searchField.focus();
+    }
 };
 
 sc.SearchViewer.prototype.createSearchResultItem = function(result) {
@@ -187,4 +226,26 @@ sc.SearchViewer.prototype.setResults = function(results) {
 
 sc.SearchViewer.prototype.clearResults = function() {
     this.workingResources.clear();
+};
+
+sc.SearchViewer.prototype.showMessage = function(message) {
+    jQuery(this.messageDiv).text(message);
+    
+    // Calculate the height of the div without actually showing it
+    jQuery(this.messageDiv).css({'visibility': 'hidden', 'display': 'block'});
+    var textHeight = jQuery(this.messageDiv).height();
+    jQuery(this.messageDiv).css({'display': 'none', 'visibility': 'visible'});
+    
+    var div = this.modalBody;
+    
+    var top = (jQuery(div).height()) / 2 - (textHeight / 2);
+    var left = 0;
+    var width = jQuery(div).width();
+    jQuery(this.messageDiv).css({'top': top, 'left': left, 'width': width});
+    
+    jQuery(this.messageDiv).fadeIn(400);
+};
+
+sc.SearchViewer.prototype.hideMessage = function() {
+    jQuery(this.messageDiv).hide();
 };

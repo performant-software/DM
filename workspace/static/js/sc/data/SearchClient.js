@@ -25,7 +25,7 @@ sc.data.SearchClient.prototype.query = function(query, callback, opt_errorCallba
             // this.databroker.processRdfData(data['n3'], 'n3', function() {
             //    callback(data['results'], data['spelling_suggestion']);
             // });
-            callback(data['results'], data['spelling_suggestion']);
+            callback(data['results'], data['spelling_suggestion'], query);
         }.bind(this),
         'error': function(jqXHR, textStatus, errorThrown) {
             if (goog.isFunction(opt_errorCallback)) {
