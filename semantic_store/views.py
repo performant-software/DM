@@ -318,6 +318,14 @@ class TextSearch(View):
             query = request.GET['q']
         except KeyError:
             return HttpResponseBadRequest('"q" (search query string) is a required GET parameter')
+
+        try:
+            if request.GET['includeN3'] == '0' or request.GET['includeN3'].lower() == 'false':
+                include_n3 = False
+            else:
+                include_n3 = True
+        except KeyError:
+            include_n3 = True
         
-        return JsonResponse(text_search.get_response(project_uri, query))
+        return JsonResponse(text_search.get_response(project_uri, query, include_n3))
 

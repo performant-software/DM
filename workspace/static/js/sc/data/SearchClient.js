@@ -1,5 +1,8 @@
 goog.provide('sc.data.SearchClient');
 
+goog.require('sc.data.Quad');
+goog.require('sc.data.Term');
+
 sc.data.SearchClient = function(databroker) {
     this.databroker = databroker;
 };
@@ -7,7 +10,7 @@ sc.data.SearchClient = function(databroker) {
 /**
  * Main search query method. Takes a query string and a function to call back with results.
  * @param {string} query The query string.
- * @param {Function(object, string, string)} callback A callback function which takes a list of results, an optional spelling suggestion, and the original query as parameters.
+ * @param {Function(array, string, string)} callback A callback function which takes a list of results, an optional spelling suggestion, and the original query as parameters.
  * @param {Function?} opt_errorCallback A function to call in case of a network error.
  */
 sc.data.SearchClient.prototype.query = function(query, callback, opt_errorCallback) {
@@ -15,9 +18,14 @@ sc.data.SearchClient.prototype.query = function(query, callback, opt_errorCallba
         'url': this.getSearchUrl(query),
         'type': 'GET',
         'success': function(data, textStatus, jqXHR) {
-            this.databroker.processRdfData(data['n3'], 'n3', function() {
-                callback(data['results'], data['spelling_suggestion']);
-            });
+            for (var i=0, len=data.results.length; i<len; i++) {
+                var result = data.results[i];
+                this.buildRdfForResult(result);
+            }
+            // this.databroker.processRdfData(data['n3'], 'n3', function() {
+            //    callback(data['results'], data['spelling_suggestion']);
+            // });
+            callback(data['results'], data['spelling_suggestion']);
         }.bind(this),
         'error': function(jqXHR, textStatus, errorThrown) {
             if (goog.isFunction(opt_errorCallback)) {
@@ -30,5 +38,18 @@ sc.data.SearchClient.prototype.query = function(query, callback, opt_errorCallba
 sc.data.SearchClient.prototype.getSearchUrl = function(query) {
     var projectUri = this.databroker.projectController.currentProject.uri;
 
-    return this.databroker.syncService.restUrl(projectUri, sc.data.SyncService.RESTYPE.search, null, {'q': query});
+    return this.databroker.syncService.restUrl(projectUri, sc.data.SyncService.RESTYPE.search, null, {'q': query, 'includeN3': 0});
+};
+
+sc.data.SearchClient.prototype.buildRdfForResult = function(result) {
+    var ns = this.databroker.namespaces;
+
+    var wrappedUri = sc.data.Term.wrapUri(result.uri);
+    var projectUri = this.databroker.projectController.currentProject.bracketedUri;
+
+    this.databroker.quadStore.addQuads([
+        new sc.data.Quad(wrappedUri, ns.expand('rdf', 'type'), ns.expand('dctypes', 'Text'), projectUri),
+        new sc.data.Quad(wrappedUri, ns.expand('dc', 'title'), sc.data.Literal(result.title).n3(), projectUri),
+        new sc.data.Quad(wrappedUri, ns.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(result.url))
+    ]);
 };
