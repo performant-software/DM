@@ -109,18 +109,8 @@ RDFLIB_STORE_GRAPH_URI = 'http://dm.drew.edu/rdfstore'
 
 URI_MINT_BASE = 'http://dm.drew.edu'
 
-#FTS_BACKEND = 'pgsql://' # or 'simple://' # or 'dummy://' 
-#FTS_CONFIGURE_ALL_BACKENDS = False
-#DATABASE_ENGINE = 'postgresql_psycopg2'
-
 ROOT_URLCONF = 'urls'
 
 SOUTH_TESTS_MIGRATE = False
-                
-# from django.contrib.auth.models import User
-# user = User.objects.create_user('sbradshaw', 'shannon.bradshaw@gmail.com', 
-#                                 'shannon')
-# user.is_staff = True
-# user.save()
 
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'

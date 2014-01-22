@@ -318,6 +318,23 @@ class TextSearch(View):
             query = request.GET['q']
         except KeyError:
             return HttpResponseBadRequest('"q" (search query string) is a required GET parameter')
-        
-        return JsonResponse(text_search.get_response(project_uri, query))
 
+        try:
+            if request.GET['includeN3'] == '0' or request.GET['includeN3'].lower() == 'false':
+                include_n3 = False
+            else:
+                include_n3 = True
+        except KeyError:
+            include_n3 = True
+        
+        return JsonResponse(text_search.get_response(project_uri, query, include_n3))
+
+class SearchAutocomplete(View):
+    @method_decorator(check_project_resource_permissions)
+    def get(self, request, project_uri):
+        try:
+            query = request.GET['q']
+        except KeyError:
+            return HttpResponseBadRequest('"q" (search query string) is a required GET parameter')
+
+        return JsonResponse(text_search.get_autocomplete(project_uri, query))

@@ -18,6 +18,8 @@ goog.require('atb.viewer.ViewerContainer');
 goog.require("sc.ProjectManager");
 goog.require('sc.ProjectViewer');
 
+goog.require('sc.SearchViewer');
+
 
 var clientApp = null;
 var glasspane = null;
@@ -40,6 +42,12 @@ var setupProjectViewer = function(clientApp, viewerGrid) {
     goog.global.projectViewer = new sc.ProjectViewer(clientApp);
     projectViewer.renderButtons('#projectViewerButtons');
     projectViewer.renderModals('body');
+};
+
+var setupSearchViewer = function(clientApp) {
+    goog.global.searchViewer = new sc.SearchViewer(clientApp);
+    searchViewer.render('body');
+    searchViewer.addListenersToButton('#searchButton');
 };
 
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
@@ -205,6 +213,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     
     setupRepoBrowser(clientApp, wrContainerParent);
     setupProjectViewer(clientApp, viewerGrid);
+    setupSearchViewer(clientApp);
 }
 
 

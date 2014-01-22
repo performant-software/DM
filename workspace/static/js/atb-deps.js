@@ -55,6 +55,7 @@ goog.addDependency('../../../atb/widgets/MenuActionEvent.js', ['atb.widgets.Menu
 goog.addDependency('../../../atb/widgets/MenuButtonSet.js', ['atb.widgets.MenuButtonSet'], ['atb.util.ReferenceUtil', 'atb.widgets.MenuActionEvent', 'atb.widgets.MenuUtil', 'goog.asserts', 'goog.dom', 'goog.ui.Dialog.ButtonSet']);
 goog.addDependency('../../../atb/widgets/MenuItem.js', ['atb.widgets.MenuItem'], ['atb.util.ReferenceUtil']);
 goog.addDependency('../../../atb/widgets/MenuUtil.js', ['atb.widgets.MenuUtil'], ['atb.util.LangUtil', 'atb.util.ReferenceUtil', 'atb.widgets.MenuItem', 'goog.asserts']);
+goog.addDependency('../../../atb/widgets/SearchResultItem.js', ['atb.widgets.SearchResultItem'], ['atb.widgets.WorkingResourcesItem']);
 goog.addDependency('../../../atb/widgets/Toolbar.js', ['atb.widgets.Toolbar'], ['atb.util.Map', 'atb.util.ReferenceUtil', 'atb.widgets.IMenu', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
 goog.addDependency('../../../atb/widgets/TwirlDown.js', ['atb.widgets.TwirlDown'], ['goog.ui.AnimatedZippy']);
 goog.addDependency('../../../atb/widgets/VerticalToolbar.js', ['atb.widgets.VerticalToolbar'], ['atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.widgets.IMenu', 'goog.dom', 'goog.events', 'goog.ui.Component.EventType', 'goog.ui.Container', 'goog.ui.editor.DefaultToolbar', 'goog.ui.editor.ToolbarFactory']);
@@ -86,6 +87,7 @@ goog.addDependency('../../../sc/RepoBrowser.js', ['sc.RepoBrowser'], ['goog.even
 goog.addDependency('../../../sc/RepoBrowserFolio.js', ['sc.RepoBrowserFolio'], ['sc.RepoBrowserItem']);
 goog.addDependency('../../../sc/RepoBrowserItem.js', ['sc.RepoBrowserItem'], []);
 goog.addDependency('../../../sc/RepoBrowserManuscript.js', ['sc.RepoBrowserManuscript'], ['goog.dom', 'goog.math.Size', 'goog.ui.AnimatedZippy', 'sc.RepoBrowserItem']);
+goog.addDependency('../../../sc/SearchViewer.js', ['sc.SearchViewer'], ['atb.widgets.SearchResultItem', 'atb.widgets.WorkingResources', 'goog.dom.DomHelper', 'goog.events', 'goog.structs']);
 goog.addDependency('../../../sc/canvas/CanvasToolbar.js', ['sc.canvas.CanvasToolbar'], ['goog.dom', 'goog.events', 'goog.structs.Map', 'goog.ui.ToggleButton', 'goog.ui.Toolbar', 'goog.ui.ToolbarSeparator', 'goog.ui.editor.ToolbarFactory', 'sc.canvas.DragFeatureControl', 'sc.canvas.DrawCircleControl', 'sc.canvas.DrawEllipseControl', 'sc.canvas.DrawLineControl', 'sc.canvas.DrawPolygonControl', 'sc.canvas.DrawRectControl', 'sc.canvas.ImageChoicePicker', 'sc.canvas.PageChooser', 'sc.canvas.PanZoomGesturesControl']);
 goog.addDependency('../../../sc/canvas/CanvasViewer.js', ['sc.canvas.CanvasViewer'], ['goog.dom', 'goog.events', 'goog.math.Size', 'sc.canvas.CanvasToolbar', 'sc.canvas.DragFeatureControl', 'sc.canvas.FabricCanvas', 'sc.canvas.FabricCanvasFactory', 'sc.canvas.FabricCanvasViewport', 'sc.canvas.ZoomSliderControl']);
 goog.addDependency('../../../sc/canvas/CommentedCanvasViewer.js', ['sc.canvas.CommentedCanvasViewer'], ['goog.events', 'sc.CommentViewer', 'sc.canvas.CanvasViewer']);
@@ -108,7 +110,7 @@ goog.addDependency('../../../sc/canvas/PanZoomGesturesControl.js', ['sc.canvas.P
 goog.addDependency('../../../sc/canvas/ZoomSliderControl.js', ['sc.canvas.ZoomSliderControl'], ['sc.canvas.Control']);
 goog.addDependency('../../../sc/data/ConjunctiveQuadStore.js', ['sc.data.ConjunctiveQuadStore'], ['goog.structs.Set', 'sc.data.BNode', 'sc.data.QuadStore', 'sc.util.DefaultDict']);
 goog.addDependency('../../../sc/data/DataModel.js', ['sc.data.DataModel'], ['goog.structs.Map', 'goog.structs.Set']);
-goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.BNode', 'sc.data.DataModel', 'sc.data.Graph', 'sc.data.N3Parser', 'sc.data.NamespaceManager', 'sc.data.ProjectController', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SearchController', 'sc.data.SyncService', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict', 'sc.util.DeferredCollection']);
+goog.addDependency('../../../sc/data/Databroker.js', ['sc.data.Databroker'], ['goog.Uri', 'goog.object', 'goog.string', 'goog.structs.Map', 'goog.structs.Set', 'sc.data.BNode', 'sc.data.DataModel', 'sc.data.Graph', 'sc.data.N3Parser', 'sc.data.NamespaceManager', 'sc.data.ProjectController', 'sc.data.Quad', 'sc.data.QuadStore', 'sc.data.RDFQueryParser', 'sc.data.RDFQuerySerializer', 'sc.data.Resource', 'sc.data.SearchClient', 'sc.data.SyncService', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict', 'sc.util.DeferredCollection']);
 goog.addDependency('../../../sc/data/Graph.js', ['sc.data.Graph'], ['sc.data.Quad', 'sc.data.Triple']);
 goog.addDependency('../../../sc/data/N3Parser.js', ['sc.data.N3Parser'], ['goog.asserts', 'n3.parser', 'sc.data.Parser']);
 goog.addDependency('../../../sc/data/NamespaceManager.js', ['sc.data.NamespaceManager'], ['goog.string', 'goog.structs.Map']);
@@ -119,7 +121,7 @@ goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goo
 goog.addDependency('../../../sc/data/RDFQueryParser.js', ['sc.data.RDFQueryParser'], ['jquery.rdfquery', 'sc.data.Parser']);
 goog.addDependency('../../../sc/data/RDFQuerySerializer.js', ['sc.data.RDFQuerySerializer'], ['sc.data.Serializer']);
 goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'sc.data.Quad', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict']);
-goog.addDependency('../../../sc/data/SearchController.js', ['sc.data.SearchController'], ['goog.object']);
+goog.addDependency('../../../sc/data/SearchClient.js', ['sc.data.SearchClient'], []);
 goog.addDependency('../../../sc/data/Serializer.js', ['sc.data.Serializer'], []);
 goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], ['goog.net.Cookies', 'sc.data.ConjunctiveQuadStore']);
 goog.addDependency('../../../sc/data/Term.js', ['sc.data.BNode', 'sc.data.DateTimeLiteral', 'sc.data.Literal', 'sc.data.Term', 'sc.data.Uri'], ['goog.string']);
