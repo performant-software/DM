@@ -79,11 +79,14 @@ sc.SearchViewer.prototype._buildModalHeader = function() {
         'placeholder': 'Search...',
         'autocomplete': 'off'
     });
+    this.lastAutocompleteSuggestions = [];
     jQuery(this.searchField).typeahead({
         'source': function(query, callback) {
+            callback([query].concat(this.lastAutocompleteSuggestions));
             this.searchClient.autocomplete(query, function(suggestions) {
                 callback([query].concat(suggestions));
-            });
+                this.lastAutocompleteSuggestions = suggestions;
+            }.bind(this));
         }.bind(this),
         'matcher': function(query) {return true;},
         'updater': function(item) {
