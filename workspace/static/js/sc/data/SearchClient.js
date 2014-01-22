@@ -53,3 +53,19 @@ sc.data.SearchClient.prototype.buildRdfForResult = function(result) {
         new sc.data.Quad(wrappedUri, ns.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(result.url))
     ]);
 };
+
+sc.data.SearchClient.prototype.getAutocompleteUrl = function(query) {
+    var projectUri = this.databroker.projectController.currentProject.uri;
+
+    return this.databroker.syncService.restUrl(projectUri, sc.data.SyncService.RESTYPE.search_autocomplete, null, {'q': query});
+};
+
+sc.data.SearchClient.prototype.autocomplete = function(query, callback) {
+    jQuery.ajax({
+        'url': this.getAutocompleteUrl(query),
+        'type': 'GET',
+        'success': function(data, textStatus, jqXHR) {
+            callback(data);
+        }.bind(this)
+    });
+};
