@@ -7,6 +7,7 @@ class TextIndex(indexes.SearchIndex, indexes.Indexable):
     timestamp = indexes.CharField(model_attr='timestamp')
     project = indexes.CharField(model_attr='project')
     identifier = indexes.CharField(model_attr='identifier')
+    content_auto = indexes.EdgeNgramField(use_template=True, template_name='search/indexes/semantic_store/text_text.txt')
 
     def get_model(self):
         return Text
