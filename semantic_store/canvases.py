@@ -17,6 +17,7 @@ canvas_and_images_graph_prepared_query = prepareQuery("""SELECT ?image_anno ?ima
     ?image_anno oa:hasBody ?image .
     { ?image a dcmitype:Image . } UNION { ?image a dms:Image . } UNION {?image a dms:ImageChoice . } .
 }""", initNs=ns)
+# Gathers all data needed to display a given canvas (no annotations)
 def canvas_and_images_graph(graph, canvas_uri):
     canvas_uri = URIRef(canvas_uri)
 
@@ -38,6 +39,7 @@ all_canvases_and_images_graph_prepared_query = prepareQuery("""SELECT DISTINCT ?
     ?image_anno oa:hasTarget ?canvas .
     ?image_anno oa:hasBody ?image .
 }""", initNs=ns)
+# Gathers all data needed to display all canvases in a graph (no annotations)
 def all_canvases_and_images_graph(graph):
     canvas_graph = Graph()
 
@@ -50,6 +52,7 @@ def all_canvases_and_images_graph(graph):
 
     return canvas_graph
 
+# Gathers everything needed to display canvas, with annotations
 def canvas_subgraph(graph, canvas_uri, project_uri):
     canvas_uri = URIRef(canvas_uri)
 
@@ -63,20 +66,24 @@ def canvas_subgraph(graph, canvas_uri, project_uri):
 
     return canvas_graph
 
+# Gathers everything needed to display a canvas and ensures that references in annotations point to actual data
 def generate_canvas_graph(project_uri, canvas_uri):
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
     db_project_graph = Graph(store=rdfstore(), identifier=project_identifier)
 
+    # Why did I do this? trying to copy to memory? (thecoloryes)
     project_graph = db_project_graph
 
     memory_graph = Graph()
     memory_graph += canvas_subgraph(project_graph, canvas_uri, project_uri)
 
+    # isDescribedBy checking -- is this necessary? if so, is there a more efficient way to do this? 
+    # Ensures texts have isDescribedBy triples
     for text in memory_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
         if (text, NS.ore.isDescribedBy, None) not in memory_graph:
             text_url = uris.url('semantic_store_project_texts', project_uri=project_uri, text_uri=text)
             memory_graph.add((text, NS.ore.isDescribedBy, text_url))
-
+    # Ensures canvases have isDescribedBy triples
     for canvas in memory_graph.subjects(NS.rdf.type, NS.sc.Canvas):
         if (canvas, NS.ore.isDescribedBy, None) not in memory_graph:
             canvas_url = uris.url('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas)
@@ -84,7 +91,8 @@ def generate_canvas_graph(project_uri, canvas_uri):
 
     return memory_graph
 
-def update_canvas_graph(project_uri, canvas_uri):
+# Creates the cached version of the canvas graph from info in the project
+def create_canvas_graph(project_uri, canvas_uri):
     identifier = uris.uri("semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas_uri)
     canvas_graph = Graph(rdfstore(), identifier=identifier)
 
@@ -94,15 +102,18 @@ def update_canvas_graph(project_uri, canvas_uri):
 
         return canvas_graph
 
+# Reads canvas from cache if possible; if not, creates cache
 def read_canvas(request, project_uri, canvas_uri):
     identifier = uris.uri("semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas_uri)
     graph = Graph(rdfstore(), identifier=identifier)
     
     if len(graph)==0:
-            graph = update_canvas_graph(project_uri, canvas_uri)
+            graph = create_canvas_graph(project_uri, canvas_uri)
 
     return graph
 
+# Updates the canvas data in the project graph
+# SHOULD: Also update the cached canvas graph
 def update_canvas(project_uri, canvas_uri, input_graph):
     project_uri = URIRef(project_uri)
     canvas_uri = URIRef(canvas_uri)
@@ -124,6 +135,8 @@ def update_canvas(project_uri, canvas_uri, input_graph):
 
     return project_graph
 
+# Removes triples about canvas from project graph
+# SHOULD: Also remove triples from canvas cache
 def remove_canvas_triples(project_uri, canvas_uri, input_graph):
     project_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
     project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
