@@ -2,6 +2,6 @@ django
 django-south
 django-haystack
 pysolr
-rdflib
+rdflib==4.1.0
 rdflib-sqlalchemy
 beautifulsoup4
