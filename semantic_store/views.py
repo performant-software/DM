@@ -302,6 +302,7 @@ class ProjectDownload(View):
         def serialization_iterator(project_uri, format):
             yield ''
             export_graph = project_export_graph(project_uri)
+            bind_namespaces(export_graph)
             yield export_graph.serialize(format=format)
 
         project_title = get_title(db_project_graph, project_uri) or u'untitled project'
