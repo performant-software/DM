@@ -108,12 +108,11 @@ def read_canvas(request, project_uri, canvas_uri):
     graph = Graph(rdfstore(), identifier=identifier)
     
     if len(graph)==0:
-            graph = create_canvas_graph(project_uri, canvas_uri)
+        graph = create_canvas_graph(project_uri, canvas_uri)
 
     return graph
 
-# Updates the canvas data in the project graph
-# SHOULD: Also update the cached canvas graph
+# Updates the canvas data in the project graph and the cached canvas graph
 def update_canvas(project_uri, canvas_uri, input_graph):
     project_uri = URIRef(project_uri)
     canvas_uri = URIRef(canvas_uri)
@@ -122,24 +121,33 @@ def update_canvas(project_uri, canvas_uri, input_graph):
     project_graph = Graph(store=rdfstore(), identifier=project_identifier)
     project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
 
+    canvas_identifier = uris.uri('semantic_store_project_canvases', project_uri=project_uri, text_uri=text_uri)
+    canvas_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
+
     with transaction.commit_on_success():
         if (canvas_uri, NS.dc.title, None) in input_graph:
             project_graph.remove((canvas_uri, NS.dc.title, None))
             project_metadata_g.remove((canvas_uri, NS.dc.title, None))
+            canvas_graph.remove((canvas_uri, NS.dc.title, None))
         if (canvas_uri, NS.rdfs.label, None) in input_graph:
             project_graph.remove((canvas_uri, NS.rdfs.label, None))
             project_metadata_g.remove((canvas_uri, NS.rdfs.label, None))
+            canvas_graph.remove((canvas_uri, NS.rdf.label, None))
 
         project_graph += input_graph
         project_metadata_g += canvas_and_images_graph(input_graph, canvas_uri)
+        canvas_graph += input_graph
 
     return project_graph
 
-# Removes triples about canvas from project graph
-# SHOULD: Also remove triples from canvas cache
+# Removes triples about canvas from project graph and cached canvas graph
 def remove_canvas_triples(project_uri, canvas_uri, input_graph):
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
     project_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
     project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+
+    canvas_identifier = uris.uri('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas_uri)
+    canvas_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
 
     removed_graph = Graph()
 
@@ -148,6 +156,7 @@ def remove_canvas_triples(project_uri, canvas_uri, input_graph):
             if t in project_graph:
                 project_graph.remove(t)
                 project_metadata_g.remove(t)
+                canvas_graph.remove(t)
                 removed_graph.add(t)
 
         return removed_graph
