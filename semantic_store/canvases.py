@@ -95,13 +95,10 @@ def update_canvas_graph(project_uri, canvas_uri):
         return canvas_graph
 
 def read_canvas(request, project_uri, canvas_uri):
-    identifier = uris.uri("semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas_uri)
-    graph = Graph(rdfstore(), identifier=identifier)
-    
-    if len(graph)==0:
-            graph = update_canvas_graph(project_uri, canvas_uri)
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    db_project_graph = Graph(store=rdfstore(), identifier=project_identifier)
 
-    return graph
+    return canvas_subgraph(db_project_graph, canvas_uri, project_uri)
 
 def update_canvas(project_uri, canvas_uri, input_graph):
     project_uri = URIRef(project_uri)
