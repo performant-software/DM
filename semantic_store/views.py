@@ -269,15 +269,20 @@ def remove_project_canvas_triples(request, project_uri, canvas_uri):
 
 @check_project_resource_permissions
 def text_specific_resource(request, project_uri, text_uri, specific_resource):
-    if request.method == 'GET' or request.method == 'PUT':
-        return specific_resource_graph(request, project_uri, specific_resource, text_uri)
+    if request.method == 'GET':
+        return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, text_uri))
+    elif request.method == 'PUT':
+        update_project_text_from_request(request, project_uri, text_uri)
     else:
         return HttpResponseNotAllowed(('GET', 'PUT'))
 
 @check_project_resource_permissions
 def canvas_specific_resource(request, project_uri, canvas_uri, specific_resource):
-    if request.method == 'GET' or request.method == 'PUT':
-        return specific_resource_graph(request, project_uri, specific_resource, canvas_uri)
+    if request.method == 'GET':
+        return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, canvas_uri))
+    elif request.method == 'PUT':
+        input_graph = parse_request_into_graph(request)
+        return NegotiatedGraphResponse(request, update_canvas(project_uri, canvas_uri, input_graph))
     else:
         return HttpResponseNotAllowed(('GET', 'PUT'))
 
