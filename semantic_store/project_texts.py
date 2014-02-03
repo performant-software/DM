@@ -19,6 +19,7 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Comment
 
+# Sanitizes problematic characters in text
 def sanitized_content(content):
     soup = BeautifulSoup(content)
 
@@ -44,8 +45,7 @@ def sanitized_content(content):
     return content
 
 # Create a project from a (POST) request to a specified project
-# This function parses the data and then sends it to create_project_text which accepts a
-#  graph object instead of a request object
+# This function parses the data and then sends it to create_project_text which accepts a graph object instead of a request object
 def create_project_text_from_request(request, project_uri):
     if request.user.is_authenticated():
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
@@ -62,6 +62,7 @@ def create_project_text_from_request(request, project_uri):
     else:
         return HttpResponse(status=401)
 
+# Imports data from a text model object and generates all relevant triples
 def text_graph_from_model(text_uri):
     text_g = Graph()
 
@@ -81,9 +82,8 @@ def text_graph_from_model(text_uri):
 
     return text_g
 
-# Returns serialized data about a given text in a given project
-# Although intended to be used with a GET request, works independent of a request
-def read_project_text(project_uri, text_uri):
+# Gathers all data about text from project graph
+def generate_project_text_graph(project_uri, text_uri):
     # Correctly format project uri and get project graph
     project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
     project_g = Graph(rdfstore(), identifier=project_identifier)
@@ -104,56 +104,76 @@ def read_project_text(project_uri, text_uri):
     # Return graph about text
     return text_g
 
-# Updates a project text based on data in the supplied graph
-# Uses different name for arguments so that (unchanged) arguments can be passed to the 
-#  read_project_text method to return the updated data
-def update_project_text(g, p_uri, t_uri, user):
-    # Correctly format project uri and get project graph
-    project_uri = uris.uri('semantic_store_projects', uri=p_uri)
-    project_g = Graph(rdfstore(), identifier=project_uri)
-    project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(p_uri))
-    text_uri = URIRef(t_uri)
+# Reads tet data from cache if possible; otherwise creates cached graph
+# Although intended to be used with a GET request, works independent of a request
+def read_project_text(project_uri, text_uri):
+    identifier=uris.uri('semantic_store_project_texts', project_uri=project_uri, text_uri=text_uri)
+    graph = Graph(rdfstore(), identifier=identifier)
 
-    title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or Literal("")
+    if len(graph)==0:
+        graph = create_text_cache(project_uri, text_uri)
+
+    return graph
+
+# Updates a text based on data in the supplied graph
+# FUTURE: Also updates cached data
+def update_project_text(g, project_uri, text_uri, user):
+    # Correctly format project uri and get project graph
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    project_g = Graph(rdfstore(), identifier=project_uri)
+    project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+
+    text_identifier = uris.uri('semantic_store_project_texts', project_uri=project_uri, text_uri=text_uri)
+    text_graph = Graph(rdfstore(), identifier=text_identifier)
+
+    text_uri = URIRef(text_uri)
+
+    title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or None
+
     content_value = g.value(text_uri, NS.cnt.chars)
     if content_value:
         content = sanitized_content(content_value)
     else:
-        content = ''
+        content = None
 
     with transaction.commit_on_success():
-        for t in Text.objects.filter(identifier=t_uri, valid=True):
+        for t in Text.objects.filter(identifier=text_uri, valid=True):
             t.valid = False
             t.save()
             # While it looks like this would be better with a QuerySet update, we need to fire the save
             # events to keep the search index up to date. In all forseeable cases, this should only execute
             # for one Text object anyway.
 
-        text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user, project=p_uri)
+        text = Text.objects.create(identifier=text_uri, title=title, content=content, last_user=user, project=project_uri)
 
-        project_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
-        project_g.set((text_uri, NS.dc.title, title))
-        project_g.set((text_uri, NS.rdfs.label, title))
+        project_g.set((text_uriref, NS.rdf.type, NS.dctypes.Text))
+        if title:
+            project_g.set((text_uriref, NS.dc.title, title))
+            project_g.set((text_uriref, NS.rdfs.label, title))
+            text_graph.set((text_uriref, NS.dc.title, title))
+            text_graph.set((text_uriref, NS.rdfs.label, title))
 
-        text_url = URIRef(uris.url('semantic_store_project_texts', project_uri=p_uri, text_uri=text_uri))
-        project_g.set((text_uri, NS.ore.isDescribedBy, text_url))
 
-        if (URIRef(p_uri), NS.ore.aggregates, text_uri):
-            project_metadata_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
-            project_metadata_g.set((text_uri, NS.dc.title, title))
-            project_metadata_g.set((text_uri, NS.rdfs.label, title))
+        text_url = URIRef(uris.url('semantic_store_project_texts', project_uri=project_uri, text_uri=text_uri))
+        project_g.set((text_uriref, NS.ore.isDescribedBy, text_url))
 
-    specific_resource_triples = specific_resources_subgraph(g, text_uri, p_uri)
+        if (URIRef(project_uri), NS.ore.aggregates, text_uriref):
+            project_metadata_g.set((text_uriref, NS.rdf.type, NS.dctypes.Text))
+            project_metadata_g.set((text_uriref, NS.dc.title, title))
+            project_metadata_g.set((text_uriref, NS.rdfs.label, title))
+
+    specific_resource_triples = specific_resources_subgraph(g, text_uri, project_uri)
     with transaction.commit_on_success():
         for t in specific_resource_triples:
-            project_g.add(t)
+            project_g.set(t)
+            text_graph.set(t)
 
         for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
             project_g.set(t)
+            text_graph.set(t)
 
 # Updates a project's text to match data in a (PUT) request
-# This function parses the data and then sends it to update_project_text which accepts a
-#  graph object instead of a request object
+# This function parses the data and then sends it to update_project_text which accepts a graph object instead of a request object
 def update_project_text_from_request(request, project_uri, text_uri):
     if request.user.is_authenticated():
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
@@ -197,3 +217,36 @@ def remove_project_text(project_uri, text_uri):
             text.valid = False
             text.save()
 
+# Creates the cached version of the text graph from info in the project graph
+def create_text_cache(project_uri, text_uri):
+    identifier = uris.uri('semantic_store_project_texts', project_uri=project_uri, text_uri=text_uri)
+
+    text_graph = Graph(rdfstore(), identifier=identifier)
+
+    with transaction.commit_on_success():
+        for t in generate_project_text_graph(project_uri, text_uri):
+            text_graph.add(t)
+
+        return text_graph
+
+# Removes triples about text from project graph and cached canvas graph
+# Returns graph containing successfully removed triples
+def remove_text_triples(project_uri, text_uri, input_graph):
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    project_graph = Graph(store=rdfstore(), identifier=project_identifier)
+    project_metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
+
+    text_identifier = uris.uri('semantic_store_project_texts', project_uri=project_uri, text_uri=text_uri)
+    text_graph = Graph(store=rdfstore(), identifier=text_identifier)
+
+    removed_graph = Graph()
+
+    with transaction.commit_on_success():
+        for t in input_graph:
+            if t in project_graph:
+                project_graph.remove(t)
+                project_metadata_graph.remove(t)
+                text_graph.remove(t)
+                removed_graph.add(t)
+
+        return removed_graph
