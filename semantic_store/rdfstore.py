@@ -166,15 +166,16 @@ class FourStore(SPARQLUpdateStore):
 
 plugin.register('SQLAlchemy', Store, 'rdflib_sqlalchemy.SQLAlchemy', 'SQLAlchemy')
 
-default_identifier = URIRef(settings.RDFLIB_STORE_GRAPH_URI)   
+default_identifier = URIRef(settings.RDFLIB_STORE_GRAPH_URI)
 
-store = plugin.get('SQLAlchemy', Store)(identifier=default_identifier)
-store.open(Literal(settings.RDFLIB_DB_URI))
+if not (hasattr(settings, 'FOUR_STORE_URIS') and 'SPARQL' in settings.FOUR_STORE_URIS and 'UPDATE' in settings.FOUR_STORE_URIS):
+    store = plugin.get('SQLAlchemy', Store)(identifier=default_identifier)
+    store.open(Literal(settings.RDFLIB_DB_URI))
+else:
+    store = FourStore(settings.FOUR_STORE_URIS['SPARQL'], settings.FOUR_STORE_URIS['UPDATE'])
 
-# store = FourStore('http://localhost:8083/sparql/', 'http://localhost:8083/update/')
-
-# sqlalchemy_store = plugin.get('SQLAlchemy', Store)(identifier=default_identifier)
-# sqlalchemy_store.open(URIRef(settings.RDFLIB_DB_URI))
+    sqlalchemy_store = plugin.get('SQLAlchemy', Store)(identifier=default_identifier)
+    sqlalchemy_store.open(URIRef(settings.RDFLIB_DB_URI))
 
 def rdfstore():
     return store
