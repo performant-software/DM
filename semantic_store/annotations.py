@@ -12,8 +12,7 @@ from itertools import chain
 def resource_annotation_subgraph(graph, resource_uri):
     subgraph = Graph()
 
-    annos = chain(graph.subjects(NS.oa.hasTarget, resource_uri), graph.subjects(NS.oa.hasBody, resource_uri))
-    for anno in annos:
+    for anno, p, o in graph.triples_choices((None, [NS.oa.hasTarget, NS.oa.hasBody], resource_uri)):
         subgraph += graph.triples((anno, None, None))
 
         for resource in chain(graph.objects(anno, NS.oa.hasBody), graph.objects(anno, NS.oa.hasTarget)):
@@ -21,8 +20,7 @@ def resource_annotation_subgraph(graph, resource_uri):
                 source = graph.value(resource, NS.oa.hasSource)
                 selector = graph.value(resource, NS.oa.hasSelector)
                 subgraph += metadata_triples(graph, source)
-                subgraph += graph.triples((resource, None, None))
-                subgraph += graph.triples((selector, None, None))
+                subgraph += graph.triples_choices(([resource, selector], None, None))
             else:
                 subgraph += metadata_triples(graph, resource)
 

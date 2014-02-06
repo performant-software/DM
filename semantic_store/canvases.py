@@ -26,8 +26,7 @@ def canvas_and_images_graph(graph, canvas_uri):
     }""", initBindings={'canvas': canvas_uri}, initNs=ns)
 
     for image_anno, image in qres:
-        canvas_graph += graph.triples((image_anno, None, None))
-        canvas_graph += graph.triples((image, None, None))
+        canvas_graph += graph.triples_choices(([image_anno, image], None, None))
 
     return canvas_graph
 
@@ -45,9 +44,7 @@ def all_canvases_and_images_graph(graph):
     }""", initBindings={}, initNs=ns)
 
     for canvas, image_anno, image in qres:
-        canvas_graph += graph.triples((canvas, None, None))
-        canvas_graph += graph.triples((image_anno, None, None))
-        canvas_graph += graph.triples((image, None, None))
+        canvas_graph += graph.triples_choices(([canvas, image_anno, image], None, None))
 
     return canvas_graph
 
