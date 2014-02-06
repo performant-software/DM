@@ -37,8 +37,7 @@ def specific_resources_subgraph(graph, source_uri, project_uri):
 
     for specific_resource in graph.subjects(NS.oa.hasSource, source_uri):
         selector = graph.value(specific_resource, NS.oa.hasSelector)
-        specific_resources_graph += graph.triples((specific_resource, None, None))
-        specific_resources_graph += graph.triples((selector, None, None))
+        specific_resources_graph += graph.triples_choices(([specific_resource, selector], None, None))
 
         # Add appropriate ore:isDescribedBy triples for each Specific Resource so the client can request annotations on that specific resource as needed
         if source_type == NS.sc.Canvas:

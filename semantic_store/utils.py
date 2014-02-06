@@ -6,7 +6,7 @@ from semantic_store.namespaces import NS, bind_namespaces
 from datetime import datetime
 from contextlib import contextmanager
 
-METADATA_PREDICATES = (
+METADATA_PREDICATES = [
     NS.rdf.type,
     NS.ore.isDescribedBy,
     NS.rdfs.label,
@@ -15,7 +15,7 @@ METADATA_PREDICATES = (
     NS.exif.width,
     NS.exif.height,
     NS.oa.exact
-)
+]
 
 RDFLIB_SERIALIZER_FORMATS = set((
     'n3',
@@ -102,9 +102,8 @@ def parse_request_into_graph(request, graph=None):
     return parse_into_graph(graph, format=format, data=request.body)
 
 def metadata_triples(graph, subject=None):
-    for predicate in METADATA_PREDICATES:
-        for t in graph.triples((subject, predicate, None)):
-            yield t
+    for t in graph.triples_choices((subject, METADATA_PREDICATES, None)):
+        yield t
 
 def get_title(graph, subject):
     return graph.value(subject, NS.dc.title) or graph.value(subject, NS.rdfs.label)
