@@ -104,8 +104,54 @@ class FourStore(SPARQLUpdateStore):
                    rt.get(p, p),
                    rt.get(o, o)), None
 
-    # def triples_choices(self, (subject, predicate, object_), context=None):
-    #     pass
+    def triples_choices(self, (s, p, o), context=None):
+        if ( isinstance(s, BNode) or
+             isinstance(p, BNode) or 
+             isinstance(o, BNode) ): 
+            raise Exception("SPARQLStore does not support Bnodes! See http://www.w3.org/TR/sparql11-query/#BGPsparqlBNodes")
+
+        vars = []
+        filter_bodies = []
+        if not s:
+            s = Variable('s')
+            vars.append(s)
+        elif isinstance(s, list):
+            filter_bodies.append(' || '.join('?s = %s' % s_choice.n3() for s_choice in s))
+            s = Variable('s')
+            vars.append(s)
+
+        if not p:
+            p = Variable('p')
+            vars.append(p)
+        elif isinstance(p, list):
+            filter_bodies.append(' || '.join('?p = %s' % p_choice.n3() for p_choice in p))
+            p = Variable('p')
+            vars.append(p)
+
+        if not o:
+            o = Variable('o')
+            vars.append(o)
+        elif isinstance(o, list):
+            filter_bodies.append(' || '.join('?o = %s' % o_choice.n3() for o_choice in o))
+            o = Variable('o')
+            vars.append(o)
+
+        if vars:
+            v = ' '.join([term.n3() for term in vars])
+        else:
+            v = '*'
+
+        query = "SELECT ?s ?p ?o WHERE { GRAPH %s { %s %s %s . %s} }" % \
+            (context.identifier.n3() if context else Variable('context'),
+             s.n3(), p.n3(), o.n3(),
+             ''.join('FILTER(%s) .' % f for f in filter_bodies))
+
+        self.setQuery(query)
+        doc = ElementTree.parse(SPARQLWrapper.query(self).response)
+        for rt, vars in TraverseSPARQLResultDOM(doc, asDictionary=True):
+            yield (rt.get(s, s),
+                   rt.get(p, p),
+                   rt.get(o, o)), None
 
     def __len__(self, context=None):
         if not self.sparql11:
@@ -163,6 +209,7 @@ class FourStore(SPARQLUpdateStore):
         r = self._do_update(query)
         if r.status not in (200, 204):
             raise Exception("Could not update: %d %s\n%s" % (r.status, r.reason, r.read()))
+
 
 plugin.register('SQLAlchemy', Store, 'rdflib_sqlalchemy.SQLAlchemy', 'SQLAlchemy')
 
