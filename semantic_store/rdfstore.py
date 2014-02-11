@@ -210,6 +210,26 @@ class FourStore(SPARQLUpdateStore):
         if r.status not in (200, 204):
             raise Exception("Could not update: %d %s\n%s" % (r.status, r.reason, r.read()))
 
+    def addN(self, quads):
+        """ Add a list of quads to the store. """
+        if not self.connection:
+            raise Exception("UpdateEndpoint is not set - call 'open'")
+
+        data = list()
+        for subject, predicate, obj, context in quads:
+            if ( isinstance(subject, BNode) or
+                 isinstance(predicate, BNode) or
+                 isinstance(obj, BNode) ):
+                raise Exception("SPARQLStore does not support Bnodes! "
+                                "See http://www.w3.org/TR/sparql11-query/#BGPsparqlBNodes")
+
+            triple = "%s %s %s ." % (subject.n3(), predicate.n3(), obj.n3())
+            data.append("INSERT DATA { GRAPH <%s> { %s } }\n" % (context.identifier, triple))
+        r = self._do_update(''.join(data))
+        if r.status not in (200, 204):
+            raise Exception("Could not update: %d %s\n%s" % (
+                r.status, r.reason, r.read()))
+
 
 plugin.register('SQLAlchemy', Store, 'rdflib_sqlalchemy.SQLAlchemy', 'SQLAlchemy')
 
