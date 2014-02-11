@@ -224,7 +224,7 @@ class FourStore(SPARQLUpdateStore):
                                 "See http://www.w3.org/TR/sparql11-query/#BGPsparqlBNodes")
 
             triple = "%s %s %s ." % (subject.n3(), predicate.n3(), obj.n3())
-            data.append("INSERT DATA { GRAPH <%s> { %s } }\n" % (context.identifier, triple))
+            data.append("INSERT DATA { GRAPH <%s> { %s } };\n" % (context.identifier, triple))
         r = self._do_update(''.join(data))
         if r.status not in (200, 204):
             raise Exception("Could not update: %d %s\n%s" % (
