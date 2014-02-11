@@ -37,13 +37,15 @@ def specific_resources_subgraph(graph, source_uri, project_uri):
 
     for specific_resource in graph.subjects(NS.oa.hasSource, source_uri):
         selector = graph.value(specific_resource, NS.oa.hasSelector)
-        specific_resources_graph += graph.triples_choices(([specific_resource, selector], None, None))
 
-        # Add appropriate ore:isDescribedBy triples for each Specific Resource so the client can request annotations on that specific resource as needed
-        if source_type == NS.sc.Canvas:
-            specific_resources_graph.add((specific_resource, NS.ore.isDescribedBy, URIRef(uris.url("semantic_store_canvas_specific_resource", project_uri=project_uri, canvas_uri=source_uri, specific_resource=specific_resource))))
-        elif source_type == NS.dcmitype.Text:
-            specific_resources_graph.add((specific_resource, NS.ore.isDescribedBy, URIRef(uris.url("semantic_store_text_specific_resource", project_uri=project_uri, text_uri=source_uri, specific_resource=specific_resource))))
+        if selector:
+            specific_resources_graph += graph.triples_choices(([specific_resource, selector], None, None))
+
+            # Add appropriate ore:isDescribedBy triples for each Specific Resource so the client can request annotations on that specific resource as needed
+            if source_type == NS.sc.Canvas:
+                specific_resources_graph.add((specific_resource, NS.ore.isDescribedBy, URIRef(uris.url("semantic_store_canvas_specific_resource", project_uri=project_uri, canvas_uri=source_uri, specific_resource=specific_resource))))
+            elif source_type == NS.dcmitype.Text:
+                specific_resources_graph.add((specific_resource, NS.ore.isDescribedBy, URIRef(uris.url("semantic_store_text_specific_resource", project_uri=project_uri, text_uri=source_uri, specific_resource=specific_resource))))
 
     return specific_resources_graph
 
