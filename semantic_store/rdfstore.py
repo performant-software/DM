@@ -160,10 +160,10 @@ class FourStore(SPARQLUpdateStore):
                 "supported for sparql1.0 endpoints")
         else:
             if self.context_aware and context is not None:
-                q = "SELECT (count(*) as ?c) FROM %s WHERE {?s ?p ?o .}" % (
+                q = "SELECT (count(*) as ?c) WHERE { GRAPH %s {?s ?p ?o .}}" % (
                     context.identifier.n3())
             else:
-                q = "SELECT (count(*) as ?c) WHERE {?s ?p ?o .}"
+                q = "SELECT (count(*) as ?c) WHERE { GRAPH ?anygraph {?s ?p ?o .}}"
             self.setQuery(q)
             doc = ElementTree.parse(SPARQLWrapper.query(self).response)
             rt, vars = iter(
