@@ -11,10 +11,10 @@ from semantic_store import uris
 
 import itertools
 
-SELECTOR_TYPES = (
+SELECTOR_TYPES = [
     NS.oa.TextQuoteSelector,
     NS.oa.SVGSelector
-)
+]
 
 def specific_resource_subgraph(graph, specific_resource):
     specific_resource_graph = Graph()
@@ -91,12 +91,16 @@ def blank_specific_resources(graph):
         if (uri, NS.oa.hasSelector, None) not in graph and (uri, NS.oa.hasSource, None) not in graph:
             yield uri
 
+def broken_specific_resources(graph):
+    for specific_resource in graph.subjects(NS.rdf.type, NS.oa.SpecificResource):
+        if (specific_resource, NS.oa.hasSelector, None) not in graph or (specific_resource, NS.oa.hasSource, None) not in graph:
+            yield uri
+
 def orphaned_selectors(graph):
-    for selector_type in SELECTOR_TYPES:
-        for selector in graph.subjects(NS.rdf.type, selector_type):
-            if (None, NS.oa.hasSelector, selector) not in graph:
-                yield selector
+    for selector, p, o in graph.triples_choices((NS.rdf.type, SELECTOR_TYPES)):
+        if (None, NS.oa.hasSelector, selector) not in graph:
+            yield selector
 
 def remove_invalid_triples(graph):
-    for uri in itertools.chain(blank_specific_resources(graph), orphaned_selectors(graph)):
+    for uri in itertools.chain(broken_specific_resources(graph), orphaned_selectors(graph)):
         graph.remove((uri, None, None))
