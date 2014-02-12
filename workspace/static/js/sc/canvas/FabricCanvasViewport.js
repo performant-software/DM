@@ -369,7 +369,7 @@ sc.canvas.FabricCanvasViewport.prototype.getCanvasOffset = function() {
     var x = viewportOffset.left;
     var y = viewportOffset.top;
 
-    var internalOffset = canvas.getOffset();
+    var internalOffset = this.canvas.getOffset();
     x += internalOffset.x;
     y += internalOffset.y;
 
