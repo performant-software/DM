@@ -100,26 +100,22 @@ def build_project_metadata_graph(project_uri):
     """
     metadata_graph = get_project_metadata_graph(project_uri)
     project_graph = get_project_graph(project_uri)
-    project_memory_graph = Graph()
-    project_memory_graph += project_graph
 
-    with transaction.commit_on_success():
-        for t in metadata_triples(project_memory_graph, project_uri):
-            metadata_graph.add(t)
+    metadata_graph += metadata_triples(project_graph, project_uri)
 
-        for aggregate_uri in project_memory_graph.objects(project_uri, NS.ore.aggregates):
-            metadata_graph.add((project_uri, NS.ore.aggregates, aggregate_uri))
+    for aggregate_uri in project_graph.objects(project_uri, NS.ore.aggregates):
+        metadata_graph.add((project_uri, NS.ore.aggregates, aggregate_uri))
 
-            if ((aggregate_uri, NS.rdf.type, NS.sc.Canvas) in project_memory_graph or
-                (aggregate_uri, NS.rdf.type, NS.dms.Canvas) in project_memory_graph):
-                for t in canvases.canvas_and_images_graph(project_memory_graph, aggregate_uri):
-                    metadata_graph.add(t)
-            elif (aggregate_uri, NS.rdf.type, NS.dcmitype.Text) in project_memory_graph:
-                for t in metadata_triples(project_memory_graph, aggregate_uri):
-                    metadata_graph.add(t)
-            else:
-                for t in metadata_triples(project_memory_graph, aggregate_uri):
-                    metadata_graph.add(t)
+        if ((aggregate_uri, NS.rdf.type, NS.sc.Canvas) in project_graph or
+            (aggregate_uri, NS.rdf.type, NS.dms.Canvas) in project_graph):
+            for t in canvases.canvas_and_images_graph(project_graph, aggregate_uri):
+                metadata_graph.add(t)
+        elif (aggregate_uri, NS.rdf.type, NS.dcmitype.Text) in project_graph:
+            for t in metadata_triples(project_graph, aggregate_uri):
+                metadata_graph.add(t)
+        else:
+            for t in metadata_triples(project_graph, aggregate_uri):
+                metadata_graph.add(t)
 
         return metadata_graph
 
