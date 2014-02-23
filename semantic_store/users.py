@@ -71,7 +71,7 @@ def user_graph(request, username=None, user=None):
 
     # Add metadata info about projects
     for project in graph.objects(user_uri, NS.perm.hasPermissionOver):
-        project_graph_identifier = uris.uri('semantic_store_projects', uri=project)
+        project_graph_identifier = URIRef(uris.uri('semantic_store_projects', uri=project))
         project_graph = Graph(store=rdfstore(), identifier=project_graph_identifier)
 
         project_url = uris.url("semantic_store_projects", uri=project)
