@@ -5,6 +5,7 @@ from rdflib import Graph, URIRef, Literal
 from semantic_store.namespaces import NS, bind_namespaces
 from datetime import datetime
 from contextlib import contextmanager
+import re
 
 METADATA_PREDICATES = [
     NS.rdf.type,
@@ -119,4 +120,22 @@ def timed_block(description='untitled operation'):
     yield
     end_time = datetime.now()
     print '- %s excecuted in %ss' % (description, end_time-start_time)
+
+def print_triples(triples):
+    """Prints a turtle serialization of an iterable of triples"""
+    g = Graph()
+    bind_namespaces(g)
+    g += triples
+
+    serialization = g.serialize(format='turtle')
+
+    # Remove the @prefix section for easier readability
+    last_match = None
+    for match in re.finditer('^@prefix.+\.$', serialization, flags=re.MULTILINE):
+        last_match = match
+
+    if last_match:
+        print serialization[last_match.end() + 1:].strip('\n')
+    else:
+        print serialization
 
