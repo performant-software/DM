@@ -40,6 +40,11 @@ def user_metadata_graph(username=None, user=None):
     if user.email:
         graph.add((user_uri, NS.foaf.mbox, URIRef("mailto:" + user.email)))
 
+    if user.first_name:
+        graph.add((user_uri, NS.foaf.firstName, Literal(user.first_name)))
+    if user.last_name:
+        graph.add((user_uri, NS.foaf.lastName, Literal(user.last_name)))
+
     return graph
 
 def user_graph(request, username=None, user=None):
