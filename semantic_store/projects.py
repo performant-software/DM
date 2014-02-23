@@ -62,20 +62,19 @@ def create_project(g):
             text_graph += g.triples((text_uri, None, None))
             project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
 
-        with transaction.commit_on_success():
-            for t in g:
-                project_g.add(t)
+        for t in g:
+            project_g.add(t)
 
-            for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
-                project_g.remove((text_uri, NS.cnt.chars, None))
+        for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
+            project_g.remove((text_uri, NS.cnt.chars, None))
 
-            url = uris.url('semantic_store_projects', uri=uri)
-            project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
+        url = uris.url('semantic_store_projects', uri=uri)
+        project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
-            project_g.remove((user, None, None))
+        project_g.remove((user, None, None))
 
-            add_project_types(project_g, uri)
-            build_project_metadata_graph(uri)
+        add_project_types(project_g, uri)
+        build_project_metadata_graph(uri)
 
         username = user.split("/")[-1]
         permissions.grant_full_project_permissions(username, uri)
@@ -173,33 +172,32 @@ def update_project_graph(g, identifier):
 
     uri = uris.uri('semantic_store_projects', uri=identifier)
 
-    with transaction.commit_on_success():
-        project_g = get_project_graph(identifier)
-        project_metadata_g = get_project_metadata_graph(identifier)
+    project_g = get_project_graph(identifier)
+    project_metadata_g = get_project_metadata_graph(identifier)
 
-        #Prevent duplicate metadata
-        if (URIRef(identifier), NS.dc.title, None) in g:
-            project_g.remove((URIRef(identifier), NS.dc.title, None))
-            project_metadata_g.remove((URIRef(identifier), NS.dc.title, None))
-        if (URIRef(identifier), NS.rdfs.label, None) in g:
-            project_g.remove((URIRef(identifier), NS.rdfs.label, None))
-            project_metadata_g.remove((URIRef(identifier), NS.rdfs.label, None))
-        if (URIRef(identifier), NS.dcterms.description, None) in g:
-            project_g.remove((URIRef(identifier), NS.dcterms.description, None))
-            project_metadata_g.remove((URIRef(identifier), NS.dcterms.description, None))
+    #Prevent duplicate metadata
+    if (URIRef(identifier), NS.dc.title, None) in g:
+        project_g.remove((URIRef(identifier), NS.dc.title, None))
+        project_metadata_g.remove((URIRef(identifier), NS.dc.title, None))
+    if (URIRef(identifier), NS.rdfs.label, None) in g:
+        project_g.remove((URIRef(identifier), NS.rdfs.label, None))
+        project_metadata_g.remove((URIRef(identifier), NS.rdfs.label, None))
+    if (URIRef(identifier), NS.dcterms.description, None) in g:
+        project_g.remove((URIRef(identifier), NS.dcterms.description, None))
+        project_metadata_g.remove((URIRef(identifier), NS.dcterms.description, None))
 
-        for triple in g:
-            project_g.add(triple)
+    for triple in g:
+        project_g.add(triple)
 
-        for triple in metadata_triples(g, identifier):
-            project_metadata_g.add(triple)
+    for triple in metadata_triples(g, identifier):
+        project_metadata_g.add(triple)
 
-        for triple in g.triples((identifier, NS.ore.aggregates, None)):
-            project_metadata_g.add(triple)
+    for triple in g.triples((identifier, NS.ore.aggregates, None)):
+        project_metadata_g.add(triple)
 
-            aggregate_uri = triple[2]
-            for t in metadata_triples(g, aggregate_uri):
-                project_metadata_g.add(t)
+        aggregate_uri = triple[2]
+        for t in metadata_triples(g, aggregate_uri):
+            project_metadata_g.add(t)
 
 def delete_project(uri):
     """Deletes a project with the given URI. (Cascades project permissions as well)"""
@@ -228,12 +226,11 @@ def delete_triples_from_project(request, uri):
             project_g = get_project_graph(uri)
             project_metadata_g = get_project_metadata_graph(uri)
 
-            with transaction.commit_on_success():
-                for t in g:
-                    if t in project_g:
-                        project_g.remove(t)
-                        removed.add(t)
-                    project_metadata_g.remove(t)
+            for t in g:
+                if t in project_g:
+                    project_g.remove(t)
+                    removed.add(t)
+                project_metadata_g.remove(t)
 
             return NegotiatedGraphResponse(request, removed)
         else:

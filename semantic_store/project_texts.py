@@ -144,12 +144,11 @@ def update_project_text(g, p_uri, t_uri, user):
             project_metadata_g.set((text_uri, NS.rdfs.label, title))
 
     specific_resource_triples = specific_resources_subgraph(g, text_uri, p_uri)
-    with transaction.commit_on_success():
-        for t in specific_resource_triples:
-            project_g.add(t)
+    for t in specific_resource_triples:
+        project_g.add(t)
 
-        for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
-            project_g.set(t)
+    for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
+        project_g.set(t)
 
 # Updates a project's text to match data in a (PUT) request
 # This function parses the data and then sends it to update_project_text which accepts a
