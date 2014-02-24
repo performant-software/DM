@@ -142,7 +142,7 @@ class FourStore(SPARQLUpdateStore):
             v = '*'
 
         query = "SELECT ?s ?p ?o WHERE { GRAPH %s { %s %s %s . %s} }" % \
-            (context.identifier.n3() if context else Variable('context'),
+            (context.identifier.n3() if context else Variable('context').n3(),
              s.n3(), p.n3(), o.n3(),
              ''.join('FILTER(%s) .' % f for f in filter_bodies))
 
