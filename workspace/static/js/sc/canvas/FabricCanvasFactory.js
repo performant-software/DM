@@ -239,7 +239,12 @@ sc.canvas.FabricCanvasFactory.findAndAddSelectors = function(canvas) {
                     // }
 
                     if (!canvas.hasFeature(selector.getUri())) {
-                        canvas.addFeatureFromSVGString(svgText, selector.getUri());
+                        try {
+                            canvas.addFeatureFromSVGString(svgText, selector.getUri());
+                        }
+                        catch (e) {
+                            console.warn('Specific resource was not rendered to the canvas\n' + specificResource + '\n' + selector, e);
+                        }
                     }
                 }
             }
