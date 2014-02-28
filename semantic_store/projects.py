@@ -272,7 +272,7 @@ def project_export_graph(project_uri):
     export_graph += db_project_graph
 
     for text_uri in db_project_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
-        export_graph += text_graph_from_model(text_uri)
+        export_graph += text_graph_from_model(text_uri, project_uri)
 
     return export_graph
 
