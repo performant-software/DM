@@ -83,8 +83,7 @@ def parse_into_graph(graph=None, *args, **kwargs):
         temp_graph = Graph()
 
     temp_graph.parse(*args, **kwargs)
-    for triple in temp_graph:
-        graph.add(triple)
+    graph += temp_graph
 
     return graph
 
