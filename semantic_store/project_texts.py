@@ -62,11 +62,11 @@ def create_project_text_from_request(request, project_uri):
     else:
         return HttpResponse(status=401)
 
-def text_graph_from_model(text_uri):
+def text_graph_from_model(text_uri, project_uri):
     text_g = Graph()
 
     try:
-        text = Text.objects.get(identifier=text_uri, valid=True)
+        text = Text.objects.get(identifier=text_uri, valid=True, project=project_uri)
     except ObjectDoesNotExist:
         pass
     else:
@@ -95,7 +95,7 @@ def read_project_text(project_uri, text_uri):
     text_g = Graph()
     bind_namespaces(text_g)
 
-    text_g += text_graph_from_model(text_uri)
+    text_g += text_graph_from_model(text_uri, project_uri)
 
     text_g += resource_annotation_subgraph(project_g, text_uri)
 
