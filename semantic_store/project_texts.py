@@ -196,3 +196,40 @@ def remove_project_text(project_uri, text_uri):
             text.valid = False
             text.save()
 
+class NoNonemptyTextVersion(Exception):
+    """
+    Exception for the restore_latest_nonempty_text_version function
+    Raised when no non-empty version of the text can be found
+    """
+    pass
+
+def restore_latest_nonempty_text_version(text_uri, project_uri):
+    """
+    Iterates through all saved versions of a text starting with the most recent,
+    and makes the most recent version which is not empty (as determined by plain
+    text converted content) the valid version of the Text.
+    """
+
+    def restore(text):
+        for t in Text.objects.filter(identifier=text_uri, valid=True):
+            t.valid = False
+            t.save()
+
+        text.valid = True
+        text.save()
+
+    with transaction.commit_on_success():
+        for t in Text.objects.filter(identifier=text_uri).order_by('-timestamp'):
+            if len(t.plain_content()) > 0:
+                if not t.valid:
+                    restore(t)
+                break
+        else:
+            raise NoNonemptyTextVersion()
+
+def restore_all_blank_texts(project_uri):
+    for t in Text.objects.filter(project=project_uri, valid=True):
+        try:
+            restore_latest_nonempty_text_version(t.identifier, project_uri)
+        except NoNonemptyTextVersion:
+            pass
