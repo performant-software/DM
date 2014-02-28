@@ -38,10 +38,9 @@ class Text(models.Model):
         )
 
     def __unicode__(self):
-        return '"%s", uri:"%s" version %s (%s %s by %s)' % (
+        return '"%s", uri:"%s" (%s %s by %s)' % (
             self.title,
             self.identifier,
-            self.id,
             self.timestamp,
             ('valid' if self.valid else 'invalid'), self.last_user
         )
