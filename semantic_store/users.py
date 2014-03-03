@@ -114,7 +114,7 @@ def permission_updates_are_allowed(request, input_graph):
             project_graph = Graph(store=rdfstore(), identifier=uris.uri('semantic_store_projects', uri=project))
             is_empty_project = (project, NS.ore.aggregates, None) not in project_graph
 
-            if not has_admin_permissions and not is_unowned_project() and not is_empty_project:
+            if not has_admin_permissions and not is_unowned_project(project) and not is_empty_project:
                 return False
 
     return True
