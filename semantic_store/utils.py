@@ -1,11 +1,12 @@
 from django.http import HttpResponse
 from django.conf import settings
 from django.utils import simplejson
-from rdflib import Graph, URIRef, Literal
+from rdflib import Graph, URIRef, Literal, BNode
 from semantic_store.namespaces import NS, bind_namespaces
 from datetime import datetime
 from contextlib import contextmanager
 import re
+from uuid import uuid4
 
 METADATA_PREDICATES = [
     NS.rdf.type,
@@ -137,4 +138,23 @@ def print_triples(triples):
         print serialization[last_match.end() + 1:].strip('\n')
     else:
         print serialization
+
+def b_nodes(graph):
+    for s in graph.subjects(None, None):
+        if isinstance(s, BNode):
+            yield s
+
+def urnify_bnodes(graph):
+    for b_node in b_nodes(graph):
+        urn = URIRef(uuid4().urn)
+
+        for t in graph.triples((b_node, None, None)):
+            graph.remove(t)
+            graph.add((urn, t[1], t[2]))
+
+        for t in graph.triples((None, None, b_node)):
+            graph.remove(t)
+            graph.add((t[0], t[1], urn))
+
+    return graph
 
