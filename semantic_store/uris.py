@@ -2,6 +2,7 @@ from uuid import uuid4
 from urlparse import urljoin
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.utils.http import urlquote
 from semantic_store.namespaces import NS
 
 from rdflib import URIRef
@@ -12,6 +13,9 @@ def uri(viewname, **kwargs):
     return uri
 
 def url(viewname, **kwargs):
+    for key, value in kwargs.items():
+        kwargs[key] = urlquote(value, safe='')
+
     url = URIRef("http://" 
                  + settings.STORE_HOST
                  + reverse(viewname, kwargs=kwargs))
