@@ -230,7 +230,8 @@ atb.widgets.WorkingResources.prototype.updateManuscript = function(item, opt_isF
 
     var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
     if (sequenceUri) {
-        var foliaUris = this.databroker.getListUrisInOrder(sequenceUri);
+        var sequence = this.databroker.getResource(sequenceUri);
+        var foliaUris = this.databroker.getListUrisInOrder(sequence.getOneProperty('sc:hasCanvases'));
         if (foliaUris.length > 0) {
             var thumbSrc = this.databroker.dataModel.findCanvasImageUris(foliaUris[0])[0];
             if (thumbSrc) {
