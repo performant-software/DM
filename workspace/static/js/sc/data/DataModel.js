@@ -337,7 +337,7 @@ sc.data.DataModel.prototype.findSelectorSpecificResourceUri = function(selectorU
     }
 };
 
-sc.data.DataModel.XYWH_REGEX = /#xywh\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*$/;
+sc.data.DataModel.XYWH_REGEX = /#xywh\s*=\s*(\-?\d+)\s*,\s*(\-?\d+)\s*,\s*(\-?\d+)\s*,\s*(\-?\d+)\s*$/;
 sc.data.DataModel.TIMECODE_REGEX = /#t\s*=\s*npt:\s*([\d:]+)\s*,\s*([\d:]+)\s*$/;
 sc.data.DataModel.getConstraintAttrsFromUri = function(constraintUri) {
     var baseEndIndex = constraintUri.indexOf('#');
