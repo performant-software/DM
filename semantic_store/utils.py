@@ -111,6 +111,8 @@ def list_subgraph(graph, l):
     Returns a graph of all the rdf:first, rdf:rest triples necessary to define
     a list, but not the items themselves.
     """
+    assert l is not None
+
     subgraph = Graph()
 
     chain = set([l])
