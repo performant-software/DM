@@ -106,6 +106,24 @@ def metadata_triples(graph, subject=None):
     for t in graph.triples_choices((subject, METADATA_PREDICATES, None)):
         yield t
 
+def list_subgraph(graph, l):
+    """
+    Returns a graph of all the rdf:first, rdf:rest triples necessary to define
+    a list, but not the items themselves.
+    """
+    subgraph = Graph()
+
+    chain = set([l])
+    while l:
+        subgraph += graph.triples((l, None, None))
+        l = graph.value(l, NS.rdf.rest)
+
+        if l in chain:
+            raise ValueError("List contains a loop")
+        chain.add(l)
+
+    return subgraph
+
 def get_title(graph, subject):
     return graph.value(subject, NS.dc.title) or graph.value(subject, NS.rdfs.label)
 
