@@ -16,12 +16,11 @@ from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.utils.decorators import method_decorator
 
-from rdflib.graph import Graph, ConjunctiveGraph
-from rdflib import URIRef
+from rdflib import Graph, ConjunctiveGraph, URIRef
 from rdflib.util import guess_format
 import rdflib.plugin
 
-from semantic_store import collection, permissions
+from semantic_store import collection, permissions, manuscripts
 from semantic_store.models import ProjectPermission
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import NegotiatedGraphResponse, JsonResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title
@@ -339,3 +338,21 @@ class SearchAutocomplete(View):
             return HttpResponseBadRequest('"q" (search query string) is a required GET parameter')
 
         return JsonResponse(text_search.get_autocomplete(project_uri, query))
+
+class Manuscript(View):
+    @method_decorator(check_project_resource_permissions)
+    def get(self, request, project_uri, manuscript_uri=None):
+        project_uri = URIRef(project_uri)
+        project_graph = get_project_graph(project_uri)
+
+        if manuscript_uri:
+            manuscript_uri = URIRef(manuscript_uri)
+            return NegotiatedGraphResponse(request, manuscripts.manuscript_subgraph(project_graph, manuscript_uri))
+        else:
+            graph = Graph()
+
+            for manuscript in project_graph.subjects(NS.rdf.type, NS.sc.Manifest):
+                graph += manuscripts.manuscript_subgraph(project_graph, manuscript)
+
+            return NegotiatedGraphResponse(request, graph)
+
