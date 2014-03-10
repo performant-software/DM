@@ -9,20 +9,41 @@ from semantic_store.utils import metadata_triples, timed_block
 
 from itertools import chain
 
+def anno_resource_metadata_subgraph(graph, resource):
+    """
+    Returns a graph containing the information necessary to render a summary of a resource within
+    a UI's linked annotations view
+    """
+
+    subgraph = Graph()
+
+    if (resource, NS.rdf.type, NS.oa.SpecificResource) in graph:
+        source = graph.value(resource, NS.oa.hasSource)
+        selector = graph.value(resource, NS.oa.hasSelector)
+        subgraph += metadata_triples(graph, source)
+        subgraph += graph.triples_choices(([resource, selector], None, None))
+    elif (resource, NS.rdf.type, NS.cnt.ContentAsText) in graph and (resource, NS.rdf.type, NS.dcmitype.Text) not in graph:
+        subgraph += graph.triples((resource, None, None))
+    else:
+        subgraph += metadata_triples(graph, resource)
+
+    return subgraph
+
+def annotation_subgraph(graph, anno):
+    subgraph = Graph()
+
+    subgraph += graph.triples((anno, None, None))
+
+    for s, p, resource in graph.triples_choices((anno, [NS.oa.hasBody, NS.oa.hasTarget], None)):
+        subgraph += anno_resource_metadata_subgraph(graph, resource)
+
+    return subgraph
+
 def resource_annotation_subgraph(graph, resource_uri):
     subgraph = Graph()
 
     for anno, p, o in graph.triples_choices((None, [NS.oa.hasTarget, NS.oa.hasBody], resource_uri)):
-        subgraph += graph.triples((anno, None, None))
-
-        for resource in chain(graph.objects(anno, NS.oa.hasBody), graph.objects(anno, NS.oa.hasTarget)):
-            if (resource, NS.rdf.type, NS.oa.SpecificResource) in graph:
-                source = graph.value(resource, NS.oa.hasSource)
-                selector = graph.value(resource, NS.oa.hasSelector)
-                subgraph += metadata_triples(graph, source)
-                subgraph += graph.triples_choices(([resource, selector], None, None))
-            else:
-                subgraph += metadata_triples(graph, resource)
+        subgraph += annotation_subgraph(graph, anno)
 
     return subgraph
 
@@ -43,3 +64,11 @@ def has_annotation_link(graph, uri):
     uri = URIRef(uri)
 
     return (None, NS.oa.hasBody, uri) in graph or (None, NS.oa.hasTarget, uri) in graph
+
+def canvas_annotation_lists(graph, canvas_uri):
+    for list_uri in graph.items(graph.value(canvas_uri, NS.sc.hasLists)):
+        yield list_uri
+
+def annotation_list_items(graph, list_uri):
+    for anno_uri in graph.items(graph.value(list_uri, NS.sc.hasAnnotations)):
+        yield anno_uri

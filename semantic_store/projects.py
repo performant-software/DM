@@ -12,10 +12,8 @@ from semantic_store import uris
 from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, metadata_triples
 from semantic_store.users import PERMISSION_PREDICATES, user_graph, user_metadata_graph
 from semantic_store.project_texts import sanitized_content, text_graph_from_model
-from semantic_store import project_texts
-from semantic_store import canvases
+from semantic_store import project_texts, canvases, permissions, manuscripts
 from semantic_store.models import ProjectPermission
-from semantic_store import permissions
 
 from datetime import datetime
 
@@ -89,6 +87,10 @@ def add_is_described_bys(request, project_uri, graph):
     for canvas in graph.subjects(NS.rdf.type, NS.sc.Canvas):
         canvas_url = uris.url("semantic_store_project_canvases", project_uri=project_uri, canvas_uri=canvas)
         graph.add((canvas, NS.ore.isDescribedBy, canvas_url))
+
+    for manuscript in graph.subjects(NS.rdf.type, NS.sc.Manifest):
+        manuscript_url = uris.url("semantic_store_project_manuscripts", project_uri=project_uri, manuscript_uri=manuscript)
+        graph.add((manuscript, NS.ore.isDescribedBy, manuscript_url))
 
 def build_project_metadata_graph(project_uri):
     """

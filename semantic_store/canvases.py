@@ -7,8 +7,8 @@ from rdflib.plugins.sparql import prepareQuery
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
-from semantic_store.utils import parse_request_into_graph, NegotiatedGraphResponse, metadata_triples
-from semantic_store.annotations import resource_annotation_subgraph
+from semantic_store.utils import parse_request_into_graph, NegotiatedGraphResponse, metadata_triples, list_subgraph, timed_block
+from semantic_store.annotations import resource_annotation_subgraph, canvas_annotation_lists, annotation_list_items, annotation_subgraph
 from semantic_store.specific_resources import specific_resources_subgraph
 
 def canvas_and_images_graph(graph, canvas_uri):
@@ -48,6 +48,25 @@ def all_canvases_and_images_graph(graph):
 
     return canvas_graph
 
+def anno_lists_subgraph(graph, canvas_uri):
+    subgraph = Graph()
+
+    lists_uri = graph.value(canvas_uri, NS.sc.hasLists)
+    if lists_uri:
+        subgraph += list_subgraph(graph, lists_uri)
+
+        for anno_list in canvas_annotation_lists(graph, canvas_uri):
+            subgraph += list_subgraph(graph, anno_list)
+
+            hasAnnotations_uri = graph.value(anno_list, NS.sc.hasAnnotations)
+            if hasAnnotations_uri:
+                subgraph += list_subgraph(graph, hasAnnotations_uri)
+
+                for anno in annotation_list_items(graph, anno_list):
+                    subgraph += annotation_subgraph(graph, anno)
+
+    return subgraph
+
 def canvas_subgraph(graph, canvas_uri, project_uri):
     canvas_uri = URIRef(canvas_uri)
 
@@ -56,6 +75,8 @@ def canvas_subgraph(graph, canvas_uri, project_uri):
     canvas_graph += canvas_and_images_graph(graph, canvas_uri)
 
     canvas_graph += resource_annotation_subgraph(graph, canvas_uri)
+
+    canvas_graph += anno_lists_subgraph(graph, canvas_uri)
 
     canvas_graph += specific_resources_subgraph(graph, canvas_uri, project_uri)
 
