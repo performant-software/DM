@@ -111,6 +111,7 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
             // setTimeout(function() {
                 sc.canvas.FabricCanvasFactory.findAndAddSelectors(canvas);
                 // sc.canvas.FabricCanvasFactory.findAndAddComments(canvas);
+                sc.canvas.FabricCanvasFactory.findAndAddTranscriptions(canvas);
 
             // setTimeout(function() {
                 canvas.resumeRendering();
@@ -298,6 +299,32 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
         }
     }
     canvas.showTextAnnos();
+};
+
+sc.canvas.FabricCanvasFactory.findAndAddTranscriptions = function(canvas) {
+    var databroker = canvas.databroker;
+
+    var canvasResource = databroker.getResource(canvas.uri);
+    var listsUri = canvasResource.getOneProperty('sc:hasLists');
+    if (listsUri) {
+        goog.structs.forEach(databroker.getListUrisInOrder(listsUri), function(annoListUri) {
+            var annoList = databroker.getResource(annoListUri);
+            var annotationsListUri = annoList.getOneProperty('sc:hasAnnotations');
+
+            if (annotationsListUri) {
+                goog.structs.forEach(databroker.getListUrisInOrder(annotationsListUri), function(annoUri) {
+                    var anno = databroker.getResource(annoUri);
+
+                    var targetUri = anno.getOneProperty('oa:hasTarget');
+
+                    if (anno.hasProperty('oa:motivatedBy', 'sc:painting') && goog.string.startsWith(targetUri, [canvasResource.uri, '#'].join(''))) {
+                        var constraintAttrs = sc.data.DataModel.getConstraintAttrsFromUri(targetUri);
+                        sc.canvas.FabricCanvasFactory.addTextAnnotation(canvas, anno, constraintAttrs);
+                    }
+                });
+            }
+        });
+    }
 };
 
 sc.canvas.FabricCanvasFactory.addTextAnnotation = function(canvas, annoResource, constraintAttrs) {
