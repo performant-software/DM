@@ -1,7 +1,7 @@
-django
-django-south
+django==1.5.4
+south
 django-haystack
 pysolr
 rdflib==4.1.0
-rdflib-sqlalchemy
+git+https://github.com/RDFLib/rdflib-sqlalchemy.git
 beautifulsoup4
