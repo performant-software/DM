@@ -22,16 +22,19 @@ class Command(BaseCommand):
 
     def parse_file(self, filename):
         print '- Parsing %s' % filename
-
         graph = Graph()
         graph.parse(filename, format=guess_format(filename) or 'turtle')
+        print '--- Done parsing.'
 
+        print '--Replacing any BNodes with URNs'
         urnify_bnodes(graph)
+        print '--- Done replacing BNodes'
 
+        print '--Adding data to DM'
         self.add_all_users(graph)
         create_project(graph)
+        print '--- Done.'
 
-        print '-- Done.'
 
     def add_all_users(self, graph):
         query = graph.query("""SELECT ?user ?email
