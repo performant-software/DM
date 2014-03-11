@@ -71,12 +71,11 @@ def create_project(g):
 
         if user:
             project_g.remove((user, None, None))
+            username = user.split("/")[-1]
+            permissions.grant_full_project_permissions(username, uri)
 
         add_project_types(project_g, uri)
         build_project_metadata_graph(uri)
-
-        username = user.split("/")[-1]
-        permissions.grant_full_project_permissions(username, uri)
 
         print "Successfully created project with uri " + uri
 
