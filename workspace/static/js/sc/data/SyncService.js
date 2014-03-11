@@ -8,8 +8,8 @@ goog.require('sc.data.ConjunctiveQuadStore');
  * @author tandres@drew.edu (Tim Andres)
  * @author lmoss1@drew.edu (Lucy Moss)
  */
-sc.data.SyncService = function(databroker, options) {
-    this.databroker = databroker;
+sc.data.SyncService = function(options) {
+    this.databroker = null; // Should be set by owning databroker
 
     this.options = {};
     goog.object.extend(this.options, sc.data.SyncService.DEFAULT_OPTIONS, options || {});

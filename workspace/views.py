@@ -5,6 +5,8 @@ from django.conf import settings
 
 @login_required
 def workspace(request):
-    context = RequestContext(request,
-                             {'use_compiled_js': settings.USE_COMPILED_JS})    
+    context = RequestContext(request, {
+        'use_compiled_js': settings.USE_COMPILED_JS,
+        'script_name': settings.FORCE_SCRIPT_NAME
+    })    
     return render_to_response("fluid_workspace/workspace.html", context_instance=context)
