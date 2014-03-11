@@ -116,8 +116,14 @@
   var mediawsURI = "{{ MEDIA_WEBSERVICE_URI }}";
   var wsSameOriginURI = "/";
 
+  {% if script_name %}
+  var restBasePath = "{{ script_name }}";
+  {% else %}
+  var restBasePath = null;
+  {% endif %}
+
   initWorkspace(wsURI, mediawsURI, wsSameOriginURI, "{{ user.username }}", 
-                styleRoot, staticUrl);
+                styleRoot, staticUrl, restBasePath);
   
 
   $("#new_text_button").click(function(e) {

@@ -41,7 +41,8 @@ sc.data.Databroker = function(options) {
 
     this.namespaces = this.options.namespaces || new sc.data.NamespaceManager();
     this.quadStore = this.options.quadStore || new sc.data.QuadStore();
-    this.syncService = this.options.syncService || new sc.data.SyncService(this);
+    this.syncService = this.options.syncService || new sc.data.SyncService();
+    this.syncService.databroker = this;
 
     goog.events.listen(window, 'beforeunload', function(event) {
         if (this.syncService.hasUnsavedChanges()) {
