@@ -15,11 +15,18 @@ class Migration(DataMigration):
         from semantic_store.projects import get_project_graph
         from semantic_store.namespaces import NS
 
-        for permission in orm.ProjectPermission.objects.all().distinct('identifier'):
+        try:
+            permissions = orm.ProjectPermission.objects.all().distinct('identifier')
+        except NotImplementedError:
+            permissions = orm.ProjectPermission.objects.filter(permission='r')
+
+        for permission in permissions:
             project_uri = permission.identifier
             project_graph = get_project_graph(project_uri)
             for text_uri in project_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
-                orm.Text.objects.filter(identifier=text_uri).update(project=project_uri)
+                for text in orm.Text.objects.filter(identifier=text_uri):
+                    text.project = project_uri
+                    text.save()
 
 
     def backwards(self, orm):
