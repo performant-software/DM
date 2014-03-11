@@ -5,6 +5,7 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore, TraverseSPARQLR
 from django.conf import settings
 import re
 import urllib
+import httplib
 
 import sys
 if getattr(sys, 'pypy_version_info', None) is not None \
@@ -187,10 +188,20 @@ class FourStore(SPARQLUpdateStore):
         return (rt.get(Variable("name"))
                 for rt, vars in TraverseSPARQLResultDOM(doc, asDictionary=True))
 
+    def reset_connection(self):
+        self.connection = httplib.HTTPConnection(self.host, self.port)
+
     def _do_update(self, update):
         update = urllib.urlencode({'update': unicode(update).encode('utf-8')})
-        self.connection.request('POST', self.path, update, self.headers)
-        return self.connection.getresponse()
+
+        # Trying to deal with inexplicable CannotSendRequest errors
+        try:
+            self.connection.request('POST', self.path, update, self.headers)
+            return self.connection.getresponse()
+        except httplib.ImproperConnectionState as e:
+            self.reset_connection()
+            self.connection.request('POST', self.path, update, self.headers)
+            return self.connection.getresponse()
 
     def update(self, query,
                initNs={},
@@ -207,8 +218,9 @@ class FourStore(SPARQLUpdateStore):
             print query
 
         r = self._do_update(query)
+        content = r.read()
         if r.status not in (200, 204):
-            raise Exception("Could not update: %d %s\n%s" % (r.status, r.reason, r.read()))
+            raise Exception("Could not update: %d %s\n%s" % (r.status, r.reason, content))
 
     def addN(self, quads):
         """ Add a list of quads to the store. """
