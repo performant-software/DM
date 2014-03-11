@@ -55,12 +55,10 @@ def create_project(g):
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
 
-        user_obj = User.objects.get(username=user.strip('/').split('/')[-1])
-
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
             text_graph = Graph()
             text_graph += g.triples((text_uri, None, None))
-            project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
+            project_texts.update_project_text(text_graph, uri, text_uri, None)
 
         for t in g:
             project_g.add(t)
@@ -71,7 +69,8 @@ def create_project(g):
         url = uris.url('semantic_store_projects', uri=uri)
         project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
-        project_g.remove((user, None, None))
+        if user:
+            project_g.remove((user, None, None))
 
         add_project_types(project_g, uri)
         build_project_metadata_graph(uri)
