@@ -340,19 +340,31 @@ class SearchAutocomplete(View):
         return JsonResponse(text_search.get_autocomplete(project_uri, query))
 
 class Manuscript(View):
+    def manuscript_graph(self, manuscript_uri, project_uri):
+        project_graph = get_project_graph(project_uri)
+        subgraph = manuscripts.manuscript_subgraph(project_graph, manuscript_uri)
+
+        for canvas in subgraph.subjects(NS.rdf.type, NS.sc.Canvas):
+            if (canvas, NS.ore.isDescribedBy, None) not in subgraph:
+                canvas_url = uris.url('semantic_store_project_canvases', project_uri=project_uri, canvas_uri=canvas)
+                subgraph.add((canvas, NS.ore.isDescribedBy, canvas_url))
+
+        return subgraph
+
     @method_decorator(check_project_resource_permissions)
     def get(self, request, project_uri, manuscript_uri=None):
         project_uri = URIRef(project_uri)
+
         project_graph = get_project_graph(project_uri)
 
         if manuscript_uri:
             manuscript_uri = URIRef(manuscript_uri)
-            return NegotiatedGraphResponse(request, manuscripts.manuscript_subgraph(project_graph, manuscript_uri))
+            return NegotiatedGraphResponse(request, self.manuscript_graph(manuscript_uri, project_uri))
         else:
             graph = Graph()
 
             for manuscript in project_graph.subjects(NS.rdf.type, NS.sc.Manifest):
-                graph += manuscripts.manuscript_subgraph(project_graph, manuscript)
+                graph += self.manuscript_graph(manuscript, project_uri)
 
             return NegotiatedGraphResponse(request, graph)
 
