@@ -50,7 +50,7 @@ def create_project(g):
                     }""", initNs=ns)
 
     for uri in g.subjects(NS.rdf.type, NS.dm.Project):
-        user = g.value(None, NS.hasPermissionOver, uri)
+        user = g.value(None, NS.perm.hasPermissionOver, uri)
 
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
