@@ -10,6 +10,7 @@ from rdflib.util import guess_format
 
 from semantic_store.projects import create_project
 from semantic_store.namespaces import ns, NS
+from semantic_store.utils import urnify_bnodes
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
@@ -24,6 +25,8 @@ class Command(BaseCommand):
 
         graph = Graph()
         graph.parse(filename, format=guess_format(filename) or 'turtle')
+
+        urnify_bnodes(graph)
 
         self.add_all_users(graph)
         create_project(graph)
