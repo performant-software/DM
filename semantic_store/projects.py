@@ -49,7 +49,9 @@ def create_project(g):
                         ?user rdf:type foaf:Agent .
                     }""", initNs=ns)
 
-    for uri, user in query:
+    for uri in graph.subjects(NS.rdf.type, NS.dm.Project):
+        user = g.value(None, NS.hasPermissionOver, uri)
+
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
 
