@@ -294,7 +294,8 @@ sc.ProjectViewer.prototype.updatePermissionsUI = function() {
 
     goog.structs.forEach(userUris, function(user) {
         var userResource = this.databroker.getResource(user);
-        var username = userResource.getOneProperty('rdfs:label') || user.substring(user.lastIndexOf('/') + 1, user.length);
+        var unwrappedUserUri = sc.data.Term.unwrapUri(user);
+        var username = userResource.getOneProperty('rdfs:label') || unwrappedUserUri.substring(unwrappedUserUri.lastIndexOf('/') + 1, unwrappedUserUri.length);
 
         var canRead = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.read);
         var canModify = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.update);
