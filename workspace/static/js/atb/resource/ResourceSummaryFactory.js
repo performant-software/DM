@@ -7,6 +7,16 @@ goog.require('atb.resource.MarkerSummary');
 goog.require('atb.resource.ManuscriptSummary');
 goog.require('atb.resource.AudioSummary');
 
+atb.resource.ResourceSummaryFactory.SUPPORTED_RESOURCE_TYPES_SET = new goog.structs.Set([
+    "<http://purl.org/dc/dcmitype/Text>",
+    "<http://www.w3.org/ns/oa#SpecificResource>",
+    "<http://dms.stanford.edu/ns/Canvas>", "<http://www.shared-canvas.org/ns/Canvas>",
+    "<http://dms.stanford.edu/ns/AudioSegment>",
+    "<http://purl.org/dc/dcmitype/Sound>"
+]);
+
+atb.resource.ResourceSummaryFactory.SUPPORTED_RESOURCE_TYPES = atb.resource.ResourceSummaryFactory.SUPPORTED_RESOURCE_TYPES_SET.getValues();
+
 atb.resource.ResourceSummaryFactory.createFromUri = function(uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
     var result;
     var databroker = clientApp.databroker;
