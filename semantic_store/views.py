@@ -31,6 +31,7 @@ from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
 from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples
 from semantic_store.specific_resources import read_specific_resource, update_specific_resource
+from semantic_store.annotations import resource_annotation_subgraph
 
 from semantic_store.project_texts import create_project_text_from_request, read_project_text, update_project_text_from_request, remove_project_text
 
@@ -368,3 +369,15 @@ class Manuscript(View):
 
             return NegotiatedGraphResponse(request, graph)
 
+class CanvasTranscription(View):
+    @method_decorator(check_project_resource_permissions)
+    def get(self, request, project_uri, canvas_uri, transcription_uri):
+        project_uri = URIRef(project_uri)
+        canvas_uri = URIRef(canvas_uri)
+
+        if transcription_uri:
+            transcription_uri = URIRef(transcription_uri)
+
+            project_graph = get_project_graph(project_uri)
+
+            return NegotiatedGraphResponse(request, resource_annotation_subgraph(project_graph, transcription_uri))

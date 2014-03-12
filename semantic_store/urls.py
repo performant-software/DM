@@ -27,6 +27,10 @@ urlpatterns = patterns('',
         semantic_store.views.canvas_specific_resource,
         name="semantic_store_canvas_specific_resource"),
 
+    url(r'^projects/(?P<project_uri>[^/]+)/canvases(?:/(?P<canvas_uri>.+))/transcription/(?P<transcription_uri>.+)?/?$',
+        semantic_store.views.CanvasTranscription.as_view(),
+        name="semantic_store_canvas_transcription"),
+
     url(r'^projects/(?P<project_uri>[^/]+)/canvases(?:/(?P<canvas_uri>.+))?/?$',
         semantic_store.views.project_canvases,
         name="semantic_store_project_canvases"),
