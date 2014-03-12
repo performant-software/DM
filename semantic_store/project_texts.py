@@ -62,9 +62,7 @@ def create_project_text_from_request(request, project_uri):
     else:
         return HttpResponse(status=401)
 
-def text_graph_from_model(text_uri, project_uri):
-    text_g = Graph()
-
+def overwrite_text_graph_from_model(text_uri, project_uri, text_g):
     try:
         text = Text.objects.get(identifier=text_uri, valid=True, project=project_uri)
     except ObjectDoesNotExist:
@@ -81,6 +79,11 @@ def text_graph_from_model(text_uri, project_uri):
 
     return text_g
 
+def text_graph_from_model(text_uri, project_uri):
+    text_g = Graph()
+
+    return overwrite_text_graph_from_model(text_uri, project_uri, text_g)
+
 # Returns serialized data about a given text in a given project
 # Although intended to be used with a GET request, works independent of a request
 def read_project_text(project_uri, text_uri):
@@ -95,11 +98,11 @@ def read_project_text(project_uri, text_uri):
     text_g = Graph()
     bind_namespaces(text_g)
 
-    text_g += text_graph_from_model(text_uri, project_uri)
-
     text_g += resource_annotation_subgraph(project_g, text_uri)
 
     text_g += specific_resources_subgraph(project_g, text_uri, project_uri)
+
+    overwrite_text_graph_from_model(text_uri, project_uri, text_g)
 
     # Return graph about text
     return text_g
