@@ -19,11 +19,11 @@ def canvas_and_images_graph(graph, canvas_uri):
 
     qres = graph.query("""SELECT ?image_anno ?image WHERE {
         ?image_anno a oa:Annotation .
-        ?image_anno oa:hasTarget ?canvas .
+        ?image_anno oa:hasTarget %s .
         ?image_anno oa:hasBody ?image .
         ?image a ?type .
         FILTER(?type = dcmitype:Image || ?type = dms:Image || ?type = dms:ImageChoice) .
-    }""", initBindings={'canvas': canvas_uri}, initNs=ns)
+    }""" % (canvas_uri.n3()), initNs=ns)
 
     for image_anno, image in qres:
         canvas_graph += graph.triples_choices(([image_anno, image], None, None))
