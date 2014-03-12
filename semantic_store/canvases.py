@@ -48,7 +48,7 @@ def all_canvases_and_images_graph(graph):
 
     return canvas_graph
 
-def anno_lists_subgraph(graph, canvas_uri):
+def anno_lists_subgraph(graph, canvas_uri, project_uri):
     subgraph = Graph()
 
     lists_uri = graph.value(canvas_uri, NS.sc.hasLists)
@@ -65,6 +65,11 @@ def anno_lists_subgraph(graph, canvas_uri):
                 for anno in annotation_list_items(graph, anno_list):
                     subgraph += annotation_subgraph(graph, anno)
 
+                    for s, p, resource in graph.triples_choices((anno, [NS.oa.hasBody, NS.oa.hasTarget], None)):
+                        if (resource, NS.rdf.type, NS.cnt.ContentAsText) in graph and (resource, NS.rdf.type, NS.dcmitype.Text) not in graph:
+                            transcription_url = URIRef(uris.url('semantic_store_canvas_transcription', project_uri=project_uri, canvas_uri=canvas_uri, transcription_uri=resource))
+                            subgraph.add((resource, NS.ore.isDescribedBy, transcription_url))
+
     return subgraph
 
 def canvas_subgraph(graph, canvas_uri, project_uri):
@@ -76,7 +81,7 @@ def canvas_subgraph(graph, canvas_uri, project_uri):
 
     canvas_graph += resource_annotation_subgraph(graph, canvas_uri)
 
-    canvas_graph += anno_lists_subgraph(graph, canvas_uri)
+    canvas_graph += anno_lists_subgraph(graph, canvas_uri, project_uri)
 
     canvas_graph += specific_resources_subgraph(graph, canvas_uri, project_uri)
 
