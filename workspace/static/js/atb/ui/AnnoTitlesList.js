@@ -244,14 +244,22 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
 
         goog.structs.forEach(bodyAnnoResources, function(anno) {
             goog.structs.forEach(anno.getProperties('oa:hasBody'), function(bodyUri) {
-                bodyUris.add(bodyUri);
-                this.bodyAnnoResourcesByUri.get(bodyUri).push(anno);
+                var bodyResource = this.databroker.getResource(bodyUri);
+
+                if (bodyResource.hasAnyType(atb.resource.ResourceSummaryFactory.SUPPORTED_RESOURCE_TYPES)) {
+                    bodyUris.add(bodyUri);
+                    this.bodyAnnoResourcesByUri.get(bodyUri).push(anno);
+                }
             }, this);
         }, this);
         goog.structs.forEach(targetAnnoResources, function(anno) {
             goog.structs.forEach(anno.getProperties('oa:hasTarget'), function(targetUri) {
-                targetUris.add(targetUri);
-                this.targetAnnoResourcesByUri.get(targetUri).push(anno);
+                var targetResource = this.databroker.getResource(targetUri);
+
+                if (targetResource.hasAnyType(atb.resource.ResourceSummaryFactory.SUPPORTED_RESOURCE_TYPES)) {
+                    targetUris.add(targetUri);
+                    this.targetAnnoResourcesByUri.get(targetUri).push(anno);
+                }
             }, this);
         }, this);
 
