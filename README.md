@@ -1,5 +1,6 @@
 DM: Tools For Digital Annotation and Linking
 ==
+(Formerly Digital Mappaemundi)
 
 [DM Project Wiki Pages](https://github.com/timandres/DM/wiki/_pages)
 
