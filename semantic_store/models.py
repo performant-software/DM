@@ -27,7 +27,7 @@ class Text(models.Model):
     identifier = models.CharField(max_length=2000, db_index=True)
     project = models.CharField(max_length=2000, null=True)
     title = models.CharField(max_length=200, blank=True, null=True, db_index=True)
-    content = models.TextField(blank=True, null=True)
+    content = models.TextField(blank=True, null=True, default=lambda:'')
     valid = models.BooleanField(default=True, db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     last_user = models.ForeignKey(User)
