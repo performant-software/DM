@@ -20,8 +20,11 @@ def anno_resource_metadata_subgraph(graph, resource):
     if (resource, NS.rdf.type, NS.oa.SpecificResource) in graph:
         source = graph.value(resource, NS.oa.hasSource)
         selector = graph.value(resource, NS.oa.hasSelector)
-        subgraph += metadata_triples(graph, source)
-        subgraph += graph.triples_choices(([resource, selector], None, None))
+
+        if source:
+            subgraph += metadata_triples(graph, source)
+            
+        subgraph += graph.triples_choices(([i for i in (resource, selector) if i is not None], None, None))
     elif (resource, NS.rdf.type, NS.cnt.ContentAsText) in graph and (resource, NS.rdf.type, NS.dcmitype.Text) not in graph:
         subgraph += graph.triples((resource, None, None))
     else:
