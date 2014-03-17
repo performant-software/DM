@@ -4,32 +4,17 @@
     </head>
 
     <body>
-        <p>My Uploaded Images</p>
-        <ul>
-            {% if my_images %}
-                {% for image in my_images %}
-                    <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name }}</a>
-                        {% if image.isPublic %}
-                        <i> public</i>
-                        {% endif %}
-                     </li>
+        <p> Select an image to add to project:</p>
+        <form action="{% url "upload_image" %}" method="post" enctype="multipart/form-data">
+            <!-- <select>
+                {% for image in pub_form.image_choices %}
+                    <option value='{{ image.ident }}'>{{ image.ident }}</option>
                 {% endfor %}
-            {% else %}
-                <li>You have not uploaded any images yet. Click <a href="/workspace/upload_image/">here</a> to upload image(s).</li>
-            {% endif %}
-        </ul>
+            </select> -->
 
-        <p>Public Images</p>
-        <ul>
-            {% if pub_images %}
-                {% for image in pub_images %}
-                    <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name }}</a>
-                        owned by {{ image.owner.username }}</li>
-                {% endfor %}
-            {% else %}
-                <li> There are no publically uploaded images.</p>
-            {% endif %}
-        </ul>
-    </body>
+            {{ pub_form.image_choices }} 
+            <p><input type="submit" value="Upload" /></p>
+        </form>
+    </body> 
 
 </html>

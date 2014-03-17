@@ -56,3 +56,6 @@ class UploadedImage(models.Model):
     owner=models.ForeignKey(User)
     isPublic=models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.imagefile.name
+
