@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 
-from semantic_store.forms import ImageForm, PublicImageForm
+from semantic_store.forms import ImageForm, PublicImageForm, AddPublicImageForm, AddPrivateImageForm
 from semantic_store.models import UploadedImage
 
 @login_required
@@ -46,9 +46,9 @@ def upload_image_view(request):
     context_instance=RequestContext(request))
 
 def add_image(request):
-    my_images = UploadedImage.objects.filter(owner=User.objects.get(username=request.user))
-    pub_images = UploadedImage.objects.filter(isPublic=True)
+    pub_form = AddPublicImageForm()
+    priv_form = AddPrivateImageForm(user=User.objects.get(username=request.user))
     return render_to_response(
     'add_image.html',
-    {'my_images': my_images, 'pub_images': pub_images},
+    {'pub_form': pub_form, 'priv_form': priv_form},
     context_instance=RequestContext(request))
