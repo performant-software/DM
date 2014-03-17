@@ -3,13 +3,13 @@
         <title>Upload New Images</title>   
     </head>
     <body>
-    <p><a href="/workspace/add_image/">Click here to add image(s) to a project.</a></p>
+    <p><a href="/workspace/add_image/">Click here to add an image to a project.</a></p>
     <!-- List of uploaded images -->
     <p>My Uploaded Images</p>
     <ul>
         {% if my_images %}
             {% for image in my_images %}
-                <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name }}</a>
+                <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name|slice:slice_cmd }}</a>
                     {% if image.isPublic %}
                     <i> public</i>
                     {% endif %}
@@ -24,7 +24,7 @@
     <ul>
         {% if pub_images %}
             {% for image in pub_images %}
-                <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name }}</a>
+                <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name|slice:slice_cmd }}</a>
                     owned by {{ image.owner.username }}</li>
             {% endfor %}
         {% else %}

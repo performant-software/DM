@@ -9,6 +9,8 @@ from django.core.urlresolvers import reverse
 from semantic_store.forms import ImageForm, PublicImageForm, AddPublicImageForm, AddPrivateImageForm
 from semantic_store.models import UploadedImage
 
+from settings import IMAGE_UPLOAD_LOCATION
+
 @login_required
 def workspace(request):
     context = RequestContext(request, {
@@ -39,10 +41,13 @@ def upload_image_view(request):
         
     my_images = UploadedImage.objects.filter(owner=User.objects.get(username=request.user))
     pub_images = UploadedImage.objects.filter(isPublic=True)
+
+    # To slice the full path off the name of uploaded images
+    slice_cmd = str(len(IMAGE_UPLOAD_LOCATION)) + ":"
     
     return render_to_response(
     'uploader.html',
-    {'my_images': my_images, 'form': form, 'pub_images': pub_images},
+    {'my_images': my_images, 'form': form, 'pub_images': pub_images, 'slice_cmd': slice_cmd},
     context_instance=RequestContext(request))
 
 def add_image(request):

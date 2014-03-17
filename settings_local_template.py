@@ -86,3 +86,5 @@ HAYSTACK_CONNECTIONS = {
 }
 
 
+
+IMAGE_UPLOAD_LOCATION="user_images/uploaded_images/"

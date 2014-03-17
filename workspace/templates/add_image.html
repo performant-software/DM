@@ -1,19 +1,29 @@
 <html>
     <head>
         <title>Add Images to Project</title>
+        <style>
+            form ul {
+                list-style:none;
+                margin-left:-1em;
+            }
+        </style>
     </head>
 
     <body>
+        <p><a href="/workspace/upload_image/">Click here to upload an image.</a></p>
         <p> Select an image to add to project:</p>
         <form action="{% url "upload_image" %}" method="post" enctype="multipart/form-data">
-            <!-- <select>
-                {% for image in pub_form.image_choices %}
-                    <option value='{{ image.ident }}'>{{ image.ident }}</option>
-                {% endfor %}
-            </select> -->
+            <p>{{ pub_form.image_choices.label }}</p>
 
-            {{ pub_form.image_choices }} 
-            <p><input type="submit" value="Upload" /></p>
+            {{ pub_form.image_choices }}
+            <p><input type="submit" value="Add Public Image" /></p>
+        </form>
+
+        <form action="{% url "upload_image" %}" method="post" enctype="multipart/form-data">
+            <p>{{ priv_form.image_choices.label }}</p>
+
+            {{ priv_form.image_choices }}
+            <p><input type="submit" value="Add Personal Image" /></p>
         </form>
     </body> 
 
