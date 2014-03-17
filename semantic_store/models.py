@@ -49,3 +49,10 @@ class Text(models.Model):
         soup = BeautifulSoup(self.content)
 
         return ' '.join(soup.body.stripped_strings)
+
+class UploadedImage(models.Model):
+    # TODO: Make custom image names  <http://stackoverflow.com/questions/15140942/django-imagefield-change-file-name-on-upload>
+    imagefile=models.ImageField(upload_to="user_images/uploaded_images")
+    owner=models.ForeignKey(User)
+    isPublic=models.BooleanField(default=False)
+
