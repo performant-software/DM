@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <title>Add Images to Project</title>
+    </head>
+
+    <body>
+        <p>My Uploaded Images</p>
+        <ul>
+            {% if my_images %}
+                {% for image in my_images %}
+                    <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name }}</a>
+                        {% if image.isPublic %}
+                        <i> public</i>
+                        {% endif %}
+                     </li>
+                {% endfor %}
+            {% else %}
+                <li>You have not uploaded any images yet. Click <a href="/workspace/upload_image/">here</a> to upload image(s).</li>
+            {% endif %}
+        </ul>
+
+        <p>Public Images</p>
+        <ul>
+            {% if pub_images %}
+                {% for image in pub_images %}
+                    <li><a href="{{ image.imagefile.url }}">{{ image.imagefile.name }}</a>
+                        owned by {{ image.owner.username }}</li>
+                {% endfor %}
+            {% else %}
+                <li> There are no publically uploaded images.</p>
+            {% endif %}
+        </ul>
+    </body>
+
+</html>

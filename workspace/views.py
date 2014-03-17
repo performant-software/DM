@@ -44,3 +44,11 @@ def upload_image_view(request):
     'uploader.html',
     {'my_images': my_images, 'form': form, 'pub_images': pub_images},
     context_instance=RequestContext(request))
+
+def add_image(request):
+    my_images = UploadedImage.objects.filter(owner=User.objects.get(username=request.user))
+    pub_images = UploadedImage.objects.filter(isPublic=True)
+    return render_to_response(
+    'add_image.html',
+    {'my_images': my_images, 'pub_images': pub_images},
+    context_instance=RequestContext(request))
