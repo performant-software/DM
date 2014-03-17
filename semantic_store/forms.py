@@ -10,10 +10,10 @@ class PublicImageForm(ImageForm):
     public=BooleanField(label="Public Image", required=True)
 
 class AddPublicImageForm(Form):
-	image_choices=ModelChoiceField(queryset=UploadedImage.objects.filter(isPublic=True), label="From Public Images: ", widget=RadioSelect())
+	image_choices=ModelChoiceField(queryset=UploadedImage.objects.filter(isPublic=True), label="From Public Images: ", widget=RadioSelect(), empty_label=None)
 
 class AddPrivateImageForm(Form):
-	image_choices=ModelChoiceField(queryset=UploadedImage.objects.none(), label="From My Images")
+	image_choices=ModelChoiceField(queryset=UploadedImage.objects.none(), label="From My Images", empty_label=None, widget=RadioSelect())
 
 	# Allow the queryset to be dynamically generated when a username is supplied to form
 	def __init__(self, *args, **kwargs):
