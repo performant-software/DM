@@ -25,6 +25,14 @@ from semantic_store.permissions import (
 
 USER_GRAPH_IDENTIFIER = URIRef('http://dm.drew.edu/store/users')
 
+def user_uri(username=None, user=None):
+    if user is None:
+        user = User.objects.get(username=username)
+    if username is None:
+        username = user.username
+
+    return URIRef(uris.uri('semantic_store_users', username=username))
+
 def user_metadata_graph(username=None, user=None):
     if user is None:
         user = User.objects.get(username=username)
