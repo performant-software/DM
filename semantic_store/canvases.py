@@ -6,7 +6,7 @@ from rdflib.plugins.sparql import prepareQuery
 
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store import uris
+from semantic_store import uris, users
 from semantic_store.utils import parse_request_into_graph, NegotiatedGraphResponse, metadata_triples, list_subgraph, timed_block
 from semantic_store.annotations import resource_annotation_subgraph, canvas_annotation_lists, annotation_list_items, annotation_subgraph
 from semantic_store.specific_resources import specific_resources_subgraph
@@ -156,3 +156,32 @@ def remove_canvas_triples(project_uri, canvas_uri, input_graph):
             removed_graph.add(t)
 
     return removed_graph
+
+def create_canvas_from_upload(graph, uploaded_image, uri, user=None, title=None):
+    graph.add((uri, NS.rdf.type, NS.sc.Canvas))
+
+    if title:
+        graph.add((uri, NS.dc.title, Literal(title)))
+        graph.add((uri, NS.rdfs.label, Literal(title)))
+
+    if user:
+        user_uri = users.user_uri(user=user)
+        graph.add((uri, NS.dc.creator, user_uri))
+
+    image_uri = uris.absolutize(uploaded_image.imagefile.url)
+    graph.add((image_uri, NS.rdf.type, NS.dcmitype.Image))
+
+    width = Literal(uploaded_image.imagefile.width)
+    height = Literal(uploaded_image.imagefile.height)
+    graph.add((image_uri, NS.exif.width, width))
+    graph.add((image_uri, NS.exif.height, height))
+    graph.add((uri, NS.exif.width, width))
+    graph.add((uri, NS.exif.height, height))
+
+    anno_uri = uris.uuid()
+    graph.add((anno_uri, NS.rdf.type, NS.oa.Annotation))
+    graph.add((anno_uri, NS.oa.motivatedBy, NS.sc.painting))
+    graph.add((anno_uri, NS.oa.hasBody, image_uri))
+    graph.add((anno_uri, NS.oa.hasTarget, uri))
+
+    return graph
