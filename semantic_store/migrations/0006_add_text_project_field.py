@@ -15,7 +15,7 @@ class Migration(DataMigration):
         from semantic_store.projects import get_project_graph
         from semantic_store.namespaces import NS
 
-        for permission in permissions = orm.ProjectPermission.objects.filter(permission='r'):
+        for permission in orm.ProjectPermission.objects.filter(permission='r'):
             project_uri = permission.identifier
             project_graph = get_project_graph(project_uri)
             for text_uri in project_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
