@@ -84,7 +84,3 @@ HAYSTACK_CONNECTIONS = {
         'INCLUDE_SPELLING': True
     },
 }
-
-
-
-IMAGE_UPLOAD_LOCATION="user_images/uploaded_images/"

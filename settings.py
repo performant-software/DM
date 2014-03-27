@@ -114,3 +114,5 @@ ROOT_URLCONF = 'urls'
 SOUTH_TESTS_MIGRATE = False
 
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+IMAGE_UPLOAD_LOCATION="user_images/uploaded_images/"
