@@ -54,10 +54,10 @@ class Text(models.Model):
 
 class UploadedImage(models.Model):
     # TODO: Make custom image names  <http://stackoverflow.com/questions/15140942/django-imagefield-change-file-name-on-upload>
+    # TODO: put image upload in sub-folders?
     imagefile=models.ImageField(upload_to=IMAGE_UPLOAD_LOCATION[:-1])
     owner=models.ForeignKey(User)
     isPublic=models.BooleanField(default=False)
 
     def __str__(self):
         return self.imagefile.name[len(IMAGE_UPLOAD_LOCATION):]
-

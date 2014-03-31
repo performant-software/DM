@@ -21,7 +21,7 @@ from rdflib.util import guess_format
 import rdflib.plugin
 
 from semantic_store import collection, permissions, manuscripts
-from semantic_store.models import ProjectPermission
+from semantic_store.models import ProjectPermission, UploadedImage
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import NegotiatedGraphResponse, JsonResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title
 from semantic_store.rdfstore import rdfstore, default_identifier
@@ -381,3 +381,9 @@ class CanvasTranscription(View):
             project_graph = get_project_graph(project_uri)
 
             return NegotiatedGraphResponse(request, resource_annotation_subgraph(project_graph, transcription_uri))
+
+def add_image(request):
+    added_image = UploadedImage.objects.get(id=request.POST['image_choices'])
+    full_path = settings.MEDIA_URL + added_image.imagefile.name
+    
+    return HttpResponse("You chose to add image '%s' to the project."%(added_image.imagefile))

@@ -89,4 +89,8 @@ urlpatterns = patterns('',
     url(r'^import/?$',
         semantic_store.views.import_old_data,
         name="import_old_data"),
+
+    url(r'^add_image/?$', 
+        semantic_store.views.add_image,
+        name="add_image_to_project")
 )

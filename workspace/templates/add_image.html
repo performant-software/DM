@@ -11,15 +11,17 @@
 
     <body>
         <p><a href="/workspace/upload_image/">Click here to upload an image.</a></p>
-        <p> Select an image to add to project:</p>
-        <form action="{% url "upload_image" %}" method="post" enctype="multipart/form-data">
+        <p> Select an image to add to current project: </p>
+        <form action="{% url "add_image_to_project" %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
             <p>{{ pub_form.image_choices.label }}</p>
 
             {{ pub_form.image_choices }}
             <p><input type="submit" value="Add Public Image" /></p>
         </form>
 
-        <form action="{% url "upload_image" %}" method="post" enctype="multipart/form-data">
+        <form action="{% url "add_image_to_project" %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
             <p>{{ priv_form.image_choices.label }}</p>
 
             {{ priv_form.image_choices }}
