@@ -29,7 +29,7 @@ from semantic_store.annotation_views import create_or_update_annotations, get_an
 from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
-from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples
+from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples, create_canvas_for_uploaded_image
 from semantic_store.specific_resources import read_specific_resource, update_specific_resource
 from semantic_store.annotations import resource_annotation_subgraph
 
@@ -386,4 +386,6 @@ def add_image(request):
     added_image = UploadedImage.objects.get(id=request.POST['image_choices'])
     full_path = settings.MEDIA_URL + added_image.imagefile.name
     
+    create_canvas_for_uploaded_image(URIRef("urn:uuid:84f13fe8-a4de-4f9c-a1b3-ffe29a038317"), added_image)    
+
     return HttpResponse("You chose to add image '%s' to the project."%(added_image.imagefile))

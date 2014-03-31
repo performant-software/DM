@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.conf import settings
 
 from rdflib.exceptions import ParserError
 from rdflib import Literal, URIRef, Graph
@@ -10,6 +11,9 @@ from semantic_store import uris
 from semantic_store.utils import parse_request_into_graph, NegotiatedGraphResponse, metadata_triples, list_subgraph, timed_block
 from semantic_store.annotations import resource_annotation_subgraph, canvas_annotation_lists, annotation_list_items, annotation_subgraph
 from semantic_store.specific_resources import specific_resources_subgraph
+from semantic_store.models import UploadedImage
+
+import projects
 
 def canvas_and_images_graph(graph, canvas_uri):
     canvas_uri = URIRef(canvas_uri)
@@ -156,3 +160,42 @@ def remove_canvas_triples(project_uri, canvas_uri, input_graph):
             removed_graph.add(t)
 
     return removed_graph
+
+# Creates a canvas for the given image as part of the given project.
+# # Requires h&w of image (see next method for translation from UploadedImage object)
+# Generates the relevant graph
+def create_canvas(project_uri, image_url, height, width, name="New Image"):
+    canvas_uri = uris.uuid()
+    annotation = uris.uuid()
+
+    canvas_graph = Graph()#store=rdfstore(), identifier=canvas_uri)
+    bind_namespaces(canvas_graph)
+
+    # Add types of canvas & image
+    canvas_graph.add((canvas_uri, NS.rdf.type, NS.sc.Canvas))
+    canvas_graph.add((URIRef(image_url), NS.rdf.type, NS.dctypes.Image))
+    
+    # Add data about canvas & image (identical)
+    for sub in [canvas_uri, URIRef(image_url)]:
+        canvas_graph.add((sub, NS.dc.title, Literal(name)))
+        canvas_graph.add((sub, NS.exif.height, Literal(height)))
+        canvas_graph.add((sub, NS.exif.width, Literal(width)))
+
+    # Add annotation
+    canvas_graph.add((annotation, NS.rdf.type, NS.oa.Annotation))
+    canvas_graph.add((annotation, NS.oa.hasBody, URIRef(image_url)))
+    canvas_graph.add((annotation, NS.oa.hasTarget, canvas_uri))
+
+# Creates canvas of image on project.
+# # Expects an UploadedImage object as second parameter
+def create_canvas_for_uploaded_image(project_uri, uploaded_image):
+    height = uploaded_image.imagefile.height
+    width = uploaded_image.imagefile.width
+
+    # Assemble full url (local) from various pieces
+    full_image_url = "http://" + settings.STORE_HOST + settings.MEDIA_URL + uploaded_image.imagefile.name
+
+    # Use name of image (last characters of URL)
+    name = str(uploaded_image.imagefile.name[len(settings.IMAGE_UPLOAD_LOCATION):])
+
+    return create_canvas(project_uri, full_image_url, height, width, name)
