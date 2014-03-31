@@ -144,7 +144,7 @@ def update_canvas(project_uri, canvas_uri, input_graph):
     return project_graph
 
 def remove_canvas_triples(project_uri, canvas_uri, input_graph):
-    project_graph = Graph(store=rdfstore(), identifier=canvas_identifier)
+    project_graph = Graph(store=rdfstore(), identifier=canvas_uri)
     project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
 
     removed_graph = Graph()
