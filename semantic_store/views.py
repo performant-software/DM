@@ -21,15 +21,15 @@ from rdflib.util import guess_format
 import rdflib.plugin
 
 from semantic_store import collection, permissions, manuscripts
-from semantic_store.models import ProjectPermission
+from semantic_store.models import ProjectPermission, UploadedImage
 from semantic_store.namespaces import NS, ns, bind_namespaces
-from semantic_store.utils import NegotiatedGraphResponse, JsonResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title
+from semantic_store.utils import NegotiatedGraphResponse, JsonResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title, metadata_triples
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
-from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph
+from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph, get_project_metadata_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
-from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples
+from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples, create_canvas_from_upload
 from semantic_store.specific_resources import read_specific_resource, update_specific_resource
 from semantic_store.annotations import resource_annotation_subgraph
 
@@ -381,3 +381,29 @@ class CanvasTranscription(View):
             project_graph = get_project_graph(project_uri)
 
             return NegotiatedGraphResponse(request, resource_annotation_subgraph(project_graph, transcription_uri))
+
+class CanvasUpload(View):
+    @method_decorator(check_project_resource_permissions)
+    def post(self, request, project_uri):
+        project_uri = URIRef(project_uri)
+        project_graph = get_project_graph(project_uri)
+        project_metadata_graph += get_project_metadata_graph(project_uri)
+        canvas_graph = Graph()
+
+        image_file = request.FILES['image_file']
+        title = request.POST.get('title', '')
+        uri = uris.uuid()
+
+        uploaded = UploadedImage.objects.create(imagefile=image_file, owner=request.user)
+        create_canvas_from_upload(canvas_graph, uploaded, uri, request.user, title)
+
+        # Make the canvas a top level project resource
+        canvas_graph.add((project_uri, NS.ore.aggregates, uri))
+
+        # project_graph += canvas_graph
+        # project_metadata_graph += canvas_graph
+
+        canvas_graph += metadata_triples(project_metadata_graph, project_uri)
+        canvas_graph += metadata_triples.triples((project_uri, NS.ore.aggregates, None))
+
+        return NegotiatedGraphResponse(request, canvas_graph)
