@@ -400,8 +400,8 @@ class CanvasUpload(View):
         # Make the canvas a top level project resource
         canvas_graph.add((project_uri, NS.ore.aggregates, uri))
 
-        # project_graph += canvas_graph
-        # project_metadata_graph += canvas_graph
+        project_graph += canvas_graph
+        project_metadata_graph += canvas_graph
 
         canvas_graph += metadata_triples(project_metadata_graph, project_uri)
         canvas_graph += metadata_triples.triples((project_uri, NS.ore.aggregates, None))
