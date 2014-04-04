@@ -19,6 +19,10 @@ urlpatterns = patterns('',
         semantic_store.views.project_texts, 
         name="semantic_store_project_texts"),
 
+    url(r'^projects/(?P<project_uri>[^/]+)/canvases/create/?$',
+        semantic_store.views.CanvasUpload.as_view(),
+        name="semantic_store_canvas_create"),
+
     url(r'^projects/(?P<project_uri>[^/]+)/canvases(?:/(?P<canvas_uri>.+))/remove_triples$',
         semantic_store.views.remove_project_canvas_triples,
         name="semantic_store_project_canvases_remove_triples"),
