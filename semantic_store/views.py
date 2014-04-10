@@ -387,7 +387,7 @@ class CanvasUpload(View):
     def post(self, request, project_uri):
         project_uri = URIRef(project_uri)
         project_graph = get_project_graph(project_uri)
-        project_metadata_graph += get_project_metadata_graph(project_uri)
+        project_metadata_graph = get_project_metadata_graph(project_uri)
         canvas_graph = Graph()
 
         image_file = request.FILES['image_file']
@@ -404,6 +404,6 @@ class CanvasUpload(View):
         project_metadata_graph += canvas_graph
 
         canvas_graph += metadata_triples(project_metadata_graph, project_uri)
-        canvas_graph += metadata_triples.triples((project_uri, NS.ore.aggregates, None))
+        canvas_graph += project_metadata_graph.triples((project_uri, NS.ore.aggregates, None))
 
         return NegotiatedGraphResponse(request, canvas_graph)
