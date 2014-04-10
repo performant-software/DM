@@ -48,4 +48,4 @@ def add_is_described_bys(graph, project_uri):
     return graph
 
 def absolutize(relative_uri):
-    return URIRef(''.join(('//', settings.STORE_HOST.rstrip('/'), '/', relative_uri)))
+    return URIRef(''.join(('http://', settings.STORE_HOST.rstrip('/'), '/', relative_uri)))
