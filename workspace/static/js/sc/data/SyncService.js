@@ -28,7 +28,8 @@ sc.data.SyncService.DEFAULT_OPTIONS = {
     restAnnotationPath: 'annotations',
     restUserPath: 'users',
     restSearchPath: 'search',
-    restAutocompletePath: 'search_autocomplete'
+    restAutocompletePath: 'search_autocomplete',
+    restCanvasPath: 'canvases'
 };
 
 sc.data.SyncService.RESTYPE = {
@@ -38,7 +39,8 @@ sc.data.SyncService.RESTYPE = {
     'user': 3, 
     'resource': 4,
     'search': 5,
-    'search_autocomplete': 6
+    'search_autocomplete': 6,
+    'canvas': 7
 };
 
 sc.data.SyncService.prototype.requestSync = function() {
@@ -90,6 +92,9 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
     }
     else if (resType == sc.data.SyncService.RESTYPE.search_autocomplete) {
         url += this.options.restAutocompletePath.replace(/^\/+|\/+$/g, "");
+    }
+    else if (resType == sc.data.SyncService.RESTYPE.canvas) {
+        url += this.options.restCanvasPath.replace(/^\/+|\/+$/g, "");
     }
 
     if (resUri != null) {
