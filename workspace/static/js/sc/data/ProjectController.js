@@ -173,3 +173,44 @@ sc.data.ProjectController.prototype.createProject = function(uri) {
 
     return project;
 };
+
+sc.data.ProjectController.prototype.getCanvasUploadUrl = function() {
+    return this.databroker.syncService.restUrl(this.currentProject.uri, sc.data.SyncService.RESTYPE.canvas) + '/create';
+};
+
+sc.data.ProjectController.prototype.uploadCanvas = function(title, file, opt_successHandler, opt_errorHandler, opt_progressHandler) {
+    var data = new FormData();
+    data.append('title', title);
+    data.append('image_file', file);
+
+    var url = this.getCanvasUploadUrl();
+
+    var xhr = new XMLHttpRequest();
+    xhr.addEventListener('load', function(event) {
+        var xhr = event.target;
+        if (goog.string.startsWith(String(xhr.status), '2')) {
+            this.databroker.processResponse(event.target.response, url, xhr, opt_successHandler || jQuery.noop);
+        }
+        else {
+            if (goog.isFunction(opt_errorHandler)) {
+                opt_errorHandler(event);
+            }
+        }
+    }.bind(this));
+    if (goog.isFunction(opt_progressHandler)) {
+        xhr.addEventListener('progress', opt_progressHandler);
+    }
+    if (goog.isFunction(opt_errorHandler)) {
+        xhr.addEventListener('error', opt_errorHandler);
+        xhr.addEventListener('abort', opt_errorHandler);
+    }
+
+    xhr.open('POST', url);
+
+    if (goog.isFunction(this.databroker.syncService.getCsrfToken)) {
+        xhr.setRequestHeader('X-CSRFToken', this.databroker.syncService.getCsrfToken());
+    }
+
+    xhr.send(data);
+    return xhr;
+};
