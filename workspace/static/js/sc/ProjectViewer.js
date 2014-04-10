@@ -50,7 +50,8 @@ sc.ProjectViewer.prototype._buildButtonGroup = function() {
     this.buttonDropdownList = this.domHelper.createDom('ul', {'class': 'dropdown-menu'});
 
     var createNewProjectButton = this.domHelper.createDom('li', {'class': 'sc-ProjectViewer-createProjectButton'},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'title': 'Start a new project'}, 'New project'));
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'title': 'Start a new project'},
+        this.domHelper.createDom('span', {'class': 'icon-plus'}), 'New project'));
     goog.events.listen(createNewProjectButton, 'click', this._handleNewProjectButtonClick, false, this);
     this.buttonDropdownList.appendChild(createNewProjectButton);
     this.buttonDropdownList.appendChild(this.domHelper.createDom('li', {'class': 'divider'}));
@@ -84,13 +85,13 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     descriptionGroup.appendChild(descriptionControls);
     this.editElement.appendChild(descriptionGroup);
 
-    this.permissionsTable = this.domHelper.createDom('table', {'class': 'table table-striped table-bordered'},
+    this.permissionsTable = this.domHelper.createDom('table', {'class': 'table table-striped table-bordered sc-ProjectViewer-permissions-table'},
         this.domHelper.createDom('thead', {},
             this.domHelper.createDom('tr', {},
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-user'}), ' User'),
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-eye-open'}), ' Can Read'),
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-pencil'}), ' Can Modify'),
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-lock'}), ' Admin'))),
+                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-user'}), 'User'),
+                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-eye-open'}), 'Can See'),
+                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'Can Modify'),
+                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-lock'}), 'Admin'))),
         this.domHelper.createDom('tbody'));
     this.editElement.appendChild(this.permissionsTable);
 
@@ -122,17 +123,17 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     var nav = this.domHelper.createDom('ul', {'class': 'nav nav-pills'});
     var newTextButtonLi = this.domHelper.createDom('li', {},
         this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-pencil'}), ' New Text Document'));
+            this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'New Text Document'));
     goog.events.listen(newTextButtonLi, 'click', this._handleNewTextButtonClick, false, this);
     nav.appendChild(newTextButtonLi);
     var editButtonLi = this.domHelper.createDom('li', {}, 
         this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-cog'}), ' Edit Project Info and Sharing'));
+            this.domHelper.createDom('span', {'class': 'icon-cog'}), 'Project Info and Sharing'));
     goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
     nav.appendChild(editButtonLi);
     var downloadButtonLi = this.domHelper.createDom('li', {},
         this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-download'}), ' Download'))
+            this.domHelper.createDom('span', {'class': 'icon-download'}), 'Download'))
     goog.events.listen(downloadButtonLi, 'click', this._handleDownloadButtonClick, false, this);
     nav.appendChild(downloadButtonLi);
     this.modalHeader.appendChild(nav);
@@ -450,11 +451,12 @@ sc.ProjectViewer.prototype.setProjectChoicesByUris = function(uris) {
         var title = this.databroker.dataModel.getTitle(uri) || 'Untitled project';
 
         var li = this.domHelper.createDom('li', {'class': 'sc-ProjectViewer-projectChoice'},
-            this.domHelper.createDom('a', {'href': 'javascript:void(0)'}, title));
+            this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+            this.domHelper.createDom('span', {'class': 'icon-book'}), title));
         $(li).attr({
             'about': uri,
             'rel': this.databroker.namespaces.expand('dc', 'title'),
-            'title': 'Switch to "' + title + '"'
+            'title': 'Switch projects to "' + title + '"'
         });
 
         goog.events.listen(li, 'click', function(event) {
