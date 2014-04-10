@@ -64,6 +64,83 @@ sc.ProjectViewer.prototype._buildButtonGroup = function() {
     this.updateButtonUI();
 };
 
+sc.ProjectViewer.prototype._buildModalElement = function() {
+    // Header
+    this._buildHeader();
+
+    // Body
+    this.modalBody = this.domHelper.createDom('div', {'class': 'modal-body'});
+
+    this.editElement = this.domHelper.createDom('div', {'class': 'form-horizontal sc-ProjectViewer-projectEdit'});
+    this._buildEditSection();
+    this.modalBody.appendChild(this.editElement);
+    this.editZippy = new goog.ui.AnimatedZippy(null, this.editElement, false);
+
+    this.uploadCanvasElement = this.domHelper.createDom('div', {'class': 'form-horizontal sc-ProjectViewer-uploadCanvas'});
+    this._buildUploadCanvasSection();
+    this.modalBody.appendChild(this.uploadCanvasElement);
+    this.uploadCanvasZippy = new goog.ui.AnimatedZippy(null, this.uploadCanvasElement, false);
+
+    this.workingResources.render(this.modalBody);
+    this.workingResourcesZippy = new goog.ui.AnimatedZippy(null, this.workingResources.getElement(), true);
+
+    this.modalElement.appendChild(this.modalBody);
+
+    // Footer
+    this.modalFooter = this.domHelper.createDom('div', {'class': 'modal-footer'});
+    var footerCloseButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Done');
+    $(footerCloseButton).attr({
+        'data-dismiss': 'modal',
+        'aria-hidden': 'true'
+    });
+    this.modalFooter.appendChild(footerCloseButton);
+    this.modalElement.appendChild(this.modalFooter);
+};
+
+sc.ProjectViewer.prototype._buildHeader = function() {
+    this.modalHeader = this.domHelper.createDom('div', {'class': 'modal-header'});
+    var closeButton = this.domHelper.createDom('button', {'class': 'close'}, '×');
+    $(closeButton).attr({
+        'data-dismiss': 'modal',
+        'aria-hidden': 'true'
+    });
+    this.modalTitle = this.domHelper.createDom('h3');
+    this.modalHeader.appendChild(closeButton);
+    this.modalHeader.appendChild(this.modalTitle);
+    var nav = this.domHelper.createDom('ul', {'class': 'nav nav-pills'});
+
+    var addButtonLi = this.domHelper.createDom('li', {'class': 'dropdown'},
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'data-toggle': 'dropdown'},
+            this.domHelper.createDom('span', {'class': 'icon-plus'}), 'Add Resources',
+                this.domHelper.createDom('span', {'class': 'caret'})));
+    var addSubmenuUl =this.domHelper.createDom('ul', {'class': 'dropdown-menu', 'role': 'menu'});
+    addButtonLi.appendChild(addSubmenuUl);
+    var newTextButtonLi = this.domHelper.createDom('li', {},
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+            this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'New Text'));
+    goog.events.listen(newTextButtonLi, 'click', this._handleNewTextButtonClick, false, this);
+    var uploadCanvasButtonLi = this.domHelper.createDom('li', {},
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+            this.domHelper.createDom('span', {'class': 'icon-picture'}), 'Upload Image'));
+    goog.events.listen(uploadCanvasButtonLi, 'click', this._handleUploadCanvasButtonClick, false, this);
+    addSubmenuUl.appendChild(newTextButtonLi);
+    addSubmenuUl.appendChild(uploadCanvasButtonLi);
+    nav.appendChild(addButtonLi);
+
+    var editButtonLi = this.domHelper.createDom('li', {}, 
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+            this.domHelper.createDom('span', {'class': 'icon-cog'}), 'Project Info and Sharing'));
+    goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
+    nav.appendChild(editButtonLi);
+    var downloadButtonLi = this.domHelper.createDom('li', {},
+        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+            this.domHelper.createDom('span', {'class': 'icon-download'}), 'Download'))
+    goog.events.listen(downloadButtonLi, 'click', this._handleDownloadButtonClick, false, this);
+    nav.appendChild(downloadButtonLi);
+    this.modalHeader.appendChild(nav);
+    this.modalElement.appendChild(this.modalHeader);
+};
+
 sc.ProjectViewer.prototype._buildEditSection = function() {
     // Title
     var titleGroup = this.domHelper.createDom('div', {'class': 'control-group'});
@@ -109,55 +186,92 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     this.editElement.appendChild(saveControls);
 };
 
-sc.ProjectViewer.prototype._buildModalElement = function() {
-    // Header
-    this.modalHeader = this.domHelper.createDom('div', {'class': 'modal-header'});
-    var closeButton = this.domHelper.createDom('button', {'class': 'close'}, '×');
-    $(closeButton).attr({
-        'data-dismiss': 'modal',
-        'aria-hidden': 'true'
-    });
-    this.modalTitle = this.domHelper.createDom('h3');
-    this.modalHeader.appendChild(closeButton);
-    this.modalHeader.appendChild(this.modalTitle);
-    var nav = this.domHelper.createDom('ul', {'class': 'nav nav-pills'});
-    var newTextButtonLi = this.domHelper.createDom('li', {},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'New Text Document'));
-    goog.events.listen(newTextButtonLi, 'click', this._handleNewTextButtonClick, false, this);
-    nav.appendChild(newTextButtonLi);
-    var editButtonLi = this.domHelper.createDom('li', {}, 
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-cog'}), 'Project Info and Sharing'));
-    goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
-    nav.appendChild(editButtonLi);
-    var downloadButtonLi = this.domHelper.createDom('li', {},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-download'}), 'Download'))
-    goog.events.listen(downloadButtonLi, 'click', this._handleDownloadButtonClick, false, this);
-    nav.appendChild(downloadButtonLi);
-    this.modalHeader.appendChild(nav);
-    this.modalElement.appendChild(this.modalHeader);
+sc.ProjectViewer.filenameToTitle = function(filename) {
+    var i = filename.lastIndexOf('.');
+    if (i !== -1) {
+        filename = filename.substring(0, i);
+    }
 
-    // Body
-    this.modalBody = this.domHelper.createDom('div', {'class': 'modal-body'});
-    this.editElement = this.domHelper.createDom('div', {'class': 'form-horizontal sc-ProjectViewer-projectEdit'});
-    this._buildEditSection();
-    this.modalBody.appendChild(this.editElement);
-    this.editZippy = new goog.ui.AnimatedZippy(null, this.editElement, false);
-    this.workingResources.render(this.modalBody);
-    this.workingResourcesZippy = new goog.ui.AnimatedZippy(null, this.workingResources.getElement(), true);
-    this.modalElement.appendChild(this.modalBody);
+    filename = filename.replace(/_/g, ' ');
 
-    // Footer
-    this.modalFooter = this.domHelper.createDom('div', {'class': 'modal-footer'});
-    var footerCloseButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Done');
-    $(footerCloseButton).attr({
-        'data-dismiss': 'modal',
-        'aria-hidden': 'true'
-    });
-    this.modalFooter.appendChild(footerCloseButton);
-    this.modalElement.appendChild(this.modalFooter);
+    return goog.string.toTitleCase(filename);
+};
+
+sc.ProjectViewer.prototype._buildUploadCanvasSection = function() {
+    this.uploadCanvasElement.appendChild(this.domHelper.createDom('h4', {}, 'Upload an Image'));
+
+    // File
+    var fileGroup = this.domHelper.createDom('div', {'class': 'control-group'});
+    var fileLabel = this.domHelper.createDom('label', {'class': 'control-label', 'for': 'canvasFileInput'}, 'Image File');
+    var fileControls = this.domHelper.createDom('div', {'class': 'controls'});
+    var fileInput = this.domHelper.createDom('input', {'type': 'file', 'id': 'canvasFileInput'});
+    fileGroup.appendChild(fileLabel);
+    fileControls.appendChild(fileInput);
+    fileGroup.appendChild(fileControls);
+    this.uploadCanvasElement.appendChild(fileGroup);
+
+    // Title
+    var titleGroup = this.domHelper.createDom('div', {'class': 'control-group'});
+    var titleLabel = this.domHelper.createDom('label', {'class': 'control-label', 'for': 'canvasTitleInput'}, 'Title');
+    var titleControls = this.domHelper.createDom('div', {'class': 'controls'});
+    var titleInput = this.domHelper.createDom('input', {'type': 'text', 'id': 'canvasTitleInput', 'placeholder': 'Untitled Canvas'});
+    titleGroup.appendChild(titleLabel);
+    titleControls.appendChild(titleInput);
+    titleGroup.appendChild(titleControls);
+    this.uploadCanvasElement.appendChild(titleGroup);
+
+    goog.events.listen(fileInput, 'change', function(event) {
+        var file = fileInput.files[0];
+
+        if (!goog.string.startsWith(file.type, 'image/')) {
+            alert('"' + file.name + '"" is not an image file.');
+            fileInput.value = null;
+            return;
+        }
+
+        if (titleInput.value == '' || titleInput.value == null) {
+            titleInput.value = sc.ProjectViewer.filenameToTitle(file.name);
+        }
+    }, false, this);
+
+    this.canvasUploadFormInputs = {
+        'title': titleInput,
+        'file': fileInput
+    };
+
+    // Progress bar
+
+    this.canvasUploadProgressBar = this.domHelper.createDom('div', {'class': 'progress progress-striped active'},
+        this.domHelper.createDom('div', {'class': 'bar', 'style': 'width: 0%;'}));
+    jQuery(this.canvasUploadProgressBar).hide();
+    this.uploadCanvasElement.appendChild(this.canvasUploadProgressBar);
+
+    // Save and cancel buttons
+    var uploadControls = this.domHelper.createDom('div', {'class': 'form-actions'});
+    var cancelButton = this.domHelper.createDom('button', {'class': 'btn'}, 'Cancel');
+    goog.events.listen(cancelButton, 'click', function(event) {
+        this.hideCanvasUploadForm();
+        this.clearCanvasUploadForm();
+    }, false, this);
+    uploadControls.appendChild(cancelButton);
+    uploadControls.appendChild(this.domHelper.createDom('span', {}, ' '));
+    var uploadButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Upload');
+    goog.events.listen(uploadButton, 'click', this._handleUploadCanvasSubmit, false, this);
+    uploadControls.appendChild(uploadButton);
+    this.uploadCanvasElement.appendChild(uploadControls);
+};
+
+sc.ProjectViewer.prototype.clearCanvasUploadForm = function() {
+    this.canvasUploadFormInputs.title.value = '';
+    this.canvasUploadFormInputs.file.value = null;
+
+    jQuery(this.canvasUploadProgressBar).hide();
+    jQuery(this.canvasUploadProgressBar).children().first().css('width', '0%');
+};
+
+sc.ProjectViewer.prototype.hideCanvasUploadForm = function() {
+    this.uploadCanvasZippy.collapse();
+    this.workingResourcesZippy.expand();
 };
 
 sc.ProjectViewer.prototype.renderButtons = function(element) {
@@ -400,6 +514,7 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
 sc.ProjectViewer.prototype.showModal = function() {
     this.updateModalUI();
     this.editZippy.collapse();
+    this.uploadCanvasZippy.collapse();
     this.workingResourcesZippy.expand();
     $(this.modalElement).modal('show');
 };
@@ -562,6 +677,7 @@ sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {
 
     this.editZippy.expand();
     this.workingResourcesZippy.collapse();
+    this.uploadCanvasZippy.collapse();
 };
 
 sc.ProjectViewer.prototype._handleDownloadButtonClick = function(event) {
@@ -573,9 +689,50 @@ sc.ProjectViewer.prototype._handleDownloadButtonClick = function(event) {
 };
 
 sc.ProjectViewer.prototype._handleNewTextButtonClick = function(event) {
-    event.stopPropagation();
-
     this.createNewText();
+};
+
+sc.ProjectViewer.prototype._handleUploadCanvasButtonClick = function(event) {
+    this.uploadCanvasZippy.expand();
+    this.workingResourcesZippy.collapse();
+    this.editZippy.collapse();
+};
+
+sc.ProjectViewer.prototype._handleUploadCanvasSubmit = function(event) {
+    var title = this.canvasUploadFormInputs.title.value;
+    var file = this.canvasUploadFormInputs.file.files[0];
+
+    jQuery(this.canvasUploadProgressBar).slideDown(200).addClass('active');
+    jQuery(this.canvasUploadProgressBar).children().first().css('width', '5%');
+
+    this.projectController.uploadCanvas(title, file, function(raw_data) {
+        // Success
+        jQuery(this.canvasUploadProgressBar).children().first().css('width', '100%').removeClass('active');
+
+        this.updateModalUI();
+
+        window.setTimeout(function() {
+            this.hideCanvasUploadForm();
+            this.clearCanvasUploadForm();
+        }.bind(this), 400);
+    }.bind(this),
+    function(event) {
+        // Failure
+        alert('Image upload failed. The server returned a status code of ' + event.target.status + '.');
+    }.bind(this),
+    function(event) {
+        // Progress
+        if (event.lengthComputable) {
+            var percentLoaded = event.loaded / event.total;
+
+            if (percentLoaded > 0.05) {
+                jQuery(this.canvasUploadProgressBar).children().first().css('width', (percentLoaded * 100) + '%');
+            }
+        }
+        else {
+
+        }
+    }.bind(this));
 };
 
 sc.ProjectViewer.prototype.saveEdits = function() {
