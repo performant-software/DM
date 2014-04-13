@@ -386,6 +386,6 @@ def add_image(request):
     added_image = UploadedImage.objects.get(id=request.POST['image_choices'])
     full_path = settings.MEDIA_URL + added_image.imagefile.name
     
-    create_canvas_for_uploaded_image(URIRef("urn:uuid:84f13fe8-a4de-4f9c-a1b3-ffe29a038317"), added_image)    
+    create_canvas_for_uploaded_image(URIRef("urn:uuid:eiwhwymz8ig7s7ankjy23oqlbk5ucc2zv25s"), added_image)    
 
     return HttpResponse("You chose to add image '%s' to the project."%(added_image.imagefile))
