@@ -13,6 +13,7 @@ from semantic_store.annotations import resource_annotation_subgraph, canvas_anno
 from semantic_store.specific_resources import specific_resources_subgraph
 from semantic_store.models import UploadedImage
 
+# Having issues importing semantic_store.projects.(methodname) and/or projects.(methodname)
 import projects
 
 def canvas_and_images_graph(graph, canvas_uri):
@@ -168,23 +169,31 @@ def create_canvas(project_uri, image_url, height, width, name="New Image"):
     canvas_uri = uris.uuid()
     annotation = uris.uuid()
 
-    canvas_graph = Graph()#store=rdfstore(), identifier=canvas_uri)
+    canvas_graph = Graph(store=rdfstore(), identifier=canvas_uri)
+    project_graph = Graph(store=rdfstore(), identifier=project_uri)
+    project_metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
     bind_namespaces(canvas_graph)
 
-    # Add types of canvas & image
-    canvas_graph.add((canvas_uri, NS.rdf.type, NS.sc.Canvas))
-    canvas_graph.add((URIRef(image_url), NS.rdf.type, NS.dctypes.Image))
-    
-    # Add data about canvas & image (identical)
-    for sub in [canvas_uri, URIRef(image_url)]:
-        canvas_graph.add((sub, NS.dc.title, Literal(name)))
-        canvas_graph.add((sub, NS.exif.height, Literal(height)))
-        canvas_graph.add((sub, NS.exif.width, Literal(width)))
+    # All basic info that is in canvas graph should be added to project graph & project metadata graph
+    for graph in [canvas_graph, project_graph, project_metadata_graph]:
+        # Add types of canvas & image
+        graph.set((canvas_uri, NS.rdf.type, NS.sc.Canvas))
+        graph.set((URIRef(image_url), NS.rdf.type, NS.dctypes.Image))
+        
+        # Add data about canvas & image (identical)
+        for sub in [canvas_uri, URIRef(image_url)]:
+            graph.set((sub, NS.dc.title, Literal(name)))
+            graph.set((sub, NS.exif.height, Literal(height)))
+            graph.set((sub, NS.exif.width, Literal(width)))
 
-    # Add annotation
-    canvas_graph.add((annotation, NS.rdf.type, NS.oa.Annotation))
-    canvas_graph.add((annotation, NS.oa.hasBody, URIRef(image_url)))
-    canvas_graph.add((annotation, NS.oa.hasTarget, canvas_uri))
+        # Add annotation
+        graph.set((annotation, NS.rdf.type, NS.oa.Annotation))
+        graph.set((annotation, NS.oa.hasBody, URIRef(image_url)))
+        graph.set((annotation, NS.oa.hasTarget, canvas_uri))
+
+    # Also add project aggregates canvas triple
+    project_graph.add((project_uri, NS.ore.aggregates, canvas_uri))
+    project_metadata_graph.add((project_uri, NS.ore.aggregates, canvas_uri))
 
 # Creates canvas of image on project.
 # # Expects an UploadedImage object as second parameter
