@@ -169,13 +169,12 @@ def create_canvas(project_uri, image_url, height, width, name="New Image"):
     canvas_uri = uris.uuid()
     annotation = uris.uuid()
 
-    canvas_graph = Graph(store=rdfstore(), identifier=canvas_uri)
-    project_graph = Graph(store=rdfstore(), identifier=project_uri)
+    project_identifier = uris.uri('semantic_store_projects', uri=project_uri)
+    project_graph = Graph(store=rdfstore(), identifier=project_identifier)
     project_metadata_graph = Graph(store=rdfstore(), identifier=uris.project_metadata_graph_identifier(project_uri))
-    bind_namespaces(canvas_graph)
 
-    # All basic info that is in canvas graph should be added to project graph & project metadata graph
-    for graph in [canvas_graph, project_graph, project_metadata_graph]:
+    # All basic info about canvases should be added to project graph & project metadata graph
+    for graph in [project_graph, project_metadata_graph]:
         # Add types of canvas & image
         graph.set((canvas_uri, NS.rdf.type, NS.sc.Canvas))
         graph.set((URIRef(image_url), NS.rdf.type, NS.dctypes.Image))
@@ -191,9 +190,8 @@ def create_canvas(project_uri, image_url, height, width, name="New Image"):
         graph.set((annotation, NS.oa.hasBody, URIRef(image_url)))
         graph.set((annotation, NS.oa.hasTarget, canvas_uri))
 
-    # Also add project aggregates canvas triple
-    project_graph.add((project_uri, NS.ore.aggregates, canvas_uri))
-    project_metadata_graph.add((project_uri, NS.ore.aggregates, canvas_uri))
+        #Add project aggregates canvas triple
+        graph.add((project_uri, NS.ore.aggregates, canvas_uri))
 
 # Creates canvas of image on project.
 # # Expects an UploadedImage object as second parameter
