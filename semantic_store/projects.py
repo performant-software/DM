@@ -118,7 +118,7 @@ def build_project_metadata_graph(project_uri):
             for t in metadata_triples(project_graph, aggregate_uri):
                 metadata_graph.add(t)
 
-        return metadata_graph
+    return metadata_graph
 
 def read_project(request, project_uri):
     """Returns a HttpResponse of the cached project metadata graph"""
