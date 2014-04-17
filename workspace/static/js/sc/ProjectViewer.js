@@ -224,7 +224,13 @@ sc.ProjectViewer.prototype._buildUploadCanvasSection = function() {
         var file = fileInput.files[0];
 
         if (!goog.string.startsWith(file.type, 'image/')) {
-            alert('"' + file.name + '"" is not an image file.');
+            alert('"' + file.name + '" is not an image file.');
+            fileInput.value = null;
+            return;
+        }
+
+        if (!(goog.string.endsWith(file.type, '/jpeg') || goog.string.endsWith(file.type, '/png'))) {
+            alert('"' + file.name + '" is not a jpeg or png formatted image file.');
             fileInput.value = null;
             return;
         }

@@ -394,6 +394,11 @@ class CanvasUpload(View):
         title = request.POST.get('title', '')
         uri = uris.uuid()
 
+        if hasattr(settings, 'MAX_IMAGE_UPLOAD_FILE_SIZE') and image_file.size > settings.MAX_IMAGE_UPLOAD_FILE_SIZE:
+            return HttpResponse(status=406)
+        if not image_file.content_type.startswith('image/'):
+            return HttpResponse(status=406)
+
         uploaded = UploadedImage.objects.create(imagefile=image_file, owner=request.user)
         create_canvas_from_upload(canvas_graph, uploaded, uri, request.user, title)
 
