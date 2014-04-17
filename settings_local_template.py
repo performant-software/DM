@@ -1,6 +1,11 @@
 import os
 import sys
 
+# Make this unique, and don't share it with anybody. And definitely don't just copy this one.
+# Hint:
+# import random, string
+# ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for i in range(50))
+SECRET_KEY = 'MJ$Q"_[Yd#/c|uv|$%r()U&@p2@F,&Q/E"5_x6\\=6[x^Pi.:C|'
 
 DEBUG = True
 
