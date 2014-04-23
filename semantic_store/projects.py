@@ -51,6 +51,7 @@ def create_project(g):
 
     for uri in g.subjects(NS.rdf.type, NS.dm.Project):
         user = g.value(None, NS.perm.hasPermissionOver, uri)
+        user_obj = User.objects.get(username=user.split('/')[-1])
 
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
@@ -58,7 +59,7 @@ def create_project(g):
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
             text_graph = Graph()
             text_graph += g.triples((text_uri, None, None))
-            project_texts.update_project_text(text_graph, uri, text_uri, None)
+            project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
 
         for t in g:
             project_g.add(t)
