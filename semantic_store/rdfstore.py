@@ -66,6 +66,22 @@ class FourStore(SPARQLUpdateStore):
 
         return Result.parse(SPARQLWrapper.query(self).response)
 
+    def _run_query(self, query):
+        self.setQuery(query)
+        response = SPARQLWrapper.query(self).response
+
+        try:
+            doc = ElementTree.parse(response)
+        except Exception as e:
+            raise FourStoreException("Parsing Exception \"%s\"\nQuery: %s\nResponse: %s" % (e, query, response))
+
+        try:
+            dom = TraverseSPARQLResultDOM(doc, asDictionary=True)
+        except Exception as e:
+            raise FourStoreException("SPARQL DOM Traversal Exception \"%s\"" % e)
+
+        return TraverseSPARQLResultDOM(doc, asDictionary=True)
+
     def triples(self, (s, p, o), context=None):
         if ( isinstance(s, BNode) or
              isinstance(p, BNode) or 
@@ -97,10 +113,7 @@ class FourStore(SPARQLUpdateStore):
             query = "SELECT %s WHERE { %s %s %s }" % \
                 (v, s.n3(), p.n3(), o.n3())
 
-        self.setQuery(query)
-        doc = ElementTree.parse(SPARQLWrapper.query(self).response)
-        # ElementTree.dump(doc)
-        for rt, vars in TraverseSPARQLResultDOM(doc, asDictionary=True):
+        for rt, vars in self._run_query(query):
             yield (rt.get(s, s),
                    rt.get(p, p),
                    rt.get(o, o)), None
@@ -147,9 +160,7 @@ class FourStore(SPARQLUpdateStore):
              s.n3(), p.n3(), o.n3(),
              ''.join('FILTER(%s) .' % f for f in filter_bodies))
 
-        self.setQuery(query)
-        doc = ElementTree.parse(SPARQLWrapper.query(self).response)
-        for rt, vars in TraverseSPARQLResultDOM(doc, asDictionary=True):
+        for rt, vars in self._run_query(query):
             yield (rt.get(s, s),
                    rt.get(p, p),
                    rt.get(o, o)), None
@@ -165,10 +176,8 @@ class FourStore(SPARQLUpdateStore):
                     context.identifier.n3())
             else:
                 q = "SELECT (count(*) as ?c) WHERE { GRAPH ?anygraph {?s ?p ?o .}}"
-            self.setQuery(q)
-            doc = ElementTree.parse(SPARQLWrapper.query(self).response)
-            rt, vars = iter(
-                TraverseSPARQLResultDOM(doc, asDictionary=True)).next()
+            
+            rt, vars = iter(self._run_query(q)).next()
             return int(rt.get(Variable("c")))
 
     def contexts(self, triple=None):
@@ -181,12 +190,9 @@ class FourStore(SPARQLUpdateStore):
                   (p if p else Variable('p')).n3(),
                   (o if o else Variable('o')).n3())
 
-        self.setQuery(
-            'SELECT DISTINCT ?name WHERE { GRAPH ?name { %s %s %s }}' % params)
-        doc = ElementTree.parse(SPARQLWrapper.query(self).response)
+        query = 'SELECT DISTINCT ?name WHERE { GRAPH ?name { %s %s %s }}' % params
 
-        return (rt.get(Variable("name"))
-                for rt, vars in TraverseSPARQLResultDOM(doc, asDictionary=True))
+        return (rt.get(Variable("name")) for rt, vars in self._run_query(query))
 
     def reset_connection(self):
         self.connection = httplib.HTTPConnection(self.host, self.port)
@@ -241,6 +247,9 @@ class FourStore(SPARQLUpdateStore):
         if r.status not in (200, 204):
             raise Exception("Could not update: %d %s\n%s" % (
                 r.status, r.reason, r.read()))
+
+class FourStoreException(Exception):
+    pass
 
 
 plugin.register('SQLAlchemy', Store, 'rdflib_sqlalchemy.SQLAlchemy', 'SQLAlchemy')
