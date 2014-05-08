@@ -5,7 +5,7 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore, TraverseSPARQLR
 from django.conf import settings
 import re
 import urllib
-import httplib
+import httplib, requests
 
 from semantic_store import utils
 
