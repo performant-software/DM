@@ -185,7 +185,7 @@ def line_column_string_insert(line_number, column_number, s, insert):
         counter += 1
 
         if counter == line_number:
-            builder.append('%s%s%s' % (line[:column_number - 1], insert, line[column_number - 1:]))
+            builder.append(u'%s%s%s' % (line[:column_number - 1], insert, line[column_number - 1:]))
         else:
             builder.append(line)
 
@@ -195,8 +195,8 @@ def line_numbered_string(s):
     builder = []
     counter = 1
     for line in s.split('\n'):
-        builder.append("{:>4}: {}\n".format(counter, line))
+        builder.append(u"{:>4}: {}\n".format(counter, line))
         counter += 1
 
-    return ''.join(builder)
+    return u''.join(builder)
 
