@@ -9,7 +9,7 @@ from rdflib import URIRef, Literal
 from semantic_store.rdfstore import rdfstore
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store import uris
-from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, metadata_triples
+from semantic_store.utils import NegotiatedGraphResponse, parse_request_into_graph, metadata_triples, print_triples
 from semantic_store.users import PERMISSION_PREDICATES, user_graph, user_metadata_graph
 from semantic_store.project_texts import sanitized_content, text_graph_from_model
 from semantic_store import project_texts, canvases, permissions, manuscripts
@@ -162,13 +162,13 @@ def update_project(request, uri):
             except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
-            update_project_graph(input_graph, uri)
+            update_project_graph(input_graph, URIRef(uri))
 
             return HttpResponse(status=204)
         else:
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
-        return HttpResponse(status=401)
+        return HttpResponse('Unauthorized', status=401)
 
 def update_project_graph(g, identifier):
     """Updates the main project graph and the metadata graph from an input graph"""
@@ -199,8 +199,9 @@ def update_project_graph(g, identifier):
         project_metadata_g.add(triple)
 
         aggregate_uri = triple[2]
-        for t in metadata_triples(g, aggregate_uri):
-            project_metadata_g.add(t)
+
+        project_metadata_g += metadata_triples(project_g, aggregate_uri)
+        project_metadata_g += metadata_triples(g, aggregate_uri)
 
 def delete_project(uri):
     """Deletes a project with the given URI. (Cascades project permissions as well)"""

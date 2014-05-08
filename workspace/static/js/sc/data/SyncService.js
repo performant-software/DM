@@ -259,6 +259,11 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         quadsToPost = dataModel.findQuadsToSyncForProject(resource, newQuadStore);
         quadsToRemove = dataModel.findQuadsToSyncForProject(resource, deletedQuadsStore);
 
+        var newAggregateUris = newQuadStore.objectsSetMatchingQuery(resource.bracketedUri, this.databroker.namespaces.expand('ore', 'aggregates'), null, null);
+        goog.structs.forEach(newAggregateUris, function(aggregateUri) {
+            quadsToPost = quadsToPost.concat(dataModel.findMetadataQuads(this.databroker.getResource(aggregateUri)));
+        }, this);
+
         url = this.restUrl(currentProject.uri, resType, null, null);
         if (method == 'POST') {
             method = 'PUT'

@@ -54,8 +54,26 @@ sc.data.DataModel.VOCABULARY = {
     metadataPredicates: [
         '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
         '<http://www.openarchives.org/ore/terms/isDescribedBy>',
-        '<http://purl.org/dc/elements/1.1/title>'
+        '<http://www.w3.org/2000/01/rdf-schema#label>',
+        '<http://purl.org/dc/elements/1.1/title>',
+        '<http://purl.org/dc/terms/description>',
+        '<http://www.w3.org/2003/12/exif/ns#width>',
+        '<http://www.w3.org/2003/12/exif/ns#height>',
+        '<http://www.w3.org/ns/oa#exact>'
     ]
+};
+
+sc.data.DataModel.prototype.findMetadataQuads = function(resource, opt_quadStore) {
+    var quadStore = opt_quadStore || this.databroker.quadStore;
+    var uri = resource.bracketedUri;
+
+    var quads = [];
+
+    goog.structs.forEach(sc.data.DataModel.VOCABULARY.metadataPredicates, function(predicate) {
+        quads = quads.concat(quadStore.query(uri, predicate, null, null));
+    });
+
+    return quads;
 };
 
 /**
