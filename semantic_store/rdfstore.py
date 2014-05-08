@@ -7,6 +7,8 @@ import re
 import urllib
 import httplib
 
+from semantic_store import utils
+
 import sys
 if getattr(sys, 'pypy_version_info', None) is not None \
     or sys.platform.startswith('java') \
@@ -73,7 +75,14 @@ class FourStore(SPARQLUpdateStore):
         try:
             doc = ElementTree.parse(response)
         except Exception as e:
-            raise FourStoreException("Parsing Exception \"%s\"\nQuery: %s\nResponse: %s" % (e, query, response))
+            if settings.DEBUG:
+                readable_response = requests.post(settings.FOUR_STORE_URIS['SPARQL'], data={'query': query})
+
+                response_text = utils.line_numbered_string(readable_response.text)
+
+                raise FourStoreException("Parsing Exception \"%s\"\nQuery: %s\nResponse:\n%s" % (e, query, response_text))
+            else:
+                raise FourStoreException("Parsing Exception \"%s\"\nQuery: %s" % (e, query))
 
         try:
             dom = TraverseSPARQLResultDOM(doc, asDictionary=True)

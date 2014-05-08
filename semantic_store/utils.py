@@ -178,3 +178,25 @@ def urnify_bnodes(graph):
 
     return graph
 
+def line_column_string_insert(line_number, column_number, s, insert):
+    builder = []
+    counter = 0
+    for line in s.split('\n'):
+        counter += 1
+
+        if counter == line_number:
+            builder.append('%s%s%s' % (line[:column_number - 1], insert, line[column_number - 1:]))
+        else:
+            builder.append(line)
+
+    return '\n'.join(builder)
+
+def line_numbered_string(s):
+    builder = []
+    counter = 1
+    for line in s.split('\n'):
+        builder.append("{:>4}: {}\n".format(counter, line))
+        counter += 1
+
+    return ''.join(builder)
+
