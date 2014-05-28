@@ -272,10 +272,12 @@ def add_project_types(graph, project_uri):
 
 def project_export_graph(project_uri):
     db_project_graph = get_project_graph(project_uri)
+    db_metadata_graph = get_project_metadata_graph(project_uri)
     export_graph = Graph()
     export_graph += db_project_graph
+    export_graph += db_metadata_graph
 
-    for text_uri in db_project_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
+    for text_uri in export_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
         export_graph += text_graph_from_model(text_uri, project_uri)
 
     return export_graph
