@@ -34,6 +34,8 @@ def specific_resources_subgraph(graph, source_uri, project_uri):
         source_type = NS.sc.Canvas
     elif (source_uri, NS.rdf.type, NS.dcmitype.Text) in graph:
         source_type = NS.dcmitype.Text
+    else:
+        source_type = None
 
     for specific_resource in graph.subjects(NS.oa.hasSource, source_uri):
         selector = graph.value(specific_resource, NS.oa.hasSelector)
