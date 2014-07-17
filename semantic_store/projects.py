@@ -157,8 +157,8 @@ def read_project(request, project_uri):
 def update_project(request, uri):
     """Updates the project and metadata graph from a put or post request"""
     if request.user.is_authenticated():
-        #TODO: Fix unowned project bug
-        if permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate):
+        if (permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate) or
+            permissions.is_abandoned_project(uri)):
             try:
                 input_graph = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
