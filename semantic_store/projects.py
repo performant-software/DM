@@ -16,6 +16,7 @@ from semantic_store import project_texts, canvases, permissions, manuscripts
 from semantic_store.models import ProjectPermission
 
 from datetime import datetime
+import itertools
 
 PROJECT_TYPES = (NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project)
 
@@ -156,6 +157,7 @@ def read_project(request, project_uri):
 def update_project(request, uri):
     """Updates the project and metadata graph from a put or post request"""
     if request.user.is_authenticated():
+        #TODO: Fix unowned project bug
         if permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
                 input_graph = parse_request_into_graph(request)
@@ -285,4 +287,60 @@ def project_export_graph(project_uri):
 def is_top_level_project_resource(project_uri, uri):
     db_project_graph = get_project_graph(project_uri)
     return (URIRef(project_uri), NS.ore.aggregates, uri) in db_project_graph
+
+def clean_project_graph(graph, project_uri):
+    """
+    Returns a set of all non-orphaned resource uris in a project (i.e., resources which are top level or linked by an annotation).
+    (Does a complete graph traversal)
+    """
+    clean_graph = Graph()
+    clean_graph += graph.triples((project_uri, None, None))
+
+    visited = set()
+    frontier = set(graph.objects(project_uri, NS.ore.aggregates))
+
+    def enqueue(o):
+        if isinstance(o, URIRef):
+            if o not in visited:
+                frontier.add(o)
+        else:
+            for i in o:
+                enqueue(i)
+
+    while len(frontier) > 0:
+        visited_resource = frontier.pop()
+        visited.add(visited_resource)
+
+        if (visited_resource, NS.rdf.type, NS.sc.Canvas) in graph:
+            # Visiting a Canvas
+            clean_graph += canvases.canvas_and_images_graph(graph, visited_resource)
+            enqueue(graph.subjects(NS.oa.hasSource, visited_resource))
+
+        elif (visited_resource, NS.rdf.type, NS.dctypes.Text) in graph:
+            # Visiting a Text
+            clean_graph += graph.triples((visited_resource, None, None))
+            content = graph.value(visited_resource, NS.cnt.chars)
+            if content:
+                for selector in project_texts.selector_uris_in_text_content(unicode(content)):
+                    specific_resource = graph.value(None, NS.oa.hasSelector, selector)
+                    if specific_resource:
+                        enqueue(specific_resource)
+
+        elif (visited_resource, NS.rdf.type, NS.oa.SpecificResource) in graph:
+            # Visiting a Specific Resource
+            clean_graph += graph.triples((visited_resource, None, None))
+            selector = graph.value(visited_resource, NS.oa.hasSelector)
+            if selector:
+                clean_graph += graph.triples((selector, None, None))
+
+
+        for anno in itertools.chain(
+                graph.subjects(NS.oa.hasTarget, visited_resource),
+                graph.subjects(NS.oa.hasBody, visited_resource)
+            ):
+            clean_graph += graph.triples((anno, None, None))
+            for s, p, linked_resource in graph.triples_choices((anno, [NS.oa.hasBody, NS.oa.hasTarget], None)):
+                enqueue(linked_resource)
+
+    return clean_graph
 
