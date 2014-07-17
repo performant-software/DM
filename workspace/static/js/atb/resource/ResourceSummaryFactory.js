@@ -47,7 +47,7 @@ atb.resource.ResourceSummaryFactory.createFromUri = function(uri, viewer, client
     }
     
     else {
-        if (console.error) {
+        if (console && console.error) {
             console.error('Unrecognized resource type ' + resource);
         }
         
