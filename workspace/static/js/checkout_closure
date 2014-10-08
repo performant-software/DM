@@ -1,4 +1,4 @@
 #!/bin/sh
-git clone https://code.google.com/p/closure-library/ -o closure-library
+git clone https://github.com/google/closure-library/
 
 chmod +x closure-library/closure/bin/build/depswriter.py
