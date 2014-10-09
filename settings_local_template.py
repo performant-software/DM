@@ -28,7 +28,7 @@ RDFLIB_DB_URI = 'mysql://username:password@hostname:port/database-name?other-par
 RDFLIB_DB_URI = 'sqlite:////absolute/path/to/foo.db'
 RDFLIB_DB_URI = 'postgresql+psycopg2://user:pasword@hostname:port/database'
 
-# Include vales for these URIS to use 4store as the triple store, rather than the rdflib sqlalchemy
+# Include values for these URIS to use 4store as the triple store, rather than the rdflib sqlalchemy
 # connector with the default database. (4store is far more space efficient).
 FOUR_STORE_URIS = {
     'SPARQL': 'http://localhost:port/sparql/',
