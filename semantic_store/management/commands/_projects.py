@@ -1,7 +1,7 @@
 from semantic_store.models import ProjectPermission
 from semantic_store.projects import create_project_graph
 import semantic_store.projects
-from semantic_store.permissions import Permission
+import semantic_store.permissions
 
 
 def create_project(user, project_identifier, title, host):
