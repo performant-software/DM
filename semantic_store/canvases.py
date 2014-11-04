@@ -168,7 +168,8 @@ def create_canvas_from_upload(graph, uploaded_image, uri, user=None, title=None)
         user_uri = users.user_uri(user=user)
         graph.add((uri, NS.dc.creator, user_uri))
 
-    image_uri = uris.absolutize(uploaded_image.imagefile.url)
+    image_uri = URIRef(uploaded_image.imagefile.url)
+
     graph.add((image_uri, NS.rdf.type, NS.dcmitype.Image))
 
     width = Literal(uploaded_image.imagefile.width)
