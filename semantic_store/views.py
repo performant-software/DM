@@ -384,7 +384,7 @@ class CanvasTranscription(View):
 
 class CanvasUpload(View):
     @method_decorator(check_project_resource_permissions)
-    def post(self, request, project_uri):
+    def post(self, request, project_uri):    
         project_uri = URIRef(project_uri)
         project_graph = get_project_graph(project_uri)
         project_metadata_graph = get_project_metadata_graph(project_uri)
