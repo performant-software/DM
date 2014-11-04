@@ -369,6 +369,9 @@ sc.ProjectManager.prototype.sendNewData = function (title, description, users){
     project.addProperty('rdf:type', 'foaf:Project');
 
     // Add the new project to the databroker as a valid project
+    // Bob: I don't think the below does anything. Can't find that function anywhere else,
+    // therefore...
+    // TODO: This can likely be removed.
     this.databroker.addNewProject(project.uri);
 
     this.addAndSwitchToProject(project.uri);

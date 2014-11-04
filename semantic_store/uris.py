@@ -47,5 +47,9 @@ def add_is_described_bys(graph, project_uri):
 
     return graph
 
+# Bob: I don't think this does what it's supposed to do. I needed remove the call to it
+# in canvases.py to fix the image upload bug, and now it's not being used any where else in the
+# project, therefore...
+# TODO: This can likely be removed.
 def absolutize(relative_uri):
     return URIRef(''.join(('http://', settings.STORE_HOST.rstrip('/'), '/', relative_uri)))
