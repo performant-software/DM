@@ -64,27 +64,33 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },
-        'file': {
+        'debug_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'semantic_store.debug.log',
             'formatter': 'verbose'
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'semantic_store.error.log',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
         'django': {
-            'handlers':['file'],
+            'handlers':['debug_file'],
             'propagate': True,
             'level':'DEBUG',
         },
         'semantic_store': {
-            'handlers': ['file'],
+            'handlers': ['debug_file'],
             'level': 'DEBUG',
+        },
+        'django.request': {
+            'handlers':['error_file'],
+            'propagate': True,
+            'level':'ERROR',
         }
     }
 }
