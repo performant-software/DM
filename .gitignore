@@ -8,6 +8,7 @@ collectstatic
 django.wsgi
 
 static/*
+workspace/static/admin/*
 
 #python specific
 *.pyc
