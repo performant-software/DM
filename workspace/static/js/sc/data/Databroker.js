@@ -46,6 +46,8 @@ sc.data.Databroker = function(options) {
 
     goog.events.listen(window, 'beforeunload', function(event) {
         if (this.syncService.hasUnsavedChanges()) {
+            // Bob: This doesn't appear to be working because you can definitely leave the page without saving.
+
             message = 'Not all changes have been synchronized with the server yet. Please wait a few seconds before leaving the page.';
 
             this.sync();
@@ -76,11 +78,16 @@ sc.data.Databroker = function(options) {
     this.newResourceUris = new goog.structs.Set();
     this.deletedResourceUris = new goog.structs.Set();
 
+    // This is how the sync happens!
     this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
+
+    this.hasSyncErrors = false;
 
     this.dataModel = new sc.data.DataModel(this);
     this.projectController = new sc.data.ProjectController(this);
     this.searchClient = new sc.data.SearchClient(this);
+
+    console.warn('In the Databroker obj..');
 };
 
 sc.data.Databroker.SYNC_INTERVAL = 15 * 1000;
@@ -901,6 +908,7 @@ sc.data.Databroker.prototype.createUuid = function() {
 };
 
 sc.data.Databroker.prototype.sync = function() {
+    console.warn('Databroker.sync being called...');
     return this.syncService.requestSync();
 };
 

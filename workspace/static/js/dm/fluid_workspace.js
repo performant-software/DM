@@ -19,6 +19,7 @@ goog.require("sc.ProjectManager");
 goog.require('sc.ProjectViewer');
 
 goog.require('sc.SearchViewer');
+goog.require('sc.SyncManager');
 
 
 var clientApp = null;
@@ -48,6 +49,11 @@ var setupSearchViewer = function(clientApp) {
     goog.global.searchViewer = new sc.SearchViewer(clientApp);
     searchViewer.render('body');
     searchViewer.addListenersToButton('#searchButton');
+};
+
+var setupSyncManager = function(clientApp) {
+    goog.global.syncManager = new sc.SyncManager(clientApp);
+    syncManager.renderSaveButton('#js_save_button');
 };
 
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
@@ -107,6 +113,7 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
 var openCanvas = function(uri, urisInOrder, index) {
     var viewerContainer = new atb.viewer.ViewerContainer();
     var viewer = new atb.viewer.CanvasViewer(clientApp);
+    console.warn('Opened viewer.');
     viewerContainer.setViewer(viewer);
     viewerGrid.addViewerContainer(viewerContainer);
     scrollIntoView(viewerContainer.getElement());
@@ -223,6 +230,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     setupRepoBrowser(clientApp, wrContainerParent);
     setupProjectViewer(clientApp, viewerGrid);
     setupSearchViewer(clientApp);
+    setupSyncManager(clientApp);
 }
 
 

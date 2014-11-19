@@ -229,6 +229,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         deletedQuadsStore.removeQuads(dataModel.findQuadsToSyncForText(resource, deletedQuadsStore));
 
         url = this.restUrl(currentProject.uri, resType, sc.data.Term.unwrapUri(uri), null);
+
+        console.warn('Sync 1: ' + url);
     }
     else if (conjunctiveResource.hasAnyType(VOCABULARY.canvasTypes)) {
         resType = sc.data.SyncService.RESTYPE.project;
@@ -240,6 +242,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         if (method == 'POST') {
             method = 'PUT'
         }
+        console.warn('Sync 2: ' + url);
     }
     else if (conjunctiveResource.hasType('oa:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.project;
@@ -251,6 +254,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         if (method == 'POST') {
             method = 'PUT'
         }
+
+        console.warn('Sync 3: ' + url);
     }
     else if (conjunctiveResource.hasType('dm:Project') &&
         projectController.userHasPermissionOverProject(null, resource, PERMISSIONS.update)) {
@@ -268,6 +273,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         if (method == 'POST') {
             method = 'PUT'
         }
+
+        console.warn('Sync 4: ' + url);
     }
     else if (conjunctiveResource.hasType('foaf:Agent')){
         resType = sc.data.SyncService.RESTYPE.user;
@@ -276,6 +283,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         var username = resource.uri.split("/").pop()
         url = this.restUrl(null, resType, username, null) + "/";
+
+        console.warn('Sync 5: ' + url);
     }
     else if (conjunctiveResource.hasType('oa:SpecificResource')) {
         resType = sc.data.SyncService.RESTYPE.project;
@@ -286,6 +295,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         if (method == 'POST') {
             method = 'PUT';
         }
+
+        console.warn('Sync 6: ' + url);
     }
     else if (conjunctiveResource.hasAnyType('oa:TextQuoteSelector', 'oa:SvgSelector')) {
         // pass
@@ -299,6 +310,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
             // Success
             this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
+            console.warn('Removing quads: ' + url);
         }.bind(this), function(jqXHR, textStatus, errorThrown) {
             // Error
             if (goog.string.startsWith(textStatus, '4')) {
@@ -313,12 +325,18 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             // Success
             if (method == 'PUT' || method == 'POST') {
                 this.databroker.newQuadStore.removeQuads(quadsToPost);
+                console.warn('Sending quads: ' + url);
             }
             if (goog.isFunction(successHandler)) {
                 successHandler();
             }
         }.bind(this), function(jqXHR, textStatus, errorThrown) {
             // Error
+            this.databroker.hasSyncErrors = true;
+            console.warn('ERROR! ' + errorThrown);
+            console.warn('textStatus: ' + textStatus);
+            console.warn('Has sync errors: ' + this.databroker.hasSyncErrors);
+            console.warn(goog.string);
             if (goog.string.startsWith(textStatus, '4')) {
                 console.error('The following quads returned a 4xx series error when being sent to url: ' + url, quadsToPost, errorThrown);
                 this.databroker.newQuadStore.removeQuads(quadsToPost);
@@ -340,6 +358,7 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
                 url: url,
                 success: function() {
                     successHandler.apply(this, arguments);
+                    console.warn('Quads sent: ' + quads);
                 }.bind(this),
                 error: function() {
                     errorHandler.apply(this, arguments);
@@ -353,6 +372,7 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
             });
         }
         else if (error) {
+            // some UI feedback here too?
             errorHandler(error);
         }
     }.bind(this));
@@ -363,6 +383,7 @@ sc.data.SyncService.prototype.getCsrfToken = function() {
 };
 
 sc.data.SyncService.prototype.hasUnsavedChanges = function() {
+    // The syncService isn't immediately seeing the changes in the text editor. Why?
     return this.databroker.newResourceUris.getCount() !== 0 || this.databroker.deletedResourceUris.getCount() !== 0 || this.getModifiedResourceUris().getCount() !== 0;
 };
 

@@ -175,6 +175,7 @@ atb.viewer.TextEditor.prototype.saveContents = function (
     var resource = this.databroker.getResource(this.resourceId);
     this.databroker.dataModel.setTitle(resource, this.getTitle());
     this.databroker.dataModel.setTextContent(resource, this.getSanitizedHtml());
+    console.warn('SaveContents');
 
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     highlightPlugin.updateAllHighlightResources();
@@ -246,6 +247,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     
     this._renderDocumentIcon();
     
+    // This is where the textEditor save Interval is created.
     this.autoSaveIntervalObject = window.setInterval(
         atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
         this.autoSaveInterval);
@@ -424,6 +426,9 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
         // goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
         // myToolbar.addChild(this.propertiesButton, true);
     }
+
+    var saveStatusDiv = this.domHelper.createDom('div', {'id': this.useID + '_js_save_status', 'class': 'goog-toolbar goog-toolbar-horizontal'}, 'Loading save status...');
+    this.toolbarDiv.appendChild(saveStatusDiv);
 
     // Hook the toolbar into the field.
     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
@@ -810,7 +815,6 @@ fontStyle: italic
 
 atb.viewer.TextEditor.prototype.applyFormattingRulesRecursively_ = function(toTag)
 {
-	//alert("!!!");
 	//_readStylePropsHelper_(toTag);//lol!
 	//this._readStylePropsHelper_(toTag);//lol!
 	//or check computed style for boldness/etc...?
@@ -1274,18 +1278,49 @@ atb.viewer.TextEditor.prototype.getPositionOfFieldChildElement = function (eleme
 };
 
 atb.viewer.TextEditor.prototype.hasUnsavedChanges = function () {
+    console.warn('TextEditor: hasUnsavedChanges?');
+    console.warn(this.unsavedChanges);
     return !! this.unsavedChanges;
 };
 
 atb.viewer.TextEditor.prototype.onChange = function (event) {
+    console.warn('Changed!');
     this.unsavedChanges = true;
+
+    // change to NOT SAVED here!
+    var domHelper = this.domHelper;
+    var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
+    // var this.saveStatus = "Not Saved!";
+    if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges() || saveStatusElement) {
+        console.warn('saveStatusElement: ' + saveStatusElement);
+        this.saveStatus = "Not Saved";
+        this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
+    }
     
     this.timeOfLastChange = goog.now();
 };
 
-atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 2 * 1000;
+atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 1 * 1000;
 
+// This is run every 2 seconds (see above)
 atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
+    console.warn('Does databroker see unsaved changes?');
+    console.warn(this.databroker.syncService.hasUnsavedChanges());
+    console.warn('Sync Service Errors:');
+    console.warn(this.databroker.hasSyncErrors);
+
+    // change to SAVED here if databroker doesn't see unSavedChanges!
+    var domHelper = this.domHelper;
+    var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
+    // var this.saveStatus = "Not Saved!";
+    if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
+        if (saveStatusElement) {
+            console.warn('saveStatusElement: ' + saveStatusElement);
+            this.saveStatus = "Saved";
+            this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
+        }
+    }
+
     var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
         (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
 
