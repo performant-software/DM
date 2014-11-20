@@ -323,6 +323,7 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     if (quadsToPost.length > 0) {
         this.sendQuads(quadsToPost, url, method, null, function() {
             // Success
+            this.databroker.hasSyncErrors = false;
             if (method == 'PUT' || method == 'POST') {
                 this.databroker.newQuadStore.removeQuads(quadsToPost);
                 console.warn('Sending quads: ' + url);
