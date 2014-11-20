@@ -1290,10 +1290,14 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
     // change to NOT SAVED here!
     var domHelper = this.domHelper;
     var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
-    // var this.saveStatus = "Not Saved!";
-    if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges() || saveStatusElement) {
-        console.warn('saveStatusElement: ' + saveStatusElement);
-        this.saveStatus = "Not Saved";
+    
+    if (this.databroker.hasSyncErrors) {
+        this.saveStatus = "Not Saved - Sync Errors!";
+    } else {
+        this.saveStatus = "Processing...";
+    }
+
+    if (saveStatusElement) {
         this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
     }
     
@@ -1312,13 +1316,15 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
     // change to SAVED here if databroker doesn't see unSavedChanges!
     var domHelper = this.domHelper;
     var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
-    // var this.saveStatus = "Not Saved!";
+    
     if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
-        if (saveStatusElement) {
-            console.warn('saveStatusElement: ' + saveStatusElement);
-            this.saveStatus = "Saved";
-            this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
-        }
+        this.saveStatus = "Saved";
+    } else if (this.databroker.hasSyncErrors) {
+        this.saveStatus = "Not Saved - Sync Errors!";
+    }
+
+    if (saveStatusElement) {            
+        this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
     }
 
     var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
