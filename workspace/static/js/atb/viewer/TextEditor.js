@@ -538,6 +538,11 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
 
         annotationPlugin.deselectAllHighlights();
     }, false, this);
+
+    // Stops autosave with the window is closed.
+    goog.events.listen(this.container.closeButton, 'click', function(e) {
+        clearInterval(this.autoSaveIntervalObject);
+    }, false, this);
 };
 
 atb.viewer.TextEditor.prototype.dismissContextMenu = function(menu) {
