@@ -673,6 +673,7 @@ sc.ProjectViewer.prototype._handleEditCancelButtonClick = function(event) {
 sc.ProjectViewer.prototype._handleSaveButtonClick = function(event) {
     event.stopPropagation();
 
+    this.databroker.sync();
     this.saveEdits();
     this.editZippy.collapse();
     this.workingResourcesZippy.expand();
