@@ -1326,7 +1326,7 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
         this.saveStatus = "Saved";
     } else if (this.databroker.hasSyncErrors) {
         this.saveStatus = "Not Saved - Sync Errors!";
-    } else if ((this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges() || this.databroker.hasSyncErrors)) {
+    } else if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges()) {
         this.saveStatus = "Processing...";   
     } else {
         this.saveStatus = "Document Loaded";
