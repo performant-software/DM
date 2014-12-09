@@ -427,7 +427,7 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
         // myToolbar.addChild(this.propertiesButton, true);
     }
 
-    var saveStatusDiv = this.domHelper.createDom('div', {'id': this.useID + '_js_save_status', 'class': 'goog-toolbar goog-toolbar-horizontal'}, 'Loading save status...');
+    var saveStatusDiv = this.domHelper.createDom('div', {'id': this.useID + '_js_save_status', 'class': 'goog-toolbar goog-toolbar-horizontal'}, 'Loading document...');
     this.toolbarDiv.appendChild(saveStatusDiv);
 
     // Hook the toolbar into the field.
@@ -539,7 +539,7 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
         annotationPlugin.deselectAllHighlights();
     }, false, this);
 
-    // Stops autosave with the window is closed.
+    // Stops autosave when the window is closed.
     goog.events.listen(this.container.closeButton, 'click', function(e) {
         clearInterval(this.autoSaveIntervalObject);
     }, false, this);
@@ -1326,6 +1326,10 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
         this.saveStatus = "Saved";
     } else if (this.databroker.hasSyncErrors) {
         this.saveStatus = "Not Saved - Sync Errors!";
+    } else if ((this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges() || this.databroker.hasSyncErrors)) {
+        this.saveStatus = "Processing...";   
+    } else {
+        this.saveStatus = "Document Loaded";
     }
 
     if (saveStatusElement) {            
