@@ -41,6 +41,8 @@ def sanitized_content(content):
 
     content = ''.join(unicode(s) for s in soup.find('body').contents)
 
+    content = content.replace("'", "&#39;")
+
     return content
 
 # Create a project from a (POST) request to a specified project

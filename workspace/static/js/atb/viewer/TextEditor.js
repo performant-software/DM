@@ -86,7 +86,16 @@ atb.viewer.TextEditor.prototype.autoSaveInterval = 3 * 1000;
  * @return {string} the html contents of the editor with unwanted tags (such as <script>) removed
  **/
 atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
-	return this.field.getCleanContents();
+    // Old code
+    // return this.field.getCleanContents();
+
+    // Option two
+    var cleanContents = this.field.getCleanContents();
+    cleanContents = cleanContents.replace(/'/g, "&#39;");
+    // cleanContents = cleanContents.replace(/"/g, "&quot;");
+    console.warn('cleanContents');
+    console.warn(cleanContents);
+    return cleanContents;
 };
 
 /**
