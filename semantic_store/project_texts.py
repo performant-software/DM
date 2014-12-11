@@ -19,6 +19,9 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Comment
 
+import logging
+logger = logging.getLogger(__name__)
+
 def sanitized_content(content):
     soup = BeautifulSoup(content)
 
@@ -42,6 +45,9 @@ def sanitized_content(content):
     content = ''.join(unicode(s) for s in soup.find('body').contents)
 
     content = content.replace("'", "&#39;")
+
+    logger.debug("$$$$$$$$ content after the replace AT THE END:")
+    logger.debug(content)
 
     return content
 
