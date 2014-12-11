@@ -240,171 +240,174 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	var TypeElement = Node.ELEMENT_NODE;
 	var TypeText = Node.TEXT_NODE;
 			
-    var domHelper = this.fieldObject.getEditableDomHelper();
+	var domHelper = this.fieldObject.getEditableDomHelper();
 	var self = this;
-    
-    if (range.getHtmlFragment() == range.getValidHtml()) {
-		var span = this.createAnnoSpan(highlightUri);
-        range.surroundContents(span);
-    }
-	else {
-		var putNodeAfter = function (parent, afterNode, newNode) {
-			if (afterNode.nextSibling == null) {
-				parent.appendChild(newNode);
-			}
-			else {
-				parent.insertBefore(newNode, afterNode.nextSibling);
-			}
-		};
-		
-		var putNodeBefore = function (parent, beforeNode, newNode) {
-			parent.insertBefore(newNode,beforeNode);
-		};
-		
-		
-		var newParents = [];
-		var rangeHack = range.browserRangeWrapper_.range_; //HACK
-		
-		var startNode = rangeHack.startContainer;
-		var startOffset = rangeHack.startOffset;
-		var endNode = rangeHack.endContainer;
-		var endOffset = rangeHack.endOffset;
-		
-		if ((this.lastStartNode == startNode) || (this.lastEndNode == endNode)) {
-			console.log("!?!");
-		}
-		this.lastStartNode = startNode;
-		this.lastEndNode = endNode;
-		
-		
-		var bSameNode = (startNode===endNode);
-		
-		var bStartNodeIsElement =(startNode.nodeType===TypeElement);
-		var bEndNodeIsElement =(endNode.nodeType===TypeElement);
-		console.log("startOffset: "+startOffset+"; endOffset: "+endOffset);
-		
-		//element start tag; startOffset: 1
-		if (bStartNodeIsElement) {
-			//TODO: need to figure out how to really do this properly...!?
-			//occured: element start tag; startOffset: 1
-			//unexpected if were to occur...?:
-			
-			var startInfo;
-			
-			startInfo = this.elementOffsetHelper_(startNode, startOffset);
-			
-			startNode = startInfo.node;
-			startOffset=startInfo.offset;
-			//bStartNodeIsElement =(startNode.nodeType===TypeElement);
-			bStartNodeIsElement =(startNode.nodeType===TypeElement);
-			//lol42..?
-		}
 
-		if (bEndNodeIsElement) {
-			//unexpected if were to occur...?:
-			//alert("element end tag; endOffset: "+endOffset);
-			var endInfo;
+	var span = this.createAnnoSpan(highlightUri);
+	range.surroundContents(span);
+    
+ //  if (range.getHtmlFragment() == range.getValidHtml()) {
+	// 	 var span = this.createAnnoSpan(highlightUri);
+ //    range.surroundContents(span);
+ //  }
+	// else {
+	// 	var putNodeAfter = function (parent, afterNode, newNode) {
+	// 		if (afterNode.nextSibling == null) {
+	// 			parent.appendChild(newNode);
+	// 		}
+	// 		else {
+	// 			parent.insertBefore(newNode, afterNode.nextSibling);
+	// 		}
+	// 	};
 		
-			endInfo = this.elementOffsetHelper_(endNode, endOffset);
-			
-			endNode = endInfo.node;
-			endOffset = endInfo.offset;
-			bEndNodeIsElement =(endNode.nodeType===TypeElement);
-		}
-		//lol@selection bug in stuff...when changing it...!
+	// 	var putNodeBefore = function (parent, beforeNode, newNode) {
+	// 		parent.insertBefore(newNode,beforeNode);
+	// 	};
 		
-		var endPrime;
-		var startPrime;
 		
-		var startNodeText = "" + startNode.nodeValue;
-		var endNodeText = "" + endNode.nodeValue;
+	// 	var newParents = [];
+	// 	var rangeHack = range.browserRangeWrapper_.range_; //HACK
 		
-		{
-			var beforeText = startNodeText.substring(0,startOffset);
-			var startNodeSelText = startNodeText.substring(startOffset);//+1);
-			var endNodeSelText = endNodeText.substring(0, endOffset);
-			var endNodeAfterText = endNodeText.substring(endOffset);// + 1);
-			//if (
-			//console.log("startOffset:"+startOffset+", endOffset:"+endOffset);
-			var beforeTextNode = document.createTextNode(beforeText);
-			var startSelTextNode =document.createTextNode(startNodeSelText);
+	// 	var startNode = rangeHack.startContainer;
+	// 	var startOffset = rangeHack.startOffset;
+	// 	var endNode = rangeHack.endContainer;
+	// 	var endOffset = rangeHack.endOffset;
+		
+	// 	if ((this.lastStartNode == startNode) || (this.lastEndNode == endNode)) {
+	// 		console.log("!?!");
+	// 	}
+	// 	this.lastStartNode = startNode;
+	// 	this.lastEndNode = endNode;
+		
+		
+	// 	var bSameNode = (startNode===endNode);
+		
+	// 	var bStartNodeIsElement =(startNode.nodeType===TypeElement);
+	// 	var bEndNodeIsElement =(endNode.nodeType===TypeElement);
+	// 	console.log("startOffset: "+startOffset+"; endOffset: "+endOffset);
+		
+	// 	//element start tag; startOffset: 1
+	// 	if (bStartNodeIsElement) {
+	// 		//TODO: need to figure out how to really do this properly...!?
+	// 		//occured: element start tag; startOffset: 1
+	// 		//unexpected if were to occur...?:
+			
+	// 		var startInfo;
+			
+	// 		startInfo = this.elementOffsetHelper_(startNode, startOffset);
+			
+	// 		startNode = startInfo.node;
+	// 		startOffset=startInfo.offset;
+	// 		//bStartNodeIsElement =(startNode.nodeType===TypeElement);
+	// 		bStartNodeIsElement =(startNode.nodeType===TypeElement);
+	// 		//lol42..?
+	// 	}
+
+	// 	if (bEndNodeIsElement) {
+	// 		//unexpected if were to occur...?:
+	// 		//alert("element end tag; endOffset: "+endOffset);
+	// 		var endInfo;
+		
+	// 		endInfo = this.elementOffsetHelper_(endNode, endOffset);
+			
+	// 		endNode = endInfo.node;
+	// 		endOffset = endInfo.offset;
+	// 		bEndNodeIsElement =(endNode.nodeType===TypeElement);
+	// 	}
+	// 	//lol@selection bug in stuff...when changing it...!
+		
+	// 	var endPrime;
+	// 	var startPrime;
+		
+	// 	var startNodeText = "" + startNode.nodeValue;
+	// 	var endNodeText = "" + endNode.nodeValue;
+		
+	// 	{
+	// 		var beforeText = startNodeText.substring(0,startOffset);
+	// 		var startNodeSelText = startNodeText.substring(startOffset);//+1);
+	// 		var endNodeSelText = endNodeText.substring(0, endOffset);
+	// 		var endNodeAfterText = endNodeText.substring(endOffset);// + 1);
+	// 		//if (
+	// 		//console.log("startOffset:"+startOffset+", endOffset:"+endOffset);
+	// 		var beforeTextNode = document.createTextNode(beforeText);
+	// 		var startSelTextNode =document.createTextNode(startNodeSelText);
 			
 			
-			//var endNodeSelText = document.createTextNode(endNodeSelText);
-			var endNodeSelTextNode = document.createTextNode(endNodeSelText);
-			var afterTextNode = document.createTextNode(endNodeAfterText);
+	// 		//var endNodeSelText = document.createTextNode(endNodeSelText);
+	// 		var endNodeSelTextNode = document.createTextNode(endNodeSelText);
+	// 		var afterTextNode = document.createTextNode(endNodeAfterText);
 			
-			var startParent= startNode.parentNode;
-			var endParent = endNode.parentNode;
+	// 		var startParent= startNode.parentNode;
+	// 		var endParent = endNode.parentNode;
 			
-			if (bStartNodeIsElement) {//TODO: finish figuring this out... what does it really mean tho...?
+	// 		if (bStartNodeIsElement) {//TODO: finish figuring this out... what does it really mean tho...?
 			
-				//startPRime = startNode;//hack...?
+	// 			//startPRime = startNode;//hack...?
 				
-				//TODO: split the parent tag in two, maybe...?
-				console.log("warning: starting on an element!");
-				if (startOffset != 0) {
-					console.log("WARNING: starting on an element, w/o a start-offset of zero!");
-				}
-				startPrime = startNode;//hack...?
-			}
-			else {
-				console.log("textStart");
-				startParent.replaceChild(startSelTextNode, startNode);//NORMAL -- null here...?
-				startParent.insertBefore(beforeTextNode,startSelTextNode);
-				startPrime = startSelTextNode;
-			}
+	// 			//TODO: split the parent tag in two, maybe...?
+	// 			console.log("warning: starting on an element!");
+	// 			if (startOffset != 0) {
+	// 				console.log("WARNING: starting on an element, w/o a start-offset of zero!");
+	// 			}
+	// 			startPrime = startNode;//hack...?
+	// 		}
+	// 		else {
+	// 			console.log("textStart");
+	// 			startParent.replaceChild(startSelTextNode, startNode);//NORMAL -- null here...?
+	// 			startParent.insertBefore(beforeTextNode,startSelTextNode);
+	// 			startPrime = startSelTextNode;
+	// 		}
 			
-			if (bEndNodeIsElement) {
-				console.log("warning: ending on an element!");
-				if (endOffset != 0) {
-					console.log("WARNING: ending on an element, w/o a end-offset of zero!");
-				}
-				endPrime = endNode;//hack...?
-			}
-			else {
-				console.log("textEnd");
-				endParent.replaceChild(afterTextNode, endNode);//another bug...?
-				endParent.insertBefore(endNodeSelTextNode,afterTextNode);
-				endPrime = endNodeSelTextNode;
-			}
-		}
-		var traversal = new atb.util.DomTraverser(startPrime, endPrime);
+	// 		if (bEndNodeIsElement) {
+	// 			console.log("warning: ending on an element!");
+	// 			if (endOffset != 0) {
+	// 				console.log("WARNING: ending on an element, w/o a end-offset of zero!");
+	// 			}
+	// 			endPrime = endNode;//hack...?
+	// 		}
+	// 		else {
+	// 			console.log("textEnd");
+	// 			endParent.replaceChild(afterTextNode, endNode);//another bug...?
+	// 			endParent.insertBefore(endNodeSelTextNode,afterTextNode);
+	// 			endPrime = endNodeSelTextNode;
+	// 		}
+	// 	}
+		// var traversal = new atb.util.DomTraverser(startPrime, endPrime);
 		
-		//TODO: ?= check this beforehand...?
-		var bFoundSpans = false;
-		traversal.each(function() {
-			if (jQuery(this).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS)) {
-				bFoundSpans = true;
-			}
-		});
-		if (bFoundSpans) {
-			this.viewer.showErrorMessage("Can't highlight a selection containing an existing highlight!");
-			return;
-		}
-		var arr = [];
-		traversal.eachTextNode(function() {
-			if (this.parentNode!=null) {
-				var ndName = (""+this.parentNode.nodeName).toLowerCase();
-				if (ndName === "style") {
-					return;
-				}
-			}
-			arr.push(this);
-		});
-		var bunches = arr;//hack
+		// //TODO: ?= check this beforehand...?
+		// var bFoundSpans = false;
+		// traversal.each(function() {
+		// 	if (jQuery(this).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS)) {
+		// 		bFoundSpans = true;
+		// 	}
+		// });
+		// if (bFoundSpans) {
+		// 	this.viewer.showErrorMessage("Can't highlight a selection containing an existing highlight!");
+		// 	return;
+		// }
+		// var arr = [];
+		// traversal.eachTextNode(function() {
+		// 	if (this.parentNode!=null) {
+		// 		var ndName = (""+this.parentNode.nodeName).toLowerCase();
+		// 		if (ndName === "style") {
+		// 			return;
+		// 		}
+		// 	}
+		// 	arr.push(this);
+		// });
+		// var bunches = arr;//hack
 		
-		for(var i=0,l=bunches.length; i<l; i++) {
-			var bunch=bunches[i];
-			bunch = [bunch,bunch];//HACK
-			var newParent = this.createAnnoSpan(annoId);
-			traversal.replaceBunchWithCommonParent(bunch, newParent);
-			newParents.push(newParent);
-			//document.createElement(
-		}
+		// for(var i=0,l=bunches.length; i<l; i++) {
+		// 	var bunch=bunches[i];
+		// 	bunch = [bunch,bunch];//HACK
+		// 	var newParent = this.createAnnoSpan(annoId);
+		// 	traversal.replaceBunchWithCommonParent(bunch, newParent);
+		// 	newParents.push(newParent);
+		// 	//document.createElement(
+		// }
 		
-		console.log("# new parents: "+newParents.length);
-    }
+		// console.log("# new parents: "+newParents.length);
+  //   }
 };
 
 /**
