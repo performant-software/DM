@@ -1318,7 +1318,7 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
     this.timeOfLastChange = goog.now();
 };
 
-atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 1 * 1000;
+atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 2 * 1000;
 
 // This is run every 2 seconds (see above)
 atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
