@@ -3,6 +3,7 @@ workspace/static/js/closure-library/*
 settings_local.py
 runserver
 collectstatic
+workspace/media/*
 
 #deployment specific files
 django.wsgi
@@ -32,6 +33,8 @@ manage_command_examples_local.sh
 output/*
 *backup.sql
 data/*
+*.ttl
+*.rdf
 
 # prevent user-uploaded images from being stored in repo
 media/user_images/uploaded_images/*
