@@ -79,7 +79,7 @@ sc.data.Databroker = function(options) {
     this.deletedResourceUris = new goog.structs.Set();
 
     // This is how the sync happens!
-    this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
+    // this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
 
     this.hasSyncErrors = false;
 

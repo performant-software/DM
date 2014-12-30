@@ -79,7 +79,7 @@ goog.inherits(atb.viewer.TextEditor, atb.viewer.Viewer);
 
 atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
 
-atb.viewer.TextEditor.prototype.autoSaveInterval = 3 * 1000;
+// atb.viewer.TextEditor.prototype.autoSaveInterval = 3 * 1000;
 
 /**
  * getSanitizedHtml()
@@ -257,13 +257,13 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this._renderDocumentIcon();
     
     // This is where the textEditor save Interval is created.
-    this.autoSaveIntervalObject = window.setInterval(
-        atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
-        this.autoSaveInterval);
+    // this.autoSaveIntervalObject = window.setInterval(
+    //     atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
+    //     this.autoSaveInterval);
 
-    this.clientApp.registerFunctionToCallBeforeUnload(function() {
-        this.saveIfModified(true);
-    }.bind(this));
+    // this.clientApp.registerFunctionToCallBeforeUnload(function() {
+    //     this.saveIfModified(true);
+    // }.bind(this));
     
     goog.events.listen(
         this.clientApp.getEventDispatcher(), 
@@ -426,14 +426,14 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 
         myToolbar.addChildAt(annotateButton, 0, true);
         
-        // this.propertiesButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
-        //     'properties',
-        //     'Edit this document\'s properties',
-        //     '',
-        //     'icon-info-sign'
-        // );
-        // goog.events.listen(this.propertiesButton, goog.ui.Component.EventType.ACTION, this.handlePropertiesButtonClick_, false, this);
-        // myToolbar.addChild(this.propertiesButton, true);
+        this.saveButton = goog.ui.editor.ToolbarFactory.makeButton(
+            'save',
+            'Save this document',
+            '',
+            'icon-ok'
+        );
+        goog.events.listen(this.saveButton, goog.ui.Component.EventType.ACTION, this.handleSaveButtonClick_, false, this);
+        myToolbar.addChild(this.saveButton, true);
     }
 
     var saveStatusDiv = this.domHelper.createDom('div', {'id': this.useID + '_js_save_status', 'class': 'goog-toolbar goog-toolbar-horizontal'}, 'Loading document...');
@@ -502,14 +502,10 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 //     this.propertiesButton.setChecked(false);
 // };
 
-// atb.viewer.TextEditor.prototype.handlePropertiesButtonClick_ = function (e) {
-//     if (this.propertiesPanelVisible) {
-//         this.hidePropertiesPane();
-//     }
-//     else {
-//         this.showPropertiesPane();
-//     }
-// };
+atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
+    console.warn('**** Document Save Clicked ****');
+    this.saveIfModified();
+};
 
 atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
     this.purpose = purpose;
