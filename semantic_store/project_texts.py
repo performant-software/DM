@@ -119,6 +119,7 @@ def read_project_text(project_uri, text_uri):
 # Uses different name for arguments so that (unchanged) arguments can be passed to the 
 #  read_project_text method to return the updated data
 def update_project_text(g, p_uri, t_uri, user):
+    logger.debug("************* Updating project")
     # Correctly format project uri and get project graph
     project_uri = uris.uri('semantic_store_projects', uri=p_uri)
     project_g = Graph(rdfstore(), identifier=project_uri)
@@ -165,6 +166,13 @@ def update_project_text(g, p_uri, t_uri, user):
 # This function parses the data and then sends it to update_project_text which accepts a
 #  graph object instead of a request object
 def update_project_text_from_request(request, project_uri, text_uri):
+    logger.debug("************** update_project_text_from_request")
+    logger.debug("%%%%%%%%%%%%%% request.body:")
+    logger.debug("\r" + request.body)
+    logger.debug("%%%%%%%%%%%%%% project_uri:")
+    logger.debug("\r" + project_uri)
+    logger.debug("%%%%%%%%%%%%%% text_uri:")
+    logger.debug("\r" + text_uri)
     if request.user.is_authenticated():
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:

@@ -8,6 +8,9 @@ from contextlib import contextmanager
 import re
 from uuid import uuid4
 
+import logging
+logger = logging.getLogger(__name__)
+
 METADATA_PREDICATES = [
     NS.rdf.type,
     NS.ore.isDescribedBy,
@@ -99,6 +102,9 @@ def parse_request_into_graph(request, graph=None):
 
     if format.startswith('rdf+'):
         format = format[4:]
+
+    logger.debug("******** parse_request_into_graph: request.body")
+    logger.debug(request.body)
 
     return parse_into_graph(graph, format=format, data=request.body)
 
