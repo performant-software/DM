@@ -44,18 +44,18 @@ sc.data.Databroker = function(options) {
     this.syncService = this.options.syncService || new sc.data.SyncService();
     this.syncService.databroker = this;
 
-    goog.events.listen(window, 'beforeunload', function(event) {
-        if (this.syncService.hasUnsavedChanges()) {
-            // Bob: This doesn't appear to be working because you can definitely leave the page without saving.
+    // goog.events.listen(window, 'beforeunload', function(event) {
+    //     if (this.syncService.hasUnsavedChanges()) {
+    //         // Bob: This doesn't appear to be working because you can definitely leave the page without saving.
 
-            message = 'Not all changes have been synchronized with the server yet. Please wait a few seconds before leaving the page.';
+    //         message = 'Not all changes have been synchronized with the server yet. Please wait a few seconds before leaving the page.';
 
-            this.sync();
+    //         this.sync();
 
-            (event || window.event).returnValue = message;
-            return message;
-        }
-    }, false, this);
+    //         (event || window.event).returnValue = message;
+    //         return message;
+    //     }
+    // }, false, this);
 
     this._setupParsersAndSerializers();
 

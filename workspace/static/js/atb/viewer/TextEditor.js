@@ -505,6 +505,8 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
     console.warn('**** Document Save Clicked ****');
     this.saveIfModified();
+    this.databroker.sync();
+    this.outputSaveStatus();
 };
 
 atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
@@ -1326,16 +1328,6 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
     // change to SAVED here if databroker doesn't see unSavedChanges!
     var domHelper = this.domHelper;
     var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
-    
-    if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
-        this.saveStatus = "Saved";
-    } else if (this.databroker.hasSyncErrors) {
-        this.saveStatus = "Not Saved - Sync Errors!";
-    } else if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges()) {
-        this.saveStatus = "Processing...";   
-    } else {
-        this.saveStatus = "Document Loaded";
-    }
 
     if (saveStatusElement) {            
         this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
@@ -1347,7 +1339,22 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
     if (this.hasUnsavedChanges() && isNotStillTyping) {
         this.saveContents(null, null, opt_synchronously);
     }
+
+    // this.outputSaveStatus();
 };
+
+atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
+    console.warn('***** Checking saved status...');
+    if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
+        this.saveStatus = "Saved";
+    } else if (this.databroker.hasSyncErrors) {
+        this.saveStatus = "Not Saved - Sync Errors!";
+    } else if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges()) {
+        this.saveStatus = "Processing...";   
+    } else {
+        this.saveStatus = "Document Loaded";
+    }    
+}
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
