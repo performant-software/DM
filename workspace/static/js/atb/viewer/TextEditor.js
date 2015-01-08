@@ -504,7 +504,8 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 
 atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
     console.warn('**** Document Save Clicked ****');
-    this.saveIfModified();
+    this.saveContents();
+    // this.saveIfModified();
     this.databroker.sync();
     this.outputSaveStatus();
 };
