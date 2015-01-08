@@ -1332,14 +1332,6 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
     console.warn('Sync Service Errors:');
     console.warn(this.databroker.hasSyncErrors);
 
-    // change to SAVED here if databroker doesn't see unSavedChanges!
-    var domHelper = this.domHelper;
-    var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
-
-    if (saveStatusElement) {            
-        this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
-    }
-
     var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
         (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
 
@@ -1375,6 +1367,16 @@ atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
     console.info('this.saveStatus:');
     console.info(this.saveStatus);
     /////
+
+    var domHelper = this.domHelper;
+    var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
+
+    if (saveStatusElement) {            
+        this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
+    }
+
+    // After the content is saved and synced the save button is re-enabled.
+    this.saveButton.setEnabled(true);
 }
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
