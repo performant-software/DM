@@ -170,9 +170,9 @@ atb.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI)
  * @param opt_doAfter {function=}
  * @param opt_doAfterScope {object=}
  **/
-atb.viewer.TextEditor.prototype.saveContents = function (
-    opt_doAfter, opt_doAfterScope, opt_synchronously
-) {
+atb.viewer.TextEditor.prototype.saveContents = function () {
+    console.warn('SaveContents...');
+
     if (this.resourceId == null) {
         this.resourceId = this.databroker.createUuid();
         this.uri = this.resourceId;
@@ -1337,7 +1337,7 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
         (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
 
     if (this.hasUnsavedChanges() && isNotStillTyping) {
-        this.saveContents(null, null, opt_synchronously);
+        this.saveContents();
     }
 
     // this.outputSaveStatus();
