@@ -2,6 +2,7 @@ goog.provide('atb.viewer.TextEditor');
 
 goog.require('goog.dom');
 goog.require('goog.dom.DomHelper');
+goog.require('goog.dom.classes');
 
 goog.require('goog.editor.Command');
 goog.require('goog.editor.Field');
@@ -260,7 +261,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     //     atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
     //     this.autoSaveInterval);
 
-    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 4 * 1000;
+    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 7 * 1000;
 
     this.autoOutputSaveStatusIntervalObject = window.setInterval(
         atb.Util.scopeAsyncHandler(this.outputSaveStatus, this), 
@@ -1350,7 +1351,16 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
 };
 
 atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
-    console.warn('***** Checking saved status...');
+    // Remove the below console outputs when save works.
+    console.info('***** Checking saved status...');
+    console.info('Does databroker see unsaved changes?');
+    console.info(this.databroker.syncService.hasUnsavedChanges());
+    console.info('Sync Service Errors:');
+    console.info(this.databroker.hasSyncErrors);
+    console.info('this.unsavedChanges:');
+    console.info(this.unsavedChanges);
+    /////
+
     if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
         this.saveStatus = "Saved";
     } else if (this.databroker.hasSyncErrors) {
@@ -1359,7 +1369,12 @@ atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
         this.saveStatus = "Processing...";   
     } else {
         this.saveStatus = "Document Loaded";
-    }    
+    }
+
+    // Remove the below console outputs when save works.
+    console.info('this.saveStatus:');
+    console.info(this.saveStatus);
+    /////
 }
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
