@@ -79,8 +79,6 @@ goog.inherits(atb.viewer.TextEditor, atb.viewer.Viewer);
 
 atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
 
-// atb.viewer.TextEditor.prototype.autoSaveInterval = 3 * 1000;
-
 /**
  * getSanitizedHtml()
  * @return {string} the html contents of the editor with unwanted tags (such as <script>) removed
@@ -256,6 +254,8 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this._renderDocumentIcon();
     
     // This is where the textEditor save Interval is created.
+    // atb.viewer.TextEditor.prototype.autoSaveInterval = 3 * 1000;
+
     // this.autoSaveIntervalObject = window.setInterval(
     //     atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
     //     this.autoSaveInterval);
