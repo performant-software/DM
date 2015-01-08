@@ -184,7 +184,6 @@ atb.viewer.TextEditor.prototype.saveContents = function () {
     var resource = this.databroker.getResource(this.resourceId);
     this.databroker.dataModel.setTitle(resource, this.getTitle());
     this.databroker.dataModel.setTextContent(resource, this.getSanitizedHtml());
-    console.warn('SaveContents');
 
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     highlightPlugin.updateAllHighlightResources();
