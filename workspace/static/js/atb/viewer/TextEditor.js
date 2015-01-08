@@ -510,9 +510,15 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 
 atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
     console.warn('**** Document Save Clicked ****');
+    
+    // disable save button
+    this.saveButton.setEnabled(false);
+    
     this.saveContents();
-    // this.saveIfModified();
+    // wait 1 second??
     this.databroker.sync();
+
+    // Save button re-enabled in the outputSaveStatus check.
 };
 
 atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
