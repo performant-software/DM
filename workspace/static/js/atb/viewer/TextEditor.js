@@ -561,7 +561,7 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
     // Stops autosave when the window is closed.
     goog.events.listen(this.container.closeButton, 'click', function(e) {
         clearInterval(this.autoOutputSaveStatusObject);
-        clearInterval(this.autoSaveIntervalObject);
+        // clearInterval(this.autoSaveIntervalObject);
     }, false, this);
 };
 
