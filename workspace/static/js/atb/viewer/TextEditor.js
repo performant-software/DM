@@ -260,6 +260,12 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     //     atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
     //     this.autoSaveInterval);
 
+    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 4 * 1000;
+
+    this.autoOutputSaveStatusIntervalObject = window.setInterval(
+        atb.Util.scopeAsyncHandler(this.outputSaveStatus, this), 
+        this.autoOutputSaveStatus);
+
     // this.clientApp.registerFunctionToCallBeforeUnload(function() {
     //     this.saveIfModified(true);
     // }.bind(this));
@@ -506,7 +512,6 @@ atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
     this.saveContents();
     // this.saveIfModified();
     this.databroker.sync();
-    this.outputSaveStatus();
 };
 
 atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
@@ -548,6 +553,7 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
 
     // Stops autosave when the window is closed.
     goog.events.listen(this.container.closeButton, 'click', function(e) {
+        clearInterval(this.autoOutputSaveStatusObject);
         clearInterval(this.autoSaveIntervalObject);
     }, false, this);
 };
