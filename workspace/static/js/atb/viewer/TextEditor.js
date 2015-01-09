@@ -1319,7 +1319,7 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
     if (this.databroker.hasSyncErrors) {
         this.saveStatus = "Not Saved - Sync Errors!";
     } else {
-        this.saveStatus = "Processing...";
+        this.saveStatus = "Not Saved";
     }
 
     if (saveStatusElement) {
@@ -1364,7 +1364,7 @@ atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
     } else if (this.databroker.hasSyncErrors) {
         this.saveStatus = "Not Saved - Sync Errors!";
     } else if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges()) {
-        this.saveStatus = "Processing...";   
+        this.saveStatus = "Not Saved";   
     } else {
         this.saveStatus = "Document Loaded";
     }
