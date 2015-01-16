@@ -10,9 +10,9 @@ sc.SyncManager = function(clientApp) {
     this.clientApp = clientApp;
     this.domHelper = new goog.dom.DomHelper();
 
-    this.saveButtonElement = this.domHelper.createDom('button', {'class': 'btn btn-inverse'}, 'Sync all');
+    // this.saveButtonElement = this.domHelper.createDom('button', {'class': 'btn btn-inverse'}, 'Sync all');
 
-    goog.events.listen(this.saveButtonElement, 'click', this._syncData, false, this);
+    // goog.events.listen(this.saveButtonElement, 'click', this._syncData, false, this);
 };
 
 

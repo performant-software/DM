@@ -230,7 +230,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     setupRepoBrowser(clientApp, wrContainerParent);
     setupProjectViewer(clientApp, viewerGrid);
     setupSearchViewer(clientApp);
-    setupSyncManager(clientApp);
+    // setupSyncManager(clientApp);
 }
 
 
