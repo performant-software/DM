@@ -18,6 +18,9 @@ from semantic_store.models import ProjectPermission
 from datetime import datetime
 import itertools
 
+import logging
+logger = logging.getLogger(__name__)
+
 PROJECT_TYPES = (NS.dcmitype.Collection, NS.ore.Aggregation, NS.foaf.Project, NS.dm.Project)
 
 def get_project_graph(project_uri):
@@ -35,6 +38,7 @@ def get_project_metadata_graph(project_uri):
 def create_project_from_request(request):
     """Takes a graph via an http request, and creates a project in the database (and the metadata cache) from an input graph"""
     try:
+        logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_from_request')
         g = parse_request_into_graph(request)
     except (ParserError, SyntaxError) as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
@@ -44,23 +48,37 @@ def create_project_from_request(request):
 
 def create_project(g):
     """Creates a project in the database (and the metadata cache) from an input graph"""
+    print "Here 1"
+
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
                         ?user rdf:type foaf:Agent .
                     }""", initNs=ns)
 
-    for uri in g.subjects(NS.rdf.type, NS.dm.Project):
-        user = g.value(None, NS.perm.hasPermissionOver, uri)
-        user_obj = User.objects.get(username=user.split('/')[-1])
+    print "Here 2"
 
+    for uri in g.subjects(NS.rdf.type, NS.dm.Project):
+        print "Here 3"
+        user = g.value(None, NS.perm.hasPermissionOver, uri)
+        if user:
+            print "Here 3.1"
+            user_obj = User.objects.get(username=user.split('/')[-1])
+        print "Here 3.2"
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
+        print "Here 3.3"
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
+
+        print "Here 4"
 
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
             text_graph = Graph()
             text_graph += g.triples((text_uri, None, None))
-            project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
+            print "Here 4.1"
+            if user:
+                project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
+
+        print "Here 5"
 
         for t in g:
             project_g.add(t)
@@ -71,7 +89,10 @@ def create_project(g):
         url = uris.url('semantic_store_projects', uri=uri)
         project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
+        print "before user"
+
         if user:
+            print "user is true"
             project_g.remove((user, None, None))
             username = user.split("/")[-1]
             permissions.grant_full_project_permissions(username, uri)
@@ -159,7 +180,11 @@ def update_project(request, uri):
     if request.user.is_authenticated():
         if (permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate) or
             permissions.is_abandoned_project(uri)):
+            logger.debug("$$$$$$$$$$$ update_project (request)")
+            logger.debug(request)
+            
             try:
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - update_project')
                 input_graph = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
@@ -225,6 +250,7 @@ def delete_triples_from_project(request, uri):
             bind_namespaces(removed)
 
             try:
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - delete_triples_from_project')
                 g = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)

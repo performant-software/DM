@@ -39,6 +39,9 @@ from semantic_store import text_search
 
 from os import listdir
 
+import logging
+logger = logging.getLogger(__name__)
+
 def check_project_resource_permissions(fn):
     def inner(request, *args, **kwargs):
         project_uri = kwargs['project_uri'] if 'project_uri' in kwargs else kwargs['uri']
@@ -157,6 +160,7 @@ def import_old_data(request):
 
     # Either gather post data (must be one project/user graph at a time)
     if request.method == 'POST':
+        logger.debug('!!!!!!!!!!!!!!! views.py - import_old_data')
         parse_request_into_graph(request, everything_graph)
 
         add_all_users(everything_graph)
@@ -222,11 +226,14 @@ def remove_project_triples(request, uri):
 @check_project_resource_permissions
 def project_texts(request, project_uri, text_uri):
     if request.method == 'POST':
-        return create_project_text_from_request(request, project_uri)
+        logger.debug("$$$$$$$$$$$$$$$ POST $$$$$$$$$$$$$$")
+        return create_project_text_from_request(request, project_uri, text_uri)
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
+        # logger.debug("$$$$$$$$$$$$$$$ g: " + str(g))
         return NegotiatedGraphResponse(request, g)
     elif request.method == 'PUT':
+        logger.debug("$$$$$$$$$$$$$$$ PUT $$$$$$$$$$$$$$")
         return update_project_text_from_request(request, project_uri, text_uri)
     elif request.method == 'DELETE':
         remove_project_text(project_uri, text_uri)
@@ -255,6 +262,7 @@ def project_canvases(request, project_uri, canvas_uri):
     if request.method == 'GET':
         return NegotiatedGraphResponse(request, read_canvas(request, project_uri, canvas_uri))
     elif request.method == 'PUT':
+        logger.debug('!!!!!!!!!!!!!!! views.py - project_canvases')
         input_graph = parse_request_into_graph(request)
         return NegotiatedGraphResponse(request, update_canvas(project_uri, canvas_uri, input_graph))
     else:
@@ -286,6 +294,7 @@ def specific_resource_graph(request, project_uri, specific_resource, source):
     if request.method == 'GET':
         return NegotiatedGraphResponse(request, read_specific_resource(project_uri, specific_resource, source))
     elif request.method == 'PUT':
+        logger.debug('!!!!!!!!!!!!!!! views.py - specific_resource_graph')
         g = parse_request_into_graph(request)
         update_specific_resource(g, URIRef(project_uri), URIRef(specific_resource))
 

@@ -53,17 +53,27 @@ def sanitized_content(content):
 
 # Create a project from a (POST) request to a specified project
 # This function parses the data and then sends it to create_project_text which accepts a
-#  graph object instead of a request object
-def create_project_text_from_request(request, project_uri):
+# graph object instead of a request object
+def create_project_text_from_request(request, project_uri, request_text_uri):
     if request.user.is_authenticated():
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request')
                 g = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - EXCEPTION !!!!!!!!')
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
             else:
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - ELSE !!!!!!!!')
                 text_uri = URIRef(uris.uuid())
+                logger.debug("uris.uuid(): %s", uris.uuid())
+                logger.debug("text_uri: %s", text_uri)
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - CREATING TEXT... !!!!!!!!')
                 update_project_text(g, project_uri, text_uri, request.user)
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - CREATING TEXT COMPLETE !!!!!!!!')
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - UPDATING... !!!!!!!!')
+                update_project_text(g, project_uri, request_text_uri, request.user)
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - UPDATING COMPLETE !!!!!!!!')
                 return NegotiatedGraphResponse(request, read_project_text(project_uri, text_uri))
         else:
             return HttpResponseForbidden()
@@ -117,54 +127,85 @@ def read_project_text(project_uri, text_uri):
 
 # Updates a project text based on data in the supplied graph
 # Uses different name for arguments so that (unchanged) arguments can be passed to the 
-#  read_project_text method to return the updated data
+# read_project_text method to return the updated data
 def update_project_text(g, p_uri, t_uri, user):
     logger.debug("************* Updating project")
     # Correctly format project uri and get project graph
     project_uri = uris.uri('semantic_store_projects', uri=p_uri)
+    logger.debug("!!!!!!!!!!!!!! Here 1")
     project_g = Graph(rdfstore(), identifier=project_uri)
+    logger.debug("!!!!!!!!!!!!!! Here 2")
     project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(p_uri))
+    logger.debug("!!!!!!!!!!!!!! Here 3")
     text_uri = URIRef(t_uri)
+    logger.debug("!!!!!!!!!!!!!! Here 4")
 
     title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or Literal("")
+    logger.debug("!!!!!!!!!!!!!! Here 5")
     content_value = g.value(text_uri, NS.cnt.chars)
+    logger.debug("!!!!!!!!!!!!!! Here 6")
+    logger.debug("g: %s", g)
+    logger.debug("g.value: %s", g.value)
+    logger.debug("text_uri: %s", text_uri)
+    logger.debug("NS.cnt.chars: %s", NS.cnt.chars)
+    logger.debug("content_value: %s", content_value)
     if content_value:
         content = sanitized_content(content_value)
+        logger.debug("!!!!!!!!!!!!!! Here 6.1")
     else:
         content = ''
+        logger.debug("!!!!!!!!!!!!!! Here 6.2")
 
     with transaction.commit_on_success():
+        logger.debug("!!!!!!!!!!!!!! Here 7")
         for t in Text.objects.filter(identifier=t_uri, valid=True):
+            logger.debug("!!!!!!!!!!!!!! Here 8")
             t.valid = False
+            logger.debug("!!!!!!!!!!!!!! Here 9")
             t.save()
+            logger.debug("!!!!!!!!!!!!!! Here 10")
             # While it looks like this would be better with a QuerySet update, we need to fire the save
             # events to keep the search index up to date. In all forseeable cases, this should only execute
             # for one Text object anyway.
 
         text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user, project=p_uri)
+        logger.debug("!!!!!!!!!!!!!! Here 11")
 
         project_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
+        logger.debug("!!!!!!!!!!!!!! Here 12")
         project_g.set((text_uri, NS.dc.title, title))
+        logger.debug("!!!!!!!!!!!!!! Here 13")
         project_g.set((text_uri, NS.rdfs.label, title))
+        logger.debug("!!!!!!!!!!!!!! Here 14")
 
         text_url = URIRef(uris.url('semantic_store_project_texts', project_uri=p_uri, text_uri=text_uri))
+        logger.debug("!!!!!!!!!!!!!! Here 15")
         project_g.set((text_uri, NS.ore.isDescribedBy, text_url))
+        logger.debug("!!!!!!!!!!!!!! Here 16")
 
         if (URIRef(p_uri), NS.ore.aggregates, text_uri) in project_metadata_g:
+            logger.debug("!!!!!!!!!!!!!! Here 16.1")
             project_metadata_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
+            logger.debug("!!!!!!!!!!!!!! Here 16.2")
             project_metadata_g.set((text_uri, NS.dc.title, title))
+            logger.debug("!!!!!!!!!!!!!! Here 16.3")
             project_metadata_g.set((text_uri, NS.rdfs.label, title))
+            logger.debug("!!!!!!!!!!!!!! Here 16.4")
 
+    logger.debug("!!!!!!!!!!!!!! Here 17")
     specific_resource_triples = specific_resources_subgraph(g, text_uri, p_uri)
+    logger.debug("!!!!!!!!!!!!!! Here 18")
     for t in specific_resource_triples:
+        logger.debug("!!!!!!!!!!!!!! Here 19")
         project_g.add(t)
 
     for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
+        logger.debug("!!!!!!!!!!!!!! Here 20")
         project_g.set(t)
 
 # Updates a project's text to match data in a (PUT) request
 # This function parses the data and then sends it to update_project_text which accepts a
-#  graph object instead of a request object
+# graph object instead of a request object
 def update_project_text_from_request(request, project_uri, text_uri):
     logger.debug("************** update_project_text_from_request")
     logger.debug("%%%%%%%%%%%%%% request.body:")
@@ -176,6 +217,7 @@ def update_project_text_from_request(request, project_uri, text_uri):
     if request.user.is_authenticated():
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
+                logger.debug('!!!!!!!!!!!!!!! project_texts.py - update_project_text_from_request')
                 g = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization. %s" % e)
