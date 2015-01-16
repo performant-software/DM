@@ -366,7 +366,16 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
                 success: function() {
                     successHandler.apply(this, arguments);
                 }.bind(this),
-                error: function() {
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error('ERROR! ' + errorThrown);
+                    console.error('textStatus: ' + textStatus);
+                    console.error('jqXHR (full obj):');
+                    console.error(jqXHR);
+                    console.error('jqXHR.responseText:');
+                    console.error(jqXHR.responseText);
+                    console.error('data:');
+                    console.error(data);
+                    console.error('************ End error **********');
                     errorHandler.apply(this, arguments);
                 },
                 data: data,
