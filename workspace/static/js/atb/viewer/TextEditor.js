@@ -170,7 +170,7 @@ atb.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI)
  * @param opt_doAfterScope {object=}
  **/
 atb.viewer.TextEditor.prototype.saveContents = function () {
-    console.warn('SaveContents...');
+    console.info('SaveContents...');
 
     if (this.resourceId == null) {
         this.resourceId = this.databroker.createUuid();
@@ -178,14 +178,14 @@ atb.viewer.TextEditor.prototype.saveContents = function () {
     }
     // this.updateAllPropertiesFromPane();
     
-    this.unsavedChanges = false;
-
     var resource = this.databroker.getResource(this.resourceId);
     this.databroker.dataModel.setTitle(resource, this.getTitle());
     this.databroker.dataModel.setTextContent(resource, this.getSanitizedHtml());
 
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     highlightPlugin.updateAllHighlightResources();
+
+    this.unsavedChanges = false;
 };
 
 /**
@@ -1351,12 +1351,12 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
 atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
     // Remove the below console outputs when save works.
     console.info('***** Checking saved status...');
+    console.info('this.unsavedChanges:');
+    console.info(this.unsavedChanges);
     console.info('Does databroker see unsaved changes?');
     console.info(this.databroker.syncService.hasUnsavedChanges());
     console.info('Sync Service Errors:');
     console.info(this.databroker.hasSyncErrors);
-    console.info('this.unsavedChanges:');
-    console.info(this.unsavedChanges);
     /////
 
     if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
@@ -1368,11 +1368,6 @@ atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
     } else {
         this.saveStatus = "Document Loaded";
     }
-
-    // Remove the below console outputs when save works.
-    console.info('this.saveStatus:');
-    console.info(this.saveStatus);
-    /////
 
     var domHelper = this.domHelper;
     var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
