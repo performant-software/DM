@@ -255,11 +255,11 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this._renderDocumentIcon();
     
     // This is where the textEditor save Interval is created.
-    // atb.viewer.TextEditor.prototype.autoSaveInterval = 3 * 1000;
+    atb.viewer.TextEditor.prototype.autoSaveInterval = 30 * 1000;
 
-    // this.autoSaveIntervalObject = window.setInterval(
-    //     atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
-    //     this.autoSaveInterval);
+    this.autoSaveIntervalObject = window.setInterval(
+        atb.Util.scopeAsyncHandler(this.saveIfModified, this), 
+        this.autoSaveInterval);
 
     atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 7 * 1000;
 
