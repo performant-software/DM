@@ -45,3 +45,4 @@ lib
 include
 .Python
 *.log
+pip-selfcheck.json
