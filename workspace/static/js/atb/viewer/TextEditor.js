@@ -254,12 +254,11 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     
     this._renderDocumentIcon();
     
-    /* DISABLE  AUTOSAVE
-    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 7 * 1000;
+    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 3 * 1000;
+
     this.autoOutputSaveStatusIntervalObject = window.setInterval(
         atb.Util.scopeAsyncHandler(this.outputSaveStatus, this), 
         this.autoOutputSaveStatus);
-    */
 
     // this.clientApp.registerFunctionToCallBeforeUnload(function() {
     //     this.saveIfModified(true);
@@ -1343,36 +1342,28 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
 };
 
 atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
-    // Remove the below console outputs when save works.
-    console.info('***** Checking saved status...');
-    console.info('this.unsavedChanges:');
-    console.info(this.unsavedChanges);
-    console.info('Does databroker see unsaved changes?');
-    console.info(this.databroker.syncService.hasUnsavedChanges());
-    console.info('Sync Service Errors:');
-    console.info(this.databroker.hasSyncErrors);
-    /////
 
     if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
-        this.saveStatus = "Saved";
+        this.saveStatus = "Saved";      
+        this.saveButton.setEnabled(true);
     } else if (this.databroker.hasSyncErrors) {
-        this.saveStatus = "Not Saved - Sync Errors!";
+        this.saveStatus = "Not Saved - Sync Errors!";      
+        this.saveButton.setEnabled(true);
     } else if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges()) {
         this.saveStatus = "Not Saved";   
     } else {
-        this.saveStatus = "Document Loaded";
+        this.saveStatus = "Document Loaded";        
+        this.saveButton.setEnabled(true);
     }
 
     var domHelper = this.domHelper;
     var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
-
-    if (saveStatusElement) {            
-        this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
+    if (saveStatusElement) {  
+        if ( this.domHelper.getTextContent(saveStatusElement) !=  this.saveStatus ) { 
+           this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
+        }
     }
-
-    // After the content is saved and synced the save button is re-enabled.
-    this.saveButton.setEnabled(true);
-}
+};
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
