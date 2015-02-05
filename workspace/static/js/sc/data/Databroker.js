@@ -78,16 +78,14 @@ sc.data.Databroker = function(options) {
     this.newResourceUris = new goog.structs.Set();
     this.deletedResourceUris = new goog.structs.Set();
 
-    // This is how the sync happens!
-    this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
+    // This is how the sync happens! NOT! Everything is manual now
+    // this.syncIntervalId = window.setInterval(this.sync.bind(this), sc.data.Databroker.SYNC_INTERVAL);
 
     this.hasSyncErrors = false;
 
     this.dataModel = new sc.data.DataModel(this);
     this.projectController = new sc.data.ProjectController(this);
     this.searchClient = new sc.data.SearchClient(this);
-
-    console.warn('In the Databroker obj..');
 };
 
 sc.data.Databroker.SYNC_INTERVAL = 60 * 1000;
@@ -325,7 +323,7 @@ sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handle
     var type = sc.data.Parser.parseContentType(responseHeaders);
 
     window.setTimeout(function() {
-        this.processRdfData(data, type, handler)
+        this.processRdfData(data, type, handler);
     }.bind(this), 1);
 };
 
@@ -908,7 +906,6 @@ sc.data.Databroker.prototype.createUuid = function() {
 };
 
 sc.data.Databroker.prototype.sync = function() {
-    console.warn('Databroker.sync being called...');
     return this.syncService.requestSync();
 };
 
