@@ -67,7 +67,7 @@ atb.viewer.TextEditor = function(clientApp, opt_initialTextContent) {
 	atb.viewer.Viewer.call(this, clientApp);
     
     this.viewerType = 'text editor';
-	
+	 this.unsavedChanges = false;
     this.styleRoot = this.clientApp.getStyleRoot();
 	
 	this.bDeleteHighlightMode = false;
@@ -125,11 +125,74 @@ atb.viewer.TextEditor.prototype.fixPastedSpans_visitRecursively_ = function(tag)
 	
 };
 */
-atb.viewer.TextEditor.prototype.onTextPasted = function()
+
+function processpaste (elem, savedcontent) {
+    pasteddata = elem.innerHTML;
+    var txt = $(elem).text();
+    //^^Alternatively loop through dom (elem.childNodes or elem.getElementsByTagName) here
+
+    elem.innerHTML = savedcontent;
+
+    // Do whatever with gathered data;
+    alert(txt);
+}
+
+function waitforpastedata (elem, savedcontent) {
+    if (elem.childNodes && elem.childNodes.length > 0) {
+        processpaste(elem, savedcontent);
+    }
+    else {
+        that = {
+            e: elem,
+            s: savedcontent
+        };
+        that.callself = function () {
+            waitforpastedata(that.e, that.s);
+        };
+        setTimeout(that.callself,2);
+    }
+} 
+
+function doGetCaretPosition (oField) {
+
+  // Initialize
+  var iCaretPos = 0;
+
+  // IE Support
+  if (document.selection) {
+
+    // Set focus on the element
+    oField.focus ();
+
+    // To get cursor position, get empty selection range
+    var oSel = document.selection.createRange ();
+
+    // Move selection start to 0 position
+    oSel.moveStart ('character', -oField.value.length);
+
+    // The caret position is selection length
+    iCaretPos = oSel.text.length;
+  }
+
+  // Firefox support
+  else if (oField.selectionStart || oField.selectionStart == '0')
+    iCaretPos = oField.selectionStart;
+
+  // Return results
+  return (iCaretPos);
+}
+
+atb.viewer.TextEditor.prototype.onTextPasted = function(e)
 {
-	//this.fixPastedSpans();
-	
-	// this.applyFormattingRules();
+	var ele = e.currentTarget;
+	var stuff = ele.innerHTML;
+
+    //alert(doGetCaretPosition(ele));
+   
+   //ele.innerHTML = "";
+
+	//waitforpastedata(ele, stuff);
+	//alert("paste orig: "+stuff);
 };
 
 /**
@@ -246,14 +309,32 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this._renderDocumentIcon();
     
     atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 3 * 1000;
-
+    var self = this;
     this.autoOutputSaveStatusIntervalObject = window.setInterval(
-        atb.Util.scopeAsyncHandler(this.outputSaveStatus, this), 
-        this.autoOutputSaveStatus);
+       function() {
+          var status = "";
+          if (!self.unsavedChanges && !self.databroker.syncService.hasUnsavedChanges() && !self.databroker.hasSyncErrors) {
+              status = "Saved";      
+              self.saveButton.setEnabled(true);
+          } else if (self.databroker.hasSyncErrors) {
+              status = "Not Saved - Sync Errors!";      
+              self.saveButton.setEnabled(true);
+          } else if (self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
+              status = "Not Saved";   
+          } else {
+              status = "Document Loaded";        
+              self.saveButton.setEnabled(true);
+          }
+      
+          var saveStatusElement = $("#"+self.useID + '_js_save_status');
+          if (saveStatusElement.length > 0) {  
+             var currTxt =  saveStatusElement.text();
+              if ( saveStatusElement.text() !=  status ) { 
+                saveStatusElement.text( status);
+              }
+          }
+       }, this.autoOutputSaveStatus);
 
-    // this.clientApp.registerFunctionToCallBeforeUnload(function() {
-    //     this.saveIfModified(true);
-    // }.bind(this));
     
     goog.events.listen(
         this.clientApp.getEventDispatcher(), 
@@ -282,9 +363,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     
     this.pasteHandler = new goog.events.PasteHandler(this.field);
     this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e) {
-        window.setTimeout(function() {
-            this.onTextPasted();
-        }.bind(this), 1);
+      this.onTextPasted(e);
     }.bind(this));
     
     this.editorIframeElement = this.domHelper.getElement(this.useID);
@@ -458,7 +537,6 @@ atb.viewer.TextEditor.prototype.handleDocumentIconClick_ = function (e) {
 atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
     var eventDispatcher = this.clientApp.getEventDispatcher();
     
-    this.unsavedChanges = false;
     goog.events.listen(this.field, goog.editor.Field.EventType.DELAYEDCHANGE, this.onChange, false, this);
     
 //    goog.events.listen(eventDispatcher, 'resource-modified', function (e) {
@@ -483,7 +561,6 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
     // Stops autosave when the window is closed.
     goog.events.listen(this.container.closeButton, 'click', function(e) {
         clearInterval(this.autoOutputSaveStatusIntervalObject);
-        // clearInterval(this.autoSaveIntervalObject);
     }, false, this);
 };
 
@@ -1230,21 +1307,6 @@ atb.viewer.TextEditor.prototype.hasUnsavedChanges = function () {
 
 atb.viewer.TextEditor.prototype.onChange = function (event) {
     this.unsavedChanges = true;
-
-    // change to NOT SAVED here!
-    var domHelper = this.domHelper;
-    var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
-    
-    if (this.databroker.hasSyncErrors) {
-        this.saveStatus = "Not Saved - Sync Errors!";
-    } else {
-        this.saveStatus = "Not Saved";
-    }
-
-    if (saveStatusElement) {
-        this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
-    }
-    
     this.timeOfLastChange = goog.now();
 };
 
@@ -1257,31 +1319,6 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
 
     if (this.hasUnsavedChanges() && isNotStillTyping) {
         this.saveContents();
-    }
-
-    // this.outputSaveStatus();
-};
-atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
-
-    if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
-        this.saveStatus = "Saved";      
-        this.saveButton.setEnabled(true);
-    } else if (this.databroker.hasSyncErrors) {
-        this.saveStatus = "Not Saved - Sync Errors!";      
-        this.saveButton.setEnabled(true);
-    } else if (this.unsavedChanges || this.databroker.syncService.hasUnsavedChanges()) {
-        this.saveStatus = "Not Saved";   
-    } else {
-        this.saveStatus = "Document Loaded";        
-        this.saveButton.setEnabled(true);
-    }
-
-    var domHelper = this.domHelper;
-    var saveStatusElement = domHelper.getDocument().getElementById(this.useID + '_js_save_status');
-    if (saveStatusElement) {  
-        if ( this.domHelper.getTextContent(saveStatusElement) !=  this.saveStatus ) { 
-           this.domHelper.setTextContent(saveStatusElement, this.saveStatus);
-        }
     }
 };
 

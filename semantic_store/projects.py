@@ -56,7 +56,7 @@ def create_project(g):
                         ?user rdf:type foaf:Agent .
                     }""", initNs=ns)
 
-    print "Here 2"
+    print "Here 2 %s %s" %(NS.rdf.type , NS.dm.Project)
 
     for uri in g.subjects(NS.rdf.type, NS.dm.Project):
         print "Here 3"

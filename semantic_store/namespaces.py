@@ -2,6 +2,8 @@ from rdflib import RDF, Graph, URIRef
 from rdflib.namespace import Namespace
 from collections import namedtuple
 
+from django.conf import settings
+
 ns = {
     'rdf': RDF,
     'dms': Namespace("http://dms.stanford.edu/ns/"),
@@ -22,7 +24,7 @@ ns = {
     'skos': Namespace("http://www.w3.org/2004/02/skos/core#"),
     'trig': Namespace("http://www.w3.org/2004/03/trix/rdfg-1/"),
     'perm': Namespace("http://vocab.ox.ac.uk/perm#"),
-    'dm': Namespace("http://dm.drew.edu/ns/")
+    'dm': Namespace(settings.BASE_URL+"ns/")
 }
 
 _ns_named_tuple = namedtuple('ns_named_tuple', ns.keys())
