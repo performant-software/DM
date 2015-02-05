@@ -226,14 +226,12 @@ def remove_project_triples(request, uri):
 @check_project_resource_permissions
 def project_texts(request, project_uri, text_uri):
     if request.method == 'POST':
-        logger.debug("$$$$$$$$$$$$$$$ POST $$$$$$$$$$$$$$")
         return create_project_text_from_request(request, project_uri, text_uri)
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
         # logger.debug("$$$$$$$$$$$$$$$ g: " + str(g))
         return NegotiatedGraphResponse(request, g)
     elif request.method == 'PUT':
-        logger.debug("$$$$$$$$$$$$$$$ PUT $$$$$$$$$$$$$$")
         return update_project_text_from_request(request, project_uri, text_uri)
     elif request.method == 'DELETE':
         remove_project_text(project_uri, text_uri)

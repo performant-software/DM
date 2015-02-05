@@ -85,15 +85,9 @@ atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
  * @return {string} the html contents of the editor with unwanted tags (such as <script>) removed
  **/
 atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
-    // Old code
-    // return this.field.getCleanContents();
-
-    // Option two
     var cleanContents = this.field.getCleanContents();
     cleanContents = cleanContents.replace(/'/g, "&#39;");
     // cleanContents = cleanContents.replace(/"/g, "&quot;");
-    console.warn('cleanContents');
-    console.warn(cleanContents);
     return cleanContents;
 };
 
@@ -170,13 +164,10 @@ atb.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI)
  * @param opt_doAfterScope {object=}
  **/
 atb.viewer.TextEditor.prototype.saveContents = function () {
-    console.info('SaveContents...');
-
     if (this.resourceId == null) {
         this.resourceId = this.databroker.createUuid();
         this.uri = this.resourceId;
     }
-    // this.updateAllPropertiesFromPane();
     
     var resource = this.databroker.getResource(this.resourceId);
     this.databroker.dataModel.setTitle(resource, this.getTitle());
@@ -442,76 +433,14 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
 };
 
-// atb.viewer.TextEditor.prototype.renderPropertiesPane = function () {
-//     this.propertiesPaneDiv = this.domHelper.createDom('div');
-//     jQuery(this.propertiesPaneDiv).hide();
-    
-//     this.rootDiv.appendChild(this.propertiesPaneDiv);
-    
-//     this.propertiesPane = new atb.viewer.TextEditorProperties(this);
-// };
-
-// atb.viewer.TextEditor.prototype.finishRenderPropertiesPane = function () {
-//     this.propertiesPane.render(this.propertiesPaneDiv);
-// };
-
-// atb.viewer.TextEditor.prototype.updateAllPropertiesFromPane = function () {
-//     var properties = this.propertiesPane.getUnescapedProperties();
-    
-//     this.setProperties(properties);
-// };
-
-// atb.viewer.TextEditor.prototype.updatePropertiesPaneContents = function () {
-//     var properties = {
-//         'purpose': this.purpose
-//     };
-    
-//     this.propertiesPane.setProperties(properties);
-// };
-
-// atb.viewer.TextEditor.prototype.setProperties = function (properties) {
-//     if (properties.purpose) {
-//         this.setPurpose(properties.purpose);
-//     }
-// };
-
-// atb.viewer.TextEditor.prototype.showPropertiesPane = function () {
-//     this.updatePropertiesPaneContents();
-    
-//     var self = this;
-//     jQuery(this.field.getElement()).fadeOut(300);
-//     jQuery(this.propertiesPaneDiv).fadeIn(300);
-//     jQuery(this.documentIcon).fadeOut(300);
-    
-//     this.propertiesPanelVisible = true;
-    
-//     this.propertiesButton.setChecked(true);
-// };
-
-// atb.viewer.TextEditor.prototype.hidePropertiesPane = function () {
-//     var self = this;
-//     jQuery(this.propertiesPaneDiv).fadeOut(300);
-//     jQuery(this.field.getElement()).fadeIn(300);
-//     jQuery(this.documentIcon).fadeIn(300);
-    
-//     this.propertiesPanelVisible = false;
-    
-//     this.updateAllPropertiesFromPane();
-    
-//     this.propertiesButton.setChecked(false);
-// };
 
 atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
-    console.warn('**** Document Save Clicked ****');
     
     // disable save button
-    this.saveButton.setEnabled(false);
-    
-    this.saveContents();
-    // wait 1 second??
-    this.databroker.sync();
-
     // Save button re-enabled in the outputSaveStatus check.
+    this.saveButton.setEnabled(false);
+    this.saveContents();
+    this.databroker.sync();
 };
 
 atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
@@ -1133,7 +1062,7 @@ atb.viewer.TextEditor.prototype.applyFormattingRulesRecursively_ = function(toTa
 					nd_tmp = nds[ndi];
 				}
 			
-				jQuery(this).contents().each(function(){nd.appendChild(this)});
+				jQuery(this).contents().each(function(){nd.appendChild(this);});
 				
 				
 				parentNode.replaceChild(nds[0], childTag);//replace us
@@ -1296,13 +1225,10 @@ atb.viewer.TextEditor.prototype.getPositionOfFieldChildElement = function (eleme
 };
 
 atb.viewer.TextEditor.prototype.hasUnsavedChanges = function () {
-    console.warn('TextEditor: hasUnsavedChanges?');
-    console.warn(this.unsavedChanges);
     return !! this.unsavedChanges;
 };
 
 atb.viewer.TextEditor.prototype.onChange = function (event) {
-    console.warn('Changed!');
     this.unsavedChanges = true;
 
     // change to NOT SAVED here!
@@ -1326,11 +1252,6 @@ atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 2 * 1000;
 
 // This is run every 2 seconds (see above)
 atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
-    console.warn('Does databroker see unsaved changes?');
-    console.warn(this.databroker.syncService.hasUnsavedChanges());
-    console.warn('Sync Service Errors:');
-    console.warn(this.databroker.hasSyncErrors);
-
     var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
         (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
 
@@ -1340,7 +1261,6 @@ atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
 
     // this.outputSaveStatus();
 };
-
 atb.viewer.TextEditor.prototype.outputSaveStatus = function () {
 
     if (!this.unsavedChanges && !this.databroker.syncService.hasUnsavedChanges() && !this.databroker.hasSyncErrors) {
@@ -1384,7 +1304,7 @@ atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
                 }
             }
         } catch (error) {
-            console.error(error)
+            console.error(error);
         }
         if (uri == this.uri) {
            this.flashDocumentIconHighlight();
