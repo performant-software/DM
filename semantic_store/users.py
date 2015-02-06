@@ -70,12 +70,16 @@ def user_graph(request, username=None, user=None):
 
     graph += user_graph.triples((user_uri, NS.dm.lastOpenProject, None))
 
-    for permission in ProjectPermission.objects.filter(user=user):
-        perm_uri = PERMISSION_URIS_BY_MODEL_VALUE[permission.permission]
-        project_uri = URIRef(permission.identifier)
-
-        graph.add((user_uri, NS.perm.hasPermissionOver, project_uri))
-        graph.add((user_uri, perm_uri, project_uri))
+    # guest is a special user that gets READ permissions on all projects
+    for permission in ProjectPermission.objects.all():
+        if user.username == 'guest' or user.id == permission.user_id: 
+            perm_uri = PERMISSION_URIS_BY_MODEL_VALUE[permission.permission]
+            if user.username == 'guest':
+                perm_uri = PERMISSION_URIS_BY_MODEL_VALUE['r']
+            project_uri = URIRef(permission.identifier)
+            
+            graph.add((user_uri, NS.perm.hasPermissionOver, project_uri))
+            graph.add((user_uri, perm_uri, project_uri))
 
     # Add metadata info about projects
     for project in graph.objects(user_uri, NS.perm.hasPermissionOver):
