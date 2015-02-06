@@ -12,6 +12,8 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
     this.databroker = clientApp.databroker;
     this.projectController = this.databroker.projectController;
     this.viewerGrid = clientApp.viewerGrid;
+    var user = this.databroker.user;
+    this.isGuest = (user.uri.split("/").pop() === "guest");
 
     this.domHelper = opt_domHelper || new goog.dom.DomHelper();
 
@@ -49,12 +51,14 @@ sc.ProjectViewer.prototype._buildButtonGroup = function() {
     });
     this.buttonDropdownList = this.domHelper.createDom('ul', {'class': 'dropdown-menu'});
 
-    var createNewProjectButton = this.domHelper.createDom('li', {'class': 'sc-ProjectViewer-createProjectButton'},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'title': 'Start a new project'},
-        this.domHelper.createDom('span', {'class': 'icon-plus'}), 'New project'));
-    goog.events.listen(createNewProjectButton, 'click', this._handleNewProjectButtonClick, false, this);
-    this.buttonDropdownList.appendChild(createNewProjectButton);
-    this.buttonDropdownList.appendChild(this.domHelper.createDom('li', {'class': 'divider'}));
+    if ( this.isGuest === false ) {
+       var createNewProjectButton = this.domHelper.createDom('li', {'class': 'sc-ProjectViewer-createProjectButton'},
+           this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'title': 'Start a new project'},
+           this.domHelper.createDom('span', {'class': 'icon-plus'}), 'New project'));
+       goog.events.listen(createNewProjectButton, 'click', this._handleNewProjectButtonClick, false, this);
+       this.buttonDropdownList.appendChild(createNewProjectButton);
+       this.buttonDropdownList.appendChild(this.domHelper.createDom('li', {'class': 'divider'}));
+    }
 
     this.projectChoiceElements = [];
 
@@ -109,32 +113,35 @@ sc.ProjectViewer.prototype._buildHeader = function() {
     this.modalHeader.appendChild(this.modalTitle);
     var nav = this.domHelper.createDom('ul', {'class': 'nav nav-pills'});
 
-    var addButtonLi = this.domHelper.createDom('li', {'class': 'dropdown'},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'data-toggle': 'dropdown'},
-            this.domHelper.createDom('span', {'class': 'icon-plus'}), 'Add Resources',
-                this.domHelper.createDom('span', {'class': 'caret'})));
-    var addSubmenuUl =this.domHelper.createDom('ul', {'class': 'dropdown-menu', 'role': 'menu'});
-    addButtonLi.appendChild(addSubmenuUl);
-    var newTextButtonLi = this.domHelper.createDom('li', {},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'New Text'));
-    goog.events.listen(newTextButtonLi, 'click', this._handleNewTextButtonClick, false, this);
-    var uploadCanvasButtonLi = this.domHelper.createDom('li', {},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-picture'}), 'Upload Image'));
-    goog.events.listen(uploadCanvasButtonLi, 'click', this._handleUploadCanvasButtonClick, false, this);
-    addSubmenuUl.appendChild(newTextButtonLi);
-    addSubmenuUl.appendChild(uploadCanvasButtonLi);
-    nav.appendChild(addButtonLi);
-
-    var editButtonLi = this.domHelper.createDom('li', {}, 
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-cog'}), 'Project Info and Sharing'));
-    goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
-    nav.appendChild(editButtonLi);
+    if ( this.isGuest === false ) {
+       var addButtonLi = this.domHelper.createDom('li', {'class': 'dropdown'},
+           this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'data-toggle': 'dropdown'},
+               this.domHelper.createDom('span', {'class': 'icon-plus'}), 'Add Resources',
+                   this.domHelper.createDom('span', {'class': 'caret'})));
+       var addSubmenuUl =this.domHelper.createDom('ul', {'class': 'dropdown-menu', 'role': 'menu'});
+       addButtonLi.appendChild(addSubmenuUl);
+       var newTextButtonLi = this.domHelper.createDom('li', {},
+           this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+               this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'New Text'));
+       goog.events.listen(newTextButtonLi, 'click', this._handleNewTextButtonClick, false, this);
+       var uploadCanvasButtonLi = this.domHelper.createDom('li', {},
+           this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+               this.domHelper.createDom('span', {'class': 'icon-picture'}), 'Upload Image'));
+       goog.events.listen(uploadCanvasButtonLi, 'click', this._handleUploadCanvasButtonClick, false, this);
+       addSubmenuUl.appendChild(newTextButtonLi);
+       addSubmenuUl.appendChild(uploadCanvasButtonLi);
+       nav.appendChild(addButtonLi);
+   
+       var editButtonLi = this.domHelper.createDom('li', {}, 
+           this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
+               this.domHelper.createDom('span', {'class': 'icon-cog'}), 'Project Info and Sharing'));
+       goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
+       nav.appendChild(editButtonLi);
+    }
+    
     var downloadButtonLi = this.domHelper.createDom('li', {},
         this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-download'}), 'Download'))
+            this.domHelper.createDom('span', {'class': 'icon-download'}), 'Download'));
     goog.events.listen(downloadButtonLi, 'click', this._handleDownloadButtonClick, false, this);
     nav.appendChild(downloadButtonLi);
     this.modalHeader.appendChild(nav);

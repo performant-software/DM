@@ -83,6 +83,10 @@ def has_permission_over(project_uri, username=None, user=None, permission=NS.per
     if username is None:
         username = user.username
 
+    # Guest is allowed access
+    if username == 'guest':
+        return True
+    
     if permission == NS.perm.hasPermissionOver:
         return ProjectPermission.objects.filter(user=user, identifier=project_uri).count() > 0
     else:
