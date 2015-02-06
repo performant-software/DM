@@ -227,7 +227,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
     var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
     jQuery('#atb-footer-controls').prepend(wrContainerParent);
     
-    setupRepoBrowser(clientApp, wrContainerParent);
+    //setupRepoBrowser(clientApp, wrContainerParent);
     setupProjectViewer(clientApp, viewerGrid);
     setupSearchViewer(clientApp);
     // setupSyncManager(clientApp);
@@ -238,4 +238,4 @@ var createCanvasViewer = function(uri) {
     var viewer = new atb.viewer.CanvasViewer(clientApp);
     viewer.setCanvasByUri(uri, null, null, null, null);
     return viewer;
-}
+};

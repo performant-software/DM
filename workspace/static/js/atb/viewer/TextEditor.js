@@ -68,6 +68,9 @@ atb.viewer.TextEditor = function(clientApp, opt_initialTextContent) {
     
     this.viewerType = 'text editor';
 	 this.unsavedChanges = false;
+	 this.loadingContent = false;
+	 this.loadError = false;
+	 this.saveClickedAt = -1;
     this.styleRoot = this.clientApp.getStyleRoot();
 	
 	this.bDeleteHighlightMode = false;
@@ -96,9 +99,9 @@ atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
  * sets the contents of the editor to the specified string
  * @param {!string} htmlString the html to be written to the editor
  **/
-atb.viewer.TextEditor.prototype.setHtml = function (htmlString, opt_fireDelayedChange) {
+atb.viewer.TextEditor.prototype.setHtml = function (htmlString) {
     if (this.field) {
-	    this.field.setHtml(false, htmlString, !opt_fireDelayedChange);
+	    this.field.setHtml(false, htmlString, false );
     }
 };
 
@@ -193,16 +196,6 @@ atb.viewer.TextEditor.prototype.onTextPasted = function(e)
 
 	//waitforpastedata(ele, stuff);
 	//alert("paste orig: "+stuff);
-};
-
-/**
- * setHtmlWithAutoParagraphs(htmlString)
- * sets the contents of the editor to the specified string using goog's auto paragraph formatting
- * @param {!string} htmlString the html to be written to the editor
- **/
-atb.viewer.TextEditor.prototype.setHtmlWithAutoParagraphs = function (htmlString) {
-	this.field.setHtml(true, htmlString);
-	this.onSetHTML();
 };
 
 /**
@@ -308,22 +301,36 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     
     this._renderDocumentIcon();
     
-    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 3 * 1000;
+    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 1 * 1000;
     var self = this;
     this.autoOutputSaveStatusIntervalObject = window.setInterval(
        function() {
           var status = "";
-          if (!self.unsavedChanges && !self.databroker.syncService.hasUnsavedChanges() && !self.databroker.hasSyncErrors) {
-              status = "Saved";      
-              self.saveButton.setEnabled(true);
-          } else if (self.databroker.hasSyncErrors) {
-              status = "Not Saved - Sync Errors!";      
-              self.saveButton.setEnabled(true);
-          } else if (self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
-              status = "Not Saved";   
+          if ( self.loadingContent === true ) {
+             status = "Loading document..."; 
+          } else if ( self.loadError === true ) {
+             status = "Load failed!"; 
           } else {
-              status = "Document Loaded";        
-              self.saveButton.setEnabled(true);
+             if (!self.unsavedChanges && !self.databroker.syncService.hasUnsavedChanges() && !self.databroker.hasSyncErrors) {
+                 status = "Saved";      
+                 self.saveButton.setEnabled(true);
+             } else if (self.databroker.hasSyncErrors) {
+                 status = "Not Saved - Sync Errors!";      
+                 self.saveButton.setEnabled(true);
+             } else if (self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
+                 status = "Not Saved";   
+             } else {
+                 self.saveButton.setEnabled(true);
+             }
+          }
+          
+          // Failsafe.... if after 20 sec still no save succes from server, re-enable the save
+          if ( self.saveClickedAt > -1 && self.unsavedChanges === false && self.databroker.syncService.hasUnsavedChanges() ) {
+            var now = Date.now();
+            var delta = (now - self.saveClickedAt)/1000;
+            if ( delta > 20 ) {
+               self.saveButton.setEnabled(true);
+            }
           }
       
           var saveStatusElement = $("#"+self.useID + '_js_save_status');
@@ -345,11 +352,11 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
     
     this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
-    this.field.registerPlugin(new goog.editor.plugins.UndoRedo());
-    this.field.registerPlugin(new goog.editor.plugins.ListTabHandler());
-    this.field.registerPlugin(new goog.editor.plugins.SpacesTabHandler());
-    this.field.registerPlugin(new goog.editor.plugins.EnterHandler());
-    this.field.registerPlugin(new goog.editor.plugins.HeaderFormatter());
+    //this.field.registerPlugin(new goog.editor.plugins.UndoRedo());
+    //this.field.registerPlugin(new goog.editor.plugins.ListTabHandler());
+    //this.field.registerPlugin(new goog.editor.plugins.SpacesTabHandler());
+    //this.field.registerPlugin(new goog.editor.plugins.EnterHandler());
+    //this.field.registerPlugin(new goog.editor.plugins.HeaderFormatter());
     this.field.registerPlugin(new goog.editor.plugins.LinkDialogPlugin());
     this.field.registerPlugin(new goog.editor.plugins.LinkBubble());
     this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
@@ -517,6 +524,7 @@ atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
     
     // disable save button
     // Save button re-enabled in the outputSaveStatus check.
+    this.saveClickedAt = Date.now();
     this.saveButton.setEnabled(false);
     this.saveContents();
     this.databroker.sync();
@@ -537,14 +545,8 @@ atb.viewer.TextEditor.prototype.handleDocumentIconClick_ = function (e) {
 atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
     var eventDispatcher = this.clientApp.getEventDispatcher();
     
-    goog.events.listen(this.field, goog.editor.Field.EventType.DELAYEDCHANGE, this.onChange, false, this);
-    
-//    goog.events.listen(eventDispatcher, 'resource-modified', function (e) {
-//                           if (e.getViewer() != this && e.getResourceId() == this.resourceId) {
-//                                this.loadResource(e.getResource());
-//                           }
-//                       }, false, this);
-    
+    goog.events.listen(this.field, goog.editor.Field.EventType.CHANGE, this.onChange, false, this);
+
     goog.events.listen(this.editorIframe, 'mousemove', function (e) {
                        var offset = jQuery(this.editorIframeElement).offset();
                        
@@ -562,11 +564,6 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
     goog.events.listen(this.container.closeButton, 'click', function(e) {
         clearInterval(this.autoOutputSaveStatusIntervalObject);
     }, false, this);
-};
-
-atb.viewer.TextEditor.prototype.dismissContextMenu = function(menu) {
-	this.unselectAllHighlights();
-	menu.hide();//lol!
 };
 
 atb.viewer.TextEditor.prototype.getTitle = function () {
@@ -642,7 +639,8 @@ atb.viewer.TextEditor.prototype._addHighlightListenersWhenUneditable = function(
 
 atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
     var resource = this.databroker.getResource(uri);
-
+    
+    this.loadingContent = true;
     if (resource.hasType('dctypes:Text')) {
         resource.defer().done(function() {
             this.resourceId = resource.getUri();
@@ -652,17 +650,14 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
             this.databroker.dataModel.textContents(resource, function(contents, error) {
                 if (contents || this.databroker.dataModel.getTitle(resource)) {
                     this.setHtml(contents);
-
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
                     this._addHighlightListenersWhenUneditable();
-
-                    if (opt_doAfter) {
-                        opt_doAfter();
-                    }
+                    this.loadingContent = false;   
                 }
                 else {
-                    console.error(error);
+                   this.loadError = true;
+                   console.error(error);
                 }
             }.bind(this));
         }.bind(this));
@@ -767,23 +762,6 @@ atb.viewer.TextEditor.prototype.dumpTagSet_=function(toTag)//;
 	visitor(toTag);
 };
 
-atb.viewer.TextEditor.prototype.applyFormattingRules = function()
-{
-    
-    //DISABLE----------------------
-    //return;
-    //-----------------------------
-    
-	//Todo: make a proper formatter helper-/implmentation class sometime, probably...
-	var toTag = this.field.field;
-	this.applyFormattingRulesRecursively_(toTag);
-	
-//	if (false)
-//	{
-//		this.dumpTagSet_(this.field.field);
-//	}
-};
-
 atb.viewer.TextEditor.prototype.replaceTagKeepingContentsHelper_ = function(tag, withTag)
 {
 	//TODO: maybe check that withTag isn't related to tag meaningfully..?/badly...??
@@ -837,488 +815,11 @@ fontStyle: italic
 	};
 };
 
-atb.viewer.TextEditor.prototype.applyFormattingRulesRecursively_ = function(toTag)
-{
-	//_readStylePropsHelper_(toTag);//lol!
-	//this._readStylePropsHelper_(toTag);//lol!
-	//or check computed style for boldness/etc...?
-	
-	
-
-	//var jqContents = jQuery(toTag).contents();
-	//debugViewObject(toTag);
-	//if (t
-	
-	//a, ul, ol, li, p, br
-	var allowedSet = new atb.util.Set();
-	allowedSet.addAll(["a", "ul", "ol", "li", "p", "br"]);
-	allowedSet.addAll(["b","i","u"]);//LOLforgot me's...
-	allowedSet.addAll(["span", "body"]);//less sure about the specifics todo with these...!
-//	allowedSet.addAll(["span", "body", "style"]);//less sure about the specifics todo with these...!
-	//if (false)
-	{
-		//while this does "fix" the div problem, apparently we want to do this the "correct" (hopefully) way...
-		allowedSet.add("div");//TEST HACK
-	}
-	
-	var blockElementSet = new atb.util.Set();
-	
-	//blockElementSet.add("div");
-	//blockElementSet.add("p");//not needed b/c we're still allowing p tags...!
-	//blockElementSet.addAll("
-	
-	//allowedSet.addAll(["span", "body"]);//less sure about the specifics todo with these...!
-	
-	var self =this;
-	var jqContents = jQuery(toTag).children();
-	jqContents.each(function()
-	{
-		var childTag = this;
-		
-		var childTagName = childTag.nodeName;//or tagName...?
-		childTagName=childTagName.toLowerCase();
-		/*
-		
-		if (childTagName == "div")
-		{
-			//TODO: replace with tag + br...?
-			
-			//childTag.parentNode.replaceChild(
-		}
-		*/
-
-		if (childTagName == "style")
-		{
-            childTag.innerHTML = "";
-            return;
-            
-			//debugViewObject(childTag.childNodes, "style children");
-			//^lol@fascinating use of 3 text nodes for the css text...lol!
-			
-			//debugPrint("style -- childNodes.length = "+childTag.childNodes.length);//lol@ 3 childnodes...???
-			
-			//debugPrint("style -- innerhtml = "+childTag.innerHTML);
-			var str = "" + childTag.innerHTML;
-			var matchFrag = "span.atb-ui-editor-textannotationatb-ui-editor-textannotation-id-";
-			/////oklol://				 span.atb-ui-editor-textannotationatb-ui-editor-text
-			var matchIndex = 0;
-			var bChanged = false;
-			var ret = "";
-			var temp = "";
-			var bSkipUntilClosingCurly = false;
-			for(var i=0,l=str.length; i<l; i++)
-			{
-				var ch = str[i];
-				if (bSkipUntilClosingCurly)
-				{
-					if (ch == "}")
-					{
-						bSkipUntilClosingCurly = false;
-					}
-					continue;
-				}
-				
-				if (ch == matchFrag[matchIndex])
-				{
-					matchIndex++;
-					temp += ch;
-					//debugPrint("matchIndex: "+ matchIndex);
-					if (matchIndex >= matchFrag.length)
-					{
-						bChanged = true;
-						bSkipUntilClosingCurly = true;
-						matchIndex = 0;
-						temp = "";
-						//debugPrint("!!!");
-					}
-				}
-				else
-				{
-					ret+=temp;
-					temp = "";
-					
-					matchIndex=0;
-					ret += ch;
-				}
-				//span.atb-ui-editor-textannotationatb-ui-editor-textannotation-id-
-			}
-			if (bChanged)
-			{
-				childTag.innerHTML = ret;
-				//continue;
-				return;
-			}
-			
-			//debugPrint("style -- innerhtml = "+childTag.innerHTML);
-			return;
-		}
-
-		
-		if (childTag.childNodes.length > 0)
-		{
-			self.applyFormattingRulesRecursively_(this);
-		}
-		//^lets do the recursion first... then the tag...lol!
-		
-		
-		//TODO: check for bold/etc somewhere and add the proper tags if pertinent...?
-		
-		//maybe more cross-browser compatible...?:
-		
-		var childStyleAttribs = self._readStylePropsHelper_(childTag);//lol!
-		//if (
-		
-		//this._readStylePropsHelper_(toTag);//lol!
-		
-		
-		//jQuery(childTag).attr("style", "");
-		
-		var bSpan = (childTagName == "span");
-		
-		//var bBlockLevelElement = (blockElementSet.has(childTagHame));//hack
-		//var bBlockLevelElement = (blockElementSet.has(childTagNSame));//hack
-		//^LOLFAIL!
-		var bBlockLevelElement = (blockElementSet.has(childTagName));//hack
-		/*
-		if (bBlockLevelElement)
-		{
-			//bBlockLevelElement
-			debugPrint("bBlockLevelElement is true!!!");//reached
-		}
-		else
-		{
-			debugPrint("not a blocklevel element; tag: '"+childTagName+"'");
-		}
-		*/
-		var bHasHighlightMarkerCssClass = false;
-		
-		//Node::classList looked promising, but, its html5 ish... =/
-		var childClassList = childTag.className.split(/\s+/);
-		var jqChildTag;
-		jqChildTag = jQuery(childTag);
-		
-		var bHasRealAnnoClass = false;
-		
-		var hackSpanIdClass = null;
-		//debugPrint("");//HACK
-		for (var i=0, l = childClassList.length; i<l; i++)
-		{
-			var oneClassName = childClassList[i];
-			if (bSpan)
-			{
-				//if (!bHasHighlightMarkerCssClass)
-				{
-					//bHasHighlightMarkerCssClass = (oneClassName.indexOf(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS) != -1);
-					if ((oneClassName.indexOf(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS) != -1))
-					{
-						//debugPrint("oneClassName="+oneClassName);
-						if (hackSpanIdClass==null)
-						{
-							hackSpanIdClass = [];
-						}
-						bHasHighlightMarkerCssClass = true;//lol!
-						//if (bHasHighlightMarkerCssClass)
-						{
-							hackSpanIdClass.push(oneClassName);
-							//hackSpanIdClass = oneClassName;//HACK we'll need this later...
-						}
-						
-						if (
-							(oneClassName.indexOf(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_ID)!=-1) || 
-							(oneClassName.indexOf(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_LOCAL_ID)!=-1)
-						){
-							bHasRealAnnoClass=true;
-							//debugPrint("bHasRealAnnoClass = true!");
-							//bHasRealClass
-						}
-					}
-				}//TODO: maybe warn if matched multiple times...??
-					//if (hackSpanIdClass
-			}
-			jqChildTag.removeClass(oneClassName);//childClassList[i]);
-		}
-		if (!bHasRealAnnoClass)
-		{
-			//debugPrint("not a real anno anymore!");
-			hackSpanIdClass = null;//kill the highlight if it lacks an id class!
-		}
-		//else
-		//{
-		//	debugPrint("a real anno!?");
-		//}
-		var newStyle ="";
-		var bStyledChild = (childStyleAttribs.bold || childStyleAttribs.italics || childStyleAttribs.underline);
-		
-		if (childStyleAttribs.bold)
-		{
-			newStyle += "font-weight: bold; ";
-		}
-		if (childStyleAttribs.italics)
-		{
-			newStyle += "font-style: italic; ";
-		}
-		if (childStyleAttribs.underline)
-		{
-			newStyle += "text-decoration: underline; ";
-		}
-		//^LOLHACKX!
-		//jQuery(childTag).attr("style", "");
-		
-		
-		jQuery(childTag).removeAttr("align");//HACK
-		
-		if (newStyle == "")
-		{
-			jQuery(childTag).removeAttr("style");
-		}
-		else
-		{
-			jQuery(childTag).attr("style", newStyle);//lolhack!
-		}
-		
-		
-		
-		if (hackSpanIdClass!=null)
-		{
-			for(var iclass=0,lclass=hackSpanIdClass.length; iclass<lclass; iclass++)
-			{
-				//jQuery(childTag).addClass(hackSpanIdClass);//HACK
-				jQuery(childTag).addClass(hackSpanIdClass[iclass]);//HACK
-			}
-		}
-		//if (
-		//On the Cotton Map
-		
-		if ( (!allowedSet.has(childTagName)) || (bSpan && (!bHasHighlightMarkerCssClass)))
-		{//Q: ^will the above still work if we have bold/etc on a span highlight...???
-			//^Whitelist//						//^//if not a marker, then kill the span
-			
-			//debugPrint("unhandled tag name: "+childTagName);
-			
-			var parentNode = childTag.parentNode;
-			var afterSibling = childTag.nextSibling;
-			//var theCurrentChild = childTag;
-			/*
-			if (bBlockLevelElement)
-			{
-				bStyledChild=true;//HACK!!
-			}
-			*/
-			if (bStyledChild)
-			{
-				var nds = [];
-				
-				
-				if (childStyleAttribs.bold)
-				{
-					nds.push(this.domHelper.createElement("b"));
-				}
-				if (childStyleAttribs.italics)
-				{
-					nds.push(this.domHelper.createElement("i"));
-				}
-				if (childStyleAttribs.underline)
-				{
-					nds.push(this.domHelper.createElement("u"));
-				}
-				/*
-				if (bBlockLevelElement)
-				{
-					//nds.push("p");//lol!
-					nds.push(document.createElement("p"));
-				}
-				*/
-				//if (if (bBlockLevelElement))
-				
-				
-				var nd = nds[nds.length-1];
-				var nd_tmp = nds[0];
-				for (var ndi=1, ndl = nds.length; ndi<ndl; ndi++)
-				{
-					nd_tmp.appendChild(nds[ndi]);
-					nd_tmp = nds[ndi];
-				}
-			
-				jQuery(this).contents().each(function(){nd.appendChild(this);});
-				
-				
-				parentNode.replaceChild(nds[0], childTag);//replace us
-				//theCurrentChild=nds[0];
-				
-				childTag = nd;
-				bSpan=false;
-				// debugPrint("styledchild!");
-			}
-			else
-			{
-				//Move children of this child into their grandparent, the current node...
-				
-				//debugPrint("NOT-styledchild!");
-				// debugPrint("NOT-styledchild! nodeName="+childTagName);
-				//jQuery(this).contents().each(function(){toTag.appendChild(this)});
-				var afterNode = childTag.nextSibling;
-				
-				jQuery(childTag).contents().each(
-					function()
-					{
-						if (afterNode == null)
-						{
-							toTag.appendChild(this);
-						}
-						else
-						{
-							toTag.insertBefore(this, afterNode);
-						}
-						//toTag.appendChild(this);
-					}
-				);
-				toTag.removeChild(childTag);
-				//debugPrint("NOT-styledchild!");
-				//return;
-			}
-			//lol@textalignment
-			//bSpan = false;
-			
-			
-			if (bBlockLevelElement)
-			{
-				//debugPrint("adding a br...");
-				//if (false)
-				
-				//var beforeName = childTag.nodeName;//or tagName...?
-				//childTagName=childTagName.toLowerCase();
-		
-				{
-					// debugPrint("adding a br...");
-					var newBr = this.domHelpercreateElement("br");
-					if (afterSibling == null)
-					{
-						//parentNode.appendChild(br);
-						parentNode.appendChild(newBr);
-					}
-					else
-					{
-						parentNode.insertBefore(newBr, afterSibling);
-					}
-				}
-			}
-			/*if (bBlockLevelElement)
-			{
-				return;//HACK
-			}*/
-			
-			if (!bStyledChild)
-			{
-				return;
-			}
-			
-		}
-		
-		
-		//childTag.setAttribute("style", "");//hack
-		//handle special cases and remove dead tags:
-		
-		var bLineFeedTag = (childTagName=="br");
-		
-		
-		
-		//if a span, add back the marker classes/etc, if relevant.
-		if (bSpan)
-		{
-			//Note: in order to remove style stuff above, we really probably want to remove the classes first, so we can't merge with the if-span parts above...!
-			if (bHasHighlightMarkerCssClass)
-			{
-				/*
-				jqChildTag.addClass(atb.resource.TextResource.ANNOTATION_MARKER_CLASS_NAME);
-				jqChildTag.addClass(atb.viewer.TextEditorAnnotate.HIGHLIGHT_STYLING_CLASS);
-				*/
-				
-				/*
-				//sadly this stuff isn't present in this version..
-				var resourceId = self.annotatePlugin.span2LocalId(childTag);
-				
-				//check if it was selected:
-				if (self.isSelectedSpanId(resourceId))//todo: rename those methods to be better/more clearly named...!
-				{
-					jqChildTag.addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
-				}
-				
-				//check if it was being hovered over:
-				if (self.isHoverSpanId(resourceId))
-				{
-					jqChildTag.addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-				}
-				*/
-			}
-			/*
-			else
-			{
-				//if not a marker, then kill the span:
-				
-				//Move children of this child into their grandparent, the current node...
-				//debugPrint("non-marker-span: "+childTag.innerHTML);
-				jQuery(this).contents().each(function(){toTag.appendChild(this)});
-			}
-			*/
-		}
-		
-		//kill empty tags, except, <BR>:
-		if (!bLineFeedTag)
-		{
-			if (childTag.childNodes.length < 1)
-			{
-				//debugPrint("removing empty tag: '"+childTagName+"'");
-				// debugPrint("empty tag!");
-				if (childTag.parentNode != null)
-				{
-					childTag.parentNode.removeChild(childTag);
-				}
-				else
-				{
-					debugViewObject(childTag,"warning null parentNode!");
-				}
-			}
-		}
-	});
-};
-
-atb.viewer.TextEditor.prototype.getPositionOfFieldChildElement = function (element) {
-	var elementPosition = jQuery(element).offset();
-	var xCoord = elementPosition.left;
-	var yCoord = elementPosition.top;
-
-	//traverse field's parents' position:
-	var domHelper = this.domHelper;
-	var fieldIframe = domHelper.getDocument().getElementById(this.useID);
-	var framePosition = jQuery(fieldIframe).offset();
-    var scrollTop = jQuery(fieldIframe.contentDocument).scrollTop();
-	xCoord += framePosition.left;
-	yCoord += framePosition.top - scrollTop;
-	
-	return {
-		x: xCoord,
-		y: yCoord
-	};
-};
-
-atb.viewer.TextEditor.prototype.hasUnsavedChanges = function () {
-    return !! this.unsavedChanges;
-};
-
 atb.viewer.TextEditor.prototype.onChange = function (event) {
-    this.unsavedChanges = true;
-    this.timeOfLastChange = goog.now();
-};
-
-atb.viewer.TextEditor.prototype.saveDelayAfterLastChange = 2 * 1000;
-
-// This is run every 2 seconds (see above)
-atb.viewer.TextEditor.prototype.saveIfModified = function (opt_synchronously) {
-    var isNotStillTyping = goog.isNumber(this.timeOfLastChange) &&
-        (goog.now() - this.timeOfLastChange) > this.saveDelayAfterLastChange;
-
-    if (this.hasUnsavedChanges() && isNotStillTyping) {
-        this.saveContents();
+    if ( this.loadingContent === false   ) {
+      this.unsavedChanges = true;
+    } else {
+       this.loadingContent = false;
     }
 };
 

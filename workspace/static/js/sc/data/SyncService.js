@@ -44,11 +44,13 @@ sc.data.SyncService.RESTYPE = {
 };
 
 sc.data.SyncService.prototype.requestSync = function() {
+    console.log("POST NEW....");
     this.postNewResources();
-
+   console.log("PUT MODIFIED....");
     this.putModifiedResources();
-
+   console.log("DELETE DELETED....");
     this.deleteDeletedResources();
+    console.log("DONE");
 };
 
 sc.data.SyncService.prototype.createTextHttpUri = function() {
@@ -229,8 +231,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         deletedQuadsStore.removeQuads(dataModel.findQuadsToSyncForText(resource, deletedQuadsStore));
 
         url = this.restUrl(currentProject.uri, resType, sc.data.Term.unwrapUri(uri), null);
-
-        console.warn('Sync 1: ' + url);
     }
     else if (conjunctiveResource.hasAnyType(VOCABULARY.canvasTypes)) {
         resType = sc.data.SyncService.RESTYPE.project;
@@ -240,9 +240,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         url = this.restUrl(currentProject.uri, resType, null, null);
         if (method == 'POST') {
-            method = 'PUT'
+            method = 'PUT';
         }
-        console.warn('Sync 2: ' + url);
     }
     else if (conjunctiveResource.hasType('oa:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.project;
@@ -252,10 +251,8 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         url = this.restUrl(currentProject.uri, resType, null, null);
         if (method == 'POST') {
-            method = 'PUT'
+            method = 'PUT';
         }
-
-        console.warn('Sync 3: ' + url);
     }
     else if (conjunctiveResource.hasType('dm:Project') &&
         projectController.userHasPermissionOverProject(null, resource, PERMISSIONS.update)) {
@@ -271,20 +268,16 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
 
         url = this.restUrl(currentProject.uri, resType, null, null);
         if (method == 'POST') {
-            method = 'PUT'
+            method = 'PUT';
         }
-
-        console.warn('Sync 4: ' + url);
     }
     else if (conjunctiveResource.hasType('foaf:Agent')){
         resType = sc.data.SyncService.RESTYPE.user;
-        quadsToPost = dataModel.findQuadsToSyncForUser(resource, newQuadStore)
-        quadsToRemove = dataModel.findQuadsToSyncForUser(resource, deletedQuadsStore)
+        quadsToPost = dataModel.findQuadsToSyncForUser(resource, newQuadStore);
+        quadsToRemove = dataModel.findQuadsToSyncForUser(resource, deletedQuadsStore);
 
-        var username = resource.uri.split("/").pop()
+        var username = resource.uri.split("/").pop();
         url = this.restUrl(null, resType, username, null) + "/";
-
-        console.warn('Sync 5: ' + url);
     }
     else if (conjunctiveResource.hasType('oa:SpecificResource')) {
         resType = sc.data.SyncService.RESTYPE.project;
@@ -295,15 +288,13 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         if (method == 'POST') {
             method = 'PUT';
         }
-
-        console.warn('Sync 6: ' + url);
     }
     else if (conjunctiveResource.hasAnyType('oa:TextQuoteSelector', 'oa:SvgSelector')) {
         // pass
     }
     else {
         console.error("Don't know how to sync resource " + conjunctiveResource);
-        return;
+        //return;
     }
 
     if (quadsToRemove.length > 0)  {
@@ -399,7 +390,9 @@ sc.data.SyncService.prototype.getCsrfToken = function() {
 
 sc.data.SyncService.prototype.hasUnsavedChanges = function() {
     // The syncService isn't immediately seeing the changes in the text editor. Why?
-    return this.databroker.newResourceUris.getCount() !== 0 || this.databroker.deletedResourceUris.getCount() !== 0 || this.getModifiedResourceUris().getCount() !== 0;
+    return  this.databroker.newResourceUris.getCount() !== 0 || 
+            this.databroker.deletedResourceUris.getCount() !== 0 || 
+            this.getModifiedResourceUris().getCount() !== 0;
 };
 
 sc.data.SyncService.prototype.getProjectDownloadUrl = function(projectUri, opt_extension) {

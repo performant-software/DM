@@ -3,8 +3,8 @@
     height: 24px;
     width: 24px;
     position: absolute;
-    right: 15px;
-    top: 65px;
+    right: 5px;
+    top: 5px;
     z-index: 1000;
     
     -moz-transition: box-shadow 0.2s;
