@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseForbidden
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -46,9 +47,6 @@ def sanitized_content(content):
 
     content = content.replace("'", "&#39;")
 
-    logger.debug("$$$$$$$$ content after the replace AT THE END:")
-    logger.debug(content)
-
     return content
 
 # Create a project from a (POST) request to a specified project
@@ -58,31 +56,24 @@ def create_project_text_from_request(request, project_uri, request_text_uri):
     if request.user.is_authenticated():
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request')
                 g = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - EXCEPTION !!!!!!!!')
+                logger.error("Unable to parse serialization for text creation.\n%s" % e) 
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
             else:
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - ELSE !!!!!!!!')
                 text_uri = URIRef(uris.uuid())
-                logger.debug("uris.uuid(): %s", uris.uuid())
-                logger.debug("text_uri: %s", text_uri)
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - CREATING TEXT... !!!!!!!!')
-                update_project_text(g, project_uri, text_uri, request.user)
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - CREATING TEXT COMPLETE !!!!!!!!')
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - UPDATING... !!!!!!!!')
                 update_project_text(g, project_uri, request_text_uri, request.user)
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_text_from_request - UPDATING COMPLETE !!!!!!!!')
                 return NegotiatedGraphResponse(request, read_project_text(project_uri, text_uri))
         else:
             return HttpResponseForbidden()
     else:
         return HttpResponse(status=401)
 
+# Pull content from MySQL tables and stuff it into the text graph
+#
 def overwrite_text_graph_from_model(text_uri, project_uri, text_g):
     try:
-        text = Text.objects.get(identifier=text_uri, valid=True, project=project_uri)
+        text = Text.objects.get(identifier=text_uri, project=project_uri)
     except ObjectDoesNotExist:
         pass
     else:
@@ -99,7 +90,6 @@ def overwrite_text_graph_from_model(text_uri, project_uri, text_g):
 
 def text_graph_from_model(text_uri, project_uri):
     text_g = Graph()
-
     return overwrite_text_graph_from_model(text_uri, project_uri, text_g)
 
 # Returns serialized data about a given text in a given project
@@ -117,11 +107,12 @@ def read_project_text(project_uri, text_uri):
     bind_namespaces(text_g)
 
     text_g += resource_annotation_subgraph(project_g, text_uri)
-
+    
+    # FIXME this is the slow call ------------------------------------------------
     text_g += specific_resources_subgraph(project_g, text_uri, project_uri)
-
+    # ----------------------------------------------------------------------------
     overwrite_text_graph_from_model(text_uri, project_uri, text_g)
-
+    
     # Return graph about text
     return text_g
 
@@ -135,62 +126,59 @@ def update_project_text(g, p_uri, t_uri, user):
     project_metadata_g = Graph(rdfstore(), identifier=uris.project_metadata_graph_identifier(p_uri))
     text_uri = URIRef(t_uri)
 
+    # Get title and content
     title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or Literal("")
     content_value = g.value(text_uri, NS.cnt.chars)
-    logger.debug("g: %s", g)
-    logger.debug("g.value: %s", g.value)
-    logger.debug("text_uri: %s", text_uri)
-    logger.debug("NS.cnt.chars: %s", NS.cnt.chars)
-    logger.debug("content_value: %s", content_value)
     if content_value:
         content = sanitized_content(content_value)
     else:
         content = ''
-
-    with transaction.commit_on_success():
-        for t in Text.objects.filter(identifier=t_uri, valid=True):
-            t.valid = False
-            t.save()
-            # While it looks like this would be better with a QuerySet update, we need to fire the save
-            # events to keep the search index up to date. In all forseeable cases, this should only execute
-            # for one Text object anyway.
-
+     
+    # Try to update an existing text record for this URI. If that fails,
+    # this must be a new text, so create it and add all of the metadata   
+    try:
+        text = Text.objects.get(identifier=t_uri)
+        logger.debug("Updating existing text %s with new content" % t_uri)    
+        
+        # title is stored with metadata in 4store,  Update it there
+        project_metadata_g.set((text_uri, NS.dc.title, title))
+        project_metadata_g.set((text_uri, NS.rdfs.label, title))
+        
+        text.content = content
+        text.title= title
+        text.last_user = user
+        text.save()
+    except ObjectDoesNotExist:
+        logger.debug("Creating new text %s" % t_uri) 
         text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user, project=p_uri)
-
+ 
         project_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
         project_g.set((text_uri, NS.dc.title, title))
         project_g.set((text_uri, NS.rdfs.label, title))
-
+ 
         text_url = URIRef(uris.url('semantic_store_project_texts', project_uri=p_uri, text_uri=text_uri))
         project_g.set((text_uri, NS.ore.isDescribedBy, text_url))
-
+ 
         if (URIRef(p_uri), NS.ore.aggregates, text_uri) in project_metadata_g:
             project_metadata_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
             project_metadata_g.set((text_uri, NS.dc.title, title))
             project_metadata_g.set((text_uri, NS.rdfs.label, title))
+ 
+        specific_resource_triples = specific_resources_subgraph(g, text_uri, p_uri)
+        for t in specific_resource_triples:
+            project_g.add(t)
+     
+        for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
+            project_g.set(t)
 
-    specific_resource_triples = specific_resources_subgraph(g, text_uri, p_uri)
-    for t in specific_resource_triples:
-        project_g.add(t)
-
-    for t in g.triples((None, NS.rdf.type, NS.oa.TextQuoteSelector)):
-        project_g.set(t)
 
 # Updates a project's text to match data in a (PUT) request
 # This function parses the data and then sends it to update_project_text which accepts a
 # graph object instead of a request object
 def update_project_text_from_request(request, project_uri, text_uri):
-    logger.debug("************** update_project_text_from_request")
-    logger.debug("%%%%%%%%%%%%%% request.body:")
-    logger.debug("\r" + request.body)
-    logger.debug("%%%%%%%%%%%%%% project_uri:")
-    logger.debug("\r" + project_uri)
-    logger.debug("%%%%%%%%%%%%%% text_uri:")
-    logger.debug("\r" + text_uri)
     if request.user.is_authenticated():
         if has_permission_over(project_uri, user=request.user, permission=NS.perm.mayUpdate):
             try:
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - update_project_text_from_request')
                 g = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
                 return HttpResponse(status=400, content="Unable to parse serialization. %s" % e)
@@ -226,44 +214,4 @@ def remove_project_text(project_uri, text_uri):
 
         project_g.remove((URIRef(project_uri), NS.ore.aggregates, text_uri))
 
-        for text in Text.objects.filter(identifier=text_uri, valid=True).only('valid'):
-            text.valid = False
-            text.save()
-
-class NoNonemptyTextVersion(Exception):
-    """
-    Exception for the restore_latest_nonempty_text_version function
-    Raised when no non-empty version of the text can be found
-    """
-    pass
-
-def restore_latest_nonempty_text_version(text_uri, project_uri):
-    """
-    Iterates through all saved versions of a text starting with the most recent,
-    and makes the most recent version which is not empty (as determined by plain
-    text converted content) the valid version of the Text.
-    """
-
-    def restore(text):
-        for t in Text.objects.filter(identifier=text_uri, valid=True):
-            t.valid = False
-            t.save()
-
-        text.valid = True
-        text.save()
-
-    with transaction.commit_on_success():
-        for t in Text.objects.filter(identifier=text_uri).order_by('-timestamp'):
-            if len(t.plain_content()) > 0:
-                if not t.valid:
-                    restore(t)
-                break
-        else:
-            raise NoNonemptyTextVersion()
-
-def restore_all_blank_texts(project_uri):
-    for t in Text.objects.filter(project=project_uri, valid=True):
-        try:
-            restore_latest_nonempty_text_version(t.identifier, project_uri)
-        except NoNonemptyTextVersion:
-            pass
+        Text.objects.filter(identifier=text_uri).delete()

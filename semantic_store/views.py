@@ -229,7 +229,6 @@ def project_texts(request, project_uri, text_uri):
         return create_project_text_from_request(request, project_uri, text_uri)
     elif request.method == 'GET':
         g = read_project_text(project_uri, text_uri)
-        # logger.debug("$$$$$$$$$$$$$$$ g: " + str(g))
         return NegotiatedGraphResponse(request, g)
     elif request.method == 'PUT':
         return update_project_text_from_request(request, project_uri, text_uri)
