@@ -113,7 +113,7 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
             }
 
             if (url.indexOf('/full/full/0/') == -1) {
-                url += '?'
+                url += '?';
                 if (opt_width)
                     url += 'w=' + String(Math.round(opt_width)) + '&';
                 if (opt_height)
@@ -429,7 +429,6 @@ sc.data.Databroker.prototype.deleteQuad = function(quad) {
 
 sc.data.Databroker.prototype.deleteQuads = function(quads) {
     goog.structs.forEach(quads, this.deleteQuad, this);
-
     return this;
 };
 
@@ -686,7 +685,7 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
         sameUris.add(uri);
         
         if (!sc.data.Term.isUri(uri)) {
-            continue
+            continue;
         }
 
         sameUris.addAll(this.quadStore.subjectsSetMatchingQuery(

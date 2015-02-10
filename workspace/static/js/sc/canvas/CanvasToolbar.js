@@ -131,7 +131,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'icon-chevron-left',
         this.handlePreviousClick
     );
-    this.addButton(leftButton);
+    //this.addButton(leftButton);
 
     var pageChooserButton = this.createButton(
         'pageChooser',
@@ -140,8 +140,8 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'icon-list',
         this.handlePageChooserClick
     );
-    this.setupPageChooser();
-    this.addButton(pageChooserButton);
+    //this.setupPageChooser();
+    //this.addButton(pageChooserButton);
 
     var rightButton = this.createButton(
         'nextPage',
@@ -150,7 +150,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         'icon-chevron-right',
         this.handleNextClick
     );
-    this.addButton(rightButton);
+    //this.addButton(rightButton);
 
     this.autoEnableNavButtons();
     this.viewer.mainViewport.addEventListener(
@@ -158,7 +158,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
         this.autoEnableNavButtons,
         false, this);
 
-    this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+    //this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
     if (!this.forReadOnly) {
         var panZoomButton = this.createButton(

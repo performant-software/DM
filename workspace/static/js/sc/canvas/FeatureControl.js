@@ -152,6 +152,9 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     var annotation = this.databroker.createResource(null, 'oa:Annotation');
     annotation.addProperty('oa:hasTarget', specificResource.bracketedUri);
 
+    // Sycc data with server after each anno is added
+    this.databroker.sync();
+
     this.resetFeature();
 };
 

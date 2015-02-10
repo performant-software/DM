@@ -345,7 +345,7 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var feature = event.getFeature();
     var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
 
-    console.log('resource click', event, uri, feature)
+    console.log('resource click', event, uri, feature);
     
     if (!specificResourceUri) return;
     if (! feature) return;
@@ -387,7 +387,7 @@ atb.viewer.CanvasViewer.prototype.loadSpecificResource = function(specificResour
         this.viewer.marqueeViewport.pauseRendering();
 
         var canvas = this.viewer.mainViewport.canvas;
-        var featureUri = specificResource.getOneProperty('oa:hasSelector')
+        var featureUri = specificResource.getOneProperty('oa:hasSelector');
         var feature = canvas.getFabricObjectByUri(featureUri);
 
         if (feature) {
@@ -468,6 +468,9 @@ atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
     var event = new goog.events.Event('resource-deleted', uri);
     var eventDispatcher = this.clientApp.getEventDispatcher();
     eventDispatcher.dispatchEvent(event);
+    
+    // sunc after every ann is removed
+    this.databroker.sync();
 };
 
 atb.viewer.CanvasViewer.prototype.hideFeature = function(uri) {

@@ -1,7 +1,4 @@
-#transcriptions {
-   display: none;
-}
-#repositories_button {
+#transcriptions,#repositories_button, #pageChooser, #imageChoices {
    display: none;
 }
 

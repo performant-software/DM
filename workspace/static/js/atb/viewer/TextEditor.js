@@ -547,13 +547,15 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
     
     goog.events.listen(this.field, goog.editor.Field.EventType.CHANGE, this.onChange, false, this);
 
-    goog.events.listen(this.editorIframe, 'mousemove', function (e) {
-                       var offset = jQuery(this.editorIframeElement).offset();
-                       
-                       this.mousePosition.x = e.clientX + offset.left;
-                       this.mousePosition.y = e.clientY + offset.top;
-                       }, false, this);
+    
+   goog.events.listen(this.editorIframe, 'mousemove', function(e) {
+      var offset = jQuery(this.editorIframeElement).offset();
 
+      this.mousePosition.x = e.clientX + offset.left;
+      this.mousePosition.y = e.screenY -100; // hck!
+   }, false, this); 
+
+                       
     goog.events.listen(this.editorIframe.document.body, 'click', function(e) {
         var annotationPlugin = this.field.getPluginByClassId('Annotation');
 

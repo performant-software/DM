@@ -46,3 +46,4 @@ include
 .Python
 *.log
 pip-selfcheck.json
+workspace/media
