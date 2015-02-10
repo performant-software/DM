@@ -183,7 +183,7 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
 };
 
 sc.data.SyncService.prototype.deleteDeletedResources = function() {
-    var quadsToRemove = []
+    var quadsToRemove = [];
 
     goog.structs.forEach(this.databroker.deletedResourceUris, function(uri) {
         quadsToRemove = quadsToRemove.concat(this.databroker.deletedQuadsStore.query(sc.data.Term.wrapUri(uri), null, null, null));
@@ -301,7 +301,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         this.sendQuads(quadsToRemove, url + 'remove_triples', 'PUT', null, function() {
             // Success
             this.databroker.deletedQuadsStore.removeQuads(quadsToRemove);
-            console.warn('Removing quads: ' + url);
         }.bind(this), function(jqXHR, textStatus, errorThrown) {
             // Error
             if (goog.string.startsWith(textStatus, '4')) {
@@ -317,7 +316,6 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
             this.databroker.hasSyncErrors = false;
             if (method == 'PUT' || method == 'POST') {
                 this.databroker.newQuadStore.removeQuads(quadsToPost);
-                console.warn('Sending quads: ' + url);
             }
             if (goog.isFunction(successHandler)) {
                 successHandler();
@@ -344,6 +342,13 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
     format = format || 'text/turtle';
 
     goog.structs.forEach(quads, function(quad) {
+        // if(quad.object.match(/".*"/)) {
+            // var x = quad.object.substring(1,quad.object.length-1);
+            // console.log("BEFORE: "+x);
+            // x = x.replace(/\\"/g, "'");
+            // console.log("AFTER: "+x);
+            // quad.object = "\""+x+"\"";
+        // }
         if(quad.object.match(/"".*""/)) {
             quad.object = quad.object.split('""').join('"');    
         }
@@ -358,15 +363,15 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
                     successHandler.apply(this, arguments);
                 }.bind(this),
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.error('ERROR! ' + errorThrown);
-                    console.error('textStatus: ' + textStatus);
-                    console.error('jqXHR (full obj):');
-                    console.error(jqXHR);
-                    console.error('jqXHR.responseText:');
+                    //console.error('ERROR! ' + errorThrown);
+                    //console.error('textStatus: ' + textStatus);
+                    //console.error('jqXHR (full obj):');
+                    ///console.error(jqXHR);
+                    ///console.error('jqXHR.responseText:');
                     console.error(jqXHR.responseText);
-                    console.error('data:');
-                    console.error(data);
-                    console.error('************ End error **********');
+                    //console.error('data:');
+                    //console.error(data);
+                    //console.error('************ End error **********');
                     errorHandler.apply(this, arguments);
                 },
                 data: data,

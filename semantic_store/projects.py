@@ -38,7 +38,6 @@ def get_project_metadata_graph(project_uri):
 def create_project_from_request(request):
     """Takes a graph via an http request, and creates a project in the database (and the metadata cache) from an input graph"""
     try:
-        logger.debug('!!!!!!!!!!!!!!! project_texts.py - create_project_from_request')
         g = parse_request_into_graph(request)
     except (ParserError, SyntaxError) as e:
         return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
@@ -48,7 +47,6 @@ def create_project_from_request(request):
 
 def create_project(g):
     """Creates a project in the database (and the metadata cache) from an input graph"""
-    print "Here 1"
 
     query = g.query("""SELECT ?uri ?user
                     WHERE {
@@ -56,29 +54,18 @@ def create_project(g):
                         ?user rdf:type foaf:Agent .
                     }""", initNs=ns)
 
-    print "Here 2 %s %s" %(NS.rdf.type , NS.dm.Project)
-
     for uri in g.subjects(NS.rdf.type, NS.dm.Project):
-        print "Here 3"
         user = g.value(None, NS.perm.hasPermissionOver, uri)
         if user:
-            print "Here 3.1"
             user_obj = User.objects.get(username=user.split('/')[-1])
-        print "Here 3.2"
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
-        print "Here 3.3"
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
-
-        print "Here 4"
 
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
             text_graph = Graph()
             text_graph += g.triples((text_uri, None, None))
-            print "Here 4.1"
             if user:
                 project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
-
-        print "Here 5"
 
         for t in g:
             project_g.add(t)
@@ -89,18 +76,14 @@ def create_project(g):
         url = uris.url('semantic_store_projects', uri=uri)
         project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
 
-        print "before user"
 
         if user:
-            print "user is true"
             project_g.remove((user, None, None))
             username = user.split("/")[-1]
             permissions.grant_full_project_permissions(username, uri)
 
         add_project_types(project_g, uri)
         build_project_metadata_graph(uri)
-
-        print "Successfully created project with uri " + uri
 
 def add_is_described_bys(request, project_uri, graph):
     for text in graph.subjects(NS.rdf.type, NS.dcmitype.Text):
@@ -180,13 +163,11 @@ def update_project(request, uri):
     if request.user.is_authenticated():
         if (permissions.has_permission_over(uri, user=request.user, permission=NS.perm.mayUpdate) or
             permissions.is_abandoned_project(uri)):
-            logger.debug("$$$$$$$$$$$ update_project (request)")
-            logger.debug(request)
             
             try:
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - update_project')
                 input_graph = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
+                logger.error("Unable to parse serialization.\n%s" % e)
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
             update_project_graph(input_graph, URIRef(uri))
@@ -204,7 +185,7 @@ def update_project_graph(g, identifier):
 
     project_g = get_project_graph(identifier)
     project_metadata_g = get_project_metadata_graph(identifier)
-
+    
     #Prevent duplicate metadata
     if (URIRef(identifier), NS.dc.title, None) in g:
         project_g.remove((URIRef(identifier), NS.dc.title, None))
@@ -250,9 +231,9 @@ def delete_triples_from_project(request, uri):
             bind_namespaces(removed)
 
             try:
-                logger.debug('!!!!!!!!!!!!!!! project_texts.py - delete_triples_from_project')
                 g = parse_request_into_graph(request)
             except (ParserError, SyntaxError) as e:
+                logger.error("Unable to parse serialization.\n%s" % e)
                 return HttpResponse(status=400, content="Unable to parse serialization.\n%s" % e)
 
             project_g = get_project_graph(uri)

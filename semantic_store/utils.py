@@ -102,11 +102,18 @@ def parse_request_into_graph(request, graph=None):
 
     if format.startswith('rdf+'):
         format = format[4:]
-
-    logger.debug("******** parse_request_into_graph: request.body")
-    logger.debug(request.body)
-
-    return parse_into_graph(graph, format=format, data=request.body)
+        
+    body = request.body.replace("&#39;","")
+    
+    try:
+        gph = parse_into_graph(graph, format=format, data=body)
+        print "PARSED"
+    except (ParserError, SyntaxError) as e:
+        print "IT BROKE %s" % e
+        print body
+        raise e
+        
+    return gph
 
 def metadata_triples(graph, subject=None):
     for t in graph.triples_choices((subject, METADATA_PREDICATES, None)):
