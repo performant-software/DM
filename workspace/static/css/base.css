@@ -1,6 +1,9 @@
 #transcriptions {
    display: none;
 }
+#repositories_button {
+   display: none;
+}
 
 a {
     color: #666688;
