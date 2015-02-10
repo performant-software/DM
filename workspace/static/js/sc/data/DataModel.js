@@ -534,7 +534,7 @@ sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStor
     text = this.databroker.getResource(text);
     var quadStore = opt_quadStore || this.databroker.quadStore;
 
-    var quads = quadStore.query(text.bracketedUri, null, null, null)
+    var quads = quadStore.query(text.bracketedUri, null, null, null);
     goog.structs.forEach(this.findSpecificResourcesInResource(text), function(specificResourceUri) {
         specificResourceUri = sc.data.Term.wrapUri(specificResourceUri);
 
@@ -542,7 +542,7 @@ sc.data.DataModel.prototype.findQuadsToSyncForText = function(text, opt_quadStor
 
         var selectorUri = quadStore.objectsMatchingQuery(specificResourceUri, this.databroker.namespaces.expand('oa', 'hasSelector'), null, null)[0];
         if (selectorUri) {
-            selectorUri = sc.data.Term.wrapUri(selectorUri)
+            selectorUri = sc.data.Term.wrapUri(selectorUri);
             quads = quads.concat(quadStore.query(selectorUri, null, null, null));
         }
     }, this);
