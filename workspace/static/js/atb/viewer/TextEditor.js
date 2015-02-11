@@ -89,7 +89,7 @@ atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
  **/
 atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
     var cleanContents = this.field.getCleanContents();
-    cleanContents = cleanContents.replace(/'/g, "&#39;");
+    //cleanContents = cleanContents.replace(/'/g, "&#39;");
     // cleanContents = cleanContents.replace(/"/g, "&quot;");
     return cleanContents;
 };
@@ -104,30 +104,6 @@ atb.viewer.TextEditor.prototype.setHtml = function (htmlString) {
 	    this.field.setHtml(false, htmlString, false );
     }
 };
-
-/*
-//partially implemented, but hopeless probably:
-atb.viewer.TextEditor.prototype.fixPastedSpans = function()
-{
-	var tag = this.field.field;//hack
-	fixPastedSpans_visitRecursively_(tag);
-};
-atb.viewer.TextEditor.prototype.fixPastedSpans_visitRecursively_ = function(tag)
-{
-	if (this.isAnnotationSpan(tag))
-	{
-	}
-	
-	var self =this;
-	var jqContents = jQuery(tag).children();
-	jqContents.each(function()
-	{
-		var childTag = this;
-		
-		var childTagName = childTag.nodeName;//or tagName...?
-	
-};
-*/
 
 function processpaste (elem, savedcontent) {
     pasteddata = elem.innerHTML;
@@ -302,10 +278,16 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this._renderDocumentIcon();
     
     atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 1 * 1000;
-    var self = this;
+    var self = this;    
     this.autoOutputSaveStatusIntervalObject = window.setInterval(
        function() {
-          var status = "";
+          var saveStatusElement = $("#"+self.useID + '_js_save_status');
+          if (saveStatusElement.length === 0 ) {
+             return;
+          }
+          
+          var status = saveStatusElement.text();
+          var priorStatus = status;
           if ( self.loadingContent === true ) {
              status = "Loading document..."; 
           } else if ( self.loadError === true ) {
@@ -317,11 +299,13 @@ atb.viewer.TextEditor.prototype.render = function(div) {
              } else if (self.databroker.hasSyncErrors) {
                  status = "Not Saved - Sync Errors!";      
                  self.saveButton.setEnabled(true);
-             } else if (self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
-                 status = "Not Saved";   
-             } else {
-                 self.saveButton.setEnabled(true);
-             }
+             } else if ( self.databroker.syncService.hasUnsavedChanges()) {
+                 if ( self.unsavedChanges) {
+                    status = "Not Saved";
+                 } else {
+                    status = "Saving..."; 
+                 }
+             } 
           }
           
           // Failsafe.... if after 20 sec still no save succes from server, re-enable the save
@@ -333,13 +317,10 @@ atb.viewer.TextEditor.prototype.render = function(div) {
             }
           }
       
-          var saveStatusElement = $("#"+self.useID + '_js_save_status');
-          if (saveStatusElement.length > 0) {  
-             var currTxt =  saveStatusElement.text();
-              if ( saveStatusElement.text() !=  status ) { 
-                saveStatusElement.text( status);
-              }
-          }
+           if ( priorStatus !=  status ) { 
+             saveStatusElement.text( status);
+           }
+  
        }, this.autoOutputSaveStatus);
 
     
@@ -349,6 +330,8 @@ atb.viewer.TextEditor.prototype.render = function(div) {
         this.handleLinkingModeExited, false, this);
 
 
+     
+    goog.editor.Field.DELAYED_CHANGE_FREQUENCY = 2000;
     this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
     
     this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
@@ -525,7 +508,7 @@ atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
     // disable save button
     // Save button re-enabled in the outputSaveStatus check.
     this.saveClickedAt = Date.now();
-    this.saveButton.setEnabled(false);
+    //this.saveButton.setEnabled(false);
     this.saveContents();
     this.databroker.sync();
 };
@@ -542,31 +525,37 @@ atb.viewer.TextEditor.prototype.handleDocumentIconClick_ = function (e) {
     eventDispatcher.dispatchEvent(event);
 };
 
-atb.viewer.TextEditor.prototype.addGlobalEventListeners = function () {
-    var eventDispatcher = this.clientApp.getEventDispatcher();
-    
-    goog.events.listen(this.field, goog.editor.Field.EventType.CHANGE, this.onChange, false, this);
 
-    
+atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
+   var eventDispatcher = this.clientApp.getEventDispatcher();
+
+   var self = this;
+   goog.events.listen(this.field, goog.editor.Field.EventType.DELAYEDCHANGE, this.onChange, false, this);
+   goog.events.listen(this.field.getElement(), goog.events.EventType.KEYPRESS, function() {
+      self.unsavedChanges = true;
+      $("#"+self.useID + '_js_save_status').text("Not Saved");
+   }); 
+
+
    goog.events.listen(this.editorIframe, 'mousemove', function(e) {
       var offset = jQuery(this.editorIframeElement).offset();
 
       this.mousePosition.x = e.clientX + offset.left;
-      this.mousePosition.y = e.screenY -100; // hck!
-   }, false, this); 
+      this.mousePosition.y = e.screenY - 100;
+   }, false, this);
 
-                       
-    goog.events.listen(this.editorIframe.document.body, 'click', function(e) {
-        var annotationPlugin = this.field.getPluginByClassId('Annotation');
+   goog.events.listen(this.editorIframe.document.body, 'click', function(e) {
+      var annotationPlugin = this.field.getPluginByClassId('Annotation');
 
-        annotationPlugin.deselectAllHighlights();
-    }, false, this);
+      annotationPlugin.deselectAllHighlights();
+   }, false, this);
 
-    // Stops autosave when the window is closed.
-    goog.events.listen(this.container.closeButton, 'click', function(e) {
-        clearInterval(this.autoOutputSaveStatusIntervalObject);
-    }, false, this);
-};
+   // Stops autosave when the window is closed.
+   goog.events.listen(this.container.closeButton, 'click', function(e) {
+      clearInterval(this.autoOutputSaveStatusIntervalObject);
+   }, false, this);
+}; 
+
 
 atb.viewer.TextEditor.prototype.getTitle = function () {
     return this.databroker.dataModel.getTitle(this.resource);
@@ -655,7 +644,6 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
                     this._addHighlightListenersWhenUneditable();
-                    this.loadingContent = false;   
                 }
                 else {
                    this.loadError = true;
@@ -743,111 +731,24 @@ atb.viewer.TextEditor.prototype.linkAnnotation = function (opt_myResourceId, opt
 	this.clientApp.createAnnoLink(this.resourceId, myAnnoId);
 };
 
-/////////////////////////Filter Code:
-atb.viewer.TextEditor.prototype.dumpTagSet_=function(toTag)//;
-{
-	//dumps a list of tags. possibly best done BEFORE the tag formatting rules, for the most info...
-	var seenTags = new atb.util.Set();
-	var visitor = function(tag)
-	{
-		var nodeName = tag.nodeName;
-		if (seenTags.add(nodeName))
-		{
-			// debugPrint(""+nodeName);
-		}
-		jQuery(tag).children().each(function()
-		{
-			visitor(this);
-		});
-	};
-	//visitor(this.field.field);
-	visitor(toTag);
-};
-
-atb.viewer.TextEditor.prototype.replaceTagKeepingContentsHelper_ = function(tag, withTag)
-{
-	//TODO: maybe check that withTag isn't related to tag meaningfully..?/badly...??
-	jQuery(tag).contents().each(function()
-	{
-		withTag.appendChild(this);
-	});
-	var tagParent = tag.parentNode;
-	if (tagParent != null)
-	{
-		tagParent.replaceChild(withTag, tag);
-	}
-
-};
-
-atb.viewer.TextEditor.prototype._readStylePropsHelper_ = function(tag)
-{
-	var jqTag = jQuery(tag);
-	var fontWeight = jqTag.css("font-weight");
-	var textDecoration = jqTag.css("text-decoration");
-	var fontStyle = jqTag.css("font-style");
-	/*
-	debugPrint("fontWeight: "+fontWeight);
-	debugPrint("textDecoration: "+textDecoration);
-	debugPrint("fontStyle: "+fontStyle);
-	*/
-	//debugPrint("fontWeight: "+fontWeight);
-	/*
-	fontWeight: 400
-textDecoration: none
-fontStyle: normal
-fontWeight: bold
-textDecoration: underline blink
-fontStyle: italic
-	//^lol@examples...lol!
-	*/
-	fontWeight = ("" + fontWeight).toLowerCase();
-	textDecoration= ("" + textDecoration).toLowerCase();
-	fontStyle= ("" + fontStyle).toLowerCase();
-	var bBold = (fontWeight.indexOf("bold") != -1);
-	//var bItalics = ((fontStyle.indexOf("italics") != -1) || (fontStyle.indexOf("oblique") != -1));
-	//var bItalic = ((fontStyle.indexOf("italics") != -1) || (fontStyle.indexOf("oblique") != -1));
-	var bItalic = ((fontStyle.indexOf("italic") != -1) || (fontStyle.indexOf("oblique") != -1));
-	
-	//oblique //hack
-	var bUnderline = (textDecoration.indexOf("underline") != -1);
-	return {
-		bold: bBold,
-		italics: bItalic,
-		underline: bUnderline
-	};
-};
-
 atb.viewer.TextEditor.prototype.onChange = function (event) {
     if ( this.loadingContent === false   ) {
       this.unsavedChanges = true;
+      //console.log ("CHANGE");
+      $("#"+this.useID + '_js_save_status').text("Not Saved");
+      this.saveContents();
+      this.databroker.sync();
     } else {
-       this.loadingContent = false;
+       //console.log("LOADED");
+       this.loadingContent = false;  
+       $("#"+this.useID + '_js_save_status').text("Loaded");
     }
 };
 
-atb.viewer.TextEditor.prototype.handleLinkingModeExited = function (event) {
-    var highlightPlugin = this.field.getPluginByClassId('Annotation');
-    var anno = this.databroker.getResource(event.uri);
-    
-    highlightPlugin.unselectAllHighlights();
-    this.unHighlightDocumentIcon();
-    
-    var bodiesAndTargets = new goog.structs.Set(anno.getProperties('oa:hasTarget').concat(anno.getProperties('oa:hasBody')));
-    goog.structs.forEach(bodiesAndTargets, function (uri) {
-        try {
-            var specificResource = this.databroker.getResource(uri);
-            var selectorUri = specificResource.getOneProperty('oa:hasSelector');
-            if (selectorUri) {
-                var tag = highlightPlugin.getHighlightElementByUri(uri);
-                if (tag) {
-                    highlightPlugin.flashSpanHighlight(tag);
-                }
-            }
-        } catch (error) {
-            console.error(error);
-        }
-        if (uri == this.uri) {
-           this.flashDocumentIconHighlight();
-        }
-   }, this);
-};
+atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
+   this.unsavedChanges = true;
+   $("#" + this.useID + '_js_save_status').text("Not Saved");
+   this.saveContents();
+   this.databroker.sync();
+}; 
+
