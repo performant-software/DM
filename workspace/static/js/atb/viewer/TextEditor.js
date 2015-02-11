@@ -300,21 +300,13 @@ atb.viewer.TextEditor.prototype.render = function(div) {
                  status = "Not Saved - Sync Errors!";      
                  self.saveButton.setEnabled(true);
              } else if ( self.databroker.syncService.hasUnsavedChanges()) {
-                 // if ( self.unsavedChanges) {
-                    // status = "Not Saved";
-                 // } else {
-                    status = "Saving..."; 
-                // }
+                 var t = $(".atb-ViewerContainer-title").text();
+                 if (t === "Untitled text document") {
+                     status = "Saved";
+                 } else {
+                     status = "Saving...";
+                 }
              } 
-          }
-          
-          // Failsafe.... if after 20 sec still no save succes from server, re-enable the save
-          if ( self.saveClickedAt > -1 && self.unsavedChanges === false && self.databroker.syncService.hasUnsavedChanges() ) {
-            var now = Date.now();
-            var delta = (now - self.saveClickedAt)/1000;
-            if ( delta > 20 ) {
-               self.saveButton.setEnabled(true);
-            }
           }
       
            if ( priorStatus !=  status ) { 
@@ -564,6 +556,7 @@ atb.viewer.TextEditor.prototype.getTitle = function () {
 atb.viewer.TextEditor.prototype.setTitle = function(title) {
     this.databroker.dataModel.setTitle(this.resource, title);
     this.setDisplayTitle(title);
+    this.databroker.sync();
 };
 
 atb.viewer.TextEditor.prototype.setDisplayTitle = function(title) {
@@ -734,8 +727,6 @@ atb.viewer.TextEditor.prototype.linkAnnotation = function (opt_myResourceId, opt
 atb.viewer.TextEditor.prototype.onChange = function (event) {
     if ( this.loadingContent === false   ) {
       this.unsavedChanges = true;
-      //console.log ("CHANGE");
-      $("#"+this.useID + '_js_save_status').text("Not Saved");
       this.saveContents();
       this.databroker.sync();
     } else {

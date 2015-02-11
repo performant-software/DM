@@ -57,8 +57,7 @@ atb.viewer.ViewerContainer.prototype.getDomHelper = function() {
 
 atb.viewer.ViewerContainer.prototype.setTitle = function(title) {
     this.title = title;
-
-    jQuery(this.titleEl).text(title)
+    jQuery(this.titleEl).text(title);
     jQuery(this.titleEl).attr('title', title);
 };
 
@@ -93,7 +92,7 @@ atb.viewer.ViewerContainer.prototype._titleKeyHandler = function(event) {
 
 atb.viewer.ViewerContainer.prototype._titleFocusHandler = function(event) {
     jQuery(this.titleEl).addClass('atb-ViewerContainer-title-editing');
-    jQuery(this.titleEl).removeClass('atb-ViewerContainer-title-not-editing')
+    jQuery(this.titleEl).removeClass('atb-ViewerContainer-title-not-editing');
 };
 
 atb.viewer.ViewerContainer.prototype._titleBlurHandler = function(event) {
