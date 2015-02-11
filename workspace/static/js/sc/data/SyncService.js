@@ -130,17 +130,20 @@ sc.data.SyncService.prototype.getModifiedResourceUris = function() {
    var subjectsOfNewQuads = this.databroker.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
    subjectsOfNewQuads.addAll(this.databroker.deletedQuadsStore.subjectsSetMatchingQuery(null, null, null, null));
 
-   var quads = subjectsOfNewQuads.difference(this.databroker.newResourceUris).difference(this.databroker.deletedResourceUris);
-   
+   return subjectsOfNewQuads.difference(this.databroker.newResourceUris).difference(this.databroker.deletedResourceUris);
+};
+  
+sc.data.SyncService.prototype.getModifiedResourceUriCount = function() {
+   quads = this.getModifiedResourceUris();
    // HACK. on load, there is always a lingereing quad with the owner in it.
-   // clear it out so the document is reported as saved
+   // Ignore this and return 0 so the status wont get stuc in saving...
    if (quads.getCount() === 1) {
       var m = quads.map_.keys_[0];
       if (m.indexOf("/users/") > -1) {
-         quads.clear();
+         return 0;
       }
    }
-   return quads;
+   return quads.getCount();
 }; 
 
 
@@ -409,7 +412,7 @@ sc.data.SyncService.prototype.hasUnsavedChanges = function() {
     // The syncService isn't immediately seeing the changes in the text editor. Why?
     return  this.databroker.newResourceUris.getCount() !== 0 || 
             this.databroker.deletedResourceUris.getCount() !== 0 || 
-            this.getModifiedResourceUris().getCount() !== 0;
+            this.getModifiedResourceUriCount() !== 0;
 };
 
 sc.data.SyncService.prototype.getProjectDownloadUrl = function(projectUri, opt_extension) {

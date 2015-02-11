@@ -300,11 +300,11 @@ atb.viewer.TextEditor.prototype.render = function(div) {
                  status = "Not Saved - Sync Errors!";      
                  self.saveButton.setEnabled(true);
              } else if ( self.databroker.syncService.hasUnsavedChanges()) {
-                 if ( self.unsavedChanges) {
-                    status = "Not Saved";
-                 } else {
+                 // if ( self.unsavedChanges) {
+                    // status = "Not Saved";
+                 // } else {
                     status = "Saving..."; 
-                 }
+                // }
              } 
           }
           
