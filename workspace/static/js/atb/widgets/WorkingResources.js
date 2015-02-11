@@ -152,6 +152,7 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
         this.updateItem(item);
     }
 
+   
     return item;
 };
 
@@ -325,7 +326,7 @@ atb.widgets.WorkingResources.prototype.refreshItem = function(item) {
     if (goog.isFunction(item.isEmpty) && item.isEmpty()) {
         window.setTimeout(function () {
             item.showFoliaMessage('loading folia...');
-        }, 0)
+        }, 0);
     }
 
     var withResource = function(resource) {
@@ -390,6 +391,7 @@ atb.widgets.WorkingResources.prototype.handleItemRemove = function(event) {
 
     this.removeItemByUri(uri);
     this.databroker.dataModel.removeResourceFromProject(this.uri, uri);
+    this.databroker.sync();
 };
 
 atb.widgets.WorkingResources.prototype.addListenersToItem = function(item) {
