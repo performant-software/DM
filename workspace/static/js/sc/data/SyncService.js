@@ -125,12 +125,24 @@ sc.data.SyncService.prototype.restUri = function(projectUri, resType, resUri, pa
     return this._restUri(this.options.dmBaseUri, projectUri, resType, resUri, params);
 };
 
-sc.data.SyncService.prototype.getModifiedResourceUris = function() {
-    var subjectsOfNewQuads = this.databroker.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
-    subjectsOfNewQuads.addAll(this.databroker.deletedQuadsStore.subjectsSetMatchingQuery(null, null, null, null));
 
-    return subjectsOfNewQuads.difference(this.databroker.newResourceUris).difference(this.databroker.deletedResourceUris);
-};
+sc.data.SyncService.prototype.getModifiedResourceUris = function() {
+   var subjectsOfNewQuads = this.databroker.newQuadStore.subjectsSetMatchingQuery(null, null, null, null);
+   subjectsOfNewQuads.addAll(this.databroker.deletedQuadsStore.subjectsSetMatchingQuery(null, null, null, null));
+
+   var quads = subjectsOfNewQuads.difference(this.databroker.newResourceUris).difference(this.databroker.deletedResourceUris);
+   
+   // HACK. on load, there is always a lingereing quad with the owner in it.
+   // clear it out so the document is reported as saved
+   if (quads.getCount() === 1) {
+      var m = quads.map_.keys_[0];
+      if (m.indexOf("/users/") > -1) {
+         quads.clear();
+      }
+   }
+   return quads;
+}; 
+
 
 sc.data.SyncService.prototype.postNewResources = function() {
     var conjunctiveStore = new sc.data.ConjunctiveQuadStore([this.databroker.quadStore, this.databroker.deletedQuadsStore]);

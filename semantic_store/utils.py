@@ -7,6 +7,7 @@ from datetime import datetime
 from contextlib import contextmanager
 import re
 from uuid import uuid4
+from rdflib.exceptions import ParserError
 
 import logging
 logger = logging.getLogger(__name__)

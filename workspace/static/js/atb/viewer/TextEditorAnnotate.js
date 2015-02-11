@@ -206,6 +206,7 @@ atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highl
     }, this);
     highlight.delete();
     specificResource.delete();
+    this.databroker.sync();
 };
 
 atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {
@@ -506,7 +507,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 				'delete_highlight_button',
 				createButtonGenerator('atb-radialmenu-button icon-remove'),
 				function(actionEvent) {
-					self.viewer.hideHoverMenu()
+					self.viewer.hideHoverMenu();
 					self.deleteAnnotation(object);
 				},
 	            'Delete this highlight'
@@ -531,9 +532,6 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
  */
 atb.viewer.TextEditorAnnotate.prototype.queryCommandValue = function(command) {
     var isSelection = this.selectionIsAnnotation();
-    if(isSelection != true) {
-        this.unselectAllHighlights();
-    }
     return isSelection;
 };
 
@@ -553,7 +551,7 @@ atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE = 'http://www.w3.org/ns/
 atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(element, uri) {
 	jQuery(element).attr('about', uri);
     jQuery(element).attr('property', atb.viewer.TextEditorAnnotate.OA_EXACT_URI);
-    jQuery(element).attr('typeof', atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE)
+    jQuery(element).attr('typeof', atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE);
 };
 
 
@@ -646,21 +644,6 @@ atb.viewer.TextEditorAnnotate.prototype.selectAnnotationSpan = function (tag) {
 	}, true, this);
 };
 
-atb.viewer.TextEditorAnnotate.prototype.flashSpanHighlight = function (tag) {
-    this.selectAnnotationSpan(tag);
-    
-    var timeoutFns = [
-    	function () {
-            this.unselectAllHighlights();
-        }, function () {
-            this.selectAnnotationSpan(tag);
-        }, function () {
-            this.unselectAllHighlights();
-        }
-    ];
-    atb.Util.timeoutSequence(250, timeoutFns, this);
-};
-
 atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
 	var selectorUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag);
 	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(selectorUri);
@@ -671,44 +654,14 @@ atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
     eventDispatcher.dispatchEvent(event);
 };
 
-atb.viewer.TextEditorAnnotate.prototype.unselectAllHighlights = function() {
-    var annotation_class = atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER;
-
-    if (this.viewer.isEditable()) {
-    	var domHelper = this.fieldObject.getEditableDomHelper();
-    	var spans = domHelper.getElementsByClass(annotation_class);
-    	this.fieldObject.manipulateDom(function() {
-    		for (var i=0, len=spans.length; i<len; i++) {
-    			jQuery(spans[i]).removeClass(annotation_class);
-    		}
-    	}.bind(this));
-    }
-    else {
-    	jQuery('#' + this.viewer.useID + ' .' + annotation_class).removeClass(annotation_class);
-    }
-};
-
-
 /**
  * hoverAnnotationSpan()
  **/
-atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function (forSpan) {
-	this.unselectAllHighlights();
-
-    var viewer = this.viewer;
-    var field = viewer.field;
-
-    if (field && viewer.isEditable()) {
-    	// Prevents firing of delayed change events
-    	field.manipulateDom(function() {
-    	    jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-    	}, true, this);
-    }
-    else {
-    	jQuery(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-    }
-};
-
+atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function(forSpan) {
+   var viewer = this.viewer;
+   var field = viewer.field;
+   $(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+}; 
 
 /**
  * unhoverAnnotationSpan()
@@ -716,23 +669,11 @@ atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function (forSpan)
 atb.viewer.TextEditorAnnotate.prototype.unhoverAnnotationSpan = function(forSpan) {
     var viewer = this.viewer;
     var field = viewer.field;
-
-    if (field && viewer.isEditable()) {
-    	// Prevents firing of delayed change events
-    	field.manipulateDom(function() {
-    	    jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-    	}, true, this);
-    }
-    else {
-    	jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-    }
+    jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.deselectAllHighlights = function() {
-	// Prevents firing of delayed change events
-	this.fieldObject.manipulateDom(function() {
-		jQuery(this.getAllAnnotationTags()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
-	}, true, this);
+   jQuery(this.getAllAnnotationTags()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
