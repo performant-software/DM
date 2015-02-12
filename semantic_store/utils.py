@@ -108,9 +108,8 @@ def parse_request_into_graph(request, graph=None):
     
     try:
         gph = parse_into_graph(graph, format=format, data=body)
-        print "PARSED"
     except (ParserError, SyntaxError) as e:
-        print "IT BROKE %s" % e
+        print "PARSE FAILED %s" % e
         print body
         raise e
         

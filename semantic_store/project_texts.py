@@ -107,10 +107,8 @@ def read_project_text(project_uri, text_uri):
     bind_namespaces(text_g)
 
     text_g += resource_annotation_subgraph(project_g, text_uri)
-    
-    # FIXME this is the slow call ------------------------------------------------
     text_g += specific_resources_subgraph(project_g, text_uri, project_uri)
-    # ----------------------------------------------------------------------------
+    
     overwrite_text_graph_from_model(text_uri, project_uri, text_g)
     
     # Return graph about text

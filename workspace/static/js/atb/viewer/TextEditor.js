@@ -669,7 +669,6 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
 };
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
-   this.unsavedChanges = true;
    $("#" + this.useID + '_js_save_status').text("Not Saved");
    this.saveContents();
 }; 
