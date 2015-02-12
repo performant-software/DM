@@ -149,8 +149,13 @@ def update_project_text(g, p_uri, t_uri, user):
         text.last_user = user
         text.save()
     except ObjectDoesNotExist:
+        # NOTE: this was occasionally throwing an exception:
+        # AttributeError: 'Cursor' object has no attribute '_last_executed'
+        # Per http://stackoverflow.com/questions/17032360/django-string-encodings-utf-8-and-issues-attributeerror-cursor-object-ha
+        # encoding from strings returned by BeautifulSoup is the cause. Added encode to strings
+        # to prevent this. Maybe.
         logger.debug("Creating new text %s" % t_uri) 
-        text = Text.objects.create(identifier=t_uri, title=title, content=content, last_user=user, project=p_uri)
+        text = Text.objects.create(identifier=t_uri, title=title.encode('utf-8'), content=content.encode('utf-8'), last_user=user, project=p_uri)
  
         project_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
         project_g.set((text_uri, NS.dc.title, title))
