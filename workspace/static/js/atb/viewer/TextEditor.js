@@ -70,12 +70,9 @@ atb.viewer.TextEditor = function(clientApp, opt_initialTextContent) {
 	 this.unsavedChanges = false;
 	 this.loadingContent = false;
 	 this.loadError = false;
-	 this.saveClickedAt = -1;
     this.styleRoot = this.clientApp.getStyleRoot();
 	
-	this.bDeleteHighlightMode = false;
-	
-	this.useID = 'atb_ui_editor_' + goog.string.getRandomString();
+	 this.useID = 'atb_ui_editor_' + goog.string.getRandomString();
 	
     this.purpose = 'other';
 };
@@ -103,75 +100,6 @@ atb.viewer.TextEditor.prototype.setHtml = function (htmlString) {
     if (this.field) {
 	    this.field.setHtml(false, htmlString, false );
     }
-};
-
-function processpaste (elem, savedcontent) {
-    pasteddata = elem.innerHTML;
-    var txt = $(elem).text();
-    //^^Alternatively loop through dom (elem.childNodes or elem.getElementsByTagName) here
-
-    elem.innerHTML = savedcontent;
-
-    // Do whatever with gathered data;
-    alert(txt);
-}
-
-function waitforpastedata (elem, savedcontent) {
-    if (elem.childNodes && elem.childNodes.length > 0) {
-        processpaste(elem, savedcontent);
-    }
-    else {
-        that = {
-            e: elem,
-            s: savedcontent
-        };
-        that.callself = function () {
-            waitforpastedata(that.e, that.s);
-        };
-        setTimeout(that.callself,2);
-    }
-} 
-
-function doGetCaretPosition (oField) {
-
-  // Initialize
-  var iCaretPos = 0;
-
-  // IE Support
-  if (document.selection) {
-
-    // Set focus on the element
-    oField.focus ();
-
-    // To get cursor position, get empty selection range
-    var oSel = document.selection.createRange ();
-
-    // Move selection start to 0 position
-    oSel.moveStart ('character', -oField.value.length);
-
-    // The caret position is selection length
-    iCaretPos = oSel.text.length;
-  }
-
-  // Firefox support
-  else if (oField.selectionStart || oField.selectionStart == '0')
-    iCaretPos = oField.selectionStart;
-
-  // Return results
-  return (iCaretPos);
-}
-
-atb.viewer.TextEditor.prototype.onTextPasted = function(e)
-{
-	var ele = e.currentTarget;
-	var stuff = ele.innerHTML;
-
-    //alert(doGetCaretPosition(ele));
-   
-   //ele.innerHTML = "";
-
-	//waitforpastedata(ele, stuff);
-	//alert("paste orig: "+stuff);
 };
 
 /**
@@ -207,7 +135,9 @@ atb.viewer.TextEditor.prototype.saveContents = function () {
 
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     highlightPlugin.updateAllHighlightResources();
-
+    
+    this.databroker.sync();
+   
     this.unsavedChanges = false;
 };
 
@@ -295,17 +225,10 @@ atb.viewer.TextEditor.prototype.render = function(div) {
           } else {
              if (!self.unsavedChanges && !self.databroker.syncService.hasUnsavedChanges() && !self.databroker.hasSyncErrors) {
                  status = "Saved";      
-                 self.saveButton.setEnabled(true);
              } else if (self.databroker.hasSyncErrors) {
                  status = "Not Saved - Sync Errors!";      
-                 self.saveButton.setEnabled(true);
              } else if ( self.databroker.syncService.hasUnsavedChanges()) {
-                 var t = $(".atb-ViewerContainer-title").text();
-                 if (t === "Untitled text document") {
-                     status = "Saved";
-                 } else {
-                     status = "Saving...";
-                 }
+               status = "Saving...";
              } 
           }
       
@@ -325,7 +248,6 @@ atb.viewer.TextEditor.prototype.render = function(div) {
      
     goog.editor.Field.DELAYED_CHANGE_FREQUENCY = 2000;
     this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
-    
     this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
     //this.field.registerPlugin(new goog.editor.plugins.UndoRedo());
     //this.field.registerPlugin(new goog.editor.plugins.ListTabHandler());
@@ -343,15 +265,35 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     var editorHtmlElement = this.field.getEditableDomHelper().getDocument().getElementsByTagName('html')[0];
     this.databroker.namespaces.bindNamespacesToHtmlElement(editorHtmlElement);
     
-    this.pasteHandler = new goog.events.PasteHandler(this.field);
+    /*this.pasteHandler = new goog.events.PasteHandler(this.field);
     this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e) {
       this.onTextPasted(e);
-    }.bind(this));
+    }.bind(this));*/
     
     this.editorIframeElement = this.domHelper.getElement(this.useID);
     this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
     this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
     
+    var editorIframe = $("#"+this.field.id);
+    var iframeContent = editorIframe.contents();
+    iframeContent.bind("paste", function(e) {
+       //editorIframe.attr('designMode', 'on');
+         
+         // var h = $("#hidden-paste");
+         // if (h.length > 0 ) {
+           // h.remove();
+         // }
+         // var jq =  $(".atb-ViewerContainer");//$(e.target);
+          // jq.append("<textarea type='text' id='hidden-paste' autofocus></textarea>");
+         // var h = $("#hidden-paste");
+         // e.preventDefault();
+         // e,stopPropagation();
+         // var copy = e;
+         // setTimeout(function() {
+            // h.focus();
+            // iframeContent.trigger(copy);
+         // }, 500);             
+       });
     // this.finishRenderPropertiesPane();
     
     this.addGlobalEventListeners();
@@ -496,13 +438,7 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 
 
 atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
-    
-    // disable save button
-    // Save button re-enabled in the outputSaveStatus check.
-    this.saveClickedAt = Date.now();
-    //this.saveButton.setEnabled(false);
     this.saveContents();
-    this.databroker.sync();
 };
 
 atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
@@ -636,7 +572,13 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     this.setHtml(contents);
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
-                    this._addHighlightListenersWhenUneditable();
+                    this._addHighlightListenersWhenUneditable(); 
+                    $("#"+this.useID + '_js_save_status').text("Loaded");
+                    this.loadingContent = false;
+                    
+                    if (opt_doAfter) {
+                       opt_doAfter();
+                    }
                 }
                 else {
                    this.loadError = true;
@@ -655,10 +597,6 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
 
             this.loadResourceByUri(textResource.bracketedUri, function() {
                 this.selectAndMoveToSpecificResource(resource);
-
-                if (opt_doAfter) {
-                    opt_doAfter();
-                }
             }.bind(this));
         }
     }
@@ -726,20 +664,13 @@ atb.viewer.TextEditor.prototype.linkAnnotation = function (opt_myResourceId, opt
 
 atb.viewer.TextEditor.prototype.onChange = function (event) {
     if ( this.loadingContent === false   ) {
-      this.unsavedChanges = true;
       this.saveContents();
-      this.databroker.sync();
-    } else {
-       //console.log("LOADED");
-       this.loadingContent = false;  
-       $("#"+this.useID + '_js_save_status').text("Loaded");
-    }
+    } 
 };
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
    this.unsavedChanges = true;
    $("#" + this.useID + '_js_save_status').text("Not Saved");
    this.saveContents();
-   this.databroker.sync();
 }; 
 

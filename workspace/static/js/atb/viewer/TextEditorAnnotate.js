@@ -206,7 +206,7 @@ atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highl
     }, this);
     highlight.delete();
     specificResource.delete();
-    this.databroker.sync();
+    this.viewer.saveContents();
 };
 
 atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {
