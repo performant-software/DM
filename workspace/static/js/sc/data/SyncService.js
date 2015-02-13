@@ -173,6 +173,7 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
     var conjunctiveStore = new sc.data.ConjunctiveQuadStore([this.databroker.quadStore, this.databroker.deletedQuadsStore]);
     var graph = new sc.data.Graph(conjunctiveStore, null);
 
+    var seen = [];
     goog.structs.forEach(this.getModifiedResourceUris(), function(uri) {
         var conjunctiveResource = new sc.data.Resource(this.databroker, graph, uri);
         var resource = this.databroker.getResource(uri);
@@ -185,14 +186,20 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
         if (conjunctiveResource.hasAnyType('oa:TextQuoteSelector', 'oa:SvgSelector')) {
             var specificResource = resource.getReferencingResources('oa:hasSelector')[0];
             if (specificResource) {
-                this.sendResource(specificResource.uri, 'PUT');
+                if ( seen.indexOf(specificResource.uri) == -1 ) {
+                  this.sendResource(specificResource.uri, 'PUT');
+                  seen.push(specificResource.uri);
+                }
             }
         }
         else if (conjunctiveResource.getProperties('rdf:type').length == 0) {
             this.databroker.newQuadStore.removeQuadsMatchingQuery(resource.bracketedUri, null, null, null);
         }
         else {
-            this.sendResource(uri, 'PUT');
+            if ( seen.indexOf(uri) == -1 ) {
+                this.sendResource(uri, 'PUT');
+                seen.push(uri);
+            }
         }
     }, this);
 };

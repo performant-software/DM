@@ -540,7 +540,6 @@ atb.viewer.TextEditor.prototype.handleDocumentIconClick_ = function (e) {
     eventDispatcher.dispatchEvent(event);
 };
 
-
 atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
    var eventDispatcher = this.clientApp.getEventDispatcher();
 
@@ -556,7 +555,7 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
       var offset = jQuery(this.editorIframeElement).offset();
 
       this.mousePosition.x = e.clientX + offset.left;
-      this.mousePosition.y = e.screenY - 100;
+      this.mousePosition.y = e.screenY - 120;
    }, false, this);
 
    goog.events.listen(this.editorIframe.document.body, 'click', function(e) {
