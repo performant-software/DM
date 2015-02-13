@@ -265,11 +265,6 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     var editorHtmlElement = this.field.getEditableDomHelper().getDocument().getElementsByTagName('html')[0];
     this.databroker.namespaces.bindNamespacesToHtmlElement(editorHtmlElement);
     
-    /*this.pasteHandler = new goog.events.PasteHandler(this.field);
-    this.field.addListener(goog.events.PasteHandler.EventType.PASTE, function(e) {
-      this.onTextPasted(e);
-    }.bind(this));*/
-    
     this.editorIframeElement = this.domHelper.getElement(this.useID);
     this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
     this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
@@ -277,24 +272,18 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     var editorIframe = $("#"+this.field.id);
     var iframeContent = editorIframe.contents();
     iframeContent.bind("paste", function(e) {
-       //editorIframe.attr('designMode', 'on');
+         // Grab the current content and caret position
+         var editor = iframeContent.find('.editable');
+         var caretPos = getCaretCharacterOffsetWithin( editor[0] );
+         var origContent = editor.html();
          
-         // var h = $("#hidden-paste");
-         // if (h.length > 0 ) {
-           // h.remove();
-         // }
-         // var jq =  $(".atb-ViewerContainer");//$(e.target);
-          // jq.append("<textarea type='text' id='hidden-paste' autofocus></textarea>");
-         // var h = $("#hidden-paste");
-         // e.preventDefault();
-         // e,stopPropagation();
-         // var copy = e;
-         // setTimeout(function() {
-            // h.focus();
-            // iframeContent.trigger(copy);
-         // }, 500);             
-       });
-    // this.finishRenderPropertiesPane();
+         // wipe the current content so paste will arrive in a blank editor.
+         // Once data arrives, grab it and strip the tags.
+         // replace the original content, move cursor to insertion
+         // point and stick in the stripped content
+         editor.html("");
+         awaitPaste(editor, origContent, caretPos);           
+     });
     
     this.addGlobalEventListeners();
 
@@ -303,6 +292,104 @@ atb.viewer.TextEditor.prototype.render = function(div) {
         this.container.setTitleEditable(true);
     }
 };
+
+
+function awaitPaste(editor, savedContent, caretPos) {
+   if (editor.text().length > 0) {
+      var pasted = editor.html();
+      if ( pasted.indexOf("urn:uuid") > -1 ) {
+         pasted = $.trim(editor.text());
+      }
+      
+      // find the right place to stick clean content
+      // by walking through characters of original content
+      // skip anything between < and >.
+      var rawPos = 0;
+      var txtPos = 0;
+      var c = '';
+      var skip = false;
+      var endSkipChar = '';
+      while ( txtPos < caretPos ) {
+         c = savedContent.charAt(rawPos);
+         if (skip) {
+            if ( c === endSkipChar ) {
+               skip = false;
+               if (endSkipChar==';' ) {
+                  txtPos += 1; // this ends a single encoded character. count it  
+               }
+            }
+         } else {
+            if ( c === '<' ) {
+               skip = true;
+               endSkipChar = '>';
+            } else if (c === '&' ) {
+               skip = true;
+               endSkipChar = ';';
+            } else {
+               txtPos += 1;
+            }
+         }
+         rawPos += 1;
+      }
+      if (savedContent.charAt(rawPos) == '<') {
+         txt = "<div>" + pasted + "</div>";
+      }
+      var content = savedContent.substring(0,rawPos)+pasted+savedContent.substring(rawPos,savedContent.length);
+      editor.html(content);
+   } else {
+      setTimeout(function() {
+         awaitPaste(editor, savedContent, caretPos);
+      }, 5);
+   }
+} 
+
+function setCaretCharacterOffsetWithin(element,off) {
+    var doc = element.ownerDocument || element.document;
+    var win = doc.defaultView || doc.parentWindow;
+    var sel;
+    if (typeof win.getSelection != "undefined") {
+        sel = win.getSelection();
+        if (sel.rangeCount > 0) {
+            var range = win.getSelection().getRangeAt(0);
+            var preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(element);
+            preCaretRange.setEnd(range.endContainer, range.endOffset);
+            caretOffset = preCaretRange.toString().length;
+        }
+    } else if ( (sel = doc.selection) && sel.type != "Control") {
+        var textRange = sel.createRange();
+        var preCaretTextRange = doc.body.createTextRange();
+        preCaretTextRange.moveToElementText(element);
+        preCaretTextRange.setEndPoint("EndToEnd", textRange);
+        caretOffset = preCaretTextRange.text.length;
+    }
+    return caretOffset;
+}
+
+
+function getCaretCharacterOffsetWithin(element) {
+    var caretOffset = 0;
+    var doc = element.ownerDocument || element.document;
+    var win = doc.defaultView || doc.parentWindow;
+    var sel;
+    if (typeof win.getSelection != "undefined") {
+        sel = win.getSelection();
+        if (sel.rangeCount > 0) {
+            var range = win.getSelection().getRangeAt(0);
+            var preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(element);
+            preCaretRange.setEnd(range.endContainer, range.endOffset);
+            caretOffset = preCaretRange.toString().length;
+        }
+    } else if ( (sel = doc.selection) && sel.type != "Control") {
+        var textRange = sel.createRange();
+        var preCaretTextRange = doc.body.createTextRange();
+        preCaretTextRange.moveToElementText(element);
+        preCaretTextRange.setEndPoint("EndToEnd", textRange);
+        caretOffset = preCaretTextRange.text.length;
+    }
+    return caretOffset;
+}
 
 atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
