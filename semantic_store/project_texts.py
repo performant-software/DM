@@ -142,8 +142,8 @@ def update_project_text(g, p_uri, t_uri, user):
         project_metadata_g.set((text_uri, NS.dc.title, title))
         project_metadata_g.set((text_uri, NS.rdfs.label, title))
         
-        text.content = content
-        text.title= title
+        text.content = content.encode('utf-8')
+        text.title= title.encode('utf-8')
         text.last_user = user
         text.save()
     except ObjectDoesNotExist:

@@ -551,13 +551,13 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
    }); 
 
 
-   goog.events.listen(this.editorIframe, 'mousemove', function(e) {
-      var offset = jQuery(this.editorIframeElement).offset();
-
-      this.mousePosition.x = e.clientX + offset.left;
-      this.mousePosition.y = e.screenY - 120;
-   }, false, this);
-
+    goog.events.listen(this.editorIframe, 'mousemove', function(e) {
+       var offset = jQuery(this.editorIframeElement).offset();
+ 
+       this.mousePosition.x = e.clientX + offset.left;
+       this.mousePosition.y = e.screenY;
+    }, false, this);
+    
    goog.events.listen(this.editorIframe.document.body, 'click', function(e) {
       var annotationPlugin = this.field.getPluginByClassId('Annotation');
 

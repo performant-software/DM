@@ -162,14 +162,11 @@ atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper2_ = function(info) {
 	
 
 atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(uri) {
-	var domHelper = this.fieldObject.getEditableDomHelper() || this.viewer.domHelper;
-	var span = domHelper.createElement('span');
-
-	jQuery(span).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-	this.setHighlightElementUri(span, uri);
-
-	this.addListeners(span);
-	return span;
+	var span = $("<span></span>");
+   $(span).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
+   this.setHighlightElementUri(span, uri);
+   this.addListeners(span[0]);
+   return span[0];
 };
 
 atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
@@ -177,25 +174,22 @@ atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
 };
 
 atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
-	var highlight = this.databroker.createResource(highlightUri);
-    highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
-    highlight.addProperty('oa:exact', sc.data.Term.wrapLiteral(range.getText()));
-    
-    // TODO
-    // highlight.addProperty('oa:prefix')
-    // highlight.addProperty('oa:suffix')
-    
-    var specificResource = this.databroker.createResource(this.databroker.createUuid());
-    specificResource.addProperty('rdf:type', 'oa:SpecificResource');
-    specificResource.addProperty('oa:hasSource', this.getTextResource().bracketedUri);
-    specificResource.addProperty('oa:hasSelector', highlight.bracketedUri);
+   var highlight = this.databroker.createResource(highlightUri);
+   highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
+   highlight.addProperty('oa:exact', sc.data.Term.wrapLiteral(range.getText()));
 
-    var anno = this.databroker.createResource(this.databroker.createUuid());
-    anno.addProperty('rdf:type', 'oa:Annotation');
-    anno.addProperty('oa:hasTarget', this.getTextResource().bracketedUri);
+   var specificResource = this.databroker.createResource(this.databroker.createUuid());
+   specificResource.addProperty('rdf:type', 'oa:SpecificResource');
+   specificResource.addProperty('oa:hasSource', this.getTextResource().bracketedUri);
+   specificResource.addProperty('oa:hasSelector', highlight.bracketedUri);
 
-    return highlight;
-};
+   var anno = this.databroker.createResource(this.databroker.createUuid());
+   anno.addProperty('rdf:type', 'oa:Annotation');
+   anno.addProperty('oa:hasTarget', this.getTextResource().bracketedUri);
+
+   return highlight;
+}; 
+
 
 atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highlightUri) {
     var highlight = this.databroker.getResource(highlightUri);
@@ -237,178 +231,10 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	var highlightResource = this.createHighlightResource(highlightUri, range);
 
 	this.viewer.unsavedChanges = true;
-	
-	var TypeElement = Node.ELEMENT_NODE;
-	var TypeText = Node.TEXT_NODE;
-			
-	var domHelper = this.fieldObject.getEditableDomHelper();
-	var self = this;
 
+		
 	var span = this.createAnnoSpan(highlightUri);
 	range.surroundContents(span);
-    
- //  if (range.getHtmlFragment() == range.getValidHtml()) {
-	// 	 var span = this.createAnnoSpan(highlightUri);
- //    range.surroundContents(span);
- //  }
-	// else {
-	// 	var putNodeAfter = function (parent, afterNode, newNode) {
-	// 		if (afterNode.nextSibling == null) {
-	// 			parent.appendChild(newNode);
-	// 		}
-	// 		else {
-	// 			parent.insertBefore(newNode, afterNode.nextSibling);
-	// 		}
-	// 	};
-		
-	// 	var putNodeBefore = function (parent, beforeNode, newNode) {
-	// 		parent.insertBefore(newNode,beforeNode);
-	// 	};
-		
-		
-	// 	var newParents = [];
-	// 	var rangeHack = range.browserRangeWrapper_.range_; //HACK
-		
-	// 	var startNode = rangeHack.startContainer;
-	// 	var startOffset = rangeHack.startOffset;
-	// 	var endNode = rangeHack.endContainer;
-	// 	var endOffset = rangeHack.endOffset;
-		
-	// 	if ((this.lastStartNode == startNode) || (this.lastEndNode == endNode)) {
-	// 		console.log("!?!");
-	// 	}
-	// 	this.lastStartNode = startNode;
-	// 	this.lastEndNode = endNode;
-		
-		
-	// 	var bSameNode = (startNode===endNode);
-		
-	// 	var bStartNodeIsElement =(startNode.nodeType===TypeElement);
-	// 	var bEndNodeIsElement =(endNode.nodeType===TypeElement);
-	// 	console.log("startOffset: "+startOffset+"; endOffset: "+endOffset);
-		
-	// 	//element start tag; startOffset: 1
-	// 	if (bStartNodeIsElement) {
-	// 		//TODO: need to figure out how to really do this properly...!?
-	// 		//occured: element start tag; startOffset: 1
-	// 		//unexpected if were to occur...?:
-			
-	// 		var startInfo;
-			
-	// 		startInfo = this.elementOffsetHelper_(startNode, startOffset);
-			
-	// 		startNode = startInfo.node;
-	// 		startOffset=startInfo.offset;
-	// 		//bStartNodeIsElement =(startNode.nodeType===TypeElement);
-	// 		bStartNodeIsElement =(startNode.nodeType===TypeElement);
-	// 		//lol42..?
-	// 	}
-
-	// 	if (bEndNodeIsElement) {
-	// 		//unexpected if were to occur...?:
-	// 		//alert("element end tag; endOffset: "+endOffset);
-	// 		var endInfo;
-		
-	// 		endInfo = this.elementOffsetHelper_(endNode, endOffset);
-			
-	// 		endNode = endInfo.node;
-	// 		endOffset = endInfo.offset;
-	// 		bEndNodeIsElement =(endNode.nodeType===TypeElement);
-	// 	}
-	// 	//lol@selection bug in stuff...when changing it...!
-		
-	// 	var endPrime;
-	// 	var startPrime;
-		
-	// 	var startNodeText = "" + startNode.nodeValue;
-	// 	var endNodeText = "" + endNode.nodeValue;
-		
-	// 	{
-	// 		var beforeText = startNodeText.substring(0,startOffset);
-	// 		var startNodeSelText = startNodeText.substring(startOffset);//+1);
-	// 		var endNodeSelText = endNodeText.substring(0, endOffset);
-	// 		var endNodeAfterText = endNodeText.substring(endOffset);// + 1);
-	// 		//if (
-	// 		//console.log("startOffset:"+startOffset+", endOffset:"+endOffset);
-	// 		var beforeTextNode = document.createTextNode(beforeText);
-	// 		var startSelTextNode =document.createTextNode(startNodeSelText);
-			
-			
-	// 		//var endNodeSelText = document.createTextNode(endNodeSelText);
-	// 		var endNodeSelTextNode = document.createTextNode(endNodeSelText);
-	// 		var afterTextNode = document.createTextNode(endNodeAfterText);
-			
-	// 		var startParent= startNode.parentNode;
-	// 		var endParent = endNode.parentNode;
-			
-	// 		if (bStartNodeIsElement) {//TODO: finish figuring this out... what does it really mean tho...?
-			
-	// 			//startPRime = startNode;//hack...?
-				
-	// 			//TODO: split the parent tag in two, maybe...?
-	// 			console.log("warning: starting on an element!");
-	// 			if (startOffset != 0) {
-	// 				console.log("WARNING: starting on an element, w/o a start-offset of zero!");
-	// 			}
-	// 			startPrime = startNode;//hack...?
-	// 		}
-	// 		else {
-	// 			console.log("textStart");
-	// 			startParent.replaceChild(startSelTextNode, startNode);//NORMAL -- null here...?
-	// 			startParent.insertBefore(beforeTextNode,startSelTextNode);
-	// 			startPrime = startSelTextNode;
-	// 		}
-			
-	// 		if (bEndNodeIsElement) {
-	// 			console.log("warning: ending on an element!");
-	// 			if (endOffset != 0) {
-	// 				console.log("WARNING: ending on an element, w/o a end-offset of zero!");
-	// 			}
-	// 			endPrime = endNode;//hack...?
-	// 		}
-	// 		else {
-	// 			console.log("textEnd");
-	// 			endParent.replaceChild(afterTextNode, endNode);//another bug...?
-	// 			endParent.insertBefore(endNodeSelTextNode,afterTextNode);
-	// 			endPrime = endNodeSelTextNode;
-	// 		}
-	// 	}
-		// var traversal = new atb.util.DomTraverser(startPrime, endPrime);
-		
-		// //TODO: ?= check this beforehand...?
-		// var bFoundSpans = false;
-		// traversal.each(function() {
-		// 	if (jQuery(this).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS)) {
-		// 		bFoundSpans = true;
-		// 	}
-		// });
-		// if (bFoundSpans) {
-		// 	this.viewer.showErrorMessage("Can't highlight a selection containing an existing highlight!");
-		// 	return;
-		// }
-		// var arr = [];
-		// traversal.eachTextNode(function() {
-		// 	if (this.parentNode!=null) {
-		// 		var ndName = (""+this.parentNode.nodeName).toLowerCase();
-		// 		if (ndName === "style") {
-		// 			return;
-		// 		}
-		// 	}
-		// 	arr.push(this);
-		// });
-		// var bunches = arr;//hack
-		
-		// for(var i=0,l=bunches.length; i<l; i++) {
-		// 	var bunch=bunches[i];
-		// 	bunch = [bunch,bunch];//HACK
-		// 	var newParent = this.createAnnoSpan(annoId);
-		// 	traversal.replaceBunchWithCommonParent(bunch, newParent);
-		// 	newParents.push(newParent);
-		// 	//document.createElement(
-		// }
-		
-		// console.log("# new parents: "+newParents.length);
-  //   }
 };
 
 /**
@@ -495,14 +321,6 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 				},
 	            'Link another resource to this highlight'
 			),
-			// new atb.widgets.MenuItem(
-		 //        "showLinkedAnnos",
-		 //        createButtonGenerator("atb-radialmenu-button icon-search"),
-		 //        function(actionEvent) {
-		 //            self.showAnnos(object);
-		 //        }, 
-		 //        'Show resources linked to this highlight'
-		 //    ),
 			new atb.widgets.MenuItem(
 				'delete_highlight_button',
 				createButtonGenerator('atb-radialmenu-button icon-remove'),
@@ -622,14 +440,14 @@ atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function (opt_ra
 	var selectionRange = opt_range || this.fieldObject.getRange();
 
 	// Mozilla includes the span tag in the range, but other browsers do not
-	if(goog.userAgent.product.Firefox) {
+	//if(goog.userAgent.product.Firefox) {
 		var selectedHtml = selectionRange.getPastableHtml();
 		return jQuery(selectedHtml).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-	}
-	else {
-		var containerNode = selectionRange.getContainerElement();
-		return jQuery(containerNode).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-	}
+	//}
+	//else {
+	//	var containerNode = selectionRange.getContainerElement();
+	//	return jQuery(containerNode).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
+	//}
 };
 
 
@@ -637,11 +455,8 @@ atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function (opt_ra
  * selectAnnotationSpan()
  **/
 atb.viewer.TextEditorAnnotate.prototype.selectAnnotationSpan = function (tag) {
-	// Prevents firing of delayed change events
-	this.fieldObject.manipulateDom(function() {
-		this.deselectAllHighlights();
-		jQuery(tag).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
-	}, true, this);
+	this.deselectAllHighlights();
+	$(tag).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
@@ -658,8 +473,6 @@ atb.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
  * hoverAnnotationSpan()
  **/
 atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function(forSpan) {
-   var viewer = this.viewer;
-   var field = viewer.field;
    $(forSpan).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
 }; 
 
@@ -667,13 +480,11 @@ atb.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function(forSpan) 
  * unhoverAnnotationSpan()
  **/
 atb.viewer.TextEditorAnnotate.prototype.unhoverAnnotationSpan = function(forSpan) {
-    var viewer = this.viewer;
-    var field = viewer.field;
-    jQuery(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
+    $(forSpan).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.deselectAllHighlights = function() {
-   jQuery(this.getAllAnnotationTags()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
+   $(this.getAllAnnotationTags()).removeClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
 };
 
 atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
@@ -701,13 +512,4 @@ atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(spanElem) {
     this.viewer.clientApp.createAnnoLink(specificResourceUri);
     
     this.selectAnnotationSpan(spanElem);
-};
-
-atb.viewer.TextEditorAnnotate.prototype.showAnnos = function(tag) {
-	var id = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(tag);
-	
-	var finder = new atb.viewer.Finder(this.viewer.clientApp, id);
-    finder.setContextType(atb.viewer.Finder.ContextTypes.RESOURCE);
-    
-	this.viewer.openRelatedViewer(finder);
 };

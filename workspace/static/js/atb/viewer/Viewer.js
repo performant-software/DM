@@ -349,7 +349,7 @@ atb.viewer.Viewer.prototype.flashDocumentIconHighlight = function () {
  * The default delay for showing and hiding menus on hover
  */
 atb.viewer.Viewer.HOVER_SHOW_DELAY = 400;
-atb.viewer.Viewer.HOVER_HIDE_DELAY = 200;
+atb.viewer.Viewer.HOVER_HIDE_DELAY = 750;
 
 /**
  * The default width for context menus (in pixels)
@@ -419,8 +419,8 @@ function(menuButtons, resourceId, opt_position) {
     else {
         var mousePosition = this.getMousePosition();
         position = new goog.math.Coordinate(
-            mousePosition.x - jQuery(menuDiv).width() / 2,
-            mousePosition.y + atb.util.StyleUtil.CURSOR_SIZE * 1.5
+            mousePosition.x + jQuery(menuDiv).width()/3,
+            mousePosition.y - jQuery(menuDiv).height()/2
         );
     }
     

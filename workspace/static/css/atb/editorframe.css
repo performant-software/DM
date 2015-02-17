@@ -37,6 +37,7 @@
 
 .atb-editor-textannotation-hover {
     background: #FFFF78;
+    outline: 1px solid red;
     
     /* Safari 4-5, Chrome 1-9 */
     background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FFFFBF), to(#FFFF78));
