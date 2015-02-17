@@ -269,6 +269,8 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
 
     var exitedEvent = new atb.events.LinkingModeExited(this.annoLinkCreationAnnoId);
     this.eventDispatcher.dispatchEvent(exitedEvent);
+    
+    this.databroker.sync();
 };
 
 atb.ClientApp.prototype.annoLinkCreationKeyHandler_ = function (e) {

@@ -756,6 +756,5 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
    $("#" + this.useID + '_js_save_status').text("Not Saved");
-   this.saveContents();
 }; 
 

@@ -44,13 +44,9 @@ sc.data.SyncService.RESTYPE = {
 };
 
 sc.data.SyncService.prototype.requestSync = function() {
-    console.log("POST NEW....");
     this.postNewResources();
-   console.log("PUT MODIFIED....");
     this.putModifiedResources();
-   console.log("DELETE DELETED....");
     this.deleteDeletedResources();
-    console.log("DONE");
 };
 
 sc.data.SyncService.prototype.createTextHttpUri = function() {

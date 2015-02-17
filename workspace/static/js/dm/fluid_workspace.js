@@ -138,7 +138,7 @@ var resizeViewerGrid = function() {
         $('#3x4_layout_button').hide();
         $('#4x4_layout_button').hide();
     }
-}
+};
 
 var setupUser = function(databroker, username) {
     databroker.user = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
@@ -168,69 +168,69 @@ var setupUser = function(databroker, username) {
 };
 
 function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl, opt_restBasePath) {
-    cookies = new goog.net.Cookies(window.document);
-    /* The following method is copied from Django documentation
-     * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-     * Necessary to avoid 403 error when posting data
+   cookies = new goog.net.Cookies(window.document);
+   /* The following method is copied from Django documentation
+    * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+    * Necessary to avoid 403 error when posting data
     */
-    var csrfSafeMethod = function(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
-    /* Part of csrf-token setup
-     * Copied from Django documentation
-     * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
+   var csrfSafeMethod = function(method) {
+      // these HTTP methods do not require CSRF protection
+      return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+   };
+
+   /* Part of csrf-token setup
+    * Copied from Django documentation
+    * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
     */
-    jQuery.ajaxSetup({
-        crossDomain: false,
-        beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type) && goog.Uri.haveSameDomain(window.location.href, settings.url)) {
-                xhr.setRequestHeader("X-CSRFToken", cookies.get("csrftoken"));
-            }
-        }
-    });
+   jQuery.ajaxSetup({
+      crossDomain : false,
+      beforeSend : function(xhr, settings) {
+         if (!csrfSafeMethod(settings.type) && goog.Uri.haveSameDomain(window.location.href, settings.url)) {
+            xhr.setRequestHeader("X-CSRFToken", cookies.get("csrftoken"));
+         }
+      }
+   });
 
-    var databrokerOptions = {};
+   var databrokerOptions = {};
 
-    if (opt_restBasePath) {
-        var syncService = new sc.data.SyncService({
-            'restBasePath': opt_restBasePath
-        });
-        databrokerOptions['syncService'] = syncService;
-    }
+   if (opt_restBasePath) {
+      var syncService = new sc.data.SyncService({
+         'restBasePath' : opt_restBasePath
+      });
+      databrokerOptions['syncService'] = syncService;
+   }
 
-    goog.global.databroker = new sc.data.Databroker(databrokerOptions);
-    
-	goog.global.clientApp = new atb.ClientApp(
-		null, 
-        username,
-        styleRoot,
-        goog.global.databroker
-    );
-    goog.global.clientApp.renderLinkCreationUI();
+   goog.global.databroker = new sc.data.Databroker(databrokerOptions);
 
-    setupUser(databroker, username);
+   goog.global.clientApp = new atb.ClientApp(null, username, styleRoot, goog.global.databroker);
+   goog.global.clientApp.renderLinkCreationUI();
 
-    goog.global.viewerGrid = new atb.viewer.ViewerGrid();
-    viewerGrid.setDimensions(1,2);
-    viewerGrid.render(goog.dom.getElement('grid'));
+   setupUser(databroker, username);
 
-    clientApp.viewerGrid = goog.global.viewerGrid;
+   goog.global.viewerGrid = new atb.viewer.ViewerGrid();
+   viewerGrid.setDimensions(1, 2);
+   viewerGrid.render(goog.dom.getElement('grid'));
 
-    resizeViewerGrid();
-    jQuery(window).bind('resize', resizeViewerGrid);
+   clientApp.viewerGrid = goog.global.viewerGrid;
 
-    glasspane = goog.dom.createDom('div', {'class': 'frosted-glasspane'});
-    jQuery(glasspane).hide();
-    jQuery(document.body).prepend(glasspane);
+   resizeViewerGrid();
+   jQuery(window).bind('resize', resizeViewerGrid);
 
-    var wrContainerParent = goog.dom.createDom('div', {'class': 'working-resources-container-parent'});
-    jQuery('#atb-footer-controls').prepend(wrContainerParent);
-    
-    //setupRepoBrowser(clientApp, wrContainerParent);
-    setupProjectViewer(clientApp, viewerGrid);
-    setupSearchViewer(clientApp);
-    // setupSyncManager(clientApp);
+   glasspane = goog.dom.createDom('div', {
+      'class' : 'frosted-glasspane'
+   });
+   jQuery(glasspane).hide();
+   jQuery(document.body).prepend(glasspane);
+
+   var wrContainerParent = goog.dom.createDom('div', {
+      'class' : 'working-resources-container-parent'
+   });
+   jQuery('#atb-footer-controls').prepend(wrContainerParent);
+
+   //setupRepoBrowser(clientApp, wrContainerParent);
+   setupProjectViewer(clientApp, viewerGrid);
+   setupSearchViewer(clientApp);
+   // setupSyncManager(clientApp);
 }
 
 

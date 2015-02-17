@@ -82,7 +82,6 @@ sc.canvas.CanvasViewer = function(options) {
 };
 
 sc.canvas.CanvasViewer.prototype.options = {
-    'databroker': new sc.data.Databroker(),
     'marqueeSize': new goog.math.Size(100, 100)
 };
 

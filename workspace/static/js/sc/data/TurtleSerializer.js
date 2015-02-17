@@ -16,28 +16,24 @@ sc.data.TurtleSerializer.prototype.serializableTypes = new goog.structs.Set([
     'text/n3'
 ]);
 
+
 sc.data.TurtleSerializer.prototype.serialize = function(quads, opt_format, handler) {
-    var format = opt_format || 'text/turtle';
+   var format = opt_format || 'text/turtle';
 
-    setTimeout(function() {
-        var lines = [];
+   var lines = [];
 
-        lines.push(this.getPrefixesString(this.databroker.namespaces));
+   lines.push(this.getPrefixesString(this.databroker.namespaces));
+   lines.push(this.getTriplesString(quads));
 
-        lines.push(this.getTriplesString(quads));
+   if (this.compact) {
+      var data = lines.join('\n');
+   } else {
+      var data = lines.join('\n\n');
+   }
 
-        if (this.compact) {
-            var data = lines.join('\n');
-        }
-        else {
-            var data = lines.join('\n\n');
-        }
+   handler(data, null, format);
+}; 
 
-        setTimeout(function() {
-            handler(data, null, format);
-        }.bind(this), 1);
-    }.bind(this), 1);
-};
 
 sc.data.TurtleSerializer.prototype.getTriplesString = function(quads) {
     var quadStore = new sc.data.QuadStore(quads);
