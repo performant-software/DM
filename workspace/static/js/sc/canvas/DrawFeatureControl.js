@@ -21,18 +21,9 @@ goog.require('sc.util.svg');
 sc.canvas.DrawFeatureControl = function(viewport, databroker) {
     sc.canvas.FeatureControl.call(this, viewport, databroker);
 
-    /**
-     * Features which have been drawn with this tool since its initialization
-     * (not its activation)
-     * @type {Array.<Raphael.Element>}
-     */
-    this.drawnFeatures = [];
-
     /** @type {string} */
     this.featureType = '';
 
-    /** @type {boolean} */
-    this.isDrawingInProgress = false;
 };
 goog.inherits(sc.canvas.DrawFeatureControl, sc.canvas.FeatureControl);
 
@@ -52,8 +43,6 @@ sc.canvas.DrawFeatureControl.EVENT_TYPES = {
  */
 sc.canvas.DrawFeatureControl.prototype.activate = function() {
     sc.canvas.FeatureControl.prototype.activate.call(this);
-
-    jQuery(this.viewport.getElement()).addClass('sc-CanvasViewport-draw');
 };
 
 /**
@@ -61,16 +50,6 @@ sc.canvas.DrawFeatureControl.prototype.activate = function() {
  */
 sc.canvas.DrawFeatureControl.prototype.deactivate = function() {
     sc.canvas.FeatureControl.prototype.deactivate.call(this);
-
-    jQuery(this.viewport.getElement()).removeClass('sc-CanvasViewport-draw');
-};
-
-/**
- * Gets a uri for a new resource from the databroker
- * @return {string} The new uri.
- */
-sc.canvas.DrawFeatureControl.prototype.getNewUri = function() {
-    return this.databroker.createUuid();
 };
 
 /**
@@ -78,14 +57,6 @@ sc.canvas.DrawFeatureControl.prototype.getNewUri = function() {
  * new feature.
  */
 sc.canvas.DrawFeatureControl.prototype.beginDrawFeature = function() {
-    this.isDrawingInProgress = true;
-
-    this.uri = this.getNewUri();
-
-    var event = new goog.events.Event(sc.canvas.DrawFeatureControl.
-                                      EVENT_TYPES.beginDraw, this.uri);
-    event.feature = this.feature;
-    this.dispatchEvent(event);
 };
 
 /**
@@ -93,37 +64,8 @@ sc.canvas.DrawFeatureControl.prototype.beginDrawFeature = function() {
  * the feature to the list of drawnFeatures and nullify this.feature.
  */
 sc.canvas.DrawFeatureControl.prototype.finishDrawFeature = function() {
-    var feature = this.feature;
-    var uri = this.uri;
-    
-    if (feature == null) {
-        return;
-    }
-
-    this.drawnFeatures.push(feature);
-
+ 
     this.sendFeatureToDatabroker();
-
-    this.viewport.canvas.requestFrameRender();
-    
-    this.viewport.canvas.fireModifiedFeature(feature, uri);
-
-    var event = new goog.events.Event(sc.canvas.DrawFeatureControl.
-                                      EVENT_TYPES.finishDraw, uri);
-    event.feature = this.feature;
+    var event = new goog.events.Event(sc.canvas.DrawFeatureControl.EVENT_TYPES.finishDraw);
     this.dispatchEvent(event);
-
-    this.feature = null;
-    this.uri = '';
-
-    this.isDrawingInProgress = false;
-};
-
-/**
- * Returns a reference to the list of features this control has drawn since it
- * has been instantiated (not since it was last activated).
- * @return {Array.<Raphael.Element>} The list of drawn features.
- */
-sc.canvas.DrawFeatureControl.prototype.getDrawnFeatures = function() {
-    return this.drawnFeatures;
 };

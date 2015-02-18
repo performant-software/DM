@@ -15,7 +15,6 @@ goog.require('sc.canvas.DrawRectControl');
 goog.require('sc.canvas.DrawLineControl');
 goog.require('sc.canvas.DrawPolygonControl');
 goog.require('sc.canvas.DragFeatureControl');
-goog.require('sc.canvas.DrawCircleControl');
 
 sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
     this.viewer = viewer;
@@ -28,9 +27,6 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
     this.controls = {
         'panZoom': new sc.canvas.PanZoomGesturesControl(viewer.mainViewport),
         'drawEllipse': new sc.canvas.DrawEllipseControl(
-            viewer.mainViewport,
-            this.databroker),
-        'drawCircle': new sc.canvas.DrawCircleControl(
             viewer.mainViewport,
             this.databroker),
         'drawRect': new sc.canvas.DrawRectControl(
@@ -53,11 +49,6 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
 
     this.setupDefaultButtons();
 
-    this.setupImageChoices();
-
-    this.viewer.mainViewport.addEventListener(
-        'canvasAdded', this.handleCanvasAdded,
-        false, this);
     this.viewer.mainViewport.addEventListener(
         'bounds changed', this.handleBoundsChanged,
         false, this);
@@ -66,7 +57,6 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
 sc.canvas.CanvasToolbar.prototype.deactivateMouseControls = function() {
     this.controls.panZoom.deactivate();
     this.controls.drawEllipse.deactivate();
-    this.controls.drawCircle.deactivate();
     this.controls.drawRect.deactivate();
     this.controls.drawLine.deactivate();
     this.controls.drawPolygon.deactivate();
@@ -78,17 +68,10 @@ sc.canvas.CanvasToolbar.prototype.unregisterControls = function() {
     }, this);
 };
 
-sc.canvas.CanvasToolbar.prototype.handleCanvasAdded = function(event) {
-    var self = this;
-    window.setTimeout(function() {
-        self.handleTranscriptionsClick();
-    }, 10);
-};
 
 sc.canvas.CanvasToolbar.prototype.handleBoundsChanged = function(event) {
     var viewport = this.viewer.mainViewport;
     var canvas = viewport.canvas;
-    
     if (canvas) {
         this.boundsByUri.set(canvas.getUri(), viewport.getBounds());
     }
@@ -123,42 +106,6 @@ sc.canvas.CanvasToolbar.prototype.createButton = function(
 
 sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     this.buttonsByName = {};
-
-    var leftButton = this.createButton(
-        'previousPage',
-        'Go to the previous canvas in this sequence',
-        '',
-        'icon-chevron-left',
-        this.handlePreviousClick
-    );
-    //this.addButton(leftButton);
-
-    var pageChooserButton = this.createButton(
-        'pageChooser',
-        'Pick another folia from this manuscript to view',
-        '',
-        'icon-list',
-        this.handlePageChooserClick
-    );
-    //this.setupPageChooser();
-    //this.addButton(pageChooserButton);
-
-    var rightButton = this.createButton(
-        'nextPage',
-        'Go to the next canvas in this sequence',
-        '',
-        'icon-chevron-right',
-        this.handleNextClick
-    );
-    //this.addButton(rightButton);
-
-    this.autoEnableNavButtons();
-    this.viewer.mainViewport.addEventListener(
-        'canvasAdded',
-        this.autoEnableNavButtons,
-        false, this);
-
-    //this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
     if (!this.forReadOnly) {
         var panZoomButton = this.createButton(
@@ -232,74 +179,6 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
                 toggleMarkersButton.setChecked(true);
             });
         }
-    }
-
-    var transcriptionsButton = this.createButton(
-        'transcriptions',
-        'Show and hide transcriptions',
-        '',
-        'icon-font',
-        this.handleTranscriptionsClick
-    );
-    transcriptionsButton.setChecked(true);
-    transcriptionsButton.addEventListener('enter', function(event) {
-        if (this.viewer.mainViewport.canvas) {
-            this.viewer.mainViewport.canvas.fadeTextAnnosToOpacity(0.7);
-        }
-    }, false, this);
-    transcriptionsButton.addEventListener('leave',
-        this.handleTranscriptionsClick,
-        false, this);
-    this.addButton(transcriptionsButton);
-    
-    var imageChoicesButton = this.createButton(
-        'imageChoices',
-        'Show alternate image choices',
-        '',
-        'icon-picture',
-        this.handleImageChoicesClick
-    );
-    this.addButton(imageChoicesButton);
-};
-
-sc.canvas.CanvasToolbar.prototype.setupPageChooser = function() {
-    var self = this;
-    
-    this.pageChooser = new sc.canvas.PageChooser(
-        this.buttonsByName['pageChooser'],
-        this.databroker
-    );
-    this.updatePageChooser();
-    goog.events.listen(this.viewer.mainViewport, 'canvasAdded', this.updatePageChooser,
-                       false, this);
-
-    goog.events.listen(this.pageChooser, 'pageChosen', this.handlePageChoice, false, this);
-};
-
-sc.canvas.CanvasToolbar.prototype.handlePageChooserClick = function(event) {
-    var button = this.buttonsByName['imageChoices'];
-    
-    if (this.pageChooser.isShowingChoices) {
-        this.pageChooser.hideChoices();
-    }
-    else if (this.pageChooser.pageUris.length > 0) {
-        this.pageChooser.showChoices();
-    }
-    else {
-        button.setChecked(false);
-    }
-};
-
-sc.canvas.CanvasToolbar.prototype.updatePageChooser = function() {
-    var canvas = this.viewer.mainViewport.canvas;
-
-    this.pageChooser.clear();
-
-    if (canvas && canvas.knowsSequenceInformation()) {
-        var canvasResource = this.databroker.getResource(canvas.uri);
-        var urisInOrder = canvas.urisInOrder;
-
-        this.pageChooser.addPages(urisInOrder, canvas.uri);
     }
 };
 
@@ -381,37 +260,6 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
         leftButton.setTooltip(tooltip);
         rightButton.setTooltip(tooltip);
     }
-};
-
-sc.canvas.CanvasToolbar.prototype.setupImageChoices = function(button) {
-    var self = this;
-    
-    this.imageChoicePicker = new sc.canvas.ImageChoicePicker(
-        this.buttonsByName['imageChoices'],
-        this.databroker,
-        100
-    );
-
-    var onCanvasAdded = function(event) {
-        var canvas = this.viewer.mainViewport.canvas;
-        var imageUris = canvas.imageOptionUris;
-        
-        this.imageChoicePicker.clear();
-
-        for (var i = 0, len = imageUris.length; i < len; i++) {
-            var imageUri = imageUris[i];
-            
-            this.imageChoicePicker.addImage(imageUri, function(uri, event) {
-                var canvas = self.viewer.mainViewport.canvas;
-                var marqueeCanvas = self.viewer.marqueeViewport.canvas;
-                
-                canvas.chooseImage(uri);
-                marqueeCanvas.chooseImage(uri);
-            });
-        }
-    };
-    goog.events.listen(this.viewer.mainViewport, 'canvasAdded', onCanvasAdded,
-                       false, this);
 };
 
 sc.canvas.CanvasToolbar.prototype.addButton = function(button) {
@@ -528,124 +376,4 @@ sc.canvas.CanvasToolbar.prototype.handleDrawBoxClick = function(event) {
         function(event) {
             this.selectHandTool();
         }, false, this);
-};
-
-sc.canvas.CanvasToolbar.prototype.handleTranscriptionsClick = function(event) {
-    var button = this.buttonsByName['transcriptions'];
-
-    var canvas = this.viewer.mainViewport.canvas;
-    var marqueeCanvas = this.viewer.marqueeViewport.canvas;
-
-    if (! canvas) {
-        return;
-    }
-
-    if (button.isChecked()) {
-        canvas.showTextAnnos();
-        
-        if (marqueeCanvas) {
-            marqueeCanvas.showTextAnnos();
-        }
-    }
-    else {
-        canvas.hideTextAnnos();
-        
-        if (marqueeCanvas) {
-            marqueeCanvas.hideTextAnnos();
-        }
-    }
-};
-
-sc.canvas.CanvasToolbar.prototype.setCanvasByUri = function(uri, urisInOrder,
-                                                            index) {
-    var self = this;
-    
-    var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(
-        uri,
-        this.databroker,
-        urisInOrder,
-        index
-    ).done(function(canvas) {
-//           var bounds = self.boundsByUri.get(uri);
-//           
-//           if (bounds) {
-//           self.viewer.mainViewport.zoomToBounds(bounds);
-//           }
-           });
-    this.viewer.addDeferredCanvas(deferredCanvas);
-};
-
-sc.canvas.CanvasToolbar.prototype.handlePreviousClick = function(event) {
-    var button = this.buttonsByName['previousPage'];
-
-    button.setChecked(false);
-
-    var canvas = this.viewer.mainViewport.canvas;
-
-    if (! canvas) {
-        return;
-    }
-
-    var urisInOrder = canvas.urisInOrder;
-    var currentIndex = canvas.currentIndex;
-
-    var newIndex = currentIndex - 1;
-    var newUri = urisInOrder[newIndex];
-
-    this.setCanvasByUri(newUri, urisInOrder, newIndex);
-};
-
-sc.canvas.CanvasToolbar.prototype.handleNextClick = function(event) {
-    var button = this.buttonsByName['nextPage'];
-
-    button.setChecked(false);
-
-    var canvas = this.viewer.mainViewport.canvas;
-
-    if (! canvas) {
-        return;
-    }
-
-    var urisInOrder = canvas.urisInOrder;
-    var currentIndex = canvas.currentIndex;
-
-    var newIndex = currentIndex + 1;
-    var newUri = urisInOrder[newIndex];
-
-    this.setCanvasByUri(newUri, urisInOrder, newIndex);
-};
-
-sc.canvas.CanvasToolbar.prototype.handlePageChoice = function(event) {
-    var uri = event.uri;
-    var button = this.buttonsByName['pageChooser'];
-
-    this.pageChooser.hideChoices();
-
-    button.setChecked(false);
-
-    var canvas = this.viewer.mainViewport.canvas;
-
-    if (! canvas) {
-        return;
-    }
-
-    var urisInOrder = canvas.urisInOrder;
-
-    var newIndex = urisInOrder.indexOf(uri);
-
-    this.setCanvasByUri(uri, urisInOrder, newIndex);
-};
-
-sc.canvas.CanvasToolbar.prototype.handleImageChoicesClick = function(event) {
-    var button = this.buttonsByName['imageChoices'];
-    
-    if (this.imageChoicePicker.isShowingChoices) {
-        this.imageChoicePicker.hideChoices();
-    }
-    else if (this.imageChoicePicker.uris.getCount() > 0) {
-        this.imageChoicePicker.showChoices();
-    }
-    else {
-        button.setChecked(false);
-    }
 };

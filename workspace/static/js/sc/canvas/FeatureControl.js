@@ -21,8 +21,6 @@ sc.canvas.FeatureControl = function(viewport, databroker) {
     this.databroker = databroker;
     
     this.resetFeature();
-    
-    this.shouldSaveChanges = true;
 };
 goog.inherits(sc.canvas.FeatureControl, sc.canvas.Control);
 
@@ -128,9 +126,6 @@ sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
  * Sends the finished drawn feature data to the databroker as new triples
  */
 sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
-    if (! this.shouldSaveChanges) {
-        return;
-    }
     
     var svgString = this.exportFeatureToSvg();
     console.log("svgString: ", svgString);
@@ -152,10 +147,10 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     var annotation = this.databroker.createResource(null, 'oa:Annotation');
     annotation.addProperty('oa:hasTarget', specificResource.bracketedUri);
 
-    // Sycc data with server after each anno is added
-    this.databroker.sync();
-
     this.resetFeature();
+    
+    // Sync data with server after each anno is added
+    this.databroker.syncNew();
 };
 
 /**
@@ -180,23 +175,4 @@ sc.canvas.FeatureControl.prototype.setFeatureCoordinates = function(x, y) {
     var feature = this.feature;
     
     this.viewport.canvas.setFeatureCoords(feature, x, y);
-};
-/**
- * Sets whether the control should save its changes to the databroker.
- *
- * @param {boolean} b True to save changes, false to not.
- */
-sc.canvas.FeatureControl.prototype.setShouldSaveChanges = function(b) {
-    this.shouldSaveChanges = b;
-};
-
-/**
- * Toggles whether the control saves its changes to the databroker.
- *
- * @return {boolean} Whether the control will now save changes.
- */
-sc.canvas.FeatureControl.prototype.toggleShouldSaveChanges = function() {
-    this.setShouldSaveChanges(!this.shouldSaveChanges);
-    
-    return this.shouldSaveChanges;
 };

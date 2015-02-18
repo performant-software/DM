@@ -49,6 +49,10 @@ sc.data.SyncService.prototype.requestSync = function() {
     this.deleteDeletedResources();
 };
 
+sc.data.SyncService.prototype.requestSyncNew = function() {
+    this.postNewResources();
+};
+
 sc.data.SyncService.prototype.createTextHttpUri = function() {
     var uuid = this.databroker.createUuid().replace("/urn\:uuid\:/", "");
     var uri = this.textBaseUri.replace(/\/+$/, "") // that property doesn't exist in this class or the databroker... ?
@@ -360,13 +364,6 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
     format = format || 'text/turtle';
 
     goog.structs.forEach(quads, function(quad) {
-        // if(quad.object.match(/".*"/)) {
-            // var x = quad.object.substring(1,quad.object.length-1);
-            // console.log("BEFORE: "+x);
-            // x = x.replace(/\\"/g, "'");
-            // console.log("AFTER: "+x);
-            // quad.object = "\""+x+"\"";
-        // }
         if(quad.object.match(/"".*""/)) {
             quad.object = quad.object.split('""').join('"');    
         }
