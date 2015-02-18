@@ -246,7 +246,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
 
 
      
-    goog.editor.Field.DELAYED_CHANGE_FREQUENCY = 2000;
+    goog.editor.Field.DELAYED_CHANGE_FREQUENCY = 1000;
     this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
     this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
     //this.field.registerPlugin(new goog.editor.plugins.UndoRedo());
@@ -660,11 +660,16 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     textEditorAnnotate.addListenersToAllHighlights();
                     this._addHighlightListenersWhenUneditable(); 
                     $("#"+this.useID + '_js_save_status').text("Loaded");
-                    this.loadingContent = false;
                     
                     if (opt_doAfter) {
                        opt_doAfter();
                     }
+                    
+                    if ( contents == null) {
+                       this.loadingContent = false;
+                    } 
+                    this.field.clearDelayedChange();
+                    
                 }
                 else {
                    this.loadError = true;
@@ -751,7 +756,9 @@ atb.viewer.TextEditor.prototype.linkAnnotation = function (opt_myResourceId, opt
 atb.viewer.TextEditor.prototype.onChange = function (event) {
     if ( this.loadingContent === false   ) {
       this.saveContents();
-    } 
+    }  else {
+       this.loadingContent = false;
+    }
 };
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {

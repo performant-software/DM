@@ -228,11 +228,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	}
 
 	var highlightUri = this.databroker.createUuid();
-	var highlightResource = this.createHighlightResource(highlightUri, range);
-
-	this.viewer.unsavedChanges = true;
-
-		
+	var highlightResource = this.createHighlightResource(highlightUri, range);		
 	var span = this.createAnnoSpan(highlightUri);
 	range.surroundContents(span);
 };
