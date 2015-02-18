@@ -610,13 +610,13 @@ sc.data.DataModel.prototype.textContents = function(text, handler, opt_forceRelo
     window.setTimeout(function() {
         text = this.databroker.getResource(text);
 
-        var content = text.getOneProperty('cnt:chars')
+        var content = text.getOneProperty('cnt:chars');
         if (content) {
             handler(content);
         }
         else {
             text.defer().done(function() {
-                var content = text.getOneProperty('cnt:chars')
+                var content = text.getOneProperty('cnt:chars');
                 if (content) {
                     handler(content);
                 }
