@@ -46,7 +46,6 @@ sc.data.Databroker = function(options) {
 
     this._setupParsersAndSerializers();
 
-    this.requestedUrls = new goog.structs.Set();
     this.receivedUrls = new goog.structs.Set();
     this.failedUrls = new goog.structs.Set();
 
@@ -221,8 +220,6 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) 
     if (! jQuery.isFunction(handler)) {
         handler = jQuery.noop;
     }
-
-    this.requestedUrls.add(url);
 
     var proxiedUrl = this.proxyUrl(url);
 
@@ -468,9 +465,8 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
 
         if (describers.length > 0) {
             for (var j = 0, lenj = describers.length; j < lenj; j++) {
-                var describer = describers[j];
-
-                if (!opt_forceReload || !this.receivedUrls.contains(describer)) {
+                var describer = decodeURIComponent(describers[j]);
+                if (!opt_forceReload || !urlsToRequest.contains(describer)) {
                     urlsToRequest.add(describer);
                 }
             }
@@ -481,10 +477,8 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
         else if (!opt_noGuesses) {
             urlGuesses = this.guessResourceUrls(uri);
             for (var j = 0, lenj = urlGuesses.length; j < lenj; j++) {
-                var url = urlGuesses[j];
-
-                if ((!opt_forceReload || !this.receivedUrls.contains(url)) &&
-                    !this.failedUrls.contains(url)) {
+                var url = decodeURIComponent(urlGuesses[j]);
+                if ((!opt_forceReload || !urlsToRequest.contains(url)) && !this.failedUrls.contains(url)) {
                     urlsToRequest.add(url);
                 }
             }
@@ -568,7 +562,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToReque
                 }
             });
         }
-    }.bind(this), 0);
+    }.bind(this), 10);
 
     return deferredResource;
 };

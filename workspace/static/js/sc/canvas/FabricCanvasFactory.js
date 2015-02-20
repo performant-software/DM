@@ -57,7 +57,6 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
     var deferredResource = databroker.getDeferredResource(uri);
 
     var canvas = null;
-
     var withResource = function(resource) {
         if (
                 !(
@@ -130,7 +129,7 @@ sc.canvas.FabricCanvasFactory.createDeferredCanvas = function(uri, databroker, o
             // }, 1);
             // }, 1);
         }
-    }
+    };
     deferredResource.progress(withResource).done(withResource).fail(withResource);
 
     if (opt_doAfter) {
