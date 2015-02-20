@@ -26,7 +26,7 @@ from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import NegotiatedGraphResponse, JsonResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title, metadata_triples
 from semantic_store.rdfstore import rdfstore, default_identifier
 from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
-from semantic_store.projects import create_project_from_request, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph, get_project_metadata_graph
+from semantic_store.projects import create_project_from_request, delete_project, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph, get_project_metadata_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
 from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples, create_canvas_from_upload
@@ -82,7 +82,8 @@ def projects(request, uri=None):
         if not uri:
             return HttpResponse(status=400, 
                                 content="Project delete request must specify URI.")
-        return delete_project(request, uri)
+        delete_project(uri)
+        return HttpResponse(status=200, content="Project successfully deleted")
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
@@ -124,7 +125,6 @@ def resources(request, uri, ext=None):
     store_g = Graph(store=rdfstore(), identifier=URIRef(uri))
     g = Graph()
     g += store_g
-
     if len(g) > 0:
         for i in perms:
             anno_uri = settings.URI_MINT_BASE \

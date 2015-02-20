@@ -25,6 +25,36 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
 
     this.modalElement = this.domHelper.createDom('div', {'class': 'modal hide fade sc-ProjectViewer-modal'});
     this._buildModalElement();
+    
+    var ss = this.databroker.syncService;
+    var pc = this.projectController;
+    setTimeout(function() {
+      var foo = $("#del-project");
+      $("#del-project").on("click", function() {
+         if ( $("#del-project").hasClass("disabled") ) {
+            return;
+         }
+         res = confirm("All data for this project will be deleted. Are you sure?");
+         if (res) {
+            $("#del-project").addClass("disabled");
+            var curr = pc.getCurrentProject();
+            var url = ss.restUrl(curr.uri);
+            $.ajax({
+               url: url,
+               method: "DELETE",
+               complete: function(jqXHR, textStatus) {
+                  if ( textStatus=="success" ) {
+                     window.location.reload();
+                  } else {
+                     $("#del-project").removeClass("disabled");
+                     alert("Unable to delete project: "+ jqXHR.responseText);
+                  }
+               },
+            });
+         }
+      });
+   }, 10); 
+
 
     goog.events.listen(this.projectController, 'projectSelected', this._onProjectSelected, false, this);
 };
@@ -97,6 +127,8 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
         'data-dismiss': 'modal',
         'aria-hidden': 'true'
     });
+    var delProjBtn = this.domHelper.createDom('button', {'class': 'btn btn-primary', 'id': 'del-project'}, 'Delete Project');
+    this.modalFooter.appendChild(delProjBtn);
     this.modalFooter.appendChild(footerCloseButton);
     this.modalElement.appendChild(this.modalFooter);
 };
@@ -696,10 +728,8 @@ sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {
 
 sc.ProjectViewer.prototype._handleDownloadButtonClick = function(event) {
     event.stopPropagation();
-
     var downloadUrl = this.databroker.syncService.getProjectDownloadUrl(this.projectController.currentProject.uri);
-
-    var w = window.open(downloadUrl)
+    var w = window.open(downloadUrl);
 };
 
 sc.ProjectViewer.prototype._handleNewTextButtonClick = function(event) {

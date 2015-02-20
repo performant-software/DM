@@ -149,6 +149,10 @@ sc.data.ProjectController.prototype.autoSelectProject = function(user) {
     }
 };
 
+sc.data.ProjectController.prototype.getCurrentProject = function() {
+   return this.currentProject;
+};
+
 sc.data.ProjectController.prototype.fireProjectSelected = function() {
     var event = new goog.events.Event('projectSelected', this);
     event.project = this.currentProject;
