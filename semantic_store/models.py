@@ -39,13 +39,13 @@ class Text(models.Model):
             ('identifier', 'valid'),
         )
 
-    def __unicode__(self):
-        return '"%s", uri:"%s" (%s %s by %s)' % (
-            self.title,
-            self.identifier,
-            self.timestamp,
-            ('valid' if self.valid else 'invalid'), self.last_user
-        )
+#     def __unicode__(self):
+#         return '"%s", uri:"%s" (%s %s by %s)' % (
+#             self.title,
+#             self.identifier,
+#             self.timestamp,
+#             ('valid' if self.valid else 'invalid'), self.last_user
+#         )
 
     def plain_content(self):
         soup = BeautifulSoup(self.content)

@@ -54,28 +54,55 @@ def create_project(g):
                         ?user rdf:type foaf:Agent .
                     }""", initNs=ns)
 
+    seen_uri = []
     for uri in g.subjects(NS.rdf.type, NS.dm.Project):
+        try:
+            seen_uri.index(uri)
+            continue
+        except ValueError as e:
+            seen_uri.append( uri )
+          
+        print "URI %s" % uri      
         user = g.value(None, NS.perm.hasPermissionOver, uri)
         if user:
             user_obj = User.objects.get(username=user.split('/')[-1])
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
 
+        seen_turi=[]
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
+            try:
+                seen_turi.index(text_uri)
+                continue
+            except ValueError as e:
+                print "TEXT URI #1: %s" % text_uri      
+                seen_turi.append( text_uri )
+                
             text_graph = Graph()
             text_graph += g.triples((text_uri, None, None))
             if user:
                 project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
 
+        seen_t = []
         for t in g:
-            project_g.add(t)
+            try:
+                seen_t.index(t)
+                continue
+            except ValueError as e:
+                seen_t.append( t )
+                project_g.add(t)
 
+        seen_turi2=[]
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
-            project_g.remove((text_uri, NS.cnt.chars, None))
+            try:
+                seen_turi2.index(text_uri)
+                continue
+            except ValueError as e:
+                seen_turi2.append( text_uri )
+                project_g.remove((text_uri, NS.cnt.chars, None))
 
         url = uris.url('semantic_store_projects', uri=uri)
         project_g.set((uri, NS.dcterms['created'], Literal(datetime.utcnow())))
-
 
         if user:
             project_g.remove((user, None, None))
@@ -105,12 +132,20 @@ def build_project_metadata_graph(project_uri):
     This should really only be called when importing a full project from a file, or to rebuild the cache. The cache should otherwise
     be maintained with each update, as it is very expensive to rebuild this cache.
     """
+    print " - build metatdata"
     metadata_graph = get_project_metadata_graph(project_uri)
     project_graph = get_project_graph(project_uri)
 
     metadata_graph += metadata_triples(project_graph, project_uri)
 
+    seen = []
     for aggregate_uri in project_graph.objects(project_uri, NS.ore.aggregates):
+        try:
+            seen.index(aggregate_uri)
+            continue
+        except ValueError as e:
+            seen.append( aggregate_uri )
+                
         metadata_graph.add((project_uri, NS.ore.aggregates, aggregate_uri))
 
         if ((aggregate_uri, NS.rdf.type, NS.sc.Canvas) in project_graph or
@@ -219,7 +254,6 @@ def delete_project(uri):
     with transaction.commit_on_success():
         project_graph.remove((None, None, None))
         metadata_graph.remove((None, None, None))
-
         ProjectPermission.objects.filter(identifier=uri).delete()
 
 def delete_triples_from_project(request, uri):
