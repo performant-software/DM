@@ -47,7 +47,7 @@ def create_project_from_request(request):
 
 def create_project(g):
     """Creates a project in the database (and the metadata cache) from an input graph"""
-
+    print "CREATE PROJECT"
     query = g.query("""SELECT ?uri ?user
                     WHERE {
                         ?user perm:hasPermissionOver ?uri .
@@ -66,6 +66,10 @@ def create_project(g):
         user = g.value(None, NS.perm.hasPermissionOver, uri)
         if user:
             user_obj = User.objects.get(username=user.split('/')[-1])
+        else:
+            print "NO USER.... DEFAULT TO mfoy@drew.edu"
+            user_obj = User.objects.get(username='mfoys@drew.edu')
+            
         project_identifier = uris.uri('semantic_store_projects', uri=uri)
         project_g = Graph(store=rdfstore(), identifier=project_identifier)
 
@@ -80,7 +84,7 @@ def create_project(g):
                 
             text_graph = Graph()
             text_graph += g.triples((text_uri, None, None))
-            if user:
+            if user_obj:
                 project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
 
         seen_t = []

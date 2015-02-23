@@ -271,6 +271,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     
     var editorIframe = $("#"+this.field.id);
     var iframeContent = editorIframe.contents();
+    var self = this;
     iframeContent.bind("paste", function(e) {
          // Grab the current content and caret position
          var editor = iframeContent.find('.editable');
@@ -282,7 +283,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
          // replace the original content, move cursor to insertion
          // point and stick in the stripped content
          editor.html("");
-         awaitPaste(editor, origContent, caretPos);           
+         awaitPaste(self, editor, origContent, caretPos);           
      });
     
     this.addGlobalEventListeners();
@@ -294,7 +295,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
 };
 
 
-function awaitPaste(editor, savedContent, caretPos) {
+function awaitPaste(self, editor, savedContent, caretPos) {
    if (editor.text().length > 0) {
       var pasted = editor.html();
       if ( pasted.indexOf("urn:uuid") > -1 ) {
@@ -336,9 +337,14 @@ function awaitPaste(editor, savedContent, caretPos) {
       }
       var content = savedContent.substring(0,rawPos)+pasted+savedContent.substring(rawPos,savedContent.length);
       editor.html(content);
+      
+      var textEditorAnnotate = self.field.getPluginByClassId('Annotation');
+      textEditorAnnotate.addListenersToAllHighlights();
+      self._addHighlightListenersWhenUneditable(); 
+      
    } else {
       setTimeout(function() {
-         awaitPaste(editor, savedContent, caretPos);
+         awaitPaste(self, editor, savedContent, caretPos);
       }, 5);
    }
 } 
