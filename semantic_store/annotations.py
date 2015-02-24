@@ -40,10 +40,10 @@ def annotation_subgraph(graph, anno):
     seen = []
     for s, p, resource in graph.triples_choices((anno, [NS.oa.hasBody, NS.oa.hasTarget], None)):
         try:
-            seen.index(s)
+            seen.index( (s, p, resource) )
             continue
         except ValueError as e:
-            seen.append( s )
+            seen.append( (s, p, resource) )
         subgraph += anno_resource_metadata_subgraph(graph, resource)
 
     return subgraph
