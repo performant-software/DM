@@ -18,6 +18,8 @@ from semantic_store.models import ProjectPermission
 from datetime import datetime
 import itertools
 
+import sys
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -87,15 +89,23 @@ def create_project(g):
             if user_obj:
                 project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
 
+        print " - Adding triples"
         seen_t = []
-        for t in g:
+        tc = 0
+        for s,p,o in g:
             try:
-                seen_t.index(t)
+                seen_t.index( (s,p,o) )
+                print "Skipping %s | %s | %s" % (s,p,o)
                 continue
             except ValueError as e:
-                seen_t.append( t )
-                project_g.add(t)
+                seen_t.append( (s,p,o) )
+                project_g.add( (s,p,o) )
+                tc =tc +1
+                if tc % 100 == 0:
+                    sys.stdout.write('.')
+                    sys.stdout.flush()
 
+        print " - Removing text"
         seen_turi2=[]
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
             try:
