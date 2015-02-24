@@ -246,23 +246,26 @@ def update_project_graph(g, identifier):
         project_g.remove((URIRef(identifier), NS.dcterms.description, None))
         project_metadata_g.remove((URIRef(identifier), NS.dcterms.description, None))
 
-    # Hack.. couln't figure out how else to know if the
-    # graph contained triple that identified it as a text resource
-    # This info is needed for the NOTE below
-    txt = False
-    for s,p,o in g:
-        if "dcmitype/Text" in o:
-            txt = True
-            break
-        
-    for s,p,o in g:
-        if "http://www.w3.org/2011/content" in p and txt == True:
-            # NOTE: adding content here was causing multiple
-            # entries for each document. Every time an anno was made, another text
-            # content was added to RDF
-            project_g.remove( (s,p,None) )
-            continue
-        project_g.add( (s,p,o) )
+#     # Hack.. couln't figure out how else to know if the
+#     # graph contained triple that identified it as a text resource
+#     # This info is needed for the NOTE below
+#     txt = False
+#     for s,p,o in g:
+#         if "dcmitype/Text" in o:
+#             txt = True
+#             break
+#         
+#     for s,p,o in g:
+#         if "http://www.w3.org/2011/content" in p and txt == True:
+#             # NOTE: adding content here was causing multiple
+#             # entries for each document. Every time an anno was made, another text
+#             # content was added to RDF
+#             project_g.remove( (s,p,None) )
+#             continue
+#         project_g.add( (s,p,o) )
+
+    for triple in g:
+        project_g.add(triple)
 
     for triple in metadata_triples(g, identifier):
         project_metadata_g.add(triple)
