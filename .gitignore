@@ -38,6 +38,7 @@ data/*
 
 # prevent user-uploaded images from being stored in repo
 media/user_images/uploaded_images/*
+media/*
 
 # python executables created by virtualenv
 bin

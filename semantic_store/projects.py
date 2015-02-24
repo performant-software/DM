@@ -18,8 +18,6 @@ from semantic_store.models import ProjectPermission
 from datetime import datetime
 import itertools
 
-import sys
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -89,23 +87,15 @@ def create_project(g):
             if user_obj:
                 project_texts.update_project_text(text_graph, uri, text_uri, user_obj)
 
-        print " - Adding triples"
         seen_t = []
-        tc = 0
-        for s,p,o in g:
+        for t in g:
             try:
-                seen_t.index( (s,p,o) )
-                print "Skipping %s | %s | %s" % (s,p,o)
+                seen_t.index(t)
                 continue
             except ValueError as e:
-                seen_t.append( (s,p,o) )
-                project_g.add( (s,p,o) )
-                tc =tc +1
-                if tc % 100 == 0:
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
+                seen_t.append( t )
+                project_g.add(t)
 
-        print " - Removing text"
         seen_turi2=[]
         for text_uri in g.subjects(NS.rdf.type, NS.dcmitype.Text):
             try:
@@ -245,24 +235,6 @@ def update_project_graph(g, identifier):
     if (URIRef(identifier), NS.dcterms.description, None) in g:
         project_g.remove((URIRef(identifier), NS.dcterms.description, None))
         project_metadata_g.remove((URIRef(identifier), NS.dcterms.description, None))
-
-#     # Hack.. couln't figure out how else to know if the
-#     # graph contained triple that identified it as a text resource
-#     # This info is needed for the NOTE below
-#     txt = False
-#     for s,p,o in g:
-#         if "dcmitype/Text" in o:
-#             txt = True
-#             break
-#         
-#     for s,p,o in g:
-#         if "http://www.w3.org/2011/content" in p and txt == True:
-#             # NOTE: adding content here was causing multiple
-#             # entries for each document. Every time an anno was made, another text
-#             # content was added to RDF
-#             project_g.remove( (s,p,None) )
-#             continue
-#         project_g.add( (s,p,o) )
 
     for triple in g:
         project_g.add(triple)
@@ -416,4 +388,3 @@ def clean_project_graph(graph, project_uri):
                 enqueue(linked_resource)
 
     return clean_graph
-
