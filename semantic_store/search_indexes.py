@@ -20,7 +20,6 @@ class TextIndex(indexes.SearchIndex, indexes.Indexable):
             backend = self._get_backend(using)
 
             if backend is not None:
-                print "Updating %s" % instance
                 if instance.valid:
                     backend.update(self, [instance])
                 else:
