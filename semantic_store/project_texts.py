@@ -77,9 +77,13 @@ def overwrite_text_graph_from_model(text_uri, project_uri, text_g):
     except ObjectDoesNotExist:
         pass
     else:
-        text_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
-        text_g.add((text_uri, NS.rdf.type, NS.cnt.ContentAsChars))
+        #text_g.add((text_uri, NS.rdf.type, NS.dctypes.Text))
+        #text_g.add((text_uri, NS.rdf.type, NS.cnt.ContentAsChars))
 
+        #text_g.remove((text_uri, NS.dc.title, None))
+        #text_g.remove((text_uri, NS.rdfs.label, None))
+        #text_g.remove((text_uri, NS.cnt.chars, None))
+        
         text_g.set((text_uri, NS.dc.title, Literal(text.title)))
         text_g.set((text_uri, NS.rdfs.label, Literal(text.title)))
         text_g.set((text_uri, NS.cnt.chars, Literal(text.content)))
@@ -136,9 +140,11 @@ def update_project_text(g, p_uri, t_uri, user):
     # this must be a new text, so create it and add all of the metadata   
     try:
         text = Text.objects.get(identifier=t_uri)
-        logger.debug("Updating existing text %s with new content" % t_uri)    
+        logger.debug("Updating existing text %s with new content" % t_uri)  
         
         # title is stored with metadata in 4store,  Update it there
+        project_g.set((text_uri, NS.dc.title, title))
+        project_g.set((text_uri, NS.rdfs.label, title))
         project_metadata_g.set((text_uri, NS.dc.title, title))
         project_metadata_g.set((text_uri, NS.rdfs.label, title))
         
