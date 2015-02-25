@@ -263,7 +263,7 @@ class FourStoreException(Exception):
 
 plugin.register('SQLAlchemy', Store, 'rdflib_sqlalchemy.SQLAlchemy', 'SQLAlchemy')
 
-default_identifier = URIRef(settings.RDFLIB_STORE_GRAPH_URI)
+default_identifier = "dm"
 
 if not (hasattr(settings, 'FOUR_STORE_URIS') and 'SPARQL' in settings.FOUR_STORE_URIS and 'UPDATE' in settings.FOUR_STORE_URIS):
     store = plugin.get('SQLAlchemy', Store)(identifier=default_identifier)
@@ -276,10 +276,3 @@ else:
 
 def rdfstore():
     return store
-
-def copy_to_store(old_store, new_store):
-    for context in old_store.contexts():
-        old_graph = Graph(old_store, context)
-        new_graph = Graph(new_store, context)
-        for t in old_graph:
-            new_graph.add(t)

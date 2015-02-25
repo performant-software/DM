@@ -24,8 +24,8 @@ from semantic_store import collection, permissions, manuscripts
 from semantic_store.models import ProjectPermission, UploadedImage
 from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import NegotiatedGraphResponse, JsonResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title, metadata_triples
-from semantic_store.rdfstore import rdfstore, default_identifier
-from semantic_store.annotation_views import create_or_update_annotations, get_annotations, search_annotations
+from semantic_store.rdfstore import rdfstore
+from semantic_store.annotation_views import create_or_update_annotations
 from semantic_store.projects import create_project_from_request, delete_project, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph, get_project_metadata_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
@@ -99,94 +99,12 @@ def annotations(request, dest_graph_uri=None, anno_uri=None):
     elif request.method == 'DELETE':
         # todo: implement delete annotations
         pass
-    elif request.method == 'GET':
-        if anno_uri:
-            return get_annotations(request, dest_graph_uri, [anno_uri])
-        else:
-            search_uri = request.GET.get('uri', None)
-            if search_uri:
-                return search_annotations(request, dest_graph_uri, search_uri)
-            else:
-                return get_annotations(request, dest_graph_uri)
     else:
         return HttpResponseNotAllowed(['POST', 'PUT', 'DELETE', 'GET'])
 
         
 def project_annotations(request, project_uri=None, anno_uri=None):
     return annotations(request, project_uri, anno_uri)
-
-def resources(request, uri, ext=None):
-    if request.user.is_authenticated():
-        perms = ProjectPermission.objects.filter(user=request.user)
-    else:
-        perms = []
-
-    uri = uri.rstrip('/')
-    store_g = Graph(store=rdfstore(), identifier=URIRef(uri))
-    g = Graph()
-    g += store_g
-    if len(g) > 0:
-        for i in perms:
-            anno_uri = settings.URI_MINT_BASE \
-                + "/projects/" + i.identifier \
-                + "/resources/" + uri \
-                + "/annotations/"
-            anno_url = reverse('semantic_store_project_annotations', 
-                               kwargs={'project_uri': i.identifier}) \
-                               + "?uri=" + uri
-            g.add((URIRef(uri), NS.ore['aggregates'], URIRef(anno_uri)))
-            g.add((URIRef(anno_uri), NS.ore['isDescribedBy'], URIRef(anno_url)))
-            g.add((URIRef(anno_uri), NS.rdf['type'], NS.ore['Aggregation']))
-            g.add((URIRef(anno_uri), NS.rdf['type'], NS.rdf['List']))
-            g.add((URIRef(anno_uri), NS.rdf['type'], NS.dms['AnnotationList']))
-        return NegotiatedGraphResponse(request, g)
-    else:
-        main_graph_store = ConjunctiveGraph(store=rdfstore(), 
-                                      identifier=default_identifier)
-        main_graph = Graph()
-        main_graph += main_graph_store
-        g = Graph()
-        bind_namespaces(g)
-        for t in main_graph.triples((URIRef(uri), None, None)):
-            g.add(t)
-        if len(g) > 0:
-            return NegotiatedGraphResponse(request, g)
-        else:
-            return HttpResponseNotFound()
-
-def import_old_data(request):
-    everything_graph = Graph()
-    bind_namespaces(everything_graph)
-
-    # Either gather post data (must be one project/user graph at a time)
-    if request.method == 'POST':
-        logger.debug('!!!!!!!!!!!!!!! views.py - import_old_data')
-        parse_request_into_graph(request, everything_graph)
-
-        add_all_users(everything_graph)
-
-        # Create each user's default project
-        # Due to the structure of the data when exported from the old system, this also
-        #  add each annotation to the project as an aggregated resource
-        create_project(everything_graph)
-
-    # or serialize from a folder, where each file is one project/user graph
-    else:
-        i = 0
-        for file_name in listdir("output/"):
-            if file_name.startswith('.'):
-                continue
-
-            try:
-                everything_graph.parse("output/" + file_name, format=guess_format(file_name) or 'turtle')
-            except Exception as e:
-                print "Failed to decode file '%s' with error message '%s'"%(file_name, e.args[-1])
-            else:
-                add_all_users(everything_graph)
-                create_project(everything_graph)
-        
-
-    return HttpResponse("I finished migrating data without errors.")
 
 DEFAULT_PASSWORD_STRING="DefaultPassword"
 

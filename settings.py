@@ -129,9 +129,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-RDFLIB_STORE_IDENTIFIER = 'rdfstore'
-RDFLIB_STORE_GRAPH_URI = 'http://dm.drew.edu/rdfstore'
-
 URI_MINT_BASE = 'http://dm.drew.edu'
 
 ROOT_URLCONF = 'urls'

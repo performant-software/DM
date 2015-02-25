@@ -2,11 +2,6 @@ from django.conf.urls import patterns, url
 import semantic_store.views
 
 urlpatterns = patterns('',
-    url(r'^resources(?:/(?P<uri>[^/]+))?/?$', 
-        semantic_store.views.resources, 
-        name="semantic_store_resources"),
-
-
     url(r'^projects/(?P<project_uri>[^/]+)/annotations(?:/(?P<anno_uri>[^/]+))?/?$', 
         semantic_store.views.project_annotations, 
         name="semantic_store_project_annotations"),
@@ -88,9 +83,5 @@ urlpatterns = patterns('',
     url(r'^annotations(?:/(?P<anno_uri>[^/]+))?/?$', 
         semantic_store.views.annotations, 
         name="semantic_store_annotations"),
-
-
-    url(r'^import/?$',
-        semantic_store.views.import_old_data,
-        name="import_old_data"),
+                       
 )

@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import transaction, IntegrityError
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
+from django.conf import settings
 
 from rdflib import Graph, URIRef, ConjunctiveGraph, Literal
 from rdflib.exceptions import ParserError
@@ -23,7 +24,7 @@ from semantic_store.permissions import (
     revoke_permission_by_uri
 )
 
-USER_GRAPH_IDENTIFIER = URIRef('http://dm.drew.edu/store/users')
+USER_GRAPH_IDENTIFIER = URIRef(settings.BASE_URL+"store/users")
 
 def user_uri(username=None, user=None):
     if user is None:
