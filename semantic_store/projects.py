@@ -216,7 +216,7 @@ def update_project(request, uri):
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
         return HttpResponse('Unauthorized', status=401)
-
+    
 def update_project_graph(g, identifier):
     """Updates the main project graph and the metadata graph from an input graph"""
 
@@ -237,18 +237,41 @@ def update_project_graph(g, identifier):
         project_metadata_g.remove((URIRef(identifier), NS.dcterms.description, None))
 
     for triple in g:
-        project_g.add(triple)
+        
+        # Annotation tags are never used. Don't let them get added to the graph
+        if "http://www.w3.org/ns/oa#Annotation" in triple[2]:
+            continue
+        
+        # contentChars data causes duplicates in text resources.. skip them
+        if "http://www.w3.org/2011/content#chars" in triple[1] and is_image_anno(triple[2]) == False:
+            continue
+        
+        # Not used
+        if "http://purl.org/dc/elements/1.1/created" in triple[1]:
+            continue
+        
+        #print "GRAPH %s | %s | %s" % ( triple[0], triple[1],triple[2])
+        project_g.add( triple )
 
     for triple in metadata_triples(g, identifier):
+        #print "META %s | %s | %s" % ( triple[0], triple[1],triple[2])
         project_metadata_g.add(triple)
 
     for triple in g.triples((identifier, NS.ore.aggregates, None)):
+        #print "META2 %s | %s | %s" % ( triple[0], triple[1],triple[2])
         project_metadata_g.add(triple)
 
         aggregate_uri = triple[2]
 
         project_metadata_g += metadata_triples(project_g, aggregate_uri)
         project_metadata_g += metadata_triples(g, aggregate_uri)
+        
+def is_image_anno(content):
+    """ Helper to check of this triple content is actually an image annotation """
+    if "<ellipse" in content or "<polyline" in content or "<rect" in content or "<polygon" in content:
+        return True
+    return False
+
 
 def delete_project(uri):
     """Deletes a project with the given URI. (Cascades project permissions as well)"""
@@ -277,11 +300,12 @@ def delete_triples_from_project(request, uri):
             project_g = get_project_graph(uri)
             project_metadata_g = get_project_metadata_graph(uri)
 
-            for t in g:
-                if t in project_g:
-                    project_g.remove(t)
-                    removed.add(t)
-                project_metadata_g.remove(t)
+            for s,p,o in g:
+                #if t in project_g:
+                print "KILL %s | %s | %s" % (s,p,o)
+                project_g.remove((s,p,o))
+                removed.add((s,p,o))
+                project_metadata_g.remove((s,p,o))
 
             return NegotiatedGraphResponse(request, removed)
         else:
