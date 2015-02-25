@@ -300,12 +300,10 @@ def delete_triples_from_project(request, uri):
             project_g = get_project_graph(uri)
             project_metadata_g = get_project_metadata_graph(uri)
 
-            for s,p,o in g:
-                #if t in project_g:
-                print "KILL %s | %s | %s" % (s,p,o)
-                project_g.remove((s,p,o))
-                removed.add((s,p,o))
-                project_metadata_g.remove((s,p,o))
+            for triple in g:
+                project_g.remove(triple)
+                removed.add(triple)
+                project_metadata_g.remove(triple)
 
             return NegotiatedGraphResponse(request, removed)
         else:
