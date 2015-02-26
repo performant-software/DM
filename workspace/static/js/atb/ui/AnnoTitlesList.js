@@ -148,6 +148,7 @@ atb.ui.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
 
         this.removeSummary(summary, this.targetSummaries);
     }
+    this.databroker.sync();
 };
 
 atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv, relationType) {

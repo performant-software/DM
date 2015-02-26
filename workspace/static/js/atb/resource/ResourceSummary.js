@@ -55,7 +55,7 @@ atb.resource.ResourceSummary = function (uri, viewer, clientApp, opt_domHelper, 
     this.deleteButton = this.domHelper.createDom('div', {
         'class': 'atb-resourcesummary-delete-button',
         'style': 'display: none;',
-        'title': 'Click to delete this resource, alt+click to bypass warning'
+        'title': 'Click to delete this resource'
     });
 
     this.annoIds = [];
