@@ -564,11 +564,10 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
  
        this.mousePosition.x = e.clientX + offset.left;
        this.mousePosition.y = e.screenY;
-    }, false, this);
-    
-   goog.events.listen(this.editorIframe.document.body, 'click', function(e) {
+    }, false, this);  
+   
+   goog.events.listen(this.editorIframe, 'mousedown', function(e) {
       var annotationPlugin = this.field.getPluginByClassId('Annotation');
-
       annotationPlugin.deselectAllHighlights();
    }, false, this);
 
