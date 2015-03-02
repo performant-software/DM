@@ -26,7 +26,7 @@ from semantic_store.namespaces import NS, ns, bind_namespaces
 from semantic_store.utils import NegotiatedGraphResponse, JsonResponse, parse_request_into_graph, RDFLIB_SERIALIZER_FORMATS, get_title, metadata_triples
 from semantic_store.rdfstore import rdfstore
 from semantic_store.annotation_views import create_or_update_annotations
-from semantic_store.projects import create_project_from_request, delete_project, create_project, read_project, update_project, delete_triples_from_project, get_project_graph, project_export_graph, get_project_metadata_graph
+from semantic_store.projects import create_project_from_request, delete_project, create_project, read_project, update_project, cleanup_orphans, delete_triples_from_project, get_project_graph, project_export_graph, get_project_metadata_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
 from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples, create_canvas_from_upload
@@ -140,6 +140,9 @@ def add_all_users(graph):
 
 def remove_project_triples(request, uri):
     return delete_triples_from_project(request, uri)
+
+def cleanup_project_orphans(request, uri):
+    return cleanup_orphans(request, uri)
 
 @check_project_resource_permissions
 def project_texts(request, project_uri, text_uri):

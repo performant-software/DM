@@ -46,7 +46,17 @@ sc.data.SyncService.RESTYPE = {
 sc.data.SyncService.prototype.requestSync = function() {
     this.postNewResources();
     this.putModifiedResources();
-    this.deleteDeletedResources();
+    if ( this.deleteDeletedResources() == true ) {
+        var currentProject = this.databroker.projectController.currentProject;
+        var url = this.restUrl(currentProject.uri, sc.data.SyncService.RESTYPE.project, null, null) + 'cleanup';
+        $.ajax({
+           url: url,
+           method: "POST",
+           complete:  function( jqXHR, textStatus ) {
+            console.log(jqXHR);
+           }
+        });
+     }
 };
 
 sc.data.SyncService.prototype.requestSyncNew = function() {
@@ -222,6 +232,7 @@ sc.data.SyncService.prototype.deleteDeletedResources = function() {
             // Error
         });
     }
+    return (quadsToRemove.length > 0);
 };
 
 sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {

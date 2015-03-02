@@ -15,6 +15,9 @@ from semantic_store.project_texts import sanitized_content, text_graph_from_mode
 from semantic_store import project_texts, canvases, permissions, manuscripts
 from semantic_store.models import ProjectPermission
 
+from semantic_store.annotations import resource_annotation_subgraph
+from semantic_store.specific_resources import specific_resources_subgraph
+
 from datetime import datetime
 import itertools
 
@@ -167,6 +170,7 @@ def build_project_metadata_graph(project_uri):
 
 def read_project(request, project_uri):
     """Returns a HttpResponse of the cached project metadata graph"""
+    print "READ PROJECT %s" % project_uri
     project_uri = URIRef(project_uri)
 
     if request.user.is_authenticated():
@@ -283,6 +287,61 @@ def delete_project(uri):
         metadata_graph.remove((None, None, None))
         ProjectPermission.objects.filter(identifier=uri).delete()
 
+def cleanup_orphans(request, uri):
+    print "==== CLEANUP ORPHANS FROM PROJECT"
+    project_g = get_project_graph(uri)
+    project_metadata_g = get_project_metadata_graph(uri)
+    
+    orphans = []
+    o = NS.dctypes.Text
+    seen = []
+    # Get all TEXT objects in the graph....
+    for s, p in project_g.subject_predicates(o):
+        try:
+            seen.index(s)
+            continue
+        except ValueError as e:
+            seen.append(s)
+        print "Project TEXT %s | %s | %s" % (s, p, o)
+ 
+        # The UUID of the text is the SUBJECT portion of the 
+        # above triple
+        #
+        # Now, find all instances where this UUID is used
+        # by something else (The UUID is the Object of a triple)
+        no_references = True
+        for ts, tp in project_g.subject_predicates(s):
+            no_references = False
+            
+            # If this text was involved with a link, it will have a creator
+            # with at least a 'hasBody' tag. Look for the hasBody...
+            print "  Usage of %s --- %s | %s" % (s, ts, tp)
+            if "http://www.w3.org/ns/oa#hasBody" in tp:
+                
+                # Found the body. It must hav a hasTarget to be in use.
+                # If this is not one of the triples, it is an orphan. As is the creator
+                del_me = True
+                for ctp, cto in project_g.predicate_objects(ts):
+                    print "     Creator %s contains --- %s | %s" % (ts, ctp, cto)
+                    if "http://www.w3.org/ns/oa#hasTarget" in ctp:
+                        del_me = False
+                if del_me == True:
+                    #print "%s is orphaned text" % s 
+                    if s not in orphans:
+                        orphans.append( s ) 
+                    if ts not in orphans:
+                        orphans.append( ts )
+        if no_references == True:
+             orphans.append( s ) 
+             #print "%s is orphaned text path 2" % s 
+                    
+    for orphan in orphans:
+        print "REMOVE ORPHAN %s" % orphan
+        project_g.remove( (orphan, None, None) )
+        project_metadata_g.remove( (orphan, None, None) )
+                    
+    return HttpResponse(status=200)
+
 def delete_triples_from_project(request, uri):
     """Deletes the triples in a graph provided by a request object from the project graph.
     Returns an HttpResponse of all the triples which were successfully removed from the graph."""
@@ -301,6 +360,21 @@ def delete_triples_from_project(request, uri):
             project_metadata_g = get_project_metadata_graph(uri)
 
             for triple in g:
+                # if this is a removal of an aggregate, also remove the TEXT itself
+                # FIXME this will probably orphan other stuff
+                if "http://www.openarchives.org/ore/terms/aggregates" in triple[1]:
+                    project_g.remove( (triple[2],None,None) )
+                    project_metadata_g.remove( (triple[2],None,None) )
+#                     g2 = resource_annotation_subgraph(project_g, triple[2] )
+#                     for ds,do in g2.subject_objects(None):
+#                         print "%s %s" % (ds,do)
+#                         g2.remove((ds,None,None))
+#                     g3 = specific_resources_subgraph(project_g, triple[2], uri)
+#                     for ds,do in g3.subject_objects(None):
+#                         print "%s %s" % (ds,do)
+#                         g3.remove((ds,None,None))
+                    
+                    
                 project_g.remove(triple)
                 removed.add(triple)
                 project_metadata_g.remove(triple)
@@ -310,7 +384,6 @@ def delete_triples_from_project(request, uri):
             return HttpResponseForbidden('User "%s" does not have update permissions over project "%s"' % (request.user.username, uri))
     else:
         return HttpResponse(status=401)
-
 
 # Create the project graph, with all of the required data, and sends it to be saved
 # Used for the the create project management command and some part of ProjectView
