@@ -195,6 +195,9 @@ def read_project(request, project_uri):
                 ret_graph.add((user_uri, perm_uri, project_uri))
             
             if len(ret_graph) > 0:
+                for s,p,o in ret_graph.triples( (None, None,None)):
+                    print "%s | %s | %s " % (s,p,o)
+                    
                 return NegotiatedGraphResponse(request, ret_graph)
             else:
                 return HttpResponseNotFound()
@@ -272,6 +275,7 @@ def update_project_graph(g, identifier):
 
         project_metadata_g += metadata_triples(project_g, aggregate_uri)
         project_metadata_g += metadata_triples(g, aggregate_uri)
+    
         
 def is_image_anno(content):
     """ Helper to check of this triple content is actually an image annotation """
@@ -298,6 +302,7 @@ def cleanup_orphans(request, uri):
     orphans = []
     o = NS.dctypes.Text
     seen = []
+    txt_cnt = 0
     # Get all TEXT objects in the graph....
     for s, p in project_g.subject_predicates(o):
         try:
@@ -306,12 +311,13 @@ def cleanup_orphans(request, uri):
         except ValueError as e:
             seen.append(s)
         print "Project TEXT %s | %s | %s" % (s, p, o)
- 
+        txt_cnt = txt_cnt + 1
+        
         # The UUID of the text is the SUBJECT portion of the 
         # above triple
         #
         # Now, find all instances where this UUID is used
-        # by something else (The UUID is the Object of a triple)
+        # by something else (The UUID is the Object of a triple)  
         no_references = True
         for ts, tp in project_g.subject_predicates(s):
             no_references = False
@@ -339,10 +345,12 @@ def cleanup_orphans(request, uri):
         if no_references == True:
              orphans.append( s ) 
              #print "%s is orphaned text path 2" % s 
-                    
-    for orphan in orphans:
-        print "REMOVE ORPHAN %s" % orphan
-        with transaction.commit_on_success():
+    
+    orphan_cnt = 0
+    with transaction.commit_on_success():        
+        for orphan in orphans:
+            orphan_cnt = orphan_cnt + 1
+            print "REMOVE ORPHAN %s" % orphan
             project_g.remove( (orphan, None, None) )
             project_metadata_g.remove( (orphan, None, None) )
             try:
@@ -351,8 +359,35 @@ def cleanup_orphans(request, uri):
                 #print "DELETED text for %s" % orphan
             except ObjectDoesNotExist:
                 pass
+            
+    print "TOTAL TEXT: %s ORPHANS %s" % (txt_cnt, orphan_cnt)
                     
     return HttpResponse(status=200)
+
+def delete_annos_on_resource(project_g, project_metadata_g, uuid):
+    print "DELETE ANNOS ON %s" % uuid
+    with transaction.commit_on_success():
+        for specific_resource in project_g.subjects( NS.oa.hasSource, URIRef(uuid) ):
+            print "HAS specificResource: %s  " % specific_resource
+                        
+            for creator in project_g.subjects( NS.oa.hasTarget, URIRef(specific_resource) ):
+                print "HAS creator: %s" % (creator)
+            
+                for bo in project_g.objects( URIRef(creator), NS.oa.hasBody):
+                    print "HAS BODY: %s" % (bo)
+                    project_g.remove( (bo,None,None) )
+                    project_metadata_g.remove( (bo,None,None) )
+                    try:
+                        text = Text.objects.get(identifier=bo)
+                        text.delete()
+                    except ObjectDoesNotExist:
+                        pass
+                
+                project_g.remove( (creator,None,None) )
+                project_metadata_g.remove( (creator,None,None) )
+                    
+            project_g.remove( (specific_resource,None,None) )
+            project_metadata_g.remove( (specific_resource,None,None) )
 
 def delete_triples_from_project(request, uri):
     """Deletes the triples in a graph provided by a request object from the project graph.
@@ -375,16 +410,17 @@ def delete_triples_from_project(request, uri):
                 # if this is a removal of an aggregate, also remove the TEXT itself
                 # FIXME this will probably orphan other stuff
                 if "http://www.openarchives.org/ore/terms/aggregates" in triple[1]:
+                    
+                    delete_annos_on_resource(project_g, project_metadata_g, triple[2])
+                    
                     project_g.remove( (triple[2],None,None) )
                     project_metadata_g.remove( (triple[2],None,None) )
-#                     g2 = resource_annotation_subgraph(project_g, triple[2] )
-#                     for ds,do in g2.subject_objects(None):
-#                         print "%s %s" % (ds,do)
-#                         g2.remove((ds,None,None))
-#                     g3 = specific_resources_subgraph(project_g, triple[2], uri)
-#                     for ds,do in g3.subject_objects(None):
-#                         print "%s %s" % (ds,do)
-#                         g3.remove((ds,None,None))
+                    try:
+                        text = Text.objects.get(identifier=triple[2])
+                        text.delete()
+                    except ObjectDoesNotExist:
+                        pass
+                    
                     
                     
                 project_g.remove(triple)
