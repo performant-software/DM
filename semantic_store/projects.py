@@ -1,6 +1,9 @@
 from django.db import transaction, IntegrityError
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+
+from semantic_store.models import Text
 
 from rdflib.graph import Graph
 from rdflib.exceptions import ParserError
@@ -316,14 +319,16 @@ def cleanup_orphans(request, uri):
             # If this text was involved with a link, it will have a creator
             # with at least a 'hasBody' tag. Look for the hasBody...
             print "  Usage of %s --- %s | %s" % (s, ts, tp)
-            if "http://www.w3.org/ns/oa#hasBody" in tp:
+            if tp == NS.oa.hasBody:
+                #print "HAS BODY"
                 
                 # Found the body. It must hav a hasTarget to be in use.
                 # If this is not one of the triples, it is an orphan. As is the creator
                 del_me = True
                 for ctp, cto in project_g.predicate_objects(ts):
                     print "     Creator %s contains --- %s | %s" % (ts, ctp, cto)
-                    if "http://www.w3.org/ns/oa#hasTarget" in ctp:
+                    if ctp == NS.oa.hasTarget:
+                        #print "HAS TARGET, don't delete"
                         del_me = False
                 if del_me == True:
                     #print "%s is orphaned text" % s 
@@ -337,8 +342,15 @@ def cleanup_orphans(request, uri):
                     
     for orphan in orphans:
         print "REMOVE ORPHAN %s" % orphan
-        project_g.remove( (orphan, None, None) )
-        project_metadata_g.remove( (orphan, None, None) )
+        with transaction.commit_on_success():
+            project_g.remove( (orphan, None, None) )
+            project_metadata_g.remove( (orphan, None, None) )
+            try:
+                text = Text.objects.get(identifier=orphan)
+                text.delete()
+                #print "DELETED text for %s" % orphan
+            except ObjectDoesNotExist:
+                pass
                     
     return HttpResponse(status=200)
 
