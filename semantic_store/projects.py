@@ -299,14 +299,20 @@ def link_removed(request, uri, uuids):
     project_g = get_project_graph(uri)
     project_metadata_g = get_project_metadata_graph(uri)
     
-    list = uuids.split(",")
-    for uuid in list:
-        for o in project_g.objects( URIRef(uuid), NS.oa.hasBody ):
-            project_g.remove( (URIRef(o), None, None) )
-            project_metadata_g.remove( (URIRef(o), None, None) )
+    with transaction.commit_on_success():   
+        list = uuids.split(",")
+        for uuid in list:
+            for o in project_g.objects( URIRef(uuid), NS.oa.hasBody ):
+                project_g.remove( (URIRef(o), None, None) )
+                project_metadata_g.remove( (URIRef(o), None, None) )
+                try:
+                    text = Text.objects.get(identifier=o)
+                    text.delete()
+                except ObjectDoesNotExist:
+                    pass
             
-        project_g.remove( (URIRef(uuid), None, None) )
-        project_metadata_g.remove( (URIRef(uuid), None, None) )
+            project_g.remove( (URIRef(uuid), None, None) )
+            project_metadata_g.remove( (URIRef(uuid), None, None) )
             
     return HttpResponse(status=200)
                         
