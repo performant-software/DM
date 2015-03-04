@@ -43,20 +43,30 @@ sc.data.SyncService.RESTYPE = {
     'canvas': 7
 };
 
+sc.data.SyncService.prototype.annotsDeleted = function(deleted) {
+   var currentProject = this.databroker.projectController.currentProject;
+   var url = this.restUrl(currentProject.uri, sc.data.SyncService.RESTYPE.project, null, null) + 'removed';
+   $.ajax({
+      url : url,
+      method : "POST",
+      data: {uuids: deleted.join()},
+      complete : function(jqXHR, textStatus) {
+         console.log(jqXHR);
+      }
+   });
+}; 
+
+
 sc.data.SyncService.prototype.requestSync = function() {
+    // var qs = this.databroker.quadStore;
+    // var o = qs.query(null,"<http://www.w3.org/ns/oa#hasTarget>",null, null);
+    // for (var c = 0; c < o.length; c++) {
+        // console.log(o[c]);
+    // }
+//     
     this.postNewResources();
     this.putModifiedResources();
-    if ( this.deleteDeletedResources() == true ) {
-        var currentProject = this.databroker.projectController.currentProject;
-        var url = this.restUrl(currentProject.uri, sc.data.SyncService.RESTYPE.project, null, null) + 'cleanup';
-        $.ajax({
-           url: url,
-           method: "POST",
-           complete:  function( jqXHR, textStatus ) {
-            console.log(jqXHR);
-           }
-        });
-     }
+    this.deleteDeletedResources();
 };
 
 sc.data.SyncService.prototype.requestSyncNew = function() {
@@ -216,10 +226,34 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
 
 sc.data.SyncService.prototype.deleteDeletedResources = function() {
     var quadsToRemove = [];
-
+       
+       // var qs = this.databroker.quadStore;
+    // var o = qs.query(null,"<http://www.w3.org/ns/oa#hasTarget>","<urn:uuid:ehrphvu93ep5wynj0t3rocdqufx3wxd33cmp>", null);
+    // for (var c = 0; c < o.length; c++) {
+        // console.log(o[c]);
+    // }
+    
     goog.structs.forEach(this.databroker.deletedResourceUris, function(uri) {
         quadsToRemove = quadsToRemove.concat(this.databroker.deletedQuadsStore.query(sc.data.Term.wrapUri(uri), null, null, null));
     });
+    
+    // return;
+    // var srUri = "";
+    // for (var i = 0; i < quadsToRemove.length; i++) {
+        // if ( quadsToRemove[i].object == "<http://www.w3.org/ns/oa#SpecificResource>") {
+            // var srUri = quadsToRemove[i].subject;
+            // break;
+        // }
+    // }
+    // if (srUri.length > 0) {
+       // var qs = this.databroker.quadStore;
+       // var o = qs.query(null,"<http://www.w3.org/ns/oa#hasTarget>",srUri, null);
+       // for (var c = 0; c < o.length; i++) {
+          // var creatorUri = o.subject;
+          // var co = qs.query(creatorUri,null,srUri, null);
+          // quadsToRemove = quadsToRemove.concat(co);
+       // }
+    // }
 
     if (quadsToRemove.length > 0) {
         var currentProject = this.databroker.projectController.currentProject;
@@ -232,7 +266,21 @@ sc.data.SyncService.prototype.deleteDeletedResources = function() {
             // Error
         });
     }
-    return (quadsToRemove.length > 0);
+    
+    
+    // this.databroker.quadStore;
+    // var o = qs.query(null,"<http://www.w3.org/ns/oa#hasTarget>","<urn:uuid:3bq0ai3jw2fz8oa2bgpxa1t2b1crzmm53kx>",null);
+//     
+    this.deletedLinkUri = "";
+    for (var i = 0; i < quadsToRemove.length; i++) {
+        if ( quadsToRemove[i].object == "<http://www.w3.org/ns/oa#SpecificResource>") {
+            this.deletedLinkUri = quadsToRemove[i].subject;
+            this.deletedLinkUri = this.deletedLinkUri.substring(1, this.deletedLinkUri.length-1);
+            break;
+        }
+    }
+    
+    return (this.deletedLinkUri.length > 0);
 };
 
 sc.data.SyncService.prototype.sendResource = function(uri, method, successHandler) {

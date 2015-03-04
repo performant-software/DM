@@ -45,6 +45,10 @@ urlpatterns = patterns('',
     url(r'^projects(?:/(?P<uri>[^/]+))/remove_triples?/?$',
         semantic_store.views.remove_project_triples,
         name="semantic_store_projects_remove_triples"),
+                       
+    url(r'^projects(?:/(?P<uri>[^/]+))/removed?/?$',
+        semantic_store.views.cleanup_removed_link,
+        name="semantic_store_projects_cleanup_removed_link"),
 
     url(r'^projects(?:/(?P<uri>[^/]+))/cleanup?/?$',
         semantic_store.views.cleanup_project_orphans,

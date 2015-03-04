@@ -195,12 +195,24 @@ atb.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highl
     var highlight = this.databroker.getResource(highlightUri);
     var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri));
 
+    var deleted = [];
+    goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
+       var foo = anno.getUri();
+       foo = foo.substring(1,foo.length-1);
+       deleted.push( foo );
+      anno.deleteProperty('oa:hasTarget', specificResource);
+    }, this);
+    
     goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
     	anno.deleteProperty('oa:hasTarget', specificResource);
     }, this);
     highlight.delete();
     specificResource.delete();
     this.viewer.saveContents();
+    
+    if (deleted.length > 0 ) {
+      this.databroker.syncService.annotsDeleted(deleted);
+   }
 };
 
 atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {

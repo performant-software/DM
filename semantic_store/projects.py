@@ -294,6 +294,22 @@ def delete_project(uri):
         metadata_graph.remove((None, None, None))
         ProjectPermission.objects.filter(identifier=uri).delete()
 
+def link_removed(request, uri, uuids):
+    print "=== LINK %s REMOVED FROM PROJECT %s  ===" % (uuids, uri)
+    project_g = get_project_graph(uri)
+    project_metadata_g = get_project_metadata_graph(uri)
+    
+    list = uuids.split(",")
+    for uuid in list:
+        for o in project_g.objects( URIRef(uuid), NS.oa.hasBody ):
+            project_g.remove( (URIRef(o), None, None) )
+            project_metadata_g.remove( (URIRef(o), None, None) )
+            
+        project_g.remove( (URIRef(uuid), None, None) )
+        project_metadata_g.remove( (URIRef(uuid), None, None) )
+            
+    return HttpResponse(status=200)
+                        
 def cleanup_orphans(request, uri):
     print "==== CLEANUP ORPHANS FROM PROJECT"
     project_g = get_project_graph(uri)
@@ -303,14 +319,14 @@ def cleanup_orphans(request, uri):
     o = NS.dctypes.Text
     seen = []
     txt_cnt = 0
+    orphan_cnt = 0
     # Get all TEXT objects in the graph....
-    for s, p in project_g.subject_predicates(o):
-        try:
-            seen.index(s)
+    for text_uri, p in project_g.subject_predicates(o):
+        if text_uri in seen:
             continue
-        except ValueError as e:
-            seen.append(s)
-        print "Project TEXT %s | %s | %s" % (s, p, o)
+        
+        seen.append(text_uri)
+        #print "Project TEXT %s" % text_uri
         txt_cnt = txt_cnt + 1
         
         # The UUID of the text is the SUBJECT portion of the 
@@ -319,38 +335,38 @@ def cleanup_orphans(request, uri):
         # Now, find all instances where this UUID is used
         # by something else (The UUID is the Object of a triple)  
         no_references = True
-        for ts, tp in project_g.subject_predicates(s):
-            no_references = False
+        for ts, tp in project_g.subject_predicates(text_uri):
+            print "URI: %s, predicate: %s" % (text_uri, tp)
+            if tp != NS.dctypes.Text:
+                no_references = False
             
             # If this text was involved with a link, it will have a creator
             # with at least a 'hasBody' tag. Look for the hasBody...
-            print "  Usage of %s --- %s | %s" % (s, ts, tp)
+            #print "  Usage of %s --- %s | %s" % (text_uri, ts, tp)
             if tp == NS.oa.hasBody:
-                #print "HAS BODY"
-                
                 # Found the body. It must hav a hasTarget to be in use.
                 # If this is not one of the triples, it is an orphan. As is the creator
                 del_me = True
-                for ctp, cto in project_g.predicate_objects(ts):
-                    print "     Creator %s contains --- %s | %s" % (ts, ctp, cto)
-                    if ctp == NS.oa.hasTarget:
-                        #print "HAS TARGET, don't delete"
-                        del_me = False
+                for cto in project_g.objects(ts, NS.oa.hasTarget):
+                    #print "     Creator %s hasTarget %s" % (ts, cto)
+                    del_me = False
+                    
                 if del_me == True:
-                    #print "%s is orphaned text" % s 
-                    if s not in orphans:
-                        orphans.append( s ) 
+                    print "%s is orphaned text" % text_uri 
+                    if text_uri not in orphans:
+                        orphans.append( text_uri ) 
+                        orphan_cnt = orphan_cnt + 1
                     if ts not in orphans:
                         orphans.append( ts )
+                        
         if no_references == True:
-             orphans.append( s ) 
-             #print "%s is orphaned text path 2" % s 
+             orphans.append( text_uri ) 
+             orphan_cnt = orphan_cnt + 1
+             print "%s is orphaned text path 2" % text_uri
     
-    orphan_cnt = 0
     with transaction.commit_on_success():        
         for orphan in orphans:
-            orphan_cnt = orphan_cnt + 1
-            print "REMOVE ORPHAN %s" % orphan
+            #print "REMOVE ORPHAN %s" % orphan
             project_g.remove( (orphan, None, None) )
             project_metadata_g.remove( (orphan, None, None) )
             try:
@@ -362,7 +378,7 @@ def cleanup_orphans(request, uri):
             
     print "TOTAL TEXT: %s ORPHANS %s" % (txt_cnt, orphan_cnt)
                     
-    return HttpResponse(status=200)
+    return HttpResponse(status=200, content="%d orphaned objects removed" % orphan_cnt)
 
 def delete_annos_on_resource(project_g, project_metadata_g, uuid):
     print "DELETE ANNOS ON %s" % uuid
@@ -408,7 +424,6 @@ def delete_triples_from_project(request, uri):
 
             for triple in g:
                 # if this is a removal of an aggregate, also remove the TEXT itself
-                # FIXME this will probably orphan other stuff
                 if "http://www.openarchives.org/ore/terms/aggregates" in triple[1]:
                     
                     delete_annos_on_resource(project_g, project_metadata_g, triple[2])

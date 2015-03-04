@@ -29,7 +29,22 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
     var ss = this.databroker.syncService;
     var pc = this.projectController;
     setTimeout(function() {
-      var foo = $("#del-project");
+      $("#clean-project").on("click", function() {
+        if ( $("#clean-project").hasClass("disabled") ) {
+            return;
+         }
+        var currentProject = pc.currentProject;
+        var url = ss.restUrl(currentProject.uri) + 'cleanup';
+        $("#clean-project").addClass("disabled");
+        $.ajax({
+           url: url,
+           method: "POST",
+           complete:  function( jqXHR, textStatus ) {
+                alert(jqXHR.responseText);
+                $("#clean-project").removeClass("disabled");
+           }
+        });
+      });
       $("#del-project").on("click", function() {
          if ( $("#del-project").hasClass("disabled") ) {
             return;
@@ -129,6 +144,10 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     });
     var delProjBtn = this.domHelper.createDom('button', {'class': 'btn btn-primary', 'id': 'del-project'}, 'Delete Project');
     this.modalFooter.appendChild(delProjBtn);
+    
+    var cleanProjBtn = this.domHelper.createDom('button', {'class': 'btn btn-primary', 'id': 'clean-project'}, 'Clean Up Project');
+    this.modalFooter.appendChild(cleanProjBtn);
+    
     this.modalFooter.appendChild(footerCloseButton);
     this.modalElement.appendChild(this.modalFooter);
 };
