@@ -173,7 +173,6 @@ def build_project_metadata_graph(project_uri):
 
 def read_project(request, project_uri):
     """Returns a HttpResponse of the cached project metadata graph"""
-    print "READ PROJECT %s" % project_uri
     project_uri = URIRef(project_uri)
 
     if request.user.is_authenticated():
@@ -244,11 +243,7 @@ def update_project_graph(g, identifier):
         project_metadata_g.remove((URIRef(identifier), NS.dcterms.description, None))
 
     for triple in g:
-        
-        # Annotation tags are never used. Don't let them get added to the graph
-        if "http://www.w3.org/ns/oa#Annotation" in triple[2]:
-            continue
-        
+                
         # contentChars data causes duplicates in text resources.. skip them
         if "http://www.w3.org/2011/content#chars" in triple[1] and is_image_anno(triple[2]) == False:
             continue
@@ -296,7 +291,7 @@ def link_removed(request, uri, uuids):
     print "=== LINK %s REMOVED FROM PROJECT %s  ===" % (uuids, uri)
     project_g = get_project_graph(uri)
     project_metadata_g = get_project_metadata_graph(uri)
-    
+     
     with transaction.commit_on_success():   
         list = uuids.split(",")
         for uuid in list:
@@ -310,34 +305,29 @@ def link_removed(request, uri, uuids):
                     text.delete()
                 except ObjectDoesNotExist:
                     pass
-            
+             
             project_g.remove( (URIRef(uuid), None, None) )
             project_metadata_g.remove( (URIRef(uuid), None, None) )
-            
+             
     return HttpResponse(status=200)
                         
 def cleanup_orphans(request, uri):
     print "==== CLEANUP ORPHANS FROM PROJECT"
     project_g = get_project_graph(uri)
     project_metadata_g = get_project_metadata_graph(uri)
-    
-    orphans = []
-    o = NS.dctypes.Text
+        
     seen = []
+    orphans = []
     txt_cnt = 0
     orphan_cnt = 0
     # Get all TEXT objects in the graph....
-    for text_uri, p in project_g.subject_predicates(o):
+    for text_uri, p in project_g.subject_predicates( NS.dctypes.Text ):
         if text_uri in seen:
             continue
         
         seen.append(text_uri)
-        #print "Project TEXT %s" % text_uri
         txt_cnt = txt_cnt + 1
         
-        # The UUID of the text is the SUBJECT portion of the 
-        # above triple
-        #
         # Now, find all instances where this UUID is used
         # by something else (The UUID is the Object of a triple)  
         no_references = True
@@ -346,12 +336,11 @@ def cleanup_orphans(request, uri):
             if tp != NS.dctypes.Text:
                 no_references = False
             
-            # If this text was involved with a link, it will have a creator
+            # If this text was involved with a link, it will have an Annotation
             # with at least a 'hasBody' tag. Look for the hasBody...
-            #print "  Usage of %s --- %s | %s" % (text_uri, ts, tp)
             if tp == NS.oa.hasBody:
                 # Found the body. It must hav a hasTarget to be in use.
-                # If this is not one of the triples, it is an orphan. As is the creator
+                # If this is not one of the triples, it is an orphan. As is the annotation
                 del_me = True
                 for cto in project_g.objects(ts, NS.oa.hasTarget):
                     #print "     Creator %s hasTarget %s" % (ts, cto)
@@ -381,10 +370,32 @@ def cleanup_orphans(request, uri):
                 #print "DELETED text for %s" % orphan
             except ObjectDoesNotExist:
                 pass
-            
+    
     print "TOTAL TEXT: %s ORPHANS %s" % (txt_cnt, orphan_cnt)
+     
+    # NOW look for orphaned ANNOTATIONs
+    anno_cnt = 0
+    del_anno = 0
+    for anno_uri, p in project_g.subject_predicates(NS.oa.Annotation):
+        if anno_uri in seen:
+            continue
+        
+        seen.append(anno_uri)
+        anno_cnt = anno_cnt +1
+        del_me = True
+        for obj in project_g.objects(anno_uri, NS.oa.hasBody):
+            del_me = False
+            break
+        
+        if del_me == True:
+            print "REMOVE ORPHAN ANNO %s" % anno_uri
+            del_anno = del_anno +1
+            project_g.remove( (anno_uri, None, None) )
+            project_metadata_g.remove( (anno_uri, None, None) )
+            
+   
                     
-    return HttpResponse(status=200, content="%d orphaned objects removed" % orphan_cnt)
+    return HttpResponse(status=200, content="%d orphaned text removed, %d orphaned annotations removed." % (orphan_cnt,del_anno))
 
 def delete_annos_on_resource(project_g, project_metadata_g, uuid):
     print "DELETE ANNOS ON %s" % uuid
@@ -392,10 +403,10 @@ def delete_annos_on_resource(project_g, project_metadata_g, uuid):
         for specific_resource in project_g.subjects( NS.oa.hasSource, URIRef(uuid) ):
             print "HAS specificResource: %s  " % specific_resource
                         
-            for creator in project_g.subjects( NS.oa.hasTarget, URIRef(specific_resource) ):
-                print "HAS creator: %s" % (creator)
+            for anno in project_g.subjects( NS.oa.hasTarget, URIRef(specific_resource) ):
+                print "HAS Annotation: %s" % (anno)
             
-                for bo in project_g.objects( URIRef(creator), NS.oa.hasBody):
+                for bo in project_g.objects( URIRef(anno), NS.oa.hasBody):
                     print "HAS BODY: %s" % (bo)
                     project_g.remove( (bo,None,None) )
                     project_metadata_g.remove( (bo,None,None) )
@@ -405,8 +416,8 @@ def delete_annos_on_resource(project_g, project_metadata_g, uuid):
                     except ObjectDoesNotExist:
                         pass
                 
-                project_g.remove( (creator,None,None) )
-                project_metadata_g.remove( (creator,None,None) )
+                project_g.remove( (anno,None,None) )
+                project_metadata_g.remove( (anno,None,None) )
                     
             project_g.remove( (specific_resource,None,None) )
             project_metadata_g.remove( (specific_resource,None,None) )

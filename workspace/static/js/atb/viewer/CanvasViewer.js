@@ -464,9 +464,9 @@ atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
    goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
       var body = anno.getOneProperty('oa:hasBody');
       if ( body != null ) {
-         var creatorUri = anno.getUri();
-         creatorUri = creatorUri.substring(1, creatorUri.length - 1);
-         deleted.push(creatorUri);
+         var annoUri = anno.getUri();
+         annoUri = annoUri.substring(1, annoUri.length - 1);
+         deleted.push(annoUri);
       }
       anno.deleteProperty('oa:hasTarget', specificResource);
    }, this);
