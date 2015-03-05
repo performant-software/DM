@@ -450,28 +450,42 @@ atb.viewer.CanvasViewer.prototype.resize = function(width, height) {
 };
 
 
-atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
-    var viewport = this.viewer.mainViewport;
-    viewport.canvas.removeObjectByUri(uri);
-    viewport.requestFrameRender();
 
-    var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
-    
-    var selectorResource = this.databroker.getResource(uri);
-    var specificResource = this.databroker.getResource(specificResourceUri);
-    goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
-        anno.deleteProperty('oa:hasTarget', specificResource);
-    }, this);
-    selectorResource.delete();
-    specificResource.delete();
-    
-    var event = new goog.events.Event('resource-deleted', uri);
-    var eventDispatcher = this.clientApp.getEventDispatcher();
-    eventDispatcher.dispatchEvent(event);
-    
-    // sunc after every ann is removed
-    this.databroker.sync();
-};
+atb.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
+   var viewport = this.viewer.mainViewport;
+   viewport.canvas.removeObjectByUri(uri);
+   viewport.requestFrameRender();
+
+   var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
+
+   var selectorResource = this.databroker.getResource(uri);
+   var specificResource = this.databroker.getResource(specificResourceUri);
+   var deleted = [];
+   goog.structs.forEach(specificResource.getReferencingResources('oa:hasTarget'), function(anno) {
+      var body = anno.getOneProperty('oa:hasBody');
+      if ( body != null ) {
+         var creatorUri = anno.getUri();
+         creatorUri = creatorUri.substring(1, creatorUri.length - 1);
+         deleted.push(creatorUri);
+      }
+      anno.deleteProperty('oa:hasTarget', specificResource);
+   }, this);
+
+   selectorResource.delete();
+   specificResource.delete();
+
+   var event = new goog.events.Event('resource-deleted', uri);
+   var eventDispatcher = this.clientApp.getEventDispatcher();
+   eventDispatcher.dispatchEvent(event);
+
+   // sync after every anno is removed
+   this.databroker.sync();
+   
+   if (deleted.length > 0) {
+      this.databroker.syncService.annotsDeleted(deleted);
+   }
+}; 
+
 
 atb.viewer.CanvasViewer.prototype.hideFeature = function(uri) {
     var viewport = this.viewer.mainViewport;
