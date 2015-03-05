@@ -151,5 +151,5 @@ sc.data.NamespaceManager.prototype.bindNamespacesToHtmlElement = function(html) 
         arr.push([prefix, ': ', uri].join(''));
     }, this);
 
-    html.setAttribute('prefix', arr.join('\n'))
+    html.setAttribute('prefix', arr.join('\n'));
 };

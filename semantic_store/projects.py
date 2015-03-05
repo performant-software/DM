@@ -195,9 +195,6 @@ def read_project(request, project_uri):
                 ret_graph.add((user_uri, perm_uri, project_uri))
             
             if len(ret_graph) > 0:
-                for s,p,o in ret_graph.triples( (None, None,None)):
-                    print "%s | %s | %s " % (s,p,o)
-                    
                 return NegotiatedGraphResponse(request, ret_graph)
             else:
                 return HttpResponseNotFound()
@@ -293,6 +290,7 @@ def delete_project(uri):
         project_graph.remove((None, None, None))
         metadata_graph.remove((None, None, None))
         ProjectPermission.objects.filter(identifier=uri).delete()
+        Text.objects.filter(project=uri).delete()
 
 def link_removed(request, uri, uuids):
     print "=== LINK %s REMOVED FROM PROJECT %s  ===" % (uuids, uri)
@@ -302,7 +300,9 @@ def link_removed(request, uri, uuids):
     with transaction.commit_on_success():   
         list = uuids.split(",")
         for uuid in list:
+            print "REMOVE %s" % uuid
             for o in project_g.objects( URIRef(uuid), NS.oa.hasBody ):
+                print "FOUND %s" % o
                 project_g.remove( (URIRef(o), None, None) )
                 project_metadata_g.remove( (URIRef(o), None, None) )
                 try:

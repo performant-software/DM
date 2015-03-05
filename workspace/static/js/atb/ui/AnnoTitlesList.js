@@ -126,30 +126,42 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
 };
 
 atb.ui.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
-    var resource = event.resource;
-    var uri = event.resource.uri;
-    var summary = event.currentTarget;
+   var resource = event.resource;
+   var uri = event.resource.uri;
+   var summary = event.currentTarget;
 
-    if (summary.relationType == 'body') {
-        var annos = this.bodyAnnoResourcesByUri.get(uri);
+   var qs = this.databroker.quadStore;
+   var o = qs.query(null, "<http://www.w3.org/ns/oa#hasBody>", "<" + summary.uri + ">", null);
+   var deleted = [];
+   for (var i = 0; i < o.length; i++) {
+      delUri = o[i].subject;
+      delUri = delUri.substring(1, delUri.length - 1);
+      deleted.push(delUri);
+   }
+   if (deleted.length > 0) {
+      this.databroker.syncService.annotsDeleted(deleted);
+   }
 
-        goog.structs.forEach(annos, function(anno) {
-            this.databroker.dataModel.unlinkTargetFromAnno(anno, this.uri, true);
-        }, this);
+   if (summary.relationType == 'body') {
+      var annos = this.bodyAnnoResourcesByUri.get(uri);
 
-        this.removeSummary(summary, this.bodySummaries);
-    }
-    else if (summary.relationType == 'target') {
-        var annos = this.targetAnnoResourcesByUri.get(uri);
+      goog.structs.forEach(annos, function(anno) {
+         this.databroker.dataModel.unlinkTargetFromAnno(anno, this.uri, true);
+      }, this);
 
-        goog.structs.forEach(annos, function(anno) {
-            this.databroker.dataModel.unlinkBodyFromAnno(anno, this.uri, true);
-        }, this);
+      this.removeSummary(summary, this.bodySummaries);
+   } else if (summary.relationType == 'target') {
+      var annos = this.targetAnnoResourcesByUri.get(uri);
 
-        this.removeSummary(summary, this.targetSummaries);
-    }
-    this.databroker.sync();
-};
+      goog.structs.forEach(annos, function(anno) {
+         this.databroker.dataModel.unlinkBodyFromAnno(anno, this.uri, true);
+      }, this);
+
+      this.removeSummary(summary, this.targetSummaries);
+   }
+   this.databroker.sync();
+}; 
+
 
 atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv, relationType) {
     for (var i = 0; i < uris.length; i++) {
