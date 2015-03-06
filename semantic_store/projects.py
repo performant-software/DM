@@ -370,9 +370,7 @@ def cleanup_orphans(request, uri):
                 #print "DELETED text for %s" % orphan
             except ObjectDoesNotExist:
                 pass
-    
-    print "TOTAL TEXT: %s ORPHANS %s" % (txt_cnt, orphan_cnt)
-     
+         
     # NOW look for orphaned ANNOTATIONs
     anno_cnt = 0
     del_anno = 0
@@ -388,12 +386,9 @@ def cleanup_orphans(request, uri):
             break
         
         if del_me == True:
-            print "REMOVE ORPHAN ANNO %s" % anno_uri
             del_anno = del_anno +1
             project_g.remove( (anno_uri, None, None) )
-            project_metadata_g.remove( (anno_uri, None, None) )
-            
-   
+            project_metadata_g.remove( (anno_uri, None, None) )   
                     
     return HttpResponse(status=200, content="%d orphaned text removed, %d orphaned annotations removed." % (orphan_cnt,del_anno))
 
@@ -453,8 +448,6 @@ def delete_triples_from_project(request, uri):
                     except ObjectDoesNotExist:
                         pass
                     
-                    
-                    
                 project_g.remove(triple)
                 removed.add(triple)
                 project_metadata_g.remove(triple)
@@ -507,59 +500,3 @@ def project_export_graph(project_uri):
 def is_top_level_project_resource(project_uri, uri):
     db_project_graph = get_project_graph(project_uri)
     return (URIRef(project_uri), NS.ore.aggregates, uri) in db_project_graph
-
-def clean_project_graph(graph, project_uri):
-    """
-    Returns a set of all non-orphaned resource uris in a project (i.e., resources which are top level or linked by an annotation).
-    (Does a complete graph traversal)
-    """
-    clean_graph = Graph()
-    clean_graph += graph.triples((project_uri, None, None))
-
-    visited = set()
-    frontier = set(graph.objects(project_uri, NS.ore.aggregates))
-
-    def enqueue(o):
-        if isinstance(o, URIRef):
-            if o not in visited:
-                frontier.add(o)
-        else:
-            for i in o:
-                enqueue(i)
-
-    while len(frontier) > 0:
-        visited_resource = frontier.pop()
-        visited.add(visited_resource)
-
-        if (visited_resource, NS.rdf.type, NS.sc.Canvas) in graph:
-            # Visiting a Canvas
-            clean_graph += canvases.canvas_and_images_graph(graph, visited_resource)
-            enqueue(graph.subjects(NS.oa.hasSource, visited_resource))
-
-        elif (visited_resource, NS.rdf.type, NS.dctypes.Text) in graph:
-            # Visiting a Text
-            clean_graph += graph.triples((visited_resource, None, None))
-            content = graph.value(visited_resource, NS.cnt.chars)
-            if content:
-                for selector in project_texts.selector_uris_in_text_content(unicode(content)):
-                    specific_resource = graph.value(None, NS.oa.hasSelector, selector)
-                    if specific_resource:
-                        enqueue(specific_resource)
-
-        elif (visited_resource, NS.rdf.type, NS.oa.SpecificResource) in graph:
-            # Visiting a Specific Resource
-            clean_graph += graph.triples((visited_resource, None, None))
-            selector = graph.value(visited_resource, NS.oa.hasSelector)
-            if selector:
-                clean_graph += graph.triples((selector, None, None))
-
-
-        for anno in itertools.chain(
-                graph.subjects(NS.oa.hasTarget, visited_resource),
-                graph.subjects(NS.oa.hasBody, visited_resource)
-            ):
-            clean_graph += graph.triples((anno, None, None))
-            for s, p, linked_resource in graph.triples_choices((anno, [NS.oa.hasBody, NS.oa.hasTarget], None)):
-                enqueue(linked_resource)
-
-    return clean_graph

@@ -38,7 +38,7 @@ sc.data.SearchClient.prototype.query = function(query, callback, opt_errorCallba
 sc.data.SearchClient.prototype.getSearchUrl = function(query) {
     var projectUri = this.databroker.projectController.currentProject.uri;
 
-    return this.databroker.syncService.restUrl(projectUri, sc.data.SyncService.RESTYPE.search, null, {'q': query, 'includeN3': 0});
+    return this.databroker.syncService.restUrl(projectUri, sc.data.SyncService.RESTYPE.search, null, {'q': query});
 };
 
 sc.data.SearchClient.prototype.buildRdfForResult = function(result) {

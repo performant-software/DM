@@ -56,17 +56,10 @@ sc.data.SyncService.prototype.annotsDeleted = function(deleted) {
    });
 }; 
 
-
 sc.data.SyncService.prototype.requestSync = function() {
-    // var qs = this.databroker.quadStore;
-    // var o = qs.query(null,"<http://www.w3.org/ns/oa#hasTarget>",null, null);
-    // for (var c = 0; c < o.length; c++) {
-        // console.log(o[c]);
-    // }
-//     
-    this.postNewResources();
-    this.putModifiedResources();
-    this.deleteDeletedResources();
+   this.postNewResources();
+   this.putModifiedResources();
+   this.deleteDeletedResources();
 };
 
 sc.data.SyncService.prototype.requestSyncNew = function() {

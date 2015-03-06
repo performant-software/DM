@@ -29,7 +29,7 @@ def search_result_to_dict(result, project_uri, highlighter, title_highlighter):
 
     return d
 
-def get_response(project_uri, query_string, include_n3=True):
+def get_response(project_uri, query_string):
     d = {
         'results': list(),
     }
@@ -51,12 +51,6 @@ def get_response(project_uri, query_string, include_n3=True):
 
         if annotations.has_annotation_link(project_graph, text_uri) or projects.is_top_level_project_resource(project_uri, text_uri):
             d['results'].append(search_result_to_dict(result, project_uri, highlighter, title_highlighter))
-
-            if include_n3:
-                graph += utils.metadata_triples(project_graph, text_uri)
-
-    if include_n3:
-        d['n3'] = graph.serialize(format='n3')
 
     return d
 

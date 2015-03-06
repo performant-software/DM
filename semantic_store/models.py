@@ -48,8 +48,7 @@ class Text(models.Model):
 #         )
 
     def plain_content(self):
-        soup = BeautifulSoup(self.content)
-
+        soup = BeautifulSoup(self.content.decode('utf-8'))
         return ' '.join(soup.body.stripped_strings)
 
 class UploadedImage(models.Model):
