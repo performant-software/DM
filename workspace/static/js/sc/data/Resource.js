@@ -413,7 +413,7 @@ sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
         }
         
         // match project from any host
-        var match = regex.exec(type);
+        var match = regex.exec(possibleType);
         if (match) {
            return true;
         }
