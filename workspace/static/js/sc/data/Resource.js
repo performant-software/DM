@@ -402,6 +402,8 @@ sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
     if (!jQuery.isArray(possibleTypes)) {
         typesToTest = arguments;
     }
+    
+    var regex = /<http:\/\/.*\/ns\/Project>/;
 
     for (var i = 0, len = typesToTest.length; i < len; i++) {
         var possibleType = this.namespaces.autoExpand(typesToTest[i]);
@@ -409,30 +411,15 @@ sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
         if (types.contains(possibleType)) {
             return true;
         }
+        
+        // match project from any host
+        var match = regex.exec(type);
+        if (match) {
+           return true;
+        }
     }
 
     return false;
-};
-
-sc.data.Resource.prototype.hasAllTypes = function(possibleTypes) {
-    var types = this.getTypesSet();
-    var typesToTest = possibleTypes;
-
-    var possibleTypesSet = new goog.structs.Set();
-    
-    if (!jQuery.isArray(possibleTypes)) {
-        typesToTest = arguments;
-    }
-
-    for (var i = 0, len = typesToTest.length; i < len; i++) {
-        var possibleType = this.namespaces.autoExpand(typesToTest[i]);
-
-        possibleTypesSet.add(possibleType);
-    }
-
-    var intersection = possibleTypesSet.intersection(types);
-
-    return intersection.equals(possibleTypesSet);
 };
 
 sc.data.Resource.prototype.getAnnoUris = function(opt_annoType) {
