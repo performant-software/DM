@@ -377,7 +377,18 @@ sc.data.Resource.prototype.hasType = function(type) {
     var types = this.getTypesSet();
     var type = this.namespaces.autoExpand(type);
 
-    return types.contains(type);
+    if ( types.contains(type) ) {
+      return true;
+    }
+    
+    // project has DM host specific stuff in it.
+    // use a regex to match any host
+    var regex = /<http:\/\/.*\/ns\/Project>/;
+    var match = regex.exec(type);
+    if (match) {
+       return true;
+    }
+    return false;
 };
 
 sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
