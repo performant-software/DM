@@ -1,7 +1,15 @@
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.conf import settings
+from django.http import (
+    HttpResponse,
+    HttpResponseNotFound
+)
+from django.views.decorators.csrf import csrf_protect
+import sys
+
 
 def sign_in(request):
     next_url = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
@@ -33,3 +41,20 @@ def sign_in(request):
 def sign_out(request):
     logout(request)
     return redirect("accounts_sign_in")
+
+@csrf_protect
+def create_user(request):
+    if request.method != 'POST':
+        return HttpResponseNotFound()
+    
+    admin = request.POST.get('admin', '')
+    try:
+        user = User.objects.create_user(request.POST.get('name', ''), 
+                                        request.POST.get('email', ''), 
+                                        request.POST.get('password', ''))
+        if admin:
+            user.is_superuser = True
+        user.save()   
+        return HttpResponse(status=200)
+    except Exception, e:
+        return HttpResponse(status=400, content=str(e))

@@ -1,3 +1,15 @@
+form.new-user .form-control {
+   width:100%;
+   box-sizing: border-box;
+   height: 30px;
+}
+
+#new-user-error {
+  text-align: center;
+  color: #a00;
+  font-weight: bold;
+}
+
 #transcriptions,#repositories_button, #pageChooser, #imageChoices {
    display: none;
 }
