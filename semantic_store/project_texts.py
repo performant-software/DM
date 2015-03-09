@@ -130,7 +130,7 @@ def update_project_text(g, p_uri, t_uri, user):
 
     # Get title and content
     title = g.value(text_uri, NS.dc.title) or g.value(text_uri, NS.rdfs.label) or Literal("")
-    content_value = g.value(text_uri, NS.cnt.chars)
+    content_value = g.value(text_uri, NS.cnt.chars).encode("utf-8")
     if content_value:
         content = sanitized_content(content_value)
     else:
