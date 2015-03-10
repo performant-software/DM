@@ -562,15 +562,27 @@ sc.ProjectViewer.prototype.updateEditUI = function() {
 };
 
 sc.ProjectViewer.prototype.updateModalUI = function() {
+    $("#del-project").hide();  
+    $("#clean-project").hide();
+    
     if (this.projectController.currentProject) {
-        this.workingResources.loadManifest(this.projectController.currentProject.uri);
-
+       var uri = this.projectController.currentProject.uri;
+        this.workingResources.loadManifest(uri);
+      
         var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
         $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
+        
+        if (this.databroker.projectController.userHasPermissionOverProject(
+         this.databroker.user, uri, sc.data.ProjectController.PERMISSIONS.administer)) {
+            $("#del-project").show();  
+            $("#clean-project").show();       
+         }
     }
     else {
         $(this.modalTitle).text('No project selected');
     }
+    
+   
 
     this.updateEditUI();
 };
