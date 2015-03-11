@@ -5,6 +5,10 @@ from bs4 import BeautifulSoup
 
 from settings import IMAGE_UPLOAD_LOCATION
 
+class PublicProject(models.Model):
+    identifier = models.CharField(max_length=100, db_index=True)
+    key = models.CharField(max_length=20)
+    
 class ProjectPermission(models.Model):
     PERMISSION_CHOICES = (
         ('r', 'Read'),
@@ -12,7 +16,7 @@ class ProjectPermission(models.Model):
         ('a', 'Administer')
     )
 
-    identifier = models.CharField(max_length=2000, db_index=True)
+    identifier = models.CharField(max_length=100, db_index=True)
     user = models.ForeignKey(User, db_index=True)
     permission = models.CharField(max_length=10, choices=PERMISSION_CHOICES)
 
@@ -26,8 +30,8 @@ class ProjectPermission(models.Model):
         return 'User %s may %s project %s' % (self.user, self.get_permission_display().lower(), self.identifier)
 
 class Text(models.Model):
-    identifier = models.CharField(max_length=2000, db_index=True)
-    project = models.CharField(max_length=2000, null=True)
+    identifier = models.CharField(max_length=100, db_index=True)
+    project = models.CharField(max_length=100, null=True)
     title = models.CharField(max_length=200, blank=True, null=True, db_index=True)
     content = models.TextField(blank=True, null=True, default=lambda:'')
     valid = models.BooleanField(default=True, db_index=True)

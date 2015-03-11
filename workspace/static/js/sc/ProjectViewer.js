@@ -28,7 +28,24 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
     
     var ss = this.databroker.syncService;
     var pc = this.projectController;
+    var self = this;
     setTimeout(function() {
+       
+      // Toggle public access
+      $("#public-access").on("click", function(e) {
+         if ( $("#public-access").is(':checked') ) {
+            self.generatePublicUrl();
+         } else {
+            resp = confirm("Remove all public access to this project?");
+            if ( resp ) {
+               self.revokePublicUrl();
+            } else {
+               $('#public-access').attr('checked', true);
+            }
+         }
+      });
+      
+      // Clean orphans from project
       $("#clean-project").on("click", function() {
         if ( $("#clean-project").hasClass("disabled") ) {
             return;
@@ -45,6 +62,8 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
            }
         });
       });
+      
+      // Delete entire project
       $("#del-project").on("click", function() {
          if ( $("#del-project").hasClass("disabled") ) {
             return;
@@ -72,6 +91,41 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
 
 
     goog.events.listen(this.projectController, 'projectSelected', this._onProjectSelected, false, this);
+};
+
+sc.ProjectViewer.prototype.generatePublicUrl = function() {
+   var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
+   $.ajax({
+      url: url,
+      method: "POST",
+      complete: function(jqXHR, textStatus) {
+         if (textStatus === "success" ) {
+            var json = $.parseJSON(jqXHR.responseText);
+            $("#public-url").text(json.url);
+            $(".pub-url-group").removeClass("hidden");
+         } else {
+            alert("Unable generate public URL for this project: "+jqXHR.responseText);
+            $('#public-access').attr('checked', false);
+         }
+      }
+   });
+};
+
+sc.ProjectViewer.prototype.revokePublicUrl = function() {
+   var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
+   $.ajax({
+      url: url,
+      method: "DELETE",
+      complete: function(jqXHR, textStatus) {
+         if (textStatus === "success" ) {
+            $("#public-url").text("");
+            $(".pub-url-group").addClass("hidden");
+         } else {
+            alert("Unable revoke public URL for this project: "+jqXHR.responseText);
+            $('#public-access').attr('checked', true);
+         }
+      }
+   });
 };
 
 sc.ProjectViewer.prototype._buildButtonGroup = function() {
@@ -219,7 +273,30 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     descriptionControls.appendChild(this.descriptionInput);
     descriptionGroup.appendChild(descriptionControls);
     this.editElement.appendChild(descriptionGroup);
+    
+    // public access
+    var publicPanel = this.domHelper.createDom('div', {'class': 'panel panel-default pub-access'});
+    var publicBody = this.domHelper.createDom('div', {'class': 'panel-body'});
+    publicPanel.appendChild(publicBody);
+    
+    var cbDiv = this.domHelper.createDom('div', {'class': 'checkbox'});
+    publicBody.appendChild(cbDiv);
+    var cbLbl = this.domHelper.createDom('label','', "Publicly Accessible?");
+    cbDiv.appendChild(cbLbl);
+    var cb = this.domHelper.createDom('input', {'type': 'checkbox', 'id': 'public-access'});
+    cbLbl.appendChild(cb);
+    
+    var urlDiv = this.domHelper.createDom('div', {'class': 'hidden control-group pub-url-group'});
+    publicBody.appendChild(urlDiv);
+    var urlLbl = this.domHelper.createDom('label','', "URL:");
+    urlDiv.appendChild(urlLbl);
+    var url = this.domHelper.createDom('p',{'id': 'public-url'}, "http://dm.performantsoftware.com/projects/98hs73hx");
+    urlDiv.appendChild(url);
+   
+    this.editElement.appendChild(publicPanel);
 
+
+    // Users and permissions.....
     this.permissionsTable = this.domHelper.createDom('table', {'class': 'table table-striped table-bordered sc-ProjectViewer-permissions-table'},
         this.domHelper.createDom('thead', {},
             this.domHelper.createDom('tr', {},
@@ -751,10 +828,26 @@ sc.ProjectViewer.prototype._handleSaveButtonClick = function(event) {
 
 sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {
     event.stopPropagation();
-
+    
+    $(".sc-ProjectViewer-projectEdit").children().addClass("disabled");
+    $("#public-access").prop('checked', false);
+    $(".pub-url-group").removeClass("hidden").addClass("hidden");
+     
     this.editZippy.expand();
     this.workingResourcesZippy.collapse();
     this.uploadCanvasZippy.collapse();
+    
+    var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
+    $.getJSON(url,function( data,status, xhr ) {
+        $(".sc-ProjectViewer-projectEdit").children().removeClass("disabled");
+        if  (  status == "success" ) {
+           if ( data.public ) {
+             $("#public-access").prop('checked', true); 
+             $("#public-url").text( data.url );
+             $(".pub-url-group").removeClass("hidden");
+           }
+        }
+    });
 };
 
 sc.ProjectViewer.prototype._handleDownloadButtonClick = function(event) {

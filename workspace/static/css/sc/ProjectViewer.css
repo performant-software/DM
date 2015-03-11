@@ -44,3 +44,36 @@
 #del-project.disabled {
    opacity: 0.5;
 }
+
+div.panel.panel-default.pub-access {
+  border: 1px solid #ddd;
+  margin: 10px 0;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.sc-ProjectViewer-projectEdit .disabled {
+   opacity: 0.3;
+}
+
+.pub-access div.checkbox {
+   margin:5px;
+}
+
+.control-group.pub-url-group {
+     margin: 10px 0 0 5px;
+}
+
+.control-group.pub-url-group label {
+   font-weight: bold;
+}
+
+.control-group.pub-url-group p {
+  margin: 5px 5px 5px 20px;
+}
+
+div.pub-access .hidden {
+   display: none;
+}
+   
+

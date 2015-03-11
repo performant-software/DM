@@ -15,11 +15,13 @@ from django.views.generic.base import View
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.utils.decorators import method_decorator
+from django.core.exceptions import ObjectDoesNotExist
 
 from rdflib import Graph, ConjunctiveGraph, URIRef
 from rdflib.util import guess_format
 import rdflib.plugin
 
+from semantic_store.models import PublicProject
 from semantic_store import collection, permissions, manuscripts
 from semantic_store.models import ProjectPermission, UploadedImage
 from semantic_store.namespaces import NS, ns, bind_namespaces
@@ -38,7 +40,8 @@ from semantic_store.project_texts import create_project_text_from_request, read_
 from semantic_store import text_search
 
 from os import listdir
-
+import random
+import string
 import logging
 logger = logging.getLogger(__name__)
 
@@ -140,6 +143,44 @@ def add_all_users(graph):
 
 def remove_project_triples(request, uri):
     return delete_triples_from_project(request, uri)
+
+def token_generator(size=8 ):
+    return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(size))
+
+def generate_public_token():
+    while True:
+        key = token_generator()
+        if PublicProject.objects.filter(key=key).count() == 0:
+            return key
+    
+def project_share(request, uri):
+    if request.method == 'GET':   
+        #
+        # Get project phblic share status
+        try:
+            pub = PublicProject.objects.get(identifier=uri)
+            url = "%spublished/%s" % (settings.BASE_URL, pub.key)
+            resp = {'public': 'true', 'url':url}
+            return JsonResponse(resp)
+        except ObjectDoesNotExist:
+            resp = {'public': False}
+            return JsonResponse(resp)
+    elif request.method == 'POST':  
+        #
+        # Generate a public access token / URL for a project
+        key = generate_public_token()
+        pub = PublicProject.objects.create(identifier=uri, key=key)
+        url = "%spublished/%s" % (settings.BASE_URL, key)
+        resp = {'success': 'true', 'url': url}
+        return JsonResponse(resp)
+    elif request.method == 'DELETE':   
+        #
+        # Revoke public access token / URL for a project
+        PublicProject.objects.filter(identifier=uri).delete();
+        return HttpResponse(status=200)
+    else:
+        return HttpResponseNotAllowed(('GET', 'POST', 'DELETE'))
+
 
 def cleanup_project_orphans(request, uri):
     return cleanup_orphans(request, uri)
