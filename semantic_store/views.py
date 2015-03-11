@@ -159,7 +159,7 @@ def project_share(request, uri):
         # Get project phblic share status
         try:
             pub = PublicProject.objects.get(identifier=uri)
-            url = "%spublished/%s" % (settings.BASE_URL, pub.key)
+            url = "%spublished/key/%s" % (settings.BASE_URL, pub.key)
             resp = {'public': 'true', 'url':url}
             return JsonResponse(resp)
         except ObjectDoesNotExist:
@@ -170,13 +170,23 @@ def project_share(request, uri):
         # Generate a public access token / URL for a project
         key = generate_public_token()
         pub = PublicProject.objects.create(identifier=uri, key=key)
-        url = "%spublished/%s" % (settings.BASE_URL, key)
+        url = "%spublished/key/%s" % (settings.BASE_URL, key)
+        
+        # create a guest user for this project
+        new_name = "guest_%s" % key
+        user = User.objects.create_user(new_name, "", "pass")
+        ProjectPermission.objects.create(user=user, identifier=uri, permission="r")
+        
         resp = {'success': 'true', 'url': url}
         return JsonResponse(resp)
     elif request.method == 'DELETE':   
         #
         # Revoke public access token / URL for a project
-        PublicProject.objects.filter(identifier=uri).delete();
+        for p in PublicProject.objects.filter(identifier=uri): 
+            uname = "guest_%s" % p.key
+            User.objects.filter(username=uname).delete();
+            ProjectPermission.objects.filter(identifier=p.identifier).delete()
+            p.delete();
         return HttpResponse(status=200)
     else:
         return HttpResponseNotAllowed(('GET', 'POST', 'DELETE'))
