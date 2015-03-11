@@ -636,6 +636,7 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
         this._addDocumentIconListeners();
 
         this.setTitleEditable(false);
+        $("#"+this.useID + '_js_save_status').hide();
     }
 };
 

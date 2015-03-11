@@ -184,8 +184,9 @@ def project_share(request, uri):
         # Revoke public access token / URL for a project
         for p in PublicProject.objects.filter(identifier=uri): 
             uname = "guest_%s" % p.key
-            User.objects.filter(username=uname).delete();
-            ProjectPermission.objects.filter(identifier=p.identifier).delete()
+            for u in User.objects.filter(username=uname):
+                ProjectPermission.objects.filter(user_id=u.id).delete()
+                u.delete()
             p.delete();
         return HttpResponse(status=200)
     else:

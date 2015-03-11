@@ -71,17 +71,17 @@
           {% endblock %}
           <li class="divider-vertical"></li>
           {% if user %}
-          <li class="dropdown">
+          <li id="user-dropdown" class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
               <span class="icon-user"></span>
-              <span title="{{ user.first_name }} {{ user.last_name}}, {{ user.email }}">{{ user.username }}</span>
+              <span id="logged-in-user" title="{{ user.first_name }} {{ user.last_name}}, {{ user.email }}">{{ user.username }}</span>
               <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
               {% if user.is_superuser %}
-                  <li><a id="create-user">Create User</a></li>   
+                  <li><a id="create-user">Create User</a></li> 
+                  <li class="divider"></li>  
               {% endif %}
-              <li class="divider"></li>
               <li><a href="{% url "accounts.views.sign_out" %}">Logout</a></li>
             </ul>
           </li>

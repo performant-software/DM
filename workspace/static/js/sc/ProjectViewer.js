@@ -746,6 +746,17 @@ sc.ProjectViewer.prototype.updateProjectChoices = function() {
     }
 
     this.setProjectChoicesByUris(projectUris);
+    
+    if ( projectUris.length === 1) {
+       var username = $("#logged-in-user").text();
+       if (username === "Guest")  {
+         this.switchToProject(projectUris[0] );
+         setTimeout( function() {
+            var b = $(".sc-ProjectViewer-titleButton");
+            b.trigger("click");
+         }, 500);
+       }
+    }
 };
 
 sc.ProjectViewer.prototype.switchToProject = function(project) {

@@ -342,6 +342,14 @@ atb.ClientApp.prototype.registerKeyboardShortcuts = function () {
 };
 
 $(function() {
+   var username = $("#logged-in-user").text();
+   if (username.indexOf("guest_") == 0 ) {
+      $("#logged-in-user").text("Guest");
+      $(".sc-ProjectViewer-createProjectButton").hide();
+      $(".sc-ProjectViewer-modal .nav-pills").hide();
+   }
+  
+   
    $("#create-user").on("click", function() {
       $(".create-user-modal").modal('show');
    });

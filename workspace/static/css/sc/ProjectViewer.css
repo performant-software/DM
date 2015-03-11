@@ -23,7 +23,7 @@
    padding-right: 3px
 }
 .sc-ProjectViewer-projectLabel {
-   display: inline-block;
+   display: none;
    color: #666
 }
 .sc-ProjectViewer-projectButtonTitle {
