@@ -11,16 +11,34 @@ class Migration(SchemaMigration):
         # Adding model 'PublicProject'
         db.create_table(u'semantic_store_publicproject', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('identifier', self.gf('django.db.models.fields.CharField')(max_length=500, db_index=True)),
+            ('identifier', self.gf('django.db.models.fields.CharField')(max_length=80, db_index=True)),
             ('key', self.gf('django.db.models.fields.CharField')(max_length=20)),
         ))
         db.send_create_signal(u'semantic_store', ['PublicProject'])
 
 
+        # Changing field 'ProjectPermission.identifier'
+        db.alter_column(u'semantic_store_projectpermission', 'identifier', self.gf('django.db.models.fields.CharField')(max_length=80))
+
+        # Changing field 'Text.project'
+        db.alter_column(u'semantic_store_text', 'project', self.gf('django.db.models.fields.CharField')(max_length=80, null=True))
+
+        # Changing field 'Text.identifier'
+        db.alter_column(u'semantic_store_text', 'identifier', self.gf('django.db.models.fields.CharField')(max_length=80))
+
     def backwards(self, orm):
         # Deleting model 'PublicProject'
         db.delete_table(u'semantic_store_publicproject')
 
+
+        # Changing field 'ProjectPermission.identifier'
+        db.alter_column(u'semantic_store_projectpermission', 'identifier', self.gf('django.db.models.fields.CharField')(max_length=2000))
+
+        # Changing field 'Text.project'
+        db.alter_column(u'semantic_store_text', 'project', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
+
+        # Changing field 'Text.identifier'
+        db.alter_column(u'semantic_store_text', 'identifier', self.gf('django.db.models.fields.CharField')(max_length=2000))
 
     models = {
         u'auth.group': {
@@ -62,23 +80,23 @@ class Migration(SchemaMigration):
         u'semantic_store.projectpermission': {
             'Meta': {'unique_together': "(('user', 'identifier', 'permission'),)", 'object_name': 'ProjectPermission', 'index_together': "(('user', 'identifier', 'permission'),)"},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'identifier': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'db_index': 'True'}),
+            'identifier': ('django.db.models.fields.CharField', [], {'max_length': '80', 'db_index': 'True'}),
             'permission': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         },
         u'semantic_store.publicproject': {
             'Meta': {'object_name': 'PublicProject'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'identifier': ('django.db.models.fields.CharField', [], {'max_length': '500', 'db_index': 'True'}),
+            'identifier': ('django.db.models.fields.CharField', [], {'max_length': '80', 'db_index': 'True'}),
             'key': ('django.db.models.fields.CharField', [], {'max_length': '20'})
         },
         u'semantic_store.text': {
             'Meta': {'object_name': 'Text', 'index_together': "(('identifier', 'valid'),)"},
             'content': ('django.db.models.fields.TextField', [], {'default': "''", 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'identifier': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'db_index': 'True'}),
+            'identifier': ('django.db.models.fields.CharField', [], {'max_length': '80', 'db_index': 'True'}),
             'last_user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"}),
-            'project': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True'}),
+            'project': ('django.db.models.fields.CharField', [], {'max_length': '80', 'null': 'True'}),
             'timestamp': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'valid': ('django.db.models.fields.BooleanField', [], {'default': 'True', 'db_index': 'True'})

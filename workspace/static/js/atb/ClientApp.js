@@ -348,7 +348,17 @@ $(function() {
       $(".sc-ProjectViewer-createProjectButton").hide();
       $(".sc-ProjectViewer-modal .nav-pills").hide();
    }
-  
+   
+   $(window).on('beforeunload', function(){
+      if ( $("#logged-in-user").text() === "Guest" ) {
+          $.ajax({
+              url: 'logout/',
+              async:false
+          });
+       }
+      return true;
+   });
+
    
    $("#create-user").on("click", function() {
       $(".create-user-modal").modal('show');
