@@ -8,9 +8,7 @@ from django.http import (
     HttpResponseNotFound
 )
 
-
 def public_project(request, key):
-    print "Public project %s" % key
     if request.method != 'GET':
         return HttpResponseNotAllowed(('GET'))
     

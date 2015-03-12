@@ -352,13 +352,11 @@ $(function() {
    $(window).on('beforeunload', function(){
       if ( $("#logged-in-user").text() === "Guest" ) {
           $.ajax({
-              url: 'logout/',
+              url: '/accounts/logout/',
               async:false
           });
        }
-      return true;
    });
-
    
    $("#create-user").on("click", function() {
       $(".create-user-modal").modal('show');
