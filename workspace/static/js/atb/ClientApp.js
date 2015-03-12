@@ -375,7 +375,7 @@ $(function() {
          $("#new-user-error").text("Passwords do not match");
          return;
       }
-      var token = $("[name='csrfmiddlewaretoken']").text();
+      var token = $("[name='csrfmiddlewaretoken']").val();
       $.ajax({
          url: "/accounts/create/",
          method: "POST",
