@@ -51,7 +51,7 @@ def create_user(request):
     try:
         user = User.objects.create_user(request.POST.get('name', ''), 
                                         request.POST.get('email', ''), 
-                                        request.POST.get('password', ''))
+                                        request.POST.get('pass', ''))
         if admin:
             user.is_superuser = True
         user.save()   
