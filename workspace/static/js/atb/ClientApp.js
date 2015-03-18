@@ -367,6 +367,7 @@ $(function() {
       var email = $("#email").val();
       var pass = $("#password").val();
       var passConf  = $("#password-confirmation").val();
+      var admin = $("#admin-checkbox").is(':checked');
       if ( name.length==0 || email.length==0 || pass.length==0 || passConf.length==0  ) {
          $("#new-user-error").text("All fields are required!");
          return;
@@ -379,7 +380,7 @@ $(function() {
       $.ajax({
          url: "/accounts/create/",
          method: "POST",
-         data: { name: name, email: email, pass: pass},
+         data: { name: name, email: email, pass: pass, admin: admin},
          beforeSend: function(xhr, settings) {
             xhr.setRequestHeader("X-CSRFToken", token);
          },

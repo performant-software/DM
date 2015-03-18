@@ -52,7 +52,7 @@ def create_user(request):
         user = User.objects.create_user(request.POST.get('name', ''), 
                                         request.POST.get('email', ''), 
                                         request.POST.get('pass', ''))
-        if admin:
+        if admin == "true":
             user.is_superuser = True
         user.save()   
         return HttpResponse(status=200)
