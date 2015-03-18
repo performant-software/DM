@@ -438,7 +438,7 @@ def delete_triples_from_project(request, uri):
                 # if this is a removal of an aggregate, also remove the TEXT itself
                 if "http://www.openarchives.org/ore/terms/aggregates" in triple[1]:
                     
-                    delete_annos_on_resource(project_g, project_metadata_g, triple[2])
+                    #delete_annos_on_resource(project_g, project_metadata_g, triple[2])
                     
                     project_g.remove( (triple[2],None,None) )
                     project_metadata_g.remove( (triple[2],None,None) )
