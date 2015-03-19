@@ -39,11 +39,9 @@ def annotation_subgraph(graph, anno):
 
     seen = []
     for s, p, resource in graph.triples_choices((anno, [NS.oa.hasBody, NS.oa.hasTarget], None)):
-        try:
-            seen.index( (s, p, resource) )
+        if (s, p, resource) in seen:
             continue
-        except ValueError as e:
-            seen.append( (s, p, resource) )
+        seen.append( (s, p, resource) )
         subgraph += anno_resource_metadata_subgraph(graph, resource)
 
     return subgraph
@@ -53,11 +51,9 @@ def resource_annotation_subgraph(graph, resource_uri):
 
     a = []
     for anno, p, o in graph.triples_choices((None, [NS.oa.hasTarget, NS.oa.hasBody], resource_uri)):
-        try:
-            a.index(anno)
+        if (anno, p, o) in a:
             continue
-        except ValueError as e:
-            a.append( anno )
+        a.append( (anno, p, o) )
         subgraph += annotation_subgraph(graph, anno)
 
     return subgraph

@@ -40,11 +40,10 @@ def specific_resources_subgraph(graph, source_uri, project_uri):
     srs = []
     for specific_resource in graph.subjects(NS.oa.hasSource, source_uri):
         # don't add the same resource multiple times
-        try:
-            srs.index(specific_resource)
+        if specific_resource in srs:
             continue
-        except ValueError as e:
-            srs.append( specific_resource )
+        
+        srs.append( specific_resource )
         
         selector = graph.value(specific_resource, NS.oa.hasSelector)
 
@@ -71,11 +70,10 @@ def read_specific_resource(project_uri, specific_resource, source):
     s = []
     selectors = project_graph.objects(specific_resource, NS.oa.hasSelector)
     for selector in selectors:
-        try:
-            s.index(selector)
+        if selector in s:
             continue
-        except ValueError as e:
-            s.append( selector )
+        
+        s.append( selector )
             
         return_graph += project_graph.triples((selector, None, None))
 
