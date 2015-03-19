@@ -3,6 +3,8 @@ from django.template import RequestContext
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.conf import settings
+from django.shortcuts import render_to_response
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpResponse,
     HttpResponseNotFound
@@ -14,10 +16,14 @@ def public_project(request, key):
     
     try:
         uname = "guest_%s" % key
+        print "auth %s" % uname
         user = authenticate(username=uname, password="pass")
+        print "past...."
         if user is not None:
             login(request, user)
             return redirect("/")
+        else:
+            return render_to_response("no_project.html")
     
     except ObjectDoesNotExist:
         return HttpResponseNotFound()
