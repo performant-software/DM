@@ -138,10 +138,10 @@ atb.viewer.Viewer.prototype.render = function (div) {
 //  this.hoverMenuPopup.setTransition(new goog.fx.dom.FadeIn(hoverMenuDiv, 100),
 //                                  new goog.fx.dom.FadeOut(hoverMenuDiv, 200));
     
-    goog.events.listen(this.rootDiv, 'mousemove', function (e) {
-        this.mousePosition.x = e.clientX;
-        this.mousePosition.y = e.clientY;
-    }, false, this);
+    // goog.events.listen(this.rootDiv, 'mousemove', function (e) {
+        // this.mousePosition.x = e.clientX;
+        // this.mousePosition.y = e.clientY;
+    // }, false, this);
     
     goog.events.listen(this.domHelper.getWindow(), 'keydown',
                        this.handleKeyDown_, false, this);
@@ -419,31 +419,14 @@ function(menuButtons, resourceId, opt_position) {
     else {
         var mousePosition = this.getMousePosition();
         position = new goog.math.Coordinate(
-            mousePosition.x + jQuery(menuDiv).width()/3,
+            mousePosition.x,
             mousePosition.y - jQuery(menuDiv).height()/2
         );
     }
-    
-    position = atb.util.StyleUtil.maintainPopupPositionWithinWindow(
-        position,
-        menuDiv,
-        this.getDomHelper()
-    );
+ 
     this.hoverMenuPopup.setPosition(
         new goog.positioning.ClientPosition(position)
     );
-    
-    var willDisplayUnderMouse = (this.getMousePosition().y - position.y) >= 0;
-    
-    if (! willDisplayUnderMouse) {
-        var calloutTriangle = this.domHelper.createDom('div',
-                                   {'class': 'atb-hoverMenu-calloutTriangle'});
-        jQuery(calloutTriangle).css({
-            'top': '-16px',
-            'left': (this.getMousePosition().x - position.x - 8) +'px'
-        });
-        menuDiv.appendChild(calloutTriangle);
-    }
     
     goog.events.listen(menuDiv, 'mouseover', function (e) {
                            this.mouseIsOverFloatingMenu = true;
