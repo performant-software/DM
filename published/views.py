@@ -16,9 +16,7 @@ def public_project(request, key):
     
     try:
         uname = "guest_%s" % key
-        print "auth %s" % uname
         user = authenticate(username=uname, password="pass")
-        print "past...."
         if user is not None:
             login(request, user)
             return redirect("/")
