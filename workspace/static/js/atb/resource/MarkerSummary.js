@@ -7,63 +7,69 @@ goog.require('sc.canvas.FabricCanvasFactory');
 
 /**
  * @extends atb.resource.ResourceSummary
- * 
+ *
  * @param resourceId
  * @param clickHandler
  * @param clickHandlerScope
  * @param resource
  * @param webService
  */
-atb.resource.MarkerSummary = function (uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
-    atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
+atb.resource.MarkerSummary = function(uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
+   atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
 
-    this.selected = false;
+   this.selected = false;
 
-    this.setTooltip('Show this marker on the canvas');
+   this.setTooltip('Show this marker on the canvas');
 
-    this.size = new goog.math.Size(75, 75);
+   this.size = new goog.math.Size(75, 75);
 
-    this.decorate();
+   this.decorate();
 };
 goog.inherits(atb.resource.MarkerSummary, atb.resource.ResourceSummary);
 
 atb.resource.MarkerSummary.prototype.resourceType = 'Marker';
 
-atb.resource.MarkerSummary.prototype.decorate = function () {
-    jQuery(this.outerDiv).addClass('atb-markersummary');
-    
-    this.imageDiv = this.domHelper.createDom(
-        'div',
-        {
-            'class' : 'atb-markersummary-thumb atb-markersummary-loadingSpinner'
-        }
-    );
-    jQuery(this.imageDiv).width(this.size.width);
-    jQuery(this.imageDiv).height(this.size.height);
-    
-    this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
-    this.viewport.resize(this.size.width, this.size.height);
-    var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getOneProperty('oa:hasSource'), this.databroker);
-    this.viewport.addDeferredCanvas(deferredCanvas);
-    this.viewport.render(this.imageDiv);
+atb.resource.MarkerSummary.prototype.decorate = function() {
+   jQuery(this.outerDiv).addClass('atb-markersummary');
 
-    var showFeature = function(canvas) {
-        var featureUri = this.resource.getOneProperty('oa:hasSelector');
-        var feature = canvas.getFabricObjectByUri(featureUri);
+   this.imageDiv = this.domHelper.createDom('div', {
+      'class' : 'atb-markersummary-thumb atb-markersummary-loadingSpinner'
+   });
+   jQuery(this.imageDiv).width(this.size.width);
+   jQuery(this.imageDiv).height(this.size.height);
 
-        if (feature) {
-            this.viewport.pauseRendering();
+   this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
+   this.viewport.resize(this.size.width, this.size.height);
+   var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getOneProperty('oa:hasSource'), this.databroker);
+   this.viewport.addDeferredCanvas(deferredCanvas);
+   this.viewport.render(this.imageDiv);
 
-            canvas.hideMarkers();
-            canvas.showObject(feature);
+   var showFeature = function(canvas) {
+      //var featureUri = this.resource.getOneProperty('oa:hasSelector');
+      var featureUri;
+      var selectors = this.resource.getResourcesByProperty('oa:hasSelector');
+      for (var i = 0; i < selectors.length; i++) {
+         var selector = selectors[i];
+         if (selector.hasType('oa:SvgSelector')) {
+            featureUri = selector;
+            break;
+         }
+      }
+      var feature = canvas.getFabricObjectByUri(featureUri);
 
-            this.viewport.zoomToFeatureByUri(featureUri);
+      if (feature) {
+         this.viewport.pauseRendering();
 
-            this.viewport.resumeRendering();
-        }
-    }.bind(this);
+         canvas.hideMarkers();
+         canvas.showObject(feature);
 
-    deferredCanvas.progress(showFeature).always(showFeature);
-    
-    this.div.appendChild(this.imageDiv);
+         this.viewport.zoomToFeatureByUri(featureUri);
+
+         this.viewport.resumeRendering();
+      }
+   }.bind(this);
+
+   deferredCanvas.progress(showFeature).always(showFeature);
+
+   this.div.appendChild(this.imageDiv);
 };

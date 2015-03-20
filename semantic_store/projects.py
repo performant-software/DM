@@ -392,6 +392,10 @@ def cleanup_orphans(request, uri):
                     
     return HttpResponse(status=200, content="%d orphaned text removed, %d orphaned annotations removed." % (orphan_cnt,del_anno))
 
+###
+### THIS IS BAD. DOEST CHECK IF ANNO IS IN USE BY ANOTHER RESOURCE 
+### BEFORE DELETING. DON'T USE UNTIL THAT IS FIXED!
+###
 def delete_annos_on_resource(project_g, project_metadata_g, uuid):
     print "DELETE ANNOS ON %s" % uuid
     with transaction.commit_on_success():
@@ -438,6 +442,7 @@ def delete_triples_from_project(request, uri):
                 # if this is a removal of an aggregate, also remove the TEXT itself
                 if "http://www.openarchives.org/ore/terms/aggregates" in triple[1]:
                     
+                    # BROKEN. DON'T USE
                     #delete_annos_on_resource(project_g, project_metadata_g, triple[2])
                     
                     project_g.remove( (triple[2],None,None) )

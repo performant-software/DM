@@ -19,7 +19,14 @@ goog.require('atb.resource.ResourceSummary');
 atb.resource.TextHighlightSummary = function (uri, viewer, clientApp, opt_domHelper, opt_styleOptions) {
     atb.resource.ResourceSummary.call(this, uri, viewer, clientApp, opt_domHelper, opt_styleOptions);
 
-    this.highlightResource = this.databroker.getResource(this.resource.getOneProperty('oa:hasSelector'));
+    var selectors = this.resource.getResourcesByProperty('oa:hasSelector');
+    for (var i=0; i<selectors.length; i++) {
+      var selector = selectors[i];
+        if (selector.hasType('oa:TextQuoteSelector')) {
+         this.highlightResource = this.databroker.getResource(selector);
+         break;
+        }
+    }
     this.parentResource = this.databroker.getResource(this.resource.getOneProperty('oa:hasSource'));
     
     this.decorate();
@@ -40,7 +47,7 @@ atb.resource.TextHighlightSummary.prototype.decorate = function (opt_label) {
         {
             'class': 'atb-resourcesummary-title atb-texthighlightsummary-title'
         }
-    )
+    );
 
     /*
     jQuery(this.titleDiv).text(this.title);
@@ -66,7 +73,7 @@ atb.resource.TextHighlightSummary.prototype.decorate = function (opt_label) {
     this.textBodySpan = this.domHelper.createElement('span');
     jQuery(this.textBodySpan).addClass('atb-resourcesummary-textbody');
     this.textBody.appendChild(this.textBodySpan);
-    jQuery(this.textBodySpan).html(truncHtml)
+    jQuery(this.textBodySpan).html(truncHtml);
     var textTitleText = this.domHelper.createTextNode(" in " + this.databroker.dataModel.getTitle(this.parentResource));
     jQuery(this.textBody).append(textTitleText);
     jQuery(this.div).append(this.textBody);
