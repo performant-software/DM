@@ -138,10 +138,10 @@ atb.viewer.Viewer.prototype.render = function (div) {
 //  this.hoverMenuPopup.setTransition(new goog.fx.dom.FadeIn(hoverMenuDiv, 100),
 //                                  new goog.fx.dom.FadeOut(hoverMenuDiv, 200));
     
-    // goog.events.listen(this.rootDiv, 'mousemove', function (e) {
-        // this.mousePosition.x = e.clientX;
-        // this.mousePosition.y = e.clientY;
-    // }, false, this);
+    goog.events.listen(this.rootDiv, 'mousemove', function (e) {
+        this.mousePosition.x = e.clientX;
+        this.mousePosition.y = e.screenY;
+    }, false, this);
     
     goog.events.listen(this.domHelper.getWindow(), 'keydown',
                        this.handleKeyDown_, false, this);
@@ -424,6 +424,11 @@ function(menuButtons, resourceId, opt_position) {
         );
     }
  
+    position = atb.util.StyleUtil.maintainPopupPositionWithinWindow(
+        position,
+        menuDiv,
+        this.getDomHelper()
+    );
     this.hoverMenuPopup.setPosition(
         new goog.positioning.ClientPosition(position)
     );
