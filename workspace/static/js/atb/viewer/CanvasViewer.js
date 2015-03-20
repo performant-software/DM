@@ -40,6 +40,8 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     this.setupEventListeners();
     
     this.viewer.render(this.rootDiv);
+    
+    this.setTitleEditable(true);
 };
 
 atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
@@ -75,6 +77,7 @@ atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
     }
     else {
         var menuButtons = [];
+        this.setTitleEditable(false);
     }
 
     this.addHoverMenuListenersToElement(this.documentIcon, menuButtons, this.getUri.bind(this));
@@ -203,6 +206,45 @@ atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
 
 atb.viewer.CanvasViewer.prototype.onCanvasAdded = function(event) {
     this.setTitle(this.getCompleteTitle());
+};
+
+atb.viewer.CanvasViewer.prototype.setTitle = function(title) {
+   var canvas = this.viewer.mainViewport.canvas;
+   var canvasResource = this.databroker.getResource(canvas.getUri());
+   var orig = this.databroker.dataModel.getTitle(canvasResource);
+   if (orig != title) {
+      this.setDisplayTitle(title);
+      
+      var resource = this.databroker.getResource(canvas.getUri());
+
+this.databroker.dataModel.setTitle(resource, title);
+      
+      var projUri = this.databroker.projectController.currentProject.uri;
+      var canvasUri = canvasResource.getUri();
+      var url = this.databroker.syncService.restUrl(projUri, sc.data.SyncService.RESTYPE.canvas) + '/'+ canvasUri+'/rename';
+      $.ajax({
+         url: url,
+         method: "POST",
+         data: {title: title},
+         complete:  function( jqXHR, textStatus ) {
+           $(".atb-WorkingResourcesItem-title").each( function(idx) {
+              var ele = $(this);
+              if ( $(this).text() == orig ) {
+                 $(this).text(title);
+              }
+           });
+        }
+      });
+      
+   } else {
+      this.setDisplayTitle(title);
+   }
+};
+
+atb.viewer.CanvasViewer.prototype.setDisplayTitle = function(title) {
+    if (this.container) {
+        this.container.setTitle(title);
+    }
 };
 
 atb.viewer.CanvasViewer.prototype.getCompleteTitle = function() {

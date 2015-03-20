@@ -307,15 +307,16 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         url = this.restUrl(currentProject.uri, resType, sc.data.Term.unwrapUri(uri), null);
     }
     else if (conjunctiveResource.hasAnyType(VOCABULARY.canvasTypes)) {
-        resType = sc.data.SyncService.RESTYPE.project;
-
-        quadsToPost = newQuadStore.query(resource.bracketedUri, null, null, null);
-        quadsToRemove = deletedQuadsStore(resource.bracketedUri, null, null, null);
-
-        url = this.restUrl(currentProject.uri, resType, null, null);
-        if (method == 'POST') {
-            method = 'PUT';
-        }
+       // THIS DOESN't WORK
+        // resType = sc.data.SyncService.RESTYPE.project;
+// 
+        // quadsToPost = newQuadStore.query(resource.bracketedUri, null, null, null);
+        // quadsToRemove = deletedQuadsStore(resource.bracketedUri, null, null, null);
+// 
+        // url = this.restUrl(currentProject.uri, resType, null, null);
+        // if (method == 'POST') {
+            // method = 'PUT';
+        // }
     }
     else if (conjunctiveResource.hasType('oa:Annotation')) {
         resType = sc.data.SyncService.RESTYPE.project;

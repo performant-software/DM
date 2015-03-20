@@ -31,7 +31,7 @@ from semantic_store.annotation_views import create_or_update_annotations
 from semantic_store.projects import create_project_from_request, delete_project, link_removed, create_project, read_project, update_project, cleanup_orphans, delete_triples_from_project, get_project_graph, project_export_graph, get_project_metadata_graph
 from semantic_store import uris
 from semantic_store.users import read_user, update_user, remove_triples_from_user
-from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples, create_canvas_from_upload
+from semantic_store.canvases import read_canvas, update_canvas, remove_canvas_triples, create_canvas_from_upload, rename_canvas
 from semantic_store.specific_resources import read_specific_resource, update_specific_resource
 from semantic_store.annotations import resource_annotation_subgraph
 
@@ -242,6 +242,16 @@ def project_canvases(request, project_uri, canvas_uri):
     else:
         return HttpResponseNotAllowed(('GET', 'PUT'))
 
+
+@check_project_resource_permissions
+def rename_project_canvas(request, project_uri, canvas_uri):
+    if request.method == 'POST':
+        title = request.POST.get('title', '')
+        rename_canvas(title, project_uri, canvas_uri)
+        return HttpResponse(status=200)
+    else:
+        return HttpResponseNotAllowed(('POST'))
+    
 @check_project_resource_permissions
 def remove_project_canvas_triples(request, project_uri, canvas_uri):
     if request.method == 'PUT':
