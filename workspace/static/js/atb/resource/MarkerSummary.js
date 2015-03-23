@@ -45,16 +45,16 @@ atb.resource.MarkerSummary.prototype.decorate = function() {
    this.viewport.render(this.imageDiv);
 
    var showFeature = function(canvas) {
-      //var featureUri = this.resource.getOneProperty('oa:hasSelector');
-      var featureUri;
-      var selectors = this.resource.getResourcesByProperty('oa:hasSelector');
-      for (var i = 0; i < selectors.length; i++) {
-         var selector = selectors[i];
-         if (selector.hasType('oa:SvgSelector')) {
-            featureUri = selector;
-            break;
-         }
-      }
+      var featureUri = this.resource.getOneProperty('oa:hasSelector');
+      // var featureUri;
+      // var selectors = this.resource.getResourcesByProperty('oa:hasSelector');
+      // for (var i = 0; i < selectors.length; i++) {
+         // var selector = selectors[i];
+         // if (selector.hasType('oa:SvgSelector')) {
+            // featureUri = selector;
+            // break;
+         // }
+      // }
       var feature = canvas.getFabricObjectByUri(featureUri);
 
       if (feature) {
