@@ -273,18 +273,45 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     var iframeContent = editorIframe.contents();
     var self = this;
     iframeContent.bind("paste", function(e) {
-         // Grab the current content and caret position
-         var editor = iframeContent.find('.editable');
-         var caretPos = getCaretCharacterOffsetWithin( editor[0] );
-         var origContent = editor.html();
-         var scrollTop=editor.scrollTop();
+        // Grab the current selection and clear it
+        var range = getSelectionRange(editorIframe);
+        if (range) {
+            range.deleteContents();
+        }
+   
+        var editor = iframeContent.find('.editable');
+        var scrollTop=editor.scrollTop();
+        
+        // set focus to paste buffer, thereby redirecting the paste target
+        var pasteBuffer = $(iframeContent).find("#paste-buffer");
+        pasteBuffer.focus();  
+        
+        // once paste has completed, move the clean content into the
+        // previus selection and restore scroll position
+        setTimeout(function() {
+            var ew = editorIframe[0].contentWindow;
+            var doc =  ew.document;
+            var pasted = $.trim(pasteBuffer.html());
+            if ( pasted.indexOf("urn:uuid") > -1 ) {
+               pasted = $.trim(pasteBuffer.text());   
+               pasted = pasted.replace(/(?:\r\n|\r|\n)/g, '<br />');
+            }
+            var ele = $("<span>"+pasted+"</span>");
+            range.insertNode( ele[0] );
+            pasteBuffer.empty();
+            
+            // restore editor focus, scroll position and caret pos
+            editor.focus();
+            editor.scrollTop(scrollTop);
+            
+            var r2 = doc.createRange();
+            var sel = ew.getSelection();
+            r2.setStartAfter(ele[0]);
+            r2.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r2);
+        }, 1);       
          
-         // wipe the current content so paste will arrive in a blank editor.
-         // Once data arrives, grab it and strip the tags.
-         // replace the original content, move cursor to insertion
-         // point and stick in the stripped content
-         editor.html("");
-         awaitPaste(self, editor, origContent, caretPos,scrollTop);           
      });
     
     this.addGlobalEventListeners();
@@ -293,110 +320,28 @@ atb.viewer.TextEditor.prototype.render = function(div) {
         this.container.autoResize();
         this.container.setTitleEditable(true);
     }
+    
+    // Create an offscreen area that will received pasted data
+    var iframeContent = editorIframe.contents();
+    $(iframeContent).find(".editable").parent().append("<div id='paste-buffer' contenteditable='true'></div>");
+    var pasteBuf = $(iframeContent).find("#paste-buffer");
+    pasteBuf.css("position", "absolute");
+    pasteBuf.css("left", "-1000px");
 };
 
-
-function awaitPaste(self, editor, savedContent, caretPos,scrollTop) {
-   if (editor.text().length > 0) {
-      var pasted = editor.html();
-      if ( pasted.indexOf("urn:uuid") > -1 ) {
-         pasted = $.trim(editor.text());
-      }
-      
-      // find the right place to stick clean content
-      // by walking through characters of original content
-      // skip anything between < and >.
-      var rawPos = 0;
-      var txtPos = 0;
-      var c = '';
-      var skip = false;
-      var endSkipChar = '';
-      while ( txtPos < caretPos ) {
-         c = savedContent.charAt(rawPos);
-         if (skip) {
-            if ( c === endSkipChar ) {
-               skip = false;
-               if (endSkipChar==';' ) {
-                  txtPos += 1; // this ends a single encoded character. count it  
-               }
-            }
-         } else {
-            if ( c === '<' ) {
-               skip = true;
-               endSkipChar = '>';
-            } else if (c === '&' ) {
-               skip = true;
-               endSkipChar = ';';
-            } else {
-               txtPos += 1;
-            }
-         }
-         rawPos += 1;
-      }
-      if (savedContent.charAt(rawPos) == '<') {
-         txt = "<div>" + pasted + "</div>";
-      }
-      var content = savedContent.substring(0,rawPos)+pasted+savedContent.substring(rawPos,savedContent.length);
-      editor.html(content);
-      editor.scrollTop(scrollTop);
-      
-      var textEditorAnnotate = self.field.getPluginByClassId('Annotation');
-      textEditorAnnotate.addListenersToAllHighlights();
-      self._addHighlightListenersWhenUneditable(); 
-      
-   } else {
-      setTimeout(function() {
-         awaitPaste(self, editor, savedContent, caretPos, scrollTop);
-      }, 5);
-   }
-} 
-
-function setCaretCharacterOffsetWithin(element,off) {
-    var doc = element.ownerDocument || element.document;
-    var win = doc.defaultView || doc.parentWindow;
+function getSelectionRange(iframe) {
     var sel;
-    if (typeof win.getSelection != "undefined") {
-        sel = win.getSelection();
-        if (sel.rangeCount > 0) {
-            var range = win.getSelection().getRangeAt(0);
-            var preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(element);
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            caretOffset = preCaretRange.toString().length;
+    var cw = iframe[0].contentWindow;
+    var doc = cw.document;
+    if (cw.getSelection) {
+        sel = cw.getSelection();
+        if (sel.rangeCount) {
+            return sel.getRangeAt(0);
         }
-    } else if ( (sel = doc.selection) && sel.type != "Control") {
-        var textRange = sel.createRange();
-        var preCaretTextRange = doc.body.createTextRange();
-        preCaretTextRange.moveToElementText(element);
-        preCaretTextRange.setEndPoint("EndToEnd", textRange);
-        caretOffset = preCaretTextRange.text.length;
+    } else if (doc.selection) {
+        return doc.selection.createRange();
     }
-    return caretOffset;
-}
-
-
-function getCaretCharacterOffsetWithin(element) {
-    var caretOffset = 0;
-    var doc = element.ownerDocument || element.document;
-    var win = doc.defaultView || doc.parentWindow;
-    var sel;
-    if (typeof win.getSelection != "undefined") {
-        sel = win.getSelection();
-        if (sel.rangeCount > 0) {
-            var range = win.getSelection().getRangeAt(0);
-            var preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(element);
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            caretOffset = preCaretRange.toString().length;
-        }
-    } else if ( (sel = doc.selection) && sel.type != "Control") {
-        var textRange = sel.createRange();
-        var preCaretTextRange = doc.body.createTextRange();
-        preCaretTextRange.moveToElementText(element);
-        preCaretTextRange.setEndPoint("EndToEnd", textRange);
-        caretOffset = preCaretTextRange.text.length;
-    }
-    return caretOffset;
+    return null;
 }
 
 atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
