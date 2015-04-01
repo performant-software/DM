@@ -48,3 +48,5 @@ include
 *.log
 pip-selfcheck.json
 workspace/media
+/media/
+/PROD.ttl-orig

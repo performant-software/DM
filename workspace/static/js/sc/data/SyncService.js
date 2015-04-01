@@ -411,12 +411,32 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     }
 };
 
+function fixQuotes( val ) {
+   var fixed = "";
+   var priorChar;
+   for (var i=0; i<val.length; i++) {
+      var currChar = val.charAt(i);
+      if (currChar == '"' ) {
+         if ( priorChar != '\\' ) {
+            fixed = fixed + "\\";
+         }
+      }
+      fixed = fixed + currChar;
+      priorChar = currChar;
+   }
+   return fixed;
+}
+
 sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, successHandler, errorHandler) {
     successHandler = successHandler || jQuery.noop;
     errorHandler = errorHandler || jQuery.noop;
     format = format || 'text/turtle';
 
     goog.structs.forEach(quads, function(quad) {
+        var stripped = quad.object.substring(1,quad.object.length-1);
+        if ( stripped.indexOf('"') > -1 && quad.predicate.indexOf("oa#exact") > -1) {
+            quad.object = '"'+fixQuotes(stripped)+'"';
+         }
         if(quad.object.match(/"".*""/)) {
             quad.object = quad.object.split('""').join('"');    
         }
