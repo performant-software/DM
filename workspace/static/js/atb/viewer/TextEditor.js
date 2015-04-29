@@ -614,7 +614,9 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
 
             this.databroker.dataModel.textContents(resource, function(contents, error) {
                 if (contents || this.databroker.dataModel.getTitle(resource)) {
-                    this.setHtml(contents);
+                    
+                	contents = contents.replace(/a href=/g, "a target='_blank' href=");
+                	this.setHtml(contents);
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
                     this._addHighlightListenersWhenUneditable(); 
