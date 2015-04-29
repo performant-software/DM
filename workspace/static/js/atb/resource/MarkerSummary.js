@@ -67,6 +67,7 @@ atb.resource.MarkerSummary.prototype.decorate = function() {
 
          this.viewport.resumeRendering();
       }
+      $(".atb-markersummary-loadingSpinner").removeClass("atb-markersummary-loadingSpinner");
    }.bind(this);
 
    deferredCanvas.progress(showFeature).always(showFeature);
