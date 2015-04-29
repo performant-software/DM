@@ -42,7 +42,6 @@ goog.require('atb.widgets.DialogWidget');
 goog.require('atb.viewer.TextEditorAnnotate');
 goog.require('atb.viewer.TextEditorProperties');
 
-goog.require('goog.events.PasteHandler');
 goog.require('atb.util.Set');
 
 goog.require('atb.widgets.GlassPane');
@@ -273,6 +272,13 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     var iframeContent = editorIframe.contents();
     var self = this;
     iframeContent.bind("paste", function(e) {
+    	var b = $("#addAnnotation");
+    	if ( b.hasClass("goog-toolbar-button-checked") ) {
+    		e.preventDefault();
+    		e.stopPropagation();
+    		alert("You cannot paste content in the middle of an existing annotation.");
+    		return;
+    	}
         // Grab the current selection and clear it
         var range = getSelectionRange(editorIframe);
         if (range) {

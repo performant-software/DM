@@ -34,7 +34,7 @@ goog.inherits(atb.viewer.TextEditorAnnotate, goog.editor.Plugin);
  * @enum {string}
  */
 atb.viewer.TextEditorAnnotate.COMMAND = {
-  ADD_ANNOTATION: '+addAnnotation'
+  ADD_ANNOTATION: 'addAnnotation'
 };
 
 /**
