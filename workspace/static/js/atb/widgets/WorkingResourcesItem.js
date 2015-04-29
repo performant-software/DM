@@ -65,8 +65,11 @@ atb.widgets.WorkingResourcesItem.prototype.handleClick = function(event) {
 
 atb.widgets.WorkingResourcesItem.prototype.handleRemoveClick = function(event) {
     event.stopPropagation();
-    var removeEvent = new goog.events.Event('remove-click', this);
-    this.dispatchEvent(removeEvent);
+    resp = confirm("This resource and all associated annotations will be removed from the project. All data will be lost.\nContinue?");
+    if (resp ) {
+	    var removeEvent = new goog.events.Event('remove-click', this);
+	    this.dispatchEvent(removeEvent);
+    }
 };
 
 atb.widgets.WorkingResourcesItem.prototype.render = function(div) {

@@ -148,21 +148,21 @@ sc.ProjectViewer.prototype._buildButtonGroup = function() {
         'data-toggle': 'dropdown',
         'title': 'Switch projects or create a new one'
     });
-    this.buttonDropdownList = this.domHelper.createDom('ul', {'class': 'dropdown-menu'});
+    this.buttonDropdownList = $("<ul class='dropdown-menu'></ul>");
 
     if ( this.isGuest === false ) {
        var createNewProjectButton = this.domHelper.createDom('li', {'class': 'sc-ProjectViewer-createProjectButton'},
            this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'title': 'Start a new project'},
            this.domHelper.createDom('span', {'class': 'icon-plus'}), 'New project'));
        goog.events.listen(createNewProjectButton, 'click', this._handleNewProjectButtonClick, false, this);
-       this.buttonDropdownList.appendChild(createNewProjectButton);
-       this.buttonDropdownList.appendChild(this.domHelper.createDom('li', {'class': 'divider'}));
+       this.buttonDropdownList.append("<li class='divider'></li>");
+       this.buttonDropdownList.append(createNewProjectButton);
     }
 
     this.projectChoiceElements = [];
 
     this.buttonGroupElement.appendChild(this.dropdownButton);
-    this.buttonGroupElement.appendChild(this.buttonDropdownList);
+    this.buttonGroupElement.appendChild(this.buttonDropdownList[0]);
 
     this.updateButtonUI();
 };
@@ -552,31 +552,32 @@ sc.ProjectViewer.prototype.updatePermissionsUI = function() {
         var userResource = this.databroker.getResource(user);
         var unwrappedUserUri = sc.data.Term.unwrapUri(user);
         var username = userResource.getOneProperty('rdfs:label') || unwrappedUserUri.substring(unwrappedUserUri.lastIndexOf('/') + 1, unwrappedUserUri.length);
-
-        var canRead = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.read);
-        var canModify = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.update);
-        var isAdmin = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.administer);
-
-        var readCheck = (canRead ? checked() : unchecked());
-        var modifyCheck = (canModify ? checked() : unchecked());
-        var adminCheck = (isAdmin ? checked() : unchecked());
-
-        this._sanityCheckPermissionsUI(readCheck, modifyCheck, adminCheck);
-
-        var tr = this.domHelper.createDom('tr', {},
-            this.domHelper.createDom('td', {'about': user}, username),
-            this.domHelper.createDom('td', {}, readCheck),
-            this.domHelper.createDom('td', {}, modifyCheck),
-            this.domHelper.createDom('td', {}, adminCheck)
-        );
-        $(tr).attr('about', user);
-
-        if (this.databroker.user.equals(user)) {
-            $(tr).addClass('info');
+        if ( username.indexOf("guest_") != 0 ) {
+	        var canRead = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.read);
+	        var canModify = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.update);
+	        var isAdmin = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.administer);
+	
+	        var readCheck = (canRead ? checked() : unchecked());
+	        var modifyCheck = (canModify ? checked() : unchecked());
+	        var adminCheck = (isAdmin ? checked() : unchecked());
+	
+	        this._sanityCheckPermissionsUI(readCheck, modifyCheck, adminCheck);
+	
+	        var tr = this.domHelper.createDom('tr', {},
+	            this.domHelper.createDom('td', {'about': user}, username),
+	            this.domHelper.createDom('td', {}, readCheck),
+	            this.domHelper.createDom('td', {}, modifyCheck),
+	            this.domHelper.createDom('td', {}, adminCheck)
+	        );
+	        $(tr).attr('about', user);
+	
+	        if (this.databroker.user.equals(user)) {
+	            $(tr).addClass('info');
+	        }
+	
+	        fragment.appendChild(tr);
+	        this.permissionsRows.push(tr);
         }
-
-        fragment.appendChild(tr);
-        this.permissionsRows.push(tr);
     }, this);
 
     this._buildAddUser(fragment);
@@ -741,7 +742,7 @@ sc.ProjectViewer.prototype.setProjectChoicesByUris = function(uris) {
         this.projectChoiceElements.push(li);
     }, this);
 
-    this.buttonDropdownList.appendChild(fragment);
+    this.buttonDropdownList.prepend(fragment);
 };
 
 sc.ProjectViewer.prototype.updateProjectChoices = function() {

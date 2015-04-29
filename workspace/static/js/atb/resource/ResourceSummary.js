@@ -157,12 +157,14 @@ atb.resource.ResourceSummary.prototype.handleClick = function (e) {
 
 atb.resource.ResourceSummary.prototype.deleteClickHandler = function(event) {
     event.stopPropagation();
-
-    var customEvent = new goog.events.BrowserEvent(event, this);
-    customEvent.resource = this.resource;
-    customEvent.type = 'delete-click';
-
-    this.dispatchEvent(customEvent);
+    resp = confirm("Remove this annotation from the resource?");
+    if (resp ) {
+	    var customEvent = new goog.events.BrowserEvent(event, this);
+	    customEvent.resource = this.resource;
+	    customEvent.type = 'delete-click';
+	
+	    this.dispatchEvent(customEvent);
+    }
 };
 
 /**
