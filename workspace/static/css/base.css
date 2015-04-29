@@ -4,6 +4,26 @@ form.new-user .form-control {
    height: 30px;
 }
 
+#cancel-link {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 6px;
+  border: 2px outset white;
+  border-radius: 8px;
+  padding: 1px;
+  cursor: pointer;
+  background-color: #ddd;
+  text-align: center;
+  color: #444;
+  opacity: 0.75;
+  display: none;
+}
+#cancel-link:hover {
+   opacity: 1;
+   color: black;
+}
+
 #new-user-error {
   text-align: center;
   color: #a00;

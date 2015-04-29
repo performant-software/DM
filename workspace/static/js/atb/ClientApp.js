@@ -169,72 +169,20 @@ atb.ClientApp.prototype.cancelAnnoLinking = function () {
 };
 
 atb.ClientApp.prototype.renderLinkCreationUI = function () {
-    var linkCreationPopupDiv = goog.dom.createDom('div', {'class': 'basic-popup atb-linkCreationControls'});
-    document.body.appendChild(linkCreationPopupDiv);
-    
-    var computeCenteredPosition = atb.util.StyleUtil.computeCenteredBottomClientPosition;
-    
-    this.linkCreationPopup = new goog.ui.Popup(linkCreationPopupDiv);
-    this.linkCreationPopup.setPosition(computeCenteredPosition(linkCreationPopupDiv));
-    this.linkCreationPopup.setShouldHideAsync(true);
-    this.linkCreationPopup.setTransition(new goog.fx.dom.FadeIn(linkCreationPopupDiv, 500), 
-                                         new goog.fx.dom.FadeOut(linkCreationPopupDiv, 500));
-    
-    var cancelButton = new goog.ui.CustomButton('Cancel link creation');
-    goog.events.listen(cancelButton, goog.ui.Component.EventType.ACTION, function (e) {
-        this.cancelAnnoLinking();
-    }, false, this);
-    cancelButton.render(linkCreationPopupDiv);
-    
-    
-    var undoLinkCreationPopupDiv = goog.dom.createDom('div', {'class': 'basic-popup atb-linkCreationControls'});
-    document.body.appendChild(undoLinkCreationPopupDiv);
-    
-    this.undoLinkCreationPopup = new goog.ui.Popup(undoLinkCreationPopupDiv);
-    this.undoLinkCreationPopup.setPosition(computeCenteredPosition(undoLinkCreationPopupDiv));
-    this.undoLinkCreationPopup.setShouldHideAsync(true);
-    this.undoLinkCreationPopup.setTransition(new goog.fx.dom.FadeIn(undoLinkCreationPopupDiv, 500),
-                                             new goog.fx.dom.FadeOut(undoLinkCreationPopupDiv, 1000));
-    
-    var undoButton = new goog.ui.CustomButton('Undo last link');
-    goog.events.listen(undoButton, goog.ui.Component.EventType.ACTION, function (e) {
-        this.undoLastAnnoLinkCreation();
-    }, false, this);
-    undoButton.render(undoLinkCreationPopupDiv);
-    
-    
-    goog.events.listen(window, 'resize', function (e) {
-        var windowWidth = jQuery(window).width();
-        var widnowHeight = jQuery(window).height();
-        
-        if (this.linkCreationPopup.isVisible()) {
-            this.linkCreationPopup.setPosition(computeCenteredPosition(linkCreationPopupDiv));
-            this.linkCreationPopup.reposition();
-        }
-        
-        if (this.undoLinkCreationPopup.isVisible()) {
-            this.undoLinkCreationPopup.setPosition(computeCenteredPosition(undoLinkCreationPopupDiv));
-            this.undoLinkCreationPopup.reposition();
-        }
-    }, false, this);
+	this.linkCreationPopup = $("<div id='cancel-link'>Cancel link creation</div>");
+	$("body").append(this.linkCreationPopup);
+	var that = this;
+	this.linkCreationPopup.on("click", function() {
+		that.cancelAnnoLinking();
+	});
 };
 
 atb.ClientApp.prototype.showLinkCreationUI = function () {
-    this.linkCreationPopup.setVisible(true);
-    this.linkCreationPopup.setPosition(atb.util.StyleUtil.computeCenteredBottomClientPosition(this.linkCreationPopup.getElement()));
+	this.linkCreationPopup.fadeIn();
 };
 
 atb.ClientApp.prototype.hideLinkCreationUI = function () {
-    this.linkCreationPopup.setVisible(false);
-};
-
-atb.ClientApp.prototype.showUndoLinkCreationUI = function () {
-    this.undoLinkCreationPopup.setVisible(true);
-    this.undoLinkCreationPopup.setPosition(atb.util.StyleUtil.computeCenteredBottomClientPosition(this.undoLinkCreationPopup.getElement()));
-};
-
-atb.ClientApp.prototype.hideUndoLinkCreationUI = function () {
-    this.undoLinkCreationPopup.setVisible(false);
+	this.linkCreationPopup.fadeOut();
 };
 
 atb.ClientApp.prototype.createAnnoLinkAddListeners_ = function () {
