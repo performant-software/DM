@@ -246,7 +246,13 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	var highlightUri = this.databroker.createUuid();
 	var highlightResource = this.createHighlightResource(highlightUri, range);		
 	var span = this.createAnnoSpan(highlightUri);
-	range.surroundContents(span);
+	try {
+		range.surroundContents(span);
+	} catch (err ) {
+		if (err.message.indexOf("partially selected") > -1) {
+			alert("You cannot make annotations arcross multiple styles of text.\n\nPlease normalize or remove styling and try again.");
+		}
+	}
 };
 
 /**
