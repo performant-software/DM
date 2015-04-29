@@ -32,6 +32,7 @@ goog.require('goog.events.KeyCodes');
  */
 atb.viewer.Viewer = function (clientApp) {
     goog.events.EventTarget.call(this);
+    this.showHoverTimerId = -1;
     
     /** @type {string} */
     this.viewerType = 'viewer';
@@ -348,7 +349,7 @@ atb.viewer.Viewer.prototype.flashDocumentIconHighlight = function () {
 /**
  * The default delay for showing and hiding menus on hover
  */
-atb.viewer.Viewer.HOVER_SHOW_DELAY = 400;
+atb.viewer.Viewer.HOVER_SHOW_DELAY = 750;
 atb.viewer.Viewer.HOVER_HIDE_DELAY = 750;
 
 /**
@@ -515,6 +516,7 @@ function(element, menuButtons, fReturnsResourceId) {
         }
         
         var afterTimer = function () {
+        	this.showHoverTimerId = -1;
             if (this.mouseOverUri) {
                 if (goog.isFunction(fReturnsResourceId))
                     var uri = fReturnsResourceId();
@@ -526,13 +528,16 @@ function(element, menuButtons, fReturnsResourceId) {
                 }
             }
         }.bind(this);
-        window.setTimeout(afterTimer, atb.viewer.Viewer.HOVER_SHOW_DELAY);
+        this.showHoverTimerId = window.setTimeout(afterTimer, atb.viewer.Viewer.HOVER_SHOW_DELAY);
     };
     goog.events.listen(element, 'mouseover', onHover, false, this);
     
     var onUnHover = function (e) {
+    	if ( this.showHoverTimerId != -1 ) {
+        	window.clearTimeout(this.showHoverTimerId);
+        	this.showHoverTimerId = -1;
+        }
         this.mouseOverUri = null;
-        
         this.maybeHideHoverMenu();
     };
     goog.events.listen(element, 'mouseout', onUnHover, false, this);
