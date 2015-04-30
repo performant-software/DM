@@ -210,7 +210,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     var self = this;    
     this.autoOutputSaveStatusIntervalObject = window.setInterval(
        function() {
-          var saveStatusElement = $("#"+self.useID + '_js_save_status');
+          var saveStatusElement = $("#save_status");
           if (saveStatusElement.length === 0 ) {
              return;
           }
@@ -475,8 +475,8 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
         myToolbar.addChild(this.saveButton, true);
     }
 
-    var saveStatusDiv = this.domHelper.createDom('div', {'id': this.useID + '_js_save_status', 'class': 'goog-toolbar goog-toolbar-horizontal'}, 'Loading document...');
-    this.toolbarDiv.appendChild(saveStatusDiv);
+    var saveStatusDiv = $("<div id='save_status' class='goog-toolbar goog-toolbar-horizontal'>Loading document...</div>");
+    $(this.toolbarDiv).append(saveStatusDiv);
 
     // Hook the toolbar into the field.
     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
@@ -506,7 +506,7 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
    goog.events.listen(this.field, goog.editor.Field.EventType.DELAYEDCHANGE, this.onChange, false, this);
    goog.events.listen(this.field.getElement(), goog.events.EventType.KEYPRESS, function() {
       self.unsavedChanges = true;
-      $("#"+self.useID + '_js_save_status').text("Not Saved");
+      $("#save_status").text("Not Saved");
    }); 
 
 
@@ -587,7 +587,8 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
         this._addDocumentIconListeners();
 
         this.setTitleEditable(false);
-        $("#"+this.useID + '_js_save_status').hide();
+        $("#save_status").hide();
+        $(this.rootDiv).append("<div id='load-status'>Loading...</div>");
     }
 };
 
@@ -620,7 +621,12 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
                     this._addHighlightListenersWhenUneditable(); 
-                    $("#"+this.useID + '_js_save_status').text("Loaded");
+                    $("#save_status").text("Loaded");
+                    
+                    $("#load-status").text("Loaded");
+                    $("#load-status").fadeOut(500, function() {
+                    	$("#load-status").remove();
+                    });
                     
                     if (opt_doAfter) {
                        opt_doAfter();
@@ -723,6 +729,6 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
 };
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
-   $("#" + this.useID + '_js_save_status').text("Not Saved");
+	$("#save_status").text("Not Saved");
 }; 
 

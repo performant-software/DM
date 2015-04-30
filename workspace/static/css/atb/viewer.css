@@ -12,6 +12,16 @@
     transition: box-shadow 0.2s;
 }
 
+#load-status {
+   position: absolute;
+   left: 0;
+   right: 0;
+   text-align: center;
+   top: 20%;
+   font-size: 1.5em;
+   color: #777;
+}
+
 .atb-viewer-documentIconHighlight {
     /*background-position: -576px 0;*/
     
