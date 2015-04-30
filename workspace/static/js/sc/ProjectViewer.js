@@ -190,7 +190,7 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     this.modalElement.appendChild(this.modalBody);
 
     // Footer
-    this.modalFooter = this.domHelper.createDom('div', {'class': 'modal-footer'});
+    this.modalFooter = this.domHelper.createDom('div', {'class': 'modal-footer', 'id':'main-footer'});
     var footerCloseButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Done');
     $(footerCloseButton).attr({
         'data-dismiss': 'modal',
@@ -204,7 +204,46 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     
     this.modalFooter.appendChild(footerCloseButton);
     this.modalElement.appendChild(this.modalFooter);
+    
+    // Footer 2 - create new project
+    var f2 = $("<div class='modal-footer' id='create-footer'></div");
+    var cancel = $("<button class='btn btn-primary' id='cancel-proj'>Cancel</button>");
+    $(cancel).attr({
+       'data-dismiss': 'modal',
+       'aria-hidden': 'true'
+    });
+    var create = $("<button class='btn btn-primary' id='create-proj'>Create</button>");
+    var self = this;
+    create.on("click", function() {
+       self.createProjectClicked();
+    });
+    f2.append(cancel);
+    f2.append(create);
+    $( this.modalElement).append(f2);
 };
+
+sc.ProjectViewer.prototype.createProjectClicked = function() {
+   var title = $(this.titleInput).val();
+   var description = $(this.descriptionInput).val();
+   var userUri = this.databroker.user.uri;
+   if ( title.length == 0 ) {
+      alert("A title is required!");
+      return;
+   }
+   
+   var newProject = this.projectController.createProject(); 
+   this.databroker.dataModel.setTitle(newProject, title);
+   newProject.setProperty('dcterms:description', sc.data.Literal(description));
+
+   this.projectController.selectProject(newProject);
+   this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
+   this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
+   this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
+   
+   this.databroker.sync();
+   this.hideModal();
+}
+
 
 sc.ProjectViewer.prototype._buildHeader = function() {
     this.modalHeader = this.domHelper.createDom('div', {'class': 'modal-header'});
@@ -643,6 +682,8 @@ sc.ProjectViewer.prototype.updateEditUI = function() {
 sc.ProjectViewer.prototype.updateModalUI = function() {
    $("#del-project").hide();
    $("#clean-project").hide();
+   $("#create-footer").hide();
+   $("#main-footer").show();
    $(".sc-ProjectViewer-modal .nav-pills").hide();
 
    if (this.projectController.currentProject) {
@@ -688,16 +729,16 @@ sc.ProjectViewer.prototype._handleNewProjectButtonClick = function(event) {
 
     $(this.dropdownButton).dropdown('toggle');
 
-    var newProject = this.projectController.createProject();
-    this.databroker.dataModel.setTitle(newProject, 'New untitled project');
-    this.projectController.selectProject(newProject);
-
-    this.updateButtonUI();
-    this.updateModalUI();
-
     this.showModal();
     this.editZippy.expand();
     this.workingResourcesZippy.collapse();
+    $("#create-footer").show();
+    $("#main-footer").hide();
+    $(".nav.nav-pills").hide();
+    $(".sc-ProjectViewer-permissions-table").hide();
+    $(".pub-access").hide();
+    $(".form-actions").hide();
+    $(".modal-header h3").text("Create New Project");
 };
 
 sc.ProjectViewer.prototype._handleProjectButtonClick = function(event) {
