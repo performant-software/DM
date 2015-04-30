@@ -30,31 +30,20 @@ goog.inherits(atb.resource.MarkerSummary, atb.resource.ResourceSummary);
 atb.resource.MarkerSummary.prototype.resourceType = 'Marker';
 
 atb.resource.MarkerSummary.prototype.decorate = function() {
-   jQuery(this.outerDiv).addClass('atb-markersummary');
+   $(this.outerDiv).addClass('atb-markersummary');
 
-   this.imageDiv = this.domHelper.createDom('div', {
-      'class' : 'atb-markersummary-thumb atb-markersummary-loadingSpinner'
-   });
-   jQuery(this.imageDiv).width(this.size.width);
-   jQuery(this.imageDiv).height(this.size.height);
+   this.imageDiv = $("<div class='atb-markersummary-thumb atb-markersummary-loadingSpinner'></div>");
+   $(this.imageDiv).width(this.size.width);
+   $(this.imageDiv).height(this.size.height);
 
    this.viewport = new sc.canvas.FabricCanvasViewport(this.databroker);
    this.viewport.resize(this.size.width, this.size.height);
    var deferredCanvas = sc.canvas.FabricCanvasFactory.createDeferredCanvas(this.resource.getOneProperty('oa:hasSource'), this.databroker);
    this.viewport.addDeferredCanvas(deferredCanvas);
-   this.viewport.render(this.imageDiv);
+   this.viewport.render(this.imageDiv[0]);
 
    var showFeature = function(canvas) {
       var featureUri = this.resource.getOneProperty('oa:hasSelector');
-      // var featureUri;
-      // var selectors = this.resource.getResourcesByProperty('oa:hasSelector');
-      // for (var i = 0; i < selectors.length; i++) {
-         // var selector = selectors[i];
-         // if (selector.hasType('oa:SvgSelector')) {
-            // featureUri = selector;
-            // break;
-         // }
-      // }
       var feature = canvas.getFabricObjectByUri(featureUri);
 
       if (feature) {
@@ -67,10 +56,16 @@ atb.resource.MarkerSummary.prototype.decorate = function() {
 
          this.viewport.resumeRendering();
       }
+      
+      var txt = this.databroker.dataModel.getTitle(canvas.uri);
+      $("#img-title").text(txt);
+      
       $(".atb-markersummary-loadingSpinner").removeClass("atb-markersummary-loadingSpinner");
    }.bind(this);
 
    deferredCanvas.progress(showFeature).always(showFeature);
 
-   this.div.appendChild(this.imageDiv);
+   $(this.div).append(this.imageDiv);
+   var title = $("<div id='img-title'></div>");
+   $(this.div).append(title);
 };

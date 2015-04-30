@@ -133,6 +133,14 @@
 .atb-markersummary {
     display: inline-block;
     user-select: none;
+    width: 260px;
+}
+
+#img-title {
+     color: #777;
+  border-top: 1px solid #ccc;
+  margin-top: 5px;
+  padding-top: 4px;
 }
 
 .atb-markersummary img {
