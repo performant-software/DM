@@ -882,11 +882,12 @@ sc.ProjectViewer.prototype._handleEditCancelButtonClick = function(event) {
 sc.ProjectViewer.prototype._handleSaveButtonClick = function(event) {
     event.stopPropagation();
 
-    this.databroker.sync();
+
     this.saveEdits();
     this.editElement.removeClass("hidden").addClass("hidden");
     this.workingResourcesElement.removeClass("hidden");
     $("#main-footer").show();
+    this.databroker.sync();
 };
 
 sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {

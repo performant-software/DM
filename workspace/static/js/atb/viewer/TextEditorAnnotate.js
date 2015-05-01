@@ -67,29 +67,27 @@ atb.viewer.TextEditorAnnotate.prototype.isSupportedCommand = function(command) {
    return command == atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION;
 };
 
-
-/**
- * Executes a command. Does not fire any BEFORECHANGE, CHANGE, or
- * SELECTIONCHANGE events (these are handled by the super class implementation
- * of {@code execCommand}.
- * @param {string} command Command to execute.
- * @override
- * @protected
- */
 atb.viewer.TextEditorAnnotate.prototype.execCommand = function (command) {
-    var domHelper = this.fieldObject.getEditableDomHelper();
-
-    var selectedAnnotation = domHelper.getElementByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
+      
+   var domHelper = this.fieldObject.getEditableDomHelper();
+   var selectedAnnotation = domHelper.getElementByClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
     
-    // if we have one selected assume we need to delete it, otherwise we're adding new.
-    if (selectedAnnotation) {
-        this.deleteAnnotation(selectedAnnotation);
-    }
+   // if we have one selected assume we need to delete it, otherwise we're adding new.
+   this.getFieldObject().dispatchBeforeChange();
+   var fireEvents = true;
+   if (selectedAnnotation) {
+      this.deleteAnnotation(selectedAnnotation);
+   }
 	else {
-		this.addAnnotation(this.fieldObject.getRange());
-    }
+	   fireEvents = this.addAnnotation(this.fieldObject.getRange());
+   }
+   
+   if (fireEvents ) {
+      this.getFieldObject().dispatchChange();
+      this.getFieldObject().dispatchSelectionChangeEvent();
+   }
 
-    return true;
+   return true;
 };
 
 
@@ -240,7 +238,7 @@ atb.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function()
  */
 atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	if (range == null || range.getText() == '') {
-		return;
+		return false;
 	}
 	
 	var htmlFrag = range.getHtmlFragment();
@@ -248,13 +246,14 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	if ( htmlFrag != validHtml ) {
 	   $("#addAnnotation").removeClass("goog-toolbar-button-checked");
 		alert("You cannot make annotations arcross multiple styles of text.\n\nPlease normalize or remove styling and try again.");
-		return;
+		return false;
 	}
 
 	var highlightUri = this.databroker.createUuid();
 	var highlightResource = this.createHighlightResource(highlightUri, range);		
 	var span = this.createAnnoSpan(highlightUri);
 	range.surroundContents(span);
+	return true;
 };
 
 /**
