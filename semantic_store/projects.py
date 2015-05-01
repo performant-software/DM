@@ -490,12 +490,20 @@ def add_project_types(graph, project_uri):
     for t in PROJECT_TYPES:
         graph.add((project_uri, NS.rdf.type, t))
 
-def project_export_graph(project_uri):
-    db_project_graph = get_project_graph(project_uri)
+def project_export_graph(project_uri, db_project_graph):
     db_metadata_graph = get_project_metadata_graph(project_uri)
     export_graph = Graph()
     export_graph += db_project_graph
     export_graph += db_metadata_graph
+    
+    for permission in ProjectPermission.objects.filter(identifier=project_uri):
+        user = permission.user
+        user_uri = uris.uri('semantic_store_users', username=user.username)
+        perm_uri = permissions.PERMISSION_URIS_BY_MODEL_VALUE[permission.permission]
+
+        export_graph += user_metadata_graph(user=user)
+        export_graph.add((user_uri, NS.perm.hasPermissionOver, project_uri))
+        export_graph.add((user_uri, perm_uri, project_uri))
 
     for text_uri in export_graph.subjects(NS.rdf.type, NS.dcmitype.Text):
         export_graph += text_graph_from_model(text_uri, project_uri)

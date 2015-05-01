@@ -294,9 +294,12 @@ class ProjectDownload(View):
 
         def serialization_iterator(project_uri, format):
             yield ''
-            export_graph = project_export_graph(project_uri)
+            export_graph = project_export_graph(project_uri, db_project_graph)
             bind_namespaces(export_graph)
-            yield export_graph.serialize(format=format)
+            ttlStr = export_graph.serialize(format=format)
+            bad = "%s/ns/Project" % settings.URI_MINT_BASE
+            good = "%sns/Project" % settings.BASE_URL
+            yield ttlStr.replace(bad, good)
 
         project_title = get_title(db_project_graph, project_uri) or u'untitled project'
 
