@@ -5,7 +5,6 @@ goog.require('goog.string');
 goog.require('goog.events');
 goog.require('goog.structs');
 goog.require('goog.array');
-goog.require('goog.ui.AnimatedZippy');
 
 sc.ProjectViewer = function(clientApp, opt_domHelper) {
     this.clientApp = clientApp;
@@ -174,18 +173,16 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     // Body
     this.modalBody = this.domHelper.createDom('div', {'class': 'modal-body'});
 
-    this.editElement = this.domHelper.createDom('div', {'class': 'form-horizontal sc-ProjectViewer-projectEdit'});
+    this.editElement = $("<div class='hidden form-horizontal sc-ProjectViewer-projectEdit'></div>");
     this._buildEditSection();
-    this.modalBody.appendChild(this.editElement);
-    this.editZippy = new goog.ui.AnimatedZippy(null, this.editElement, false);
+    $(this.modalBody).append( this.editElement );
 
-    this.uploadCanvasElement = this.domHelper.createDom('div', {'class': 'form-horizontal sc-ProjectViewer-uploadCanvas'});
+    this.uploadCanvasElement = $("<div class='hidden form-horizontal sc-ProjectViewer-uploadCanvas'></div>");
     this._buildUploadCanvasSection();
-    this.modalBody.appendChild(this.uploadCanvasElement);
-    this.uploadCanvasZippy = new goog.ui.AnimatedZippy(null, this.uploadCanvasElement, false);
+    $(this.modalBody).append(this.uploadCanvasElement);
 
     this.workingResources.render(this.modalBody);
-    this.workingResourcesZippy = new goog.ui.AnimatedZippy(null, this.workingResources.getElement(), true);
+    this.workingResourcesElement = $(this.workingResources.getElement());
 
     this.modalElement.appendChild(this.modalBody);
 
@@ -301,7 +298,7 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     titleGroup.appendChild(titleLabel);
     titleControls.appendChild(this.titleInput);
     titleGroup.appendChild(titleControls);
-    this.editElement.appendChild(titleGroup);
+    this.editElement.append( $(titleGroup)) ;
 
     // Description
     var descriptionGroup = this.domHelper.createDom('div', {'class': 'control-group'});
@@ -311,7 +308,7 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     descriptionGroup.appendChild(descriptionLabel);
     descriptionControls.appendChild(this.descriptionInput);
     descriptionGroup.appendChild(descriptionControls);
-    this.editElement.appendChild(descriptionGroup);
+    this.editElement.append( $(descriptionGroup) );
     
     // public access
     var publicPanel = this.domHelper.createDom('div', {'class': 'panel panel-default pub-access'});
@@ -332,7 +329,7 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     var url = this.domHelper.createDom('p',{'id': 'public-url'}, "http://dm.performantsoftware.com/projects/98hs73hx");
     urlDiv.appendChild(url);
    
-    this.editElement.appendChild(publicPanel);
+    this.editElement.append( $(publicPanel) );
 
 
     // Users and permissions.....
@@ -344,7 +341,7 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
                 this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'Can Modify'),
                 this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-lock'}), 'Admin'))),
         this.domHelper.createDom('tbody'));
-    this.editElement.appendChild(this.permissionsTable);
+    this.editElement.append( $(this.permissionsTable) );
 
     this.permissionsRows = [];
 
@@ -357,7 +354,7 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     var saveButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Save');
     goog.events.listen(saveButton, 'click', this._handleSaveButtonClick, false, this);
     saveControls.appendChild(saveButton);
-    this.editElement.appendChild(saveControls);
+    this.editElement.append( $(saveControls) );
 };
 
 sc.ProjectViewer.filenameToTitle = function(filename) {
@@ -372,7 +369,7 @@ sc.ProjectViewer.filenameToTitle = function(filename) {
 };
 
 sc.ProjectViewer.prototype._buildUploadCanvasSection = function() {
-    this.uploadCanvasElement.appendChild(this.domHelper.createDom('h4', {}, 'Upload an Image'));
+    this.uploadCanvasElement.append($(this.domHelper.createDom('h4', {}, 'Upload an Image')) );
 
     // File
     var fileGroup = this.domHelper.createDom('div', {'class': 'control-group'});
@@ -382,7 +379,7 @@ sc.ProjectViewer.prototype._buildUploadCanvasSection = function() {
     fileGroup.appendChild(fileLabel);
     fileControls.appendChild(fileInput);
     fileGroup.appendChild(fileControls);
-    this.uploadCanvasElement.appendChild(fileGroup);
+    this.uploadCanvasElement.append( $(fileGroup));
 
     // Title
     var titleGroup = this.domHelper.createDom('div', {'class': 'control-group'});
@@ -392,7 +389,7 @@ sc.ProjectViewer.prototype._buildUploadCanvasSection = function() {
     titleGroup.appendChild(titleLabel);
     titleControls.appendChild(titleInput);
     titleGroup.appendChild(titleControls);
-    this.uploadCanvasElement.appendChild(titleGroup);
+    this.uploadCanvasElement.append( $(titleGroup));
 
     goog.events.listen(fileInput, 'change', function(event) {
         var file = fileInput.files[0];
@@ -420,11 +417,10 @@ sc.ProjectViewer.prototype._buildUploadCanvasSection = function() {
     };
 
     // Progress bar
-
     this.canvasUploadProgressBar = this.domHelper.createDom('div', {'class': 'progress progress-striped active'},
         this.domHelper.createDom('div', {'class': 'bar', 'style': 'width: 0%;'}));
     jQuery(this.canvasUploadProgressBar).hide();
-    this.uploadCanvasElement.appendChild(this.canvasUploadProgressBar);
+    this.uploadCanvasElement.append( $(this.canvasUploadProgressBar) );
 
     // Save and cancel buttons
     var uploadControls = this.domHelper.createDom('div', {'class': 'form-actions'});
@@ -438,7 +434,7 @@ sc.ProjectViewer.prototype._buildUploadCanvasSection = function() {
     var uploadButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Upload');
     goog.events.listen(uploadButton, 'click', this._handleUploadCanvasSubmit, false, this);
     uploadControls.appendChild(uploadButton);
-    this.uploadCanvasElement.appendChild(uploadControls);
+    this.uploadCanvasElement.append( $(uploadControls) );
 };
 
 sc.ProjectViewer.prototype.clearCanvasUploadForm = function() {
@@ -450,8 +446,9 @@ sc.ProjectViewer.prototype.clearCanvasUploadForm = function() {
 };
 
 sc.ProjectViewer.prototype.hideCanvasUploadForm = function() {
-    this.uploadCanvasZippy.collapse();
-    this.workingResourcesZippy.expand();
+    this.uploadCanvasElement.removeClass("hidden").addClass("hidden");
+    this.workingResourcesElement.removeClass("hidden");
+    $("#main-footer").show();
 };
 
 sc.ProjectViewer.prototype.renderButtons = function(element) {
@@ -685,6 +682,10 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
    $("#create-footer").hide();
    $("#main-footer").show();
    $(".sc-ProjectViewer-modal .nav-pills").hide();
+   
+   $(".sc-ProjectViewer-permissions-table").show();
+   $(".pub-access").show();
+   $(".form-actions").show();
 
    if (this.projectController.currentProject) {
       var uri = this.projectController.currentProject.uri;
@@ -714,9 +715,9 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
 
 sc.ProjectViewer.prototype.showModal = function() {
     this.updateModalUI();
-    this.editZippy.collapse();
-    this.uploadCanvasZippy.collapse();
-    this.workingResourcesZippy.expand();
+    this.editElement.removeClass("hidden").addClass("hidden");
+    this.uploadCanvasElement.removeClass("hidden").addClass("hidden");
+    this.workingResourcesElement.removeClass("hidden");
     $(this.modalElement).modal('show');
 };
 
@@ -728,10 +729,10 @@ sc.ProjectViewer.prototype._handleNewProjectButtonClick = function(event) {
     event.stopPropagation();
 
     $(this.dropdownButton).dropdown('toggle');
-
+    
     this.showModal();
-    this.editZippy.expand();
-    this.workingResourcesZippy.collapse();
+    this.editElement.removeClass("hidden");
+    this.workingResourcesElement.removeClass("hidden").addClass("hidden");
     $("#create-footer").show();
     $("#main-footer").hide();
     $(".nav.nav-pills").hide();
@@ -739,6 +740,8 @@ sc.ProjectViewer.prototype._handleNewProjectButtonClick = function(event) {
     $(".pub-access").hide();
     $(".form-actions").hide();
     $(".modal-header h3").text("Create New Project");
+    $(this.titleInput).val("");
+    $(this.descriptionInput).val("");
 };
 
 sc.ProjectViewer.prototype._handleProjectButtonClick = function(event) {
@@ -872,8 +875,8 @@ sc.ProjectViewer.prototype._handleEditCancelButtonClick = function(event) {
     event.stopPropagation();
 
     this.updateModalUI();
-    this.editZippy.collapse();
-    this.workingResourcesZippy.expand();
+    this.editElement.removeClass("hidden").addClass("hidden");
+    this.workingResourcesElement.removeClass("hidden");
 };
 
 sc.ProjectViewer.prototype._handleSaveButtonClick = function(event) {
@@ -881,8 +884,9 @@ sc.ProjectViewer.prototype._handleSaveButtonClick = function(event) {
 
     this.databroker.sync();
     this.saveEdits();
-    this.editZippy.collapse();
-    this.workingResourcesZippy.expand();
+    this.editElement.removeClass("hidden").addClass("hidden");
+    this.workingResourcesElement.removeClass("hidden");
+    $("#main-footer").show();
 };
 
 sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {
@@ -891,10 +895,11 @@ sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {
     $(".sc-ProjectViewer-projectEdit").children().addClass("disabled");
     $("#public-access").prop('checked', false);
     $(".pub-url-group").removeClass("hidden").addClass("hidden");
+    $("#main-footer").hide();
      
-    this.editZippy.expand();
-    this.workingResourcesZippy.collapse();
-    this.uploadCanvasZippy.collapse();
+    this.editElement.removeClass("hidden");
+    this.workingResourcesElement.removeClass("hidden").addClass("hidden");
+    this.uploadCanvasElement.removeClass("hidden").addClass("hidden");
     
     var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
     $.getJSON(url,function( data,status, xhr ) {
@@ -920,9 +925,10 @@ sc.ProjectViewer.prototype._handleNewTextButtonClick = function(event) {
 };
 
 sc.ProjectViewer.prototype._handleUploadCanvasButtonClick = function(event) {
-    this.uploadCanvasZippy.expand();
-    this.workingResourcesZippy.collapse();
-    this.editZippy.collapse();
+    this.uploadCanvasElement.removeClass("hidden");
+    this.workingResourcesElement.removeClass("hidden").addClass("hidden");
+    this.editElement.removeClass("hidden").addClass("hidden");
+    $("#main-footer").hide();
 };
 
 sc.ProjectViewer.prototype._handleUploadCanvasSubmit = function(event) {

@@ -4,6 +4,14 @@ form.new-user .form-control {
    height: 30px;
 }
 
+.sc-ProjectViewer-modal .modal-body {
+	max-height: 405px;
+}
+
+.hidden {
+	display:none;
+}
+
 #cancel-link {
   position: absolute;
   left: 4px;
