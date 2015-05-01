@@ -5,7 +5,20 @@ form.new-user .form-control {
 }
 
 .sc-ProjectViewer-modal .modal-body {
-	max-height: 405px;
+	max-height: 440px;
+}
+
+.sc-ProjectViewer-modal .form-actions {
+   margin: 0;
+   background-color: transparent;
+   text-align: right;
+   padding: 0px;
+   border: 0;
+}
+
+#main-footer {
+	background-color: transparent;
+   border: 0;
 }
 
 .hidden {
