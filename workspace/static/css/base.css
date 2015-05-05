@@ -30,7 +30,7 @@ form.new-user .form-control {
 }
 
 #cancel-link {
-  position: absolute;
+  position: fixed;
   left: 4px;
   right: 4px;
   bottom: 6px;
@@ -41,8 +41,9 @@ form.new-user .form-control {
   background-color: #ddd;
   text-align: center;
   color: #444;
-  opacity: 0.75;
+  opacity: 0.9;
   display: none;
+  z-index: 1000;
 }
 #cancel-link:hover {
    opacity: 1;
