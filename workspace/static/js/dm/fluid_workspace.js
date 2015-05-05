@@ -110,16 +110,6 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
     repoBrowser.render(repoBrowserContainer);
 };
 
-var openCanvas = function(uri, urisInOrder, index) {
-    var viewerContainer = new atb.viewer.ViewerContainer();
-    var viewer = new atb.viewer.CanvasViewer(clientApp);
-    console.warn('Opened viewer.');
-    viewerContainer.setViewer(viewer);
-    viewerGrid.addViewerContainer(viewerContainer);
-    scrollIntoView(viewerContainer.getElement());
-    viewer.setCanvasByUri(uri, null, null, urisInOrder, index);
-};
-
 var GRID_BOTTOM_MARGIN = 20;
 var GRID_LEFT_MARGIN = 20;
 var GRID_RIGHT_MARGIN = 20;

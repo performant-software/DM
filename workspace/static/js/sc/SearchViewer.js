@@ -133,22 +133,26 @@ sc.SearchViewer.prototype._handleWorkingResourcesOpenRequest = function(event) {
 
 sc.SearchViewer.prototype.openViewerForResource = function(resource) {
     var resource = this.databroker.getResource(resource);
-
-    var container = new atb.viewer.ViewerContainer(this.domHelper);
-    this.viewerGrid.addViewerContainer(container);
-
-    if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
-
-    var viewer = atb.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
-    container.setViewer(viewer);
-
-    if (goog.isFunction(viewer.makeUneditable) &&
-        !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
-        viewer.makeUneditable();
+    if ( this.viewerGrid.isOpen(resource.uri)) {
+       var container = this.viewerGrid.getContainer(resource.uri);
+       if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+    } else {
+       var container = new atb.viewer.ViewerContainer(this.domHelper);
+       this.viewerGrid.addViewerContainer(resource.uri, container);
+   
+       if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+   
+       var viewer = atb.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
+       container.setViewer(viewer);
+   
+       if (goog.isFunction(viewer.makeUneditable) &&
+           !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+           viewer.makeUneditable();
+       }
+   
+       viewer.loadResourceByUri(resource.uri);
+       container.autoResize();
     }
-
-    viewer.loadResourceByUri(resource.uri);
-    container.autoResize();
 };
 
 sc.SearchViewer.prototype._handleSearchFieldKeydown = function(event) {

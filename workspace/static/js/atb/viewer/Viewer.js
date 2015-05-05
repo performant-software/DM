@@ -193,10 +193,17 @@ atb.viewer.Viewer.prototype.getContainer = function() {
     return this.container;
 };
 
-atb.viewer.Viewer.prototype.openRelatedViewer = function(viewer) {
-    var container = new atb.viewer.ViewerContainer(this.getDomHelper());
-    this.getContainer().grid.addViewerContainerAt(container, this.container.getIndex() + 1);
-    container.setViewer(viewer);
+atb.viewer.Viewer.prototype.openRelatedViewer = function(uri, viewer) {
+   if ( this.getContainer().grid.isOpen(uri)) {
+      var container = this.getContainer().grid.getContainer(uri);
+      if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+   } else {
+      var container = new atb.viewer.ViewerContainer(this.getDomHelper());
+      var idx = this.container.getIndex() + 1;
+      var viewerGrid = this.getContainer().grid;
+      viewerGrid.addViewerContainerAt(uri, container, idx);
+      container.setViewer(viewer);
+   }
 };
 
 /**

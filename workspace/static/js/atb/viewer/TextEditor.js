@@ -355,14 +355,6 @@ atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
 
     if (this.isEditable()) {
         var menuItems = [
-            // new atb.widgets.MenuItem(
-            //         "showLinkedAnnos",
-            //         createButtonGenerator("atb-radialmenu-button icon-search"),
-            //         function(actionEvent) {
-            //             this.showAnnos(this.resourceId);
-            //         }.bind(this), 
-            //         'Show resources linked to this document'
-            // ),
             new atb.widgets.MenuItem(
                 "createLink",
                 createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
@@ -691,35 +683,28 @@ atb.viewer.TextEditor.prototype.showErrorMessage = function (msg) {
 
 atb.viewer.TextEditor.prototype.DEFAULT_DOCUMENT_TITLE = 'Untitled text document';
 
-atb.viewer.TextEditor.prototype.createNewTextBody = function () {
-	var databroker = this.databroker;
-    var body = databroker.dataModel.createText('New annotation on ' + this.getTitle());
+/**
+ * Create link on entire document (hover over toolbar document icon to do so)
+ */
+atb.viewer.TextEditor.prototype.createNewTextBody = function() {
+   this.hideHoverMenu();
+   var databroker = this.databroker;
+   var body = databroker.dataModel.createText('New annotation on ' + this.getTitle());
 
-    var anno = databroker.dataModel.createAnno(body, this.resource);
-	
-    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
-    this.openRelatedViewer(annoBodyEditor);
-    annoBodyEditor.loadResourceByUri(body.uri);
+   var anno = databroker.dataModel.createAnno(body, this.resource);
+
+   var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
+   this.openRelatedViewer(body.uri, annoBodyEditor);
+   annoBodyEditor.loadResourceByUri(body.uri);
 };
 
-atb.viewer.TextEditor.prototype.showAnnos = function (opt_myResourceId) {
-	var id = opt_myResourceId || this.resourceId;
-
-    var otherContainer = this.getOtherPanelHelper();
-
-    var finder = new atb.viewer.Finder(this.clientApp, id);
-    finder.setContextType(atb.viewer.Finder.ContextTypes.RESOURCE);
-
-	otherContainer.setViewer(finder);
-};
-
-atb.viewer.TextEditor.prototype.linkAnnotation = function (opt_myResourceId, opt_myAnnoId) {
-	var myResourceId = opt_myResourceId || this.resourceId;
-	var myAnnoId = opt_myAnnoId || this.annotationUid;
-    
-    this.highlightDocumentIcon();
-	
-	this.clientApp.createAnnoLink(this.resourceId, myAnnoId);
+/**
+ * Start process of linking another resource to this document
+ */
+atb.viewer.TextEditor.prototype.linkAnnotation = function () {   
+   this.highlightDocumentIcon();
+   this.hideHoverMenu();
+	this.clientApp.createAnnoLink("<"+this.resourceId+">");
 };
 
 atb.viewer.TextEditor.prototype.onChange = function (event) {
@@ -732,5 +717,6 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
 	$("#save_status").text("Not Saved");
+	this.unHighlightDocumentIcon();
 }; 
 

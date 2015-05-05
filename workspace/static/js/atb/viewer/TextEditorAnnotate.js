@@ -510,25 +510,29 @@ atb.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
 	this.viewer.showErrorMessage(msg);
 };
 
+/** 
+ * Create a new text annotation on this highlight
+ */
 atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
-	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
-	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
+   var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
+   var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
 
-	var databroker = this.databroker;
-    var body = databroker.dataModel.createText('New annotation on ' + this.viewer.getTitle());
+   var databroker = this.databroker;
+   var body = databroker.dataModel.createText('New annotation on ' + this.viewer.getTitle());
 
-    var anno = databroker.dataModel.createAnno(body, specificResourceUri);
-	
-    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
-    this.viewer.openRelatedViewer(annoBodyEditor);
-    annoBodyEditor.loadResourceByUri(body.uri);
+   var anno = databroker.dataModel.createAnno(body, specificResourceUri);
+
+   var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
+   this.viewer.openRelatedViewer(body.uri, annoBodyEditor);
+   annoBodyEditor.loadResourceByUri(body.uri);
 };
 
+/**
+ * Start the process of linking to another highlight
+ */
 atb.viewer.TextEditorAnnotate.prototype.linkAnnotation = function(spanElem) {
-	var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
-	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
-    
-    this.viewer.clientApp.createAnnoLink(specificResourceUri);
-    
-    this.selectAnnotationSpan(spanElem);
+   var highlightUri = atb.viewer.TextEditorAnnotate.getHighlightSelectorUri(spanElem);
+   var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(highlightUri);
+   this.viewer.clientApp.createAnnoLink(specificResourceUri);
+   this.selectAnnotationSpan(spanElem);
 };

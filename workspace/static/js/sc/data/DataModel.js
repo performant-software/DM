@@ -469,34 +469,41 @@ sc.data.DataModel.prototype.unlinkBodyFromAnno = function(anno, body, opt_delete
 };
 
 sc.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri, opt_quadStore) {
-    var anno = this.databroker.getResource(uri);
-    var quadStore = opt_quadStore || this.databroker.quadStore;
+   var anno = this.databroker.getResource(uri);
+   var quadStore = opt_quadStore || this.databroker.quadStore;
 
-    var quadsToPost = quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
+   var quadsToPost = quadStore.queryReturningSet(anno.bracketedUri, null, null, null);
+   var targetUris = anno.getProperties('oa:hasTarget');
+   var bodyUris = anno.getProperties('oa:hasBody');
 
-    var targetUris = anno.getProperties('oa:hasTarget');
-    var bodyUris = anno.getProperties('oa:hasBody');
+   for (var i=0, len=targetUris.length; i<len; i++) {
+      var target = this.databroker.getResource(targetUris[i]);
+      quadsToPost.addAll(quadStore.queryReturningSet(target.bracketedUri, null, null, null));
+       
+      if (target.hasType('oa:SpecificResource')) {
+         goog.structs.forEach(target.getProperties('oa:hasSelector'), function(selectorUri) {
+            quadsToPost.addAll(quadStore.queryReturningSet(sc.data.Term.wrapUri(selectorUri), null, null, null));
+         }, this);
+      }
+   }
 
-    for (var i=0, len=targetUris.length; i<len; i++) {
-        var target = this.databroker.getResource(targetUris[i]);
+   for (var i=0, len=bodyUris.length; i<len; i++) {
+      var body = this.databroker.getResource(bodyUris[i]);
+      quadsToPost.addAll(quadStore.queryReturningSet(body.bracketedUri, null, null, null));
+   }
 
-        quadsToPost.addAll(quadStore.queryReturningSet(target.bracketedUri, null, null, null));
-
-        if (target.hasType('oa:SpecificResource')) {
-            goog.structs.forEach(target.getProperties('oa:hasSelector'), function(selectorUri) {
-                quadsToPost.addAll(quadStore.queryReturningSet(
-                    sc.data.Term.wrapUri(selectorUri), null, null, null));
-            }, this);
-        }
-    }
-
-    for (var i=0, len=bodyUris.length; i<len; i++) {
-        var body = this.databroker.getResource(bodyUris[i]);
-
-        quadsToPost.addAll(quadStore.queryReturningSet(body.bracketedUri, null, null, null));
-    }
-
-    return quadsToPost.getValues();
+   var vals =  quadsToPost.getValues();
+   $.each(vals, function(idx, val) {
+      if ( val.predicate.indexOf("content#chars") > -1 ) {
+         var ob = val.object;
+         var stripped = ob.substring(1, ob.length-1);
+         stripped = stripped.replace(/\\\"/g, "\"");
+         stripped = stripped.replace(/\"/g, "\\\"");
+         var out = "\"" + stripped + "\"";
+         val.object = out;
+      }
+   });
+   return vals;
 };
 
 sc.data.DataModel.prototype.findQuadsToSyncForSpecificResource = function(uri, opt_quadStore) {

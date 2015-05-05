@@ -98,30 +98,59 @@ atb.ui.AnnoTitlesList.prototype.clear = function() {
 atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     var uri = event.resource.uri;
     var summary = event.currentTarget;
-
     var resource = event.resource;
-
     var eventDispatcher = this.clientApp.getEventDispatcher();
-    var resourceClickEvent = new atb.events.ResourceClick(resource.getUri(), eventDispatcher, this);
+    var resourceClickEvent = new atb.events.ResourceClick(uri, eventDispatcher, this);
+    var viewerUri = uri;
+    
+    // If this respource is a link, the URI above refers to the target link on
+    // the other document. Find the URI of the SOURCE as this is the URI that will
+    // be closed when the user closes the editor. If we don't have this URI, the viewgrid
+    // will have a lingering reference to the LINK and will think the resource is open.
+    // In this situation, the target resource will not open again once closed.
+    if (resource.hasType('oa:SpecificResource')) {
+       var src = resource.getOneResourceByProperty('oa:hasSource');
+       viewerUri = src.uri;
+    }
+    
     if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
-        var deferredResource = this.databroker.getDeferredResource(uri);
-
+        // Only open each resource ONCE
         var viewerGrid = this.clientApp.viewerGrid;
-        var container = new atb.viewer.ViewerContainer(this.domHelper);
-        viewerGrid.addViewerContainerAt(container, viewerGrid.indexOf(this.viewer.container) + 1);
-
-        if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
-
-        var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
-        container.setViewer(viewer);
-
-        deferredResource.done(function() {
-            viewer.loadResourceByUri(uri);
-            if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
-                if (viewer.makeUneditable) viewer.makeUneditable();
-            }
-            container.autoResize();
-        }.bind(this));
+        if ( viewerGrid.isOpen(viewerUri)) {
+           // Grab existing and make sure it is scrolled into view
+           // NOTE: this scroll into view is for the WORKSPACE, not the document.
+           // A separate call is required to scroll to the site of the target within the doc
+           var container = viewerGrid.getContainer(viewerUri);
+           if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+           // IF view URI is the same as URI, this link is to a DOCUMENT. No need to scroll
+           if ( viewerUri != uri ) {
+              if ( container.viewer instanceof atb.viewer.CanvasViewer) {
+                 container.viewer.resourceZoom(resource);   
+              } else {
+                 container.viewer.selectAndMoveToSpecificResource(resource);
+              }
+           }
+        } else {
+           var deferredResource = this.databroker.getDeferredResource(uri);
+           var container = new atb.viewer.ViewerContainer(this.domHelper);
+           
+          
+           
+           viewerGrid.addViewerContainerAt(viewerUri, container, viewerGrid.indexOf(this.viewer.container) + 1);
+   
+           if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+   
+           var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
+           container.setViewer(viewer);
+   
+           deferredResource.done(function() {
+               viewer.loadResourceByUri(uri);
+               if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
+                   if (viewer.makeUneditable) viewer.makeUneditable();
+               }
+               container.autoResize();
+           }.bind(this));
+        }
     }
 };
 

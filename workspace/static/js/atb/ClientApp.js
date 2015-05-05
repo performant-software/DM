@@ -72,16 +72,6 @@ atb.ClientApp.prototype.setActiveAnnotation = function (set_active_annotation) {
 atb.ClientApp.prototype.clearActiveAnnotation = function () {
 	this.setActiveAnnotation(null);
 	this.setAnnotationBody(null);
-	
-	// var panelContainers = this.getPanelManager().getAllPanels();
-	// for (var x in panelContainers) {
-	// 	var viewer = panelContainers[x].getViewer();
-		
-	// 	try {
-	// 		viewer.unHighlightDocumentIcon();
-	// 	}
-	// 	catch (e) {}
-	// }
 };
 
 
@@ -200,12 +190,12 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     e.preventDefault();
     
     this.createAnnoLinkRemoveListeners_();
-    
     this.linkingInProgress = false;
     
     var targetUri = e.uri;
     
-    if (this.annoLinkCreationBodyId) {
+    
+    if (this.annoLinkCreationBodyId && targetUri) {
         var bodyId = this.annoLinkCreationBodyId;
         this.annoLinkCreationBodyId = null;
 
@@ -215,6 +205,8 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
         bezel.show();
         
         this.hideLinkCreationUI();
+    } else {
+       alert("Link creation failed; one of the highlights was missing an ID. Remove and re-add the highlights and try again.");
     }
 
     var exitedEvent = new atb.events.LinkingModeExited(this.annoLinkCreationAnnoId);
