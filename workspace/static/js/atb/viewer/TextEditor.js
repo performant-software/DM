@@ -210,7 +210,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     var self = this;    
     this.autoOutputSaveStatusIntervalObject = window.setInterval(
        function() {
-          var saveStatusElement = $("#save_status");
+          var saveStatusElement = $("#save-status-"+self.useID);
           if (saveStatusElement.length === 0 ) {
              return;
           }
@@ -226,15 +226,13 @@ atb.viewer.TextEditor.prototype.render = function(div) {
                  status = "Saved";      
              } else if (self.databroker.hasSyncErrors) {
                  status = "Not Saved - Sync Errors!";      
-             } else if ( self.databroker.syncService.hasUnsavedChanges()) {
+             } else if ( self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
                status = "Saving...";
              } 
           }
       
-           if ( priorStatus !=  status ) { 
-             saveStatusElement.text( status);
-           }
-  
+          saveStatusElement.text( status);
+
        }, this.autoOutputSaveStatus);
 
     
@@ -467,7 +465,7 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
         myToolbar.addChild(this.saveButton, true);
     }
 
-    var saveStatusDiv = $("<div id='save_status' class='goog-toolbar goog-toolbar-horizontal'>Loading document...</div>");
+    var saveStatusDiv = $("<div id='save-status-"+this.useID+"' class='goog-toolbar goog-toolbar-horizontal'>Initializing</div>");
     $(this.toolbarDiv).append(saveStatusDiv);
 
     // Hook the toolbar into the field.
@@ -498,7 +496,7 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
    goog.events.listen(this.field, goog.editor.Field.EventType.DELAYEDCHANGE, this.onChange, false, this);
    goog.events.listen(this.field.getElement(), goog.events.EventType.KEYPRESS, function() {
       self.unsavedChanges = true;
-      $("#save_status").text("Not Saved");
+      $("#save-status-"+this.useID).text("Not Saved");
    }); 
 
 
@@ -579,7 +577,7 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
         this._addDocumentIconListeners();
 
         this.setTitleEditable(false);
-        $("#save_status").hide();
+        $("#save-status-"+this.useID).hide();
         $(this.rootDiv).append("<div id='load-status'>Loading...</div>");
     }
 };
@@ -615,7 +613,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
                     this._addHighlightListenersWhenUneditable(); 
-                    $("#save_status").text("Loaded");
+                    $("#save-status-"+this.useID).text("Loaded");
                     
                     $("#load-status").text("Loaded");
                     $("#load-status").fadeOut(500, function() {
@@ -625,7 +623,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     if (opt_doAfter) {
                        opt_doAfter();
                     }
-                    
+
                     if ( contents == null) {
                        this.loadingContent = false;
                     } 
@@ -708,7 +706,7 @@ atb.viewer.TextEditor.prototype.linkAnnotation = function () {
 };
 
 atb.viewer.TextEditor.prototype.onChange = function (event) {
-    if ( this.loadingContent === false   ) {
+   if ( this.loadingContent === false   ) {
       this.saveContents();
     }  else {
        this.loadingContent = false;
@@ -716,7 +714,7 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
 };
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
-	$("#save_status").text("Not Saved");
+	$("#save-status-"+this.useID).text("Not Saved");
 	this.unHighlightDocumentIcon();
 }; 
 
