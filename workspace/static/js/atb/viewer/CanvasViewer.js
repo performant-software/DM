@@ -156,11 +156,6 @@ atb.viewer.CanvasViewer.prototype.setupEventListeners = function() {
     viewport.addEventListener('mouseout', this.onFeatureMouseout, false, this);
     viewport.addEventListener('canvasAdded', this.onCanvasAdded, false, this);
     
-    goog.events.listen(
-          this.clientApp.getEventDispatcher(), 
-          atb.events.LinkingModeExited.EVENT_TYPE, 
-          this.handleLinkingModeExited, false, this);
-
     this.setupControlEventListeners();
 
 /* SGB    
@@ -535,10 +530,6 @@ atb.viewer.CanvasViewer.prototype.linkAnnotation = function () {
    this.clientApp.createAnnoLink("<"+canvasResource.uri+">");
 };
 
-atb.viewer.CanvasViewer.prototype.handleLinkingModeExited = function(event) {
-   this.unHighlightDocumentIcon();
-};
-
 atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
    this.hideHoverMenu();
     var canvasUri = this.viewer.mainViewport.canvas.getUri();
@@ -603,7 +594,7 @@ atb.viewer.CanvasViewer.prototype.flashFeatureHighlight = function(uri) {
 
 atb.viewer.CanvasViewer.prototype.handleLinkingModeExited = function(event) {
     var anno = this.databroker.getResource(event.uri);
-    
+    this.unHighlightDocumentIcon();
     if (this.lastHighlightedFeatureUri) {
         this.unhighlightFeature(this.lastHighlightedFeatureUri);
     }
