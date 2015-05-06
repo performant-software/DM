@@ -162,8 +162,9 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 		return false;
 	}
 	
-	var htmlFrag = range.getHtmlFragment();
-	var validHtml = range.getValidHtml();
+	var htmlFrag = range.getHtmlFragment().replace(/\s+/g, ' ');
+	var validHtml = normalizeFrag(range.getValidHtml());
+	
 	if ( htmlFrag != validHtml ) {
 	   $("#addAnnotation").removeClass("goog-toolbar-button-checked");
 		alert("You cannot make annotations arcross multiple styles of text.\n\nPlease normalize or remove styling and try again.");
@@ -198,6 +199,12 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
    
 	return true;
 };
+
+function normalizeFrag (frag) {
+   clean = frag.replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
+   clean = clean.replace(/&nbsp;/g, " ");
+   return clean.replace(/\s+/g, ' ');
+}
 
 /**
  * Delete an annotation
