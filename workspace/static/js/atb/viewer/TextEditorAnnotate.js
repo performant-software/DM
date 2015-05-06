@@ -193,7 +193,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 
 	// If this is the end of the document, add an extra space so we are not locked out
 	// of adding more non-highlighted content
-   if ( fullLen == caretOffset ) {
+   if ( fullLen == caretOffset ) {git
       $(span).after("&nbsp;");
    }
    
