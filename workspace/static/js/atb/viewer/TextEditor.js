@@ -119,32 +119,32 @@ atb.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI)
 
 /**
  * saveContents
- * @param opt_doAfter {function=}
- * @param opt_doAfterScope {object=}
  **/
-atb.viewer.TextEditor.prototype.saveContents = function () {
-    if (this.resourceId == null) {
-        this.resourceId = this.databroker.createUuid();
-        this.uri = this.resourceId;
-    }
-    
-    var resource = this.databroker.getResource(this.resourceId);
-    this.databroker.dataModel.setTitle(resource, this.getTitle());
-    this.databroker.dataModel.setTextContent(resource, this.getSanitizedHtml());
+atb.viewer.TextEditor.prototype.saveContents = function() {
+   if (this.resourceId == null) {
+      this.resourceId = this.databroker.createUuid();
+      this.uri = this.resourceId;
+   }
 
-    var highlightPlugin = this.field.getPluginByClassId('Annotation');
-    highlightPlugin.updateAllHighlightResources();
-    
-    this.databroker.sync();
-   
-    this.unsavedChanges = false;
+   var resource = this.databroker.getResource(this.resourceId);
+   this.databroker.dataModel.setTitle(resource, this.getTitle());
+   this.databroker.dataModel.setTextContent(resource, this.getSanitizedHtml());
+
+   var highlightPlugin = this.field.getPluginByClassId('Annotation');
+   highlightPlugin.updateAllHighlightResources();
+
+   this.databroker.sync();
+
+   this.unsavedChanges = false;
 };
 
 /**
- * scrollIntoView
- * centers the editor view scroll with the tag roughly in the center
- * @param tag {Element} highlight span
- **/
+ * scrollIntoView centers the editor view scroll with the tag roughly in the
+ * center
+ * 
+ * @param tag
+ *           {Element} highlight span
+ */
 atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
     if (this.isEditable()) {
         var editorElement = this.editorIframe;
@@ -183,10 +183,8 @@ atb.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (spec
 };
 
 atb.viewer.TextEditor.prototype.resize = function(width, height) {
-    atb.viewer.Viewer.prototype.resize(width, height);
-	
-	jQuery('#' + this.useID).width(width)
-    .height(height - jQuery(this.toolbarDiv).outerHeight(true));
+   atb.viewer.Viewer.prototype.resize(width, height);
+   $('#' + this.useID).width(width).height( height - $(this.toolbarDiv).outerHeight(true) );
 };
 
 atb.viewer.TextEditor.prototype.render = function(div) {
@@ -199,43 +197,11 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.toolbarDiv = this.domHelper.createDom('div');
     
     this.rootDiv.appendChild(this.toolbarDiv);
-    
-    // this.renderPropertiesPane();
-    
+        
     this.rootDiv.appendChild(this.editorDiv);
     
     this._renderDocumentIcon();
-    
-    atb.viewer.TextEditor.prototype.autoOutputSaveStatus = 1 * 1000;
-    var self = this;    
-    this.autoOutputSaveStatusIntervalObject = window.setInterval(
-       function() {
-          var saveStatusElement = $("#save-status-"+self.useID);
-          if (saveStatusElement.length === 0 ) {
-             return;
-          }
-          
-          var status = saveStatusElement.text();
-          var priorStatus = status;
-          if ( self.loadingContent === true ) {
-             status = "Loading document..."; 
-          } else if ( self.loadError === true ) {
-             status = "Load failed!"; 
-          } else {
-             if (!self.unsavedChanges && !self.databroker.syncService.hasUnsavedChanges() && !self.databroker.hasSyncErrors) {
-                 status = "Saved";      
-             } else if (self.databroker.hasSyncErrors) {
-                 status = "Not Saved - Sync Errors!";      
-             } else if ( self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
-               status = "Saving...";
-             } 
-          }
-      
-          saveStatusElement.text( status);
-
-       }, this.autoOutputSaveStatus);
-
-    
+       
     goog.events.listen(
         this.clientApp.getEventDispatcher(), 
         atb.events.LinkingModeExited.EVENT_TYPE, 
@@ -246,11 +212,6 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     goog.editor.Field.DELAYED_CHANGE_FREQUENCY = 1000;
     this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
     this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
-    //this.field.registerPlugin(new goog.editor.plugins.UndoRedo());
-    //this.field.registerPlugin(new goog.editor.plugins.ListTabHandler());
-    //this.field.registerPlugin(new goog.editor.plugins.SpacesTabHandler());
-    //this.field.registerPlugin(new goog.editor.plugins.EnterHandler());
-    //this.field.registerPlugin(new goog.editor.plugins.HeaderFormatter());
     this.field.registerPlugin(new goog.editor.plugins.LinkDialogPlugin());
     this.field.registerPlugin(new goog.editor.plugins.LinkBubble());
     this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
@@ -266,87 +227,125 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
     this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
     
-    var editorIframe = $("#"+this.field.id);
-    var iframeContent = editorIframe.contents();
-    var self = this;
-    iframeContent.bind("paste", function(e) {
-    	var b = $("#addAnnotation");
-    	if ( b.hasClass("goog-toolbar-button-checked") ) {
-    		e.preventDefault();
-    		e.stopPropagation();
-    		alert("You cannot paste content in the middle of an existing annotation.");
-    		return;
-    	}
-        // Grab the current selection and clear it
-        var range = getSelectionRange(editorIframe);
-        if (range) {
-            range.deleteContents();
-        }
-   
-        var editor = iframeContent.find('.editable');
-        var scrollTop=editor.scrollTop();
-        
-        // set focus to paste buffer, thereby redirecting the paste target
-        var pasteBuffer = $(iframeContent).find("#paste-buffer");
-        pasteBuffer.focus();  
-        
-        // once paste has completed, move the clean content into the
-        // previus selection and restore scroll position
-        setTimeout(function() {
-            var ew = editorIframe[0].contentWindow;
-            var doc =  ew.document;
-            var pasted = $.trim(pasteBuffer.html());
-            if ( pasted.indexOf("urn:uuid") > -1 ) {
-               pasted = $.trim(pasteBuffer.text());   
-               pasted = pasted.replace(/(?:\r\n|\r|\n)/g, '<br />');
-            }
-            var ele = $("<span>"+pasted+"</span>");
-            range.insertNode( ele[0] );
-            pasteBuffer.empty();
-            
-            // restore editor focus, scroll position and caret pos
-            editor.focus();
-            editor.scrollTop(scrollTop);
-            
-            var r2 = doc.createRange();
-            var sel = ew.getSelection();
-            r2.setStartAfter(ele[0]);
-            r2.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(r2);
-        }, 1);       
-         
-     });
-    
     this.addGlobalEventListeners();
 
     if (this.container) {
         this.container.autoResize();
         this.container.setTitleEditable(true);
     }
-    
-    // Create an offscreen area that will received pasted data
-    var iframeContent = editorIframe.contents();
-    $(iframeContent).find(".editable").parent().append("<div id='paste-buffer' contenteditable='true'></div>");
-    var pasteBuf = $(iframeContent).find("#paste-buffer");
-    pasteBuf.css("position", "absolute");
-    pasteBuf.css("left", "-1000px");
+      
+    // Start checking/displaying document status changes
+    this.initStatusChecker();
+    this.initPasteHandling();
+};
+
+atb.viewer.TextEditor.prototype.initPasteHandling = function() {
+   var editorIframe = $("#" + this.field.id);
+   var iframeContent = editorIframe.contents();
+   var self = this;
+
+   // Create an offscreen area that will received pasted data
+   $(iframeContent).find(".editable").parent().append("<div id='paste-buffer' contenteditable='true'></div>");
+   var pasteBuf = $(iframeContent).find("#paste-buffer");
+   pasteBuf.css("position", "absolute");
+   pasteBuf.css("left", "-1000px");
+
+   // PASTE HANDLING
+   iframeContent.bind("paste", function(e) {
+      var b = $("#addAnnotation");
+      if (b.hasClass("goog-toolbar-button-checked")) {
+         e.preventDefault();
+         e.stopPropagation();
+         alert("You cannot paste content in the middle of an existing annotation.");
+         return;
+      }
+
+      // Grab the current selection and clear it
+      var range = getSelectionRange(editorIframe);
+      if (range) {
+         range.deleteContents();
+      }
+
+      var editor = iframeContent.find('.editable');
+      var scrollTop = editor.scrollTop();
+
+      // set focus to paste buffer, thereby redirecting the paste
+      // target
+      var pasteBuffer = $(iframeContent).find("#paste-buffer");
+      pasteBuffer.focus();
+
+      // once paste has completed, move the clean content into the
+      // previus selection and restore scroll position
+      setTimeout(function() {
+         var ew = editorIframe[0].contentWindow;
+         var doc = ew.document;
+         var pasted = $.trim(pasteBuffer.html());
+         if (pasted.indexOf("urn:uuid") > -1) {
+            pasted = $.trim(pasteBuffer.text());
+            pasted = pasted.replace(/(?:\r\n|\r|\n)/g, '<br />');
+         }
+         var ele = $("<span>" + pasted + "</span>");
+         range.insertNode(ele[0]);
+         pasteBuffer.empty();
+
+         // restore editor focus, scroll position and caret pos
+         editor.focus();
+         editor.scrollTop(scrollTop);
+
+         var r2 = doc.createRange();
+         var sel = ew.getSelection();
+         r2.setStartAfter(ele[0]);
+         r2.collapse(true);
+         sel.removeAllRanges();
+         sel.addRange(r2);
+      }, 1);
+   });
 };
 
 function getSelectionRange(iframe) {
-    var sel;
-    var cw = iframe[0].contentWindow;
-    var doc = cw.document;
-    if (cw.getSelection) {
-        sel = cw.getSelection();
-        if (sel.rangeCount) {
-            return sel.getRangeAt(0);
-        }
-    } else if (doc.selection) {
-        return doc.selection.createRange();
-    }
-    return null;
+   var sel;
+   var cw = iframe[0].contentWindow;
+   var doc = cw.document;
+   if (cw.getSelection) {
+       sel = cw.getSelection();
+       if (sel.rangeCount) {
+           return sel.getRangeAt(0);
+       }
+   } else if (doc.selection) {
+       return doc.selection.createRange();
+   }
+   return null;
 }
+
+atb.viewer.TextEditor.prototype.initStatusChecker = function() {
+   var statusInterval = 1 * 1000;
+   var self = this;    
+   this.autoOutputSaveStatusIntervalObject = window.setInterval(function() {
+      var saveStatusElement = $("#save-status-" + self.useID);
+      if (saveStatusElement.length === 0) {
+         return;
+      }
+
+      var status = saveStatusElement.text();
+      var priorStatus = status;
+      if (self.loadingContent === true) {
+         status = "Loading document...";
+      } else if (self.loadError === true) {
+         status = "Load failed!";
+      } else {
+         if (!self.unsavedChanges && !self.databroker.syncService.hasUnsavedChanges() && !self.databroker.hasSyncErrors) {
+           status = "Saved";
+         } else if (self.databroker.hasSyncErrors) {
+           status = "Not Saved - Sync Errors!";
+         } else if (self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
+           status = "Saving...";
+         }
+      }
+
+      saveStatusElement.text(status);
+      
+   }, statusInterval);
+};
 
 atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
@@ -438,19 +437,12 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
 
     if (this.isEditable()) {
         // Create annotate button
-        // TODO: See if we can move this into the plugin instead of here
         var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
             atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
             'Annotate selected text',
             '',
             'icon-tag');
-        /*
-        //lol@seems un-needed, and infact causes a redundant event, it would seem, from what i can tell:
-        goog.events.listen(annotateButton, goog.ui.Component.EventType.ACTION, function (e) {
-            //debugPrint("annotate command!");
-            this.field.execCommand(atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION);
-        }, false, this);
-        */
+
         annotateButton.queryable = true;//Fixes wierd annotations bug
 
         myToolbar.addChildAt(annotateButton, 0, true);

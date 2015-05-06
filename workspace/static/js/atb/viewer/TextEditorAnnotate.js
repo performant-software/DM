@@ -29,38 +29,23 @@ atb.viewer.TextEditorAnnotate = function(viewer) {
 goog.inherits(atb.viewer.TextEditorAnnotate, goog.editor.Plugin);
 
 
-/**
- * Commands implemented by this plugin.
- * @enum {string}
- */
+// Commands implemented by this plugin.
 atb.viewer.TextEditorAnnotate.COMMAND = {
   ADD_ANNOTATION: 'addAnnotation'
 };
 
-/**
- * ANNOTATION_CLASS
- */
+// CONSTANTS
+atb.viewer.TextEditorAnnotate.OA_EXACT_URI = 'http://www.w3.org/ns/oa#exact';
+atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE = 'http://www.w3.org/ns/oa#TextQuoteSelector';
 atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS = 'atb-editor-textannotation';
-
-/**
- * ANNOTATION_CLASS_SELECTED
- */
 atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED = 'atb-editor-textannotation-selected';
-
-/**
- * ANNOTATION_CLASS_HOVER
- */
 atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER = 'atb-editor-textannotation-hover';
-
-
 
 
 /** @inheritDoc */
 atb.viewer.TextEditorAnnotate.prototype.getTrogClassId = function() {
     return 'Annotation';
 };
-
-//moved the fields up...!
 
 /** @inheritDoc */
 atb.viewer.TextEditorAnnotate.prototype.isSupportedCommand = function(command) {
@@ -90,79 +75,12 @@ atb.viewer.TextEditorAnnotate.prototype.execCommand = function (command) {
    return true;
 };
 
-
-atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper_ = function(node, offset) {
-	/*
-	startOffset: 0; endOffset: 1921
-	#childnodes: 1921
-	//^Lolnorecurslook!
-	*/
-	var TypeElement = Node.ELEMENT_NODE;// == 1
-	var TypeText = Node.TEXT_NODE;// == 3
-	var TypeCDataSection = Node.CDATA_SECTION_NODE;// == 4
-	var TypeCommentNode = Node.COMMENT_NODE;// == 8
-	
-	
-	//var info = {node: node.firstChild, offset: offset, bSolved: false};
-	var info = {node: node, offset: offset, bSolved: false};
-	var nodeType = node.nodeType;
-	var bOffsetIsNumChildNodesCounted = ((nodeType !== TypeText) && (nodeType !== TypeCDataSection) && (nodeType !== TypeCommentNode));
-	info.bOffsetTypeIsNodeCount = bOffsetIsNumChildNodesCounted;
-	return this.elementOffsetHelper2_(info);
-};
-
-atb.viewer.TextEditorAnnotate.prototype.elementOffsetHelper2_ = function(info) {
-	var TypeElement = Node.ELEMENT_NODE;// == 1
-	var TypeText = Node.TEXT_NODE;// == 3
-	var TypeCDataSection = Node.CDATA_SECTION_NODE;// == 4
-	var TypeCommentNode = Node.COMMENT_NODE;// == 8
-	//lol@debug info needed on page ...lol..!?
-	
-	if (info.bSolved)
-	{
-		return info;
-	}
-	
-	
-	var node = info.node;
-	var nodeType = node.nodeType;
-	
-	var counter = info.offset;
-	
-	if (info.bOffsetTypeIsNodeCount)
-	{
-		//var ptr = info.firstChild;
-		var ptr = node.firstChild;//lol!
-		//while(counter > 0)
-		//while(counter > 0)
-		counter--;//firstchild
-		while(counter > 0)
-		{
-			counter--;
-			ptr = ptr.nextSibling;
-			if (ptr == null)
-			{
-				//throw new Error("not enough siblings!");
-				throw new Error("not enough siblings; counter ="+counter);
-			}
-		}
-		info.node = ptr;
-		info.offset = 0;
-		//info.startNode = ptr;
-		info.bSolved=true;
-	}
-	else
-	{
-		info.bSolved=true;
-	}
-	return info;
-};
-	
-
 atb.viewer.TextEditorAnnotate.prototype.createAnnoSpan = function(uri) {
 	var span = $("<span></span>");
    $(span).addClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-   this.setHighlightElementUri(span, uri);
+   $(span).attr('about', uri);
+   $(span).attr('property', atb.viewer.TextEditorAnnotate.OA_EXACT_URI);
+   $(span).attr('typeof', atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE);
    this.addListeners(span[0]);
    return span[0];
 };
@@ -171,6 +89,9 @@ atb.viewer.TextEditorAnnotate.prototype.getTextResource = function() {
     return this.databroker.getResource(this.viewer.uri);
 };
 
+/**
+ * Create the RDF for a new highlight
+ */
 atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highlightUri, range) {
    var highlight = this.databroker.createResource(highlightUri);
    highlight.addProperty('rdf:type', 'oa:TextQuoteSelector');
@@ -248,11 +169,33 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 		alert("You cannot make annotations arcross multiple styles of text.\n\nPlease normalize or remove styling and try again.");
 		return false;
 	}
+	
+	// find the caret position of the end of the current selection
+	// within the iframe editor body
+	var editorIframe = $("#" + this.fieldObject.id);
+   var iframeContent = editorIframe.contents();
+   var editorBody = $(iframeContent).find(".editable");
+   var browserRange = range.getBrowserRangeObject();
+   var preCaretRange = browserRange.cloneRange();
+   preCaretRange.selectNodeContents( editorBody[0] );
+   preCaretRange.setEnd(browserRange.endContainer, browserRange.endOffset);
+   var caretOffset = preCaretRange.toString().length;
 
+   // Full length of the content
+   var fullLen = editorBody.text().length;
+
+   // Add the highlight markup
 	var highlightUri = this.databroker.createUuid();
 	var highlightResource = this.createHighlightResource(highlightUri, range);		
 	var span = this.createAnnoSpan(highlightUri);
 	range.surroundContents(span);
+
+	// If this is the end of the document, add an extra space so we are not locked out
+	// of adding more non-highlighted content
+   if ( fullLen == caretOffset ) {
+      $(span).after("&nbsp;");
+   }
+   
 	return true;
 };
 
@@ -273,14 +216,12 @@ atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(element) {
 };
 
 /**
- * Add listeners to an annotation object.  We'll need to call this most likely when we load annotations from
- * a saved sate.
- * @param {string} object The element to apply to.
- * @return {true}
+ * Add listeners to an annotation object. 
  */
 atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	if (!this.isHighlightElement(object)) {
 		console.error('attempting to add highlight event listeners to an element which is not a highlight', object);
+		return;
 	}
 
 	var selector = this.getElementSelectorResource(object);
@@ -382,16 +323,6 @@ atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function (
     }
 };
 
-atb.viewer.TextEditorAnnotate.OA_EXACT_URI = 'http://www.w3.org/ns/oa#exact';
-atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE = 'http://www.w3.org/ns/oa#TextQuoteSelector';
-
-atb.viewer.TextEditorAnnotate.prototype.setHighlightElementUri = function(element, uri) {
-	jQuery(element).attr('about', uri);
-    jQuery(element).attr('property', atb.viewer.TextEditorAnnotate.OA_EXACT_URI);
-    jQuery(element).attr('typeof', atb.viewer.TextEditorAnnotate.OA_TEXTQUOTESELECTOR_TYPE);
-};
-
-
 /**
  * getAnnotationId()
  * gets ID of existing annotation
@@ -445,7 +376,6 @@ atb.viewer.TextEditorAnnotate.prototype.getHighlightElementByUri = function (uri
 	}
 };
 
-
 /**
  * selectionIsAnnotation(opt_textRange)
  * returns whether the selection or specified text range is surrounded by a span with the class
@@ -455,18 +385,10 @@ atb.viewer.TextEditorAnnotate.prototype.getHighlightElementByUri = function (uri
  * @param opt_range optionally specifies the goog.dom.AbstractRange to check
  * @return boolean true if the selection is an annotation
  **/
-atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function (opt_range) {
-	var selectionRange = opt_range || this.fieldObject.getRange();
-
-	// Mozilla includes the span tag in the range, but other browsers do not
-	//if(goog.userAgent.product.Firefox) {
-		var selectedHtml = selectionRange.getPastableHtml();
-		return jQuery(selectedHtml).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-	//}
-	//else {
-	//	var containerNode = selectionRange.getContainerElement();
-	//	return jQuery(containerNode).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
-	//}
+atb.viewer.TextEditorAnnotate.prototype.selectionIsAnnotation = function () {
+   var selectionRange = this.fieldObject.getRange();
+	var selectedHtml = selectionRange.getPastableHtml();
+	return jQuery(selectedHtml).hasClass(atb.viewer.TextEditorAnnotate.ANNOTATION_CLASS);
 };
 
 
