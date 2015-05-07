@@ -433,10 +433,15 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
     format = format || 'text/turtle';
 
     goog.structs.forEach(quads, function(quad) {
-        var stripped = quad.object.substring(1,quad.object.length-1);
-        if ( stripped.indexOf('"') > -1 && quad.predicate.indexOf("oa#exact") > -1) {
-            quad.object = '"'+fixQuotes(stripped)+'"';
-         }
+        if ( quad.predicate.indexOf("content#chars") > -1 || quad.predicate.indexOf("oa#exact") > -1 ) {
+          var ob = quad.object;
+          var stripped = ob.substring(1, ob.length-1);
+          stripped = stripped.replace(/\\\"/g, "\"");
+          stripped = stripped.replace(/\"/g, "\\\"");
+          var out = "\"" + stripped + "\"";
+          quad.object = out;
+        }
+       
         if(quad.object.match(/"".*""/)) {
             quad.object = quad.object.split('""').join('"');    
         }

@@ -741,7 +741,9 @@ sc.ProjectViewer.prototype._handleNewProjectButtonClick = function(event) {
     $(".form-actions").hide();
     $(".modal-header h3").text("Create New Project");
     $(this.titleInput).val("");
+    this.titleInput.disabled = false;
     $(this.descriptionInput).val("");
+    this.descriptionInput.disabled = false;
 };
 
 sc.ProjectViewer.prototype._handleProjectButtonClick = function(event) {

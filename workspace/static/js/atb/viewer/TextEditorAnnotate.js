@@ -167,7 +167,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	
 	if ( htmlFrag != validHtml ) {
 	   $("#addAnnotation").removeClass("goog-toolbar-button-checked");
-		alert("You cannot make annotations arcross multiple styles of text.\n\nPlease normalize or remove styling and try again.");
+		alert("You cannot make annotations across multiple styles of text.\n\nPlease normalize or remove styling and try again.");
 		return false;
 	}
 	
