@@ -295,19 +295,21 @@ def link_removed(request, uri, uuids):
     with transaction.commit_on_success():   
         list = uuids.split(",")
         for uuid in list:
-            print "REMOVE %s" % uuid
             for o in project_g.objects( URIRef(uuid), NS.oa.hasBody ):
-                print "FOUND %s" % o
-                project_g.remove( (URIRef(o), None, None) )
-                project_metadata_g.remove( (URIRef(o), None, None) )
-                try:
-                    text = Text.objects.get(identifier=o)
-                    text.delete()
-                except ObjectDoesNotExist:
-                    pass
-             
-            project_g.remove( (URIRef(uuid), None, None) )
-            project_metadata_g.remove( (URIRef(uuid), None, None) )
+                print "   FOUND related resource [%s]. Remove it?" % o
+                if (URIRef(uri), NS.ore.aggregates, URIRef(o)) in project_g:
+                    print "   ** SKIPPING TOP LEVEL RESOURCE"
+                else:
+                    project_g.remove( (URIRef(o), None, None) )
+                    project_metadata_g.remove( (URIRef(o), None, None) )
+                    try:
+                        text = Text.objects.get(identifier=o)
+                        text.delete()
+                    except ObjectDoesNotExist:
+                        pass
+                   
+                    project_g.remove( (URIRef(uuid), None, None) )
+                    project_metadata_g.remove( (URIRef(uuid), None, None) )
              
     return HttpResponse(status=200)
                         

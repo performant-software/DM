@@ -414,10 +414,6 @@ function(menuButtons, resourceId, opt_position) {
         'class': 'atb-hoverMenu-closeButton',
         'title': 'Close this hover menu (ESC)'
     });
-    jQuery(closeButton).css({
-        'top': 0,
-        'left': atb.viewer.Viewer.CONTEXT_MENU_WIDTH - 16 + 'px'
-    });
     menuDiv.appendChild(closeButton);
     
     var position = null;

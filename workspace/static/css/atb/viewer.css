@@ -43,12 +43,16 @@
     -moz-box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
     -webkit-box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
     box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
-    
+    border: 1px solid #777;
+    border-radius: 8px 8px 0 0;
     z-index: 100000;
 }
 
 .atb-hoverMenu .goog-toolbar {
     min-height: 16px;
+    background: #ccc;
+    border-bottom: 1px solid #999;
+    border-radius: 8px 8px 0 0;
 }
 
 .atb-hoverMenu-closeButton {
@@ -56,6 +60,8 @@
     width: 16px;
     height: 16px;
     position: absolute;
+    top: 5px;
+    right: 5px;
 }
 
 .atb-hoverMenu-calloutTriangle {
