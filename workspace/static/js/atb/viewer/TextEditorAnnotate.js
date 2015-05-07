@@ -181,6 +181,8 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
    preCaretRange.selectNodeContents( editorBody[0] );
    preCaretRange.setEnd(browserRange.endContainer, browserRange.endOffset);
    var caretOffset = preCaretRange.toString().length;
+   var nodeTextLen = range.getEndNode().data.length;
+   var atNodeEnd = (browserRange.endOffset==nodeTextLen);
 
    // Full length of the content
    var fullLen = editorBody.text().length;
@@ -193,7 +195,7 @@ atb.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 
 	// If this is the end of the document, add an extra space so we are not locked out
 	// of adding more non-highlighted content
-   if ( fullLen == caretOffset ) {
+   if ( fullLen == caretOffset || atNodeEnd ) {
       $(span).after("&nbsp;");
    }
    
