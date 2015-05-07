@@ -25,5 +25,7 @@
 }
 
 .goog-toolbar {
-    background-image: url(../../img/toolbar-bg-horz.png);
+    background-image: none;
+    border-bottom: 0;
+    background: transparent;
 }

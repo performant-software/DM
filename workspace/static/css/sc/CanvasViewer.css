@@ -4,6 +4,12 @@
    -ms-user-select: none;
    user-select: none
 }
+
+.atb-CanvasViewer .atb-viewer-documentIcon {
+   top: 7px;
+   right: 3px;	
+}
+
 .loadingSpinnerBackground {
    background-image: url("../../img/large_loading_spinner.gif");
    background-position: center center;
@@ -44,6 +50,13 @@
    -webkit-user-select: none;
    -ms-user-select: none;
    user-select: none
+}
+
+.sc-CanvasToolbar {
+	padding: 5px;
+	background: #fafafa;
+   border-top: 1px solid #ccc;
+   border-bottom: 1px solid #ccc;
 }
 .sc-CanvasToolbar .goog-toolbar-button {
    margin: 0 2px

@@ -3,13 +3,22 @@
     height: 24px;
     width: 24px;
     position: absolute;
-    right: 5px;
-    top: 5px;
+    right: 3px;
+    top: 6px;
     z-index: 1000;
-    
-    -moz-transition: box-shadow 0.2s;
-    -webkit-transition: box-shadow 0.2s;
-    transition: box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.text-editor-toolbar {
+  border-top: 1px solid #ccc;	
+}
+
+.text-editor-toolbar .goog-toolbar {
+	border-bottom: 1px solid #ddd;
+}
+
+.atb-viewer-documentIcon:hover {
+ background-position-x: -576px;  	
 }
 
 #load-status {
@@ -22,16 +31,8 @@
    color: #777;
 }
 
-.atb-viewer-documentIconHighlight {
-    /*background-position: -576px 0;*/
-    
-    -moz-box-shadow: 0 0 5px 5px #C3DDFD;
-    -webkit-box-shadow: 0 0 5px 5px #C3DDFD;
-    box-shadow: 0 0 5px 5px #C3DDFD;
-    
-    -moz-transition: box-shadow 0.2s;
-    -webkit-transition: box-shadow 0.2s;
-    transition: box-shadow 0.2s;
+.atb-viewer-documentIconHighlight {    
+   background-position-x: -576px;
 }
 
 .atb-viewer-documentIcon-noScrollbars {

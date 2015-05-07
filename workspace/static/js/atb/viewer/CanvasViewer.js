@@ -17,31 +17,28 @@ atb.viewer.CanvasViewer = function(clientApp) {
 goog.inherits(atb.viewer.CanvasViewer, atb.viewer.Viewer);
 
 atb.viewer.CanvasViewer.prototype.render = function(div) {
-    if (this.rootDiv != null) {
-        return;
-    }
-
-    this._isEditable = true;
-
-    atb.viewer.Viewer.prototype.render.call(this, div);
-    jQuery(this.rootDiv).addClass('atb-CanvasViewer');
+   if (this.rootDiv != null) {
+      return;
+   }
+   
+   this._isEditable = true;
+   atb.viewer.Viewer.prototype.render.call(this, div);
+   $(this.rootDiv).addClass('atb-CanvasViewer');
     
-    this.documentIcon = this.domHelper.createElement('div');
-	jQuery(this.documentIcon).addClass('atb-viewer-documentIcon ' +
-                                       'atb-viewer-documentIcon-noScrollbars');
+   this.documentIcon = this.domHelper.createElement('div');
+	$(this.documentIcon).addClass('atb-viewer-documentIcon');
 	goog.events.listen(this.documentIcon, 'click',
-                       this.handleDocumentIconClick_, false, this);
-    this.rootDiv.appendChild(this.documentIcon);
+                      this.handleDocumentIconClick_, false, this);
+	this.rootDiv.appendChild(this.documentIcon);
     
-    this.viewer = new sc.canvas.CanvasViewer({
-        databroker: this.databroker
-    });
+   this.viewer = new sc.canvas.CanvasViewer({
+       databroker: this.databroker
+   });
+ 
+   this.setupEventListeners();
     
-    this.setupEventListeners();
-    
-    this.viewer.render(this.rootDiv);
-    
-    this.setTitleEditable(true);
+   this.viewer.render(this.rootDiv); 
+   this.setTitleEditable(true);
 };
 
 atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
@@ -83,7 +80,11 @@ atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
 };
 
 atb.viewer.CanvasViewer.prototype.handleDocumentIconClick_ = function(event) {
-    
+   event.stopPropagation();
+   
+   var eventDispatcher = this.clientApp.getEventDispatcher();
+   var event = new atb.events.ResourceClick(this.getResourceId(), eventDispatcher, this);
+   eventDispatcher.dispatchEvent(event);
 };
 
 atb.viewer.CanvasViewer.prototype.getUri = function() {

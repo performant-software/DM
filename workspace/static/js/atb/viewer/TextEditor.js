@@ -194,7 +194,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     atb.viewer.Viewer.prototype.render.call(this, div);
 
     this.editorDiv = this.domHelper.createDom('div', {'id': this.useID});
-    this.toolbarDiv = this.domHelper.createDom('div');
+    this.toolbarDiv = this.domHelper.createDom('div', {'class': 'text-editor-toolbar'} );
     
     this.rootDiv.appendChild(this.toolbarDiv);
         
@@ -434,6 +434,7 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
     jQuery(this.toolbarDiv).empty();
 
     var myToolbar = goog.ui.editor.DefaultToolbar.makeToolbar(buttons, this.domHelper.getElement(this.toolbarDiv));
+    $(myToolbar).addClass("puppy");
 
     if (this.isEditable()) {
         // Create annotate button
