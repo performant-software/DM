@@ -5,6 +5,11 @@ from bs4 import BeautifulSoup
 
 from settings import IMAGE_UPLOAD_LOCATION
 
+class LockedResource(models.Model):
+    identifier = models.CharField(max_length=80, db_index=True)
+    user = models.ForeignKey(User, db_index=True)
+    locked_on = models.DateField()
+    
 class PublicProject(models.Model):
     identifier = models.CharField(max_length=80, db_index=True)
     key = models.CharField(max_length=20)

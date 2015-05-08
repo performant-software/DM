@@ -1,2 +1,3 @@
 eclipse.preferences.version=1
 encoding//semantic_store/migrations/0008_auto__add_publicproject__chg_field_projectpermission_identifier__chg_f.py=utf-8
+encoding//semantic_store/migrations/0009_auto__add_lockedresource.py=utf-8
