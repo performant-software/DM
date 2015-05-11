@@ -353,6 +353,114 @@ atb.viewer.Viewer.prototype.flashDocumentIconHighlight = function () {
     atb.Util.timeoutSequence(250, timeoutFns, this);
 };
 
+function getCookie(name) {
+   var cookieValue = null;
+   if (document.cookie && document.cookie != '') {
+       var cookies = document.cookie.split(';');
+       for (var i = 0; i < cookies.length; i++) {
+           var cookie = jQuery.trim(cookies[i]);
+           // Does this cookie string begin with the name we want?
+           if (cookie.substring(0, name.length + 1) == (name + '=')) {
+               cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+               break;
+           }
+       }
+   }
+   return cookieValue;
+}
+
+atb.viewer.Viewer.prototype.unlockResource = function(uri, lockIcon, lockMessage) {
+   var self = this;
+   $.ajax({
+      url: "/store/lock/"+uri,
+      method: "DELETE",
+      beforeSend: function(xhr) {
+          xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+      },
+      complete: function(jqXHR, textStatus) {
+         if ( textStatus == "success" ) {
+            lockMessage.text("Click to lock resource for edit");
+            lockIcon.removeClass("checked");
+            self.makeUneditable();
+         } else {
+            alert("Unlock failed. Please try again later.\n\nReason: "+jqXHR.responseText);
+         }
+      }
+   });
+}
+
+atb.viewer.Viewer.prototype.lockResource = function(uri, lockIcon, lockMessage) {
+   var self = this;
+   $.ajax({
+      url: "/store/lock/"+uri,
+      method: "POST",
+      beforeSend: function(xhr) {
+          xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+      },
+      complete: function(jqXHR, textStatus) {
+         if (lockIcon==null || lockMessage==null) {
+            return;
+         }
+         if ( textStatus == "success" ) {
+            lockMessage.text("Locked for edit");
+            lockIcon.addClass("checked");
+            self.makeEditable();
+         } else {
+            alert("Lock failed. Please try again later.\n\nReason: "+jqXHR.responseText);
+         }
+      }
+   });
+}
+
+atb.viewer.Viewer.prototype.lockStatus = function(resourceUri, isLocked, isLockHolder, lockedBy, lockedOn) {
+   var lockIcon = $("<div data-uri='"+resourceUri+"' class='lock-for-edit-icon'></div>");
+   var lockMessage = $("<div class='lock-message'></div>");
+   if ( isLocked == false ) {
+      lockMessage.text("Click to lock resource for edit");
+   } else {
+      if ( isLockHolder ) {
+         if (lockedOn == null ) {
+            lockMessage.text("Locked for edit");
+         } else {
+            lockMessage.text("Locked for edit on "+lockedOn);
+         }
+         lockIcon.addClass('checked');
+      } else {
+         lockMessage.text("Locked by "+lockedBy+" for edit on "+lockedOn);
+         lockIcon.addClass('locked');    
+      }
+   }
+   
+   $(lockIcon).on("mouseover", function() {
+      lockMessage.show();
+   });
+   $(lockIcon).on("mouseout", function() {
+      lockMessage.hide();
+   });
+   
+   var self = this;
+   $(lockIcon).on("click", function() {
+      // someone else has locked it.do nothing
+      if ( $(this).hasClass("locked")) {
+         return;
+      } 
+      
+      if ( $(this).hasClass("checked")) {
+         // you locked it; release lock
+         self.unlockResource( $(this).data("uri") , lockIcon, lockMessage);
+      } else {
+         // Not locked at all, lock it
+         self.lockResource( $(this).data("uri") , lockIcon, lockMessage);
+      }
+   });
+   
+   this.rootDiv.appendChild(lockIcon[0]);
+   this.rootDiv.appendChild(lockMessage[0]);
+   if ( $.trim($("#logged-in-user").text()) == "Guest" ) {
+      lockIcon.hide();
+   }
+}
+
 /**
  * The default delay for showing and hiding menus on hover
  */

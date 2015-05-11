@@ -39,7 +39,7 @@ sc.canvas.CanvasViewer = function(options) {
     this.mainViewport = new sc.canvas.FabricCanvasViewport(this.databroker);
     this.marqueeViewport = new sc.canvas.FabricCanvasViewport(this.databroker);
 
-    this.toolbar = this.options.toolbar || new sc.canvas.CanvasToolbar(this);
+    this.toolbar = new sc.canvas.CanvasToolbar(this);
     this.setupControls();
     this.toolbarDiv = this.toolbar.getElement();
 
@@ -90,19 +90,21 @@ sc.canvas.CanvasViewer.prototype.isEditable = function() {
 };
 
 sc.canvas.CanvasViewer.prototype.makeEditable = function() {
-    if (!this.isEditable()) {
-
-
-        this._isEditable = true;
-    }
+   if (this.isEditable() == false) {
+      this.toolbar.activate();
+//      this.toolbar = new sc.canvas.CanvasToolbar(this);
+//      this.setupControls();
+//      this.toolbarDiv = this.toolbar.getElement();
+      this._isEditable = true;
+   }
 };
 
 sc.canvas.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
-        this.toolbar.unregisterControls();
-        this.toolbar = new sc.canvas.CanvasToolbar(this, true);
-        jQuery(this.toolbarDiv).replaceWith(this.toolbar.getElement());
-        this.toolbarDiv = this.toolbar.getElement();
+        this.toolbar.deactivate();
+//        this.toolbar = new sc.canvas.CanvasToolbar(this, true);
+//        jQuery(this.toolbarDiv).replaceWith(this.toolbar.getElement());
+//        this.toolbarDiv = this.toolbar.getElement();
 
         this._isEditable = false;
     }
@@ -122,16 +124,14 @@ sc.canvas.CanvasViewer.prototype.getElement = function() {
 };
 
 sc.canvas.CanvasViewer.prototype.resize = function(width, height) {
-    if (height == null) {
-        height = width.height;
-        width = width.width;
-    }
+   if (height == null) {
+      height = width.height;
+      width = width.width;
+   }
 
-    var toolbarHeight = jQuery(this.toolbarDiv).height();
-    
-    this.mainViewport.resize(width, height - toolbarHeight);
-    /* SGB
-    */
+   var toolbarHeight = jQuery(this.toolbarDiv).height();
+
+   this.mainViewport.resize(width, height - toolbarHeight);
 };
 
 sc.canvas.CanvasViewer.prototype.getDisplaySize = function() {

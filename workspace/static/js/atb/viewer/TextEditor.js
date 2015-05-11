@@ -106,15 +106,13 @@ atb.viewer.TextEditor.prototype.setHtml = function (htmlString) {
  * adds the specified stylesheet to the editor iframe
  * @param stylesheetURI {!string} the URI of the stylesheet *relative to the html document*
  **/
-atb.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI) 
-{
-    var linkElement = this.editorIframe.document.createElement('link');
-    linkElement.setAttribute('rel', 'stylesheet');
-    linkElement.setAttribute('href', stylesheetURI);
-
-    var head = this.editorIframe.document.getElementsByTagName('head')[0];
-
-    head.appendChild(linkElement);
+atb.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI) {
+   var le = $("<link></link");
+   le.attr('rel', 'stylesheet');
+   le.attr('href', stylesheetURI);
+   var doc = $(this.editorIframeElement).contents();
+   var head = doc.find("head");
+   head.append(le);
 };
 
 /**
@@ -193,7 +191,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
 	}
     atb.viewer.Viewer.prototype.render.call(this, div);
 
-    this.editorDiv = this.domHelper.createDom('div', {'id': this.useID});
+    this.editorDiv = this.domHelper.createDom('div', {'id': this.useID, 'class': 'ro-editor'});
     this.toolbarDiv = this.domHelper.createDom('div', {'class': 'text-editor-toolbar'} );
     
     this.rootDiv.appendChild(this.toolbarDiv);
@@ -206,9 +204,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
         this.clientApp.getEventDispatcher(), 
         atb.events.LinkingModeExited.EVENT_TYPE, 
         this.handleLinkingModeExited, false, this);
-
-
-     
+    
     goog.editor.Field.DELAYED_CHANGE_FREQUENCY = 1000;
     this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
     this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
@@ -217,9 +213,9 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
 
     this.field.makeEditable();
-
+    
     this._renderToolbar();
-
+    
     var editorHtmlElement = this.field.getEditableDomHelper().getDocument().getElementsByTagName('html')[0];
     this.databroker.namespaces.bindNamespacesToHtmlElement(editorHtmlElement);
     
@@ -251,7 +247,8 @@ atb.viewer.TextEditor.prototype.initPasteHandling = function() {
    pasteBuf.css("left", "-1000px");
 
    // PASTE HANDLING
-   iframeContent.bind("paste", function(e) {
+   iframeContent.off("paste");
+   iframeContent.on("paste", function(e) {
       var b = $("#addAnnotation");
       if (b.hasClass("goog-toolbar-button-checked")) {
          e.preventDefault();
@@ -402,69 +399,50 @@ atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
 };
 
 atb.viewer.TextEditor.prototype._renderToolbar = function() {
-    if (this.isEditable()) {
-        // Specify the buttons to add to the toolbar, using built in default buttons.
-        var buttons = [
-            goog.editor.Command.BOLD,
-            goog.editor.Command.ITALIC,
-            goog.editor.Command.UNDERLINE,
-            //goog.editor.Command.FONT_COLOR,
-            //goog.editor.Command.BACKGROUND_COLOR,
-            //goog.editor.Command.FONT_FACE,
-            goog.editor.Command.FONT_SIZE,
-            goog.editor.Command.LINK,
-            //goog.editor.Command.UNDO,
-            //goog.editor.Command.REDO,
-            goog.editor.Command.UNORDERED_LIST,
-            goog.editor.Command.ORDERED_LIST//,
-            //goog.editor.Command.INDENT,
-            //goog.editor.Command.OUTDENT
-            //goog.editor.Command.JUSTIFY_LEFT,
-            //goog.editor.Command.JUSTIFY_CENTER,
-            //goog.editor.Command.JUSTIFY_RIGHT,
-            //goog.editor.Command.SUBSCRIPT,
-            //goog.editor.Command.SUPERSCRIPT,
-            //goog.editor.Command.STRIKE_THROUGH
-        ];
-    }
-    else {
-        var buttons = [];
-    }
-
-    jQuery(this.toolbarDiv).empty();
-
+    // Specify the buttons to add to the toolbar, using built in default buttons.
+    var buttons = [
+         goog.editor.Command.BOLD,
+         goog.editor.Command.ITALIC,
+         goog.editor.Command.UNDERLINE,
+         //goog.editor.Command.FONT_COLOR,
+         //goog.editor.Command.BACKGROUND_COLOR,
+         //goog.editor.Command.FONT_FACE,
+         goog.editor.Command.FONT_SIZE,
+         goog.editor.Command.LINK,
+         //goog.editor.Command.UNDO,
+         //goog.editor.Command.REDO,
+         goog.editor.Command.UNORDERED_LIST,
+         goog.editor.Command.ORDERED_LIST//,
+         //goog.editor.Command.INDENT,
+         //goog.editor.Command.OUTDENT
+         //goog.editor.Command.JUSTIFY_LEFT,
+         //goog.editor.Command.JUSTIFY_CENTER,
+         //goog.editor.Command.JUSTIFY_RIGHT,
+         //goog.editor.Command.SUBSCRIPT,
+         //goog.editor.Command.SUPERSCRIPT,
+         //goog.editor.Command.STRIKE_THROUGH
+    ];
+    $(this.toolbarDiv).empty();
     var myToolbar = goog.ui.editor.DefaultToolbar.makeToolbar(buttons, this.domHelper.getElement(this.toolbarDiv));
-    $(myToolbar).addClass("puppy");
 
-    if (this.isEditable()) {
-        // Create annotate button
-        var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
-            atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
-            'Annotate selected text',
-            '',
-            'icon-tag');
+     // Create annotate button
+     var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
+         atb.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
+         'Annotate selected text',
+         '',
+         'icon-tag');
 
-        annotateButton.queryable = true;//Fixes wierd annotations bug
+     annotateButton.queryable = true;//Fixes wierd annotations bug
 
-        myToolbar.addChildAt(annotateButton, 0, true);
-        
-        this.saveButton = goog.ui.editor.ToolbarFactory.makeButton(
-            'save',
-            'Save this document',
-            '',
-            'icon-ok'
-        );
-        goog.events.listen(this.saveButton, goog.ui.Component.EventType.ACTION, this.handleSaveButtonClick_, false, this);
-        myToolbar.addChild(this.saveButton, true);
-    }
+     myToolbar.addChildAt(annotateButton, 0, true);
+       
 
-    var saveStatusDiv = $("<div id='save-status-"+this.useID+"' class='goog-toolbar goog-toolbar-horizontal'>Initializing</div>");
-    $(this.toolbarDiv).append(saveStatusDiv);
+     var saveStatusDiv = $("<div id='save-status-"+this.useID+"' class='editor-status goog-toolbar goog-toolbar-horizontal'>Initializing</div>");
+     $(this.toolbarDiv).append(saveStatusDiv);
 
-    // Hook the toolbar into the field.
-    var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
+     // Hook the toolbar into the field.
+     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
 };
-
 
 atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
     this.saveContents();
@@ -542,48 +520,50 @@ atb.viewer.TextEditor.prototype.isEditable = function() {
 };
 
 atb.viewer.TextEditor.prototype.makeEditable = function() {
-    if (!this.isEditable()) {
-        this.field.makeEditable();
+   if (!this.isEditable()) {
+      this.field.makeEditable();
+      this.setTitleEditable(true);
+      $("#save-status-" + this.useID).text("Saved");
+      this.loadingContent = false;
+      $("#save-status-" + this.useID).show();
+      $('#' + this.useID).removeClass('atb-Editor-noedit');
+      $('#' + this.useID).width(this.size.width).height(
+            this.size.height - jQuery(this.toolbarDiv).outerHeight(true));
 
-        this._renderToolbar();
-
-        jQuery('#' + this.useID).width(this.size.width)
-            .height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true));
-
-        this.setTitleEditable(true);
-    }
+      // NOTES: toggling from editable to unediable destroys the
+      // editor iframe and all associated styles / handlers. they must
+      // be added back if status is toggled back to editable. Further.. the
+      // oroginal reference to the editor is invalid, and must be re-established
+      this.editorIframeElement = this.domHelper.getElement(this.useID);
+      this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
+      this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
+      var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
+      textEditorAnnotate.addListenersToAllHighlights();
+      this.addGlobalEventListeners();
+      this.initPasteHandling(); 
+      $(".text-editor-toolbar .goog-toolbar-button").show();
+      $(".text-editor-toolbar .goog-toolbar-menu-button").show();
+   }
 };
 
 atb.viewer.TextEditor.prototype.makeUneditable = function() {
-    if (this.isEditable()) {
-        this.field.makeUneditable();
+   if (this.isEditable()) {
+      this.field.makeUneditable();
+      this.setTitleEditable(false);
+      $("#save-status-" + this.useID).hide();
+      $('#' + this.useID).width(this.size.width).height(
+            this.size.height - jQuery(this.toolbarDiv).outerHeight(true));
 
-        this._renderToolbar();
-        jQuery(this.toolbarDiv).find('.goog-toolbar').css('min-height', 32);
+      var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
+      textEditorAnnotate.addListenersToAllHighlights();
+      
+      $(".text-editor-toolbar .goog-toolbar-button").hide();
+      $(".text-editor-toolbar .goog-toolbar-menu-button").hide();
 
-        jQuery('#' + this.useID).width(this.size.width)
-            .height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true))
-            .addClass('atb-Editor-noedit');
-
-        this._addHighlightListenersWhenUneditable();
-
-        this._addDocumentIconListeners();
-
-        this.setTitleEditable(false);
-        $("#save-status-"+this.useID).hide();
-        $(this.rootDiv).append("<div id='load-status'>Loading...</div>");
-    }
-};
-
-atb.viewer.TextEditor.prototype._addHighlightListenersWhenUneditable = function() {
-    if (!this.isEditable()) {
-        var annotatePlugin = new atb.viewer.TextEditorAnnotate(this);
-
-        var highlights = annotatePlugin.getAllAnnotationTags();
-        for (var i=0, len=highlights.length; i<len; i++) {
-            annotatePlugin.addListeners(highlights[i]);
-        }
-    }
+      if (this.field.getCleanContents().length == 0) {
+         $(this.rootDiv).append("<div id='load-status'>Loading...</div>");
+      }
+   }
 };
 
 atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
@@ -605,7 +585,6 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                 	this.setHtml(contents);
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
-                    this._addHighlightListenersWhenUneditable(); 
                     $("#save-status-"+this.useID).text("Loaded");
                     
                     $("#load-status").text("Loaded");
@@ -686,6 +665,11 @@ atb.viewer.TextEditor.prototype.createNewTextBody = function() {
 
    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
    this.openRelatedViewer(body.uri, annoBodyEditor);
+   
+   var email = $.trim($("#logged-in-email").text());
+   annoBodyEditor.lockStatus(body.uri,true,true, email, null);
+   annoBodyEditor.lockResource(body.uri,null,null);
+   
    annoBodyEditor.loadResourceByUri(body.uri);
 };
 
@@ -701,9 +685,8 @@ atb.viewer.TextEditor.prototype.linkAnnotation = function () {
 atb.viewer.TextEditor.prototype.onChange = function (event) {
    if ( this.loadingContent === false   ) {
       this.saveContents();
-    }  else {
-       this.loadingContent = false;
     }
+    this.loadingContent = false;
 };
 
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {

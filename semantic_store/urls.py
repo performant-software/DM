@@ -41,7 +41,7 @@ urlpatterns = patterns('',
     url(r'^projects/(?P<project_uri>[^/]+)/manuscripts(?:/(?P<manuscript_uri>.+))?/?$',
         semantic_store.views.Manuscript.as_view(),
         name="semantic_store_project_manuscripts"),
-
+                       
     url(r'^projects/(?P<uri>[^/]+)/resources(?:/(?P<resource_identifier>[^/]+))?/?$', 
         semantic_store.views.projects, 
         name="semantic_store_project_resources"),
@@ -82,7 +82,6 @@ urlpatterns = patterns('',
         semantic_store.views.projects,
         name="semantic_store_projects"),
 
-
     url(r'^users(?:/(?P<username>[^/]+))/remove_triples?/?$',
         semantic_store.views.remove_user_triples,
         name="semantic_store_user_remove_triples"),
@@ -95,6 +94,9 @@ urlpatterns = patterns('',
         semantic_store.views.users,
         name="semantic_store_users"),
     
+    url(r'^lock(?:/(?P<uri>[^/]+))?/?$', 
+        semantic_store.views.resource_lock,
+        name="semantic_store_lock_status"),
 
     url(r'^annotations(?:/(?P<anno_uri>[^/]+))?/?$', 
         semantic_store.views.annotations, 

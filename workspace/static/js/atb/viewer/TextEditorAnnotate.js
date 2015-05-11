@@ -455,6 +455,11 @@ atb.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
 
    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
    this.viewer.openRelatedViewer(body.uri, annoBodyEditor);
+   
+   var email = $.trim($("#logged-in-email").text());
+   annoBodyEditor.lockStatus(body.uri,true,true, email, null);
+   annoBodyEditor.lockResource(body.uri,null,null);
+   
    annoBodyEditor.loadResourceByUri(body.uri);
 };
 

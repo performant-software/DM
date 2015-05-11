@@ -145,13 +145,48 @@ sc.SearchViewer.prototype.openViewerForResource = function(resource) {
        var viewer = atb.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
        container.setViewer(viewer);
    
-       if (goog.isFunction(viewer.makeUneditable) &&
-           !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+       if ( !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
            viewer.makeUneditable();
+           viewer.loadResourceByUri(resource.uri);
+           container.autoResize();
+       } else {
+       
+          // Check lock status of this resource
+          $.ajax({
+             url: "/store/lock/"+resource.uri,
+             method: "GET",
+             complete: function(jqXHR, textStatus) {
+                if ( textStatus == "success" ) {
+                   if ( jqXHR.responseJSON.locked ) {
+                      // Resource is locked. See if it us by the current user
+                      if ( $("#logged-in-user").text() == jqXHR.responseJSON.user ) {
+                         // Logged in user has lock; leave editable and show unlocked info
+                         viewer.lockStatus(resource.uri,true,true, jqXHR.responseJSON.email, jqXHR.responseJSON.date);
+                      } else {
+                         // Someone else has lock. Readonly, and show lock holder details
+                         viewer.lockStatus(resource.uri, true, false, jqXHR.responseJSON.email, jqXHR.responseJSON.date);
+                         viewer.makeUneditable();
+                      }
+                   } else {
+                      // Not locked by anyone. Default to read only
+                      viewer.makeUneditable();
+                      viewer.lockStatus(resource.uri,false,false,"","");
+                   }
+                   
+                   viewer.loadResourceByUri(resource.uri);
+                   container.autoResize();
+                   
+                } else {
+                   alert("Unable to determine lock status. For safety, this resource will be locked");
+                   viewer.makeUneditable();
+                   
+                   
+                   viewer.loadResourceByUri(resource.uri);
+                   container.autoResize();
+                }
+             }
+           });
        }
-   
-       viewer.loadResourceByUri(resource.uri);
-       container.autoResize();
     }
 };
 

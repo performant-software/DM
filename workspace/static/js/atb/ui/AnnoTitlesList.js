@@ -133,22 +133,61 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
         } else {
            var deferredResource = this.databroker.getDeferredResource(uri);
            var container = new atb.viewer.ViewerContainer(this.domHelper);
-           
-          
-           
+
            viewerGrid.addViewerContainerAt(viewerUri, container, viewerGrid.indexOf(this.viewer.container) + 1);
    
            if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
    
            var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
-           container.setViewer(viewer);
+           container.setViewer(viewer);           
    
            deferredResource.done(function() {
-               viewer.loadResourceByUri(uri);
-               if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
-                   if (viewer.makeUneditable) viewer.makeUneditable();
-               }
-               container.autoResize();
+              
+              if (this.databroker.projectController.userHasPermissionOverProject(
+                    this.databroker.user, this.uri, sc.data.ProjectController.PERMISSIONS.update)) {
+                 // Check lock status of this resource. Only one user at a time can
+                 // lock a resource for edit
+                 $.ajax({
+                    url: "/store/lock/"+uri,
+                    method: "GET",
+                    complete: function(jqXHR, textStatus) {
+                       if ( textStatus == "success" ) {
+                          if ( jqXHR.responseJSON.locked ) {
+                             // Resource is locked. See if it us by the current user
+                             if ( $("#logged-in-user").text() == jqXHR.responseJSON.user ) {
+                                // Logged in user has lock; leave editable and show unlocked info
+                                viewer.lockStatus(uri,true,true, jqXHR.responseJSON.email, jqXHR.responseJSON.date);
+                             } else {
+                                // Someone else has lock. Readonly, and show lock holder details
+                                viewer.lockStatus(uri,true, false, jqXHR.responseJSON.email, jqXHR.responseJSON.date);
+                                viewer.makeUneditable();
+                             }
+                          } else {
+                             // Not locked by anyone. Default to read only
+                             viewer.makeUneditable();
+                             viewer.lockStatus(uri,false,false,"","");
+                          }
+                          
+                          viewer.loadResourceByUri(resource.uri);
+                          container.autoResize();
+                          
+                       } else {
+                          alert("Unable to determine lock status. For safety, this resource will be locked");
+                          viewer.makeUneditable();
+                          
+                          
+                          viewer.loadResourceByUri(resource.uri);
+                          container.autoResize();
+                       }
+                    }
+                  });
+              } else {
+                 viewer.loadResourceByUri(uri);
+                 if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
+                     if (viewer.makeUneditable) viewer.makeUneditable();
+                 }
+              }
+
            }.bind(this));
         }
     }

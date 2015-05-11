@@ -21,6 +21,7 @@ from rdflib import Graph, ConjunctiveGraph, URIRef
 from rdflib.util import guess_format
 import rdflib.plugin
 
+from semantic_store.locks import is_locked, unlock, lock
 from semantic_store.models import PublicProject
 from semantic_store import collection, permissions, manuscripts
 from semantic_store.models import ProjectPermission, UploadedImage
@@ -140,6 +141,19 @@ def add_all_users(graph):
             u.save()
             print "User '%s' was created successfully."%(username)
 
+
+#
+# Check lock status for a project resource
+#
+def resource_lock(request, uri):
+    if request.method == 'GET':   
+        return is_locked(uri)
+    elif request.method == 'POST':  
+        return lock(uri, request.user)
+    elif request.method == 'DELETE':  
+        return unlock(uri)
+    else:
+        return HttpResponseNotAllowed(('GET', 'POST', 'DELETE'))
 
 def remove_project_triples(request, uri):
     return delete_triples_from_project(request, uri)

@@ -545,6 +545,11 @@ atb.viewer.CanvasViewer.prototype.createTextAnno = function(uri) {
     var textEditor = new atb.viewer.TextEditor(this.clientApp);
     textEditor.setPurpose('anno');
     this.openRelatedViewer(body.uri, textEditor);
+    
+    var email = $.trim($("#logged-in-email").text());
+    textEditor.lockStatus(body.uri,true,true, email, null);
+    textEditor.lockResource(body.uri,null,null);
+    
     textEditor.loadResourceByUri(body.uri);
 };
 

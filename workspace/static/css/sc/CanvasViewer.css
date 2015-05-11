@@ -57,6 +57,7 @@
 	background: #fafafa;
    border-top: 1px solid #ccc;
    border-bottom: 1px solid #ccc;
+   height: 26px;
 }
 .sc-CanvasToolbar .goog-toolbar-button {
    margin: 0 2px
@@ -106,7 +107,7 @@
 .sc-CanvasViewer .sc-CanvasViewer-marquee {
    position: absolute;
    right: 4px;
-   bottom: 4px;
+   bottom: 16px;
    z-index: 1000;
    background-color: white;
    -moz-user-select: none;

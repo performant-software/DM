@@ -8,6 +8,72 @@
     z-index: 1000;
     cursor: pointer;
 }
+.ro-editor{
+	margin:8px;
+}
+.ro-editor.editable {
+	margin:0;
+}
+
+.ro-editor a, .ro-editor a:active, .ro-editor a:visited, .ro-editor a:hover{
+	color: #04c;
+	text-decoration: underline;
+}
+
+.ro-editor a:hover{
+   color: #08c;
+   text-decoration: underline;
+}
+
+.sc-CanvasViewer .lock-message  {
+   top: 38px;	
+}
+
+.editor-status {
+	position:absolute;
+	bottom:0;
+	margin:0;
+	left: 0;
+   right: 0;
+   border-top: 1px solid #ccc;
+   background-color: #f0f0f0;
+   padding: 2px 5px 1px 5px;
+}
+.lock-message {
+   position: absolute;
+  right: 0px;
+  top: 37px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #c80;
+  border-radius: 0 0 0 8px;
+  background-color: #ffffe5;
+  color: #c80;
+  font-size: 0.9em;
+  padding: 2px 10px;
+  border-right: 0;
+  display:none;
+}
+.lock-for-edit-icon {
+   background: url("../../img/edit2.png") no-repeat 0 0 transparent;   	
+   height: 24px;
+   width: 24px;
+   position: absolute;
+   right: 36px;
+   top: 6px;
+   z-index: 1000;
+   cursor: pointer;
+   border: 1px solid transparent;
+}
+.lock-for-edit-icon.checked {
+    background-color: #dfd;
+  border: 1px solid #090;
+  border-radius: 3px;	
+}
+.lock-for-edit-icon.locked {
+  opacity: 0.3;
+  cursor: default;
+}
 
 .text-editor-toolbar {
   border-top: 1px solid #ccc;	
@@ -15,6 +81,10 @@
 
 .text-editor-toolbar .goog-toolbar {
 	border-bottom: 1px solid #ddd;
+	height: 32px;
+}
+.editor-status.goog-toolbar.goog-toolbar-horizontal {
+      height: auto;	
 }
 
 .atb-viewer-documentIcon:hover {

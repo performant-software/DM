@@ -48,10 +48,24 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
     this.googToolbar.render(this.baseDiv);
 
     this.setupDefaultButtons();
+    
+    this.setButtonVisibility();
 
     this.viewer.mainViewport.addEventListener(
         'bounds changed', this.handleBoundsChanged,
         false, this);
+};
+
+sc.canvas.CanvasToolbar.prototype.setButtonVisibility = function() {
+   if ( this.forReadOnly ) {
+      $(".sc-CanvasToolbar .goog-toolbar.goog-toolbar-horizontal .goog-toolbar-button").hide();
+      $(".sc-CanvasToolbar .goog-toolbar-separator ").hide();
+   } else {
+      $(".sc-CanvasToolbar .goog-toolbar.goog-toolbar-horizontal .goog-toolbar-button").show();
+      $(".sc-CanvasToolbar .goog-toolbar-separator ").show();
+   }
+   $("#toggle-markers").show();
+
 };
 
 sc.canvas.CanvasToolbar.prototype.deactivateMouseControls = function() {
@@ -62,10 +76,14 @@ sc.canvas.CanvasToolbar.prototype.deactivateMouseControls = function() {
     this.controls.drawPolygon.deactivate();
 };
 
-sc.canvas.CanvasToolbar.prototype.unregisterControls = function() {
-    goog.structs.forEach(this.controls, function(control) {
-        control.unregister();
-    }, this);
+sc.canvas.CanvasToolbar.prototype.deactivate = function() {
+   this.forReadOnly  = true;
+   this.setButtonVisibility();
+};
+
+sc.canvas.CanvasToolbar.prototype.activate = function() {
+   this.forReadOnly  = false;
+   this.setButtonVisibility();
 };
 
 
@@ -107,56 +125,54 @@ sc.canvas.CanvasToolbar.prototype.createButton = function(
 sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
     this.buttonsByName = {};
 
-    if (!this.forReadOnly) {
-        var panZoomButton = this.createButton(
-            'pan-zoom',
-            'Pan and zoom the canvas',
-            '',
-            'icon-hand-up',
-            this.handlePanZoomClick
-        );
-        this.selectButton(panZoomButton);
-        this.addButton(panZoomButton);
+     var panZoomButton = this.createButton(
+         'pan-zoom',
+         'Pan and zoom the canvas',
+         '',
+         'icon-hand-up',
+         this.handlePanZoomClick
+     );
+     this.selectButton(panZoomButton);
+     this.addButton(panZoomButton);
 
-        var drawLineButton = this.createButton(
-            'draw-line',
-            'Draw lines and polylines on the canvas',
-            '',
-            'sc-CanvasToolbar-drawLineIcon',
-            this.handleDrawLineClick
-        );
-        this.addButton(drawLineButton);
+     var drawLineButton = this.createButton(
+         'draw-line',
+         'Draw lines and polylines on the canvas',
+         '',
+         'sc-CanvasToolbar-drawLineIcon',
+         this.handleDrawLineClick
+     );
+     this.addButton(drawLineButton);
 
-        var drawBoxButton = this.createButton(
-            'draw-box',
-            'Draw rectangles on the canvas',
-            '',
-            'sc-CanvasToolbar-drawBoxIcon',
-            this.handleDrawBoxClick
-        );
-        this.addButton(drawBoxButton);
+     var drawBoxButton = this.createButton(
+         'draw-box',
+         'Draw rectangles on the canvas',
+         '',
+         'sc-CanvasToolbar-drawBoxIcon',
+         this.handleDrawBoxClick
+     );
+     this.addButton(drawBoxButton);
 
-        var drawCircleButton = this.createButton(
-            'draw-circle',
-            'Draw circles and ellipses on the canvas',
-            '',
-            'sc-CanvasToolbar-drawCircleIcon',
-            this.handleDrawCircleClick
-        );
-        this.addButton(drawCircleButton);
+     var drawCircleButton = this.createButton(
+         'draw-circle',
+         'Draw circles and ellipses on the canvas',
+         '',
+         'sc-CanvasToolbar-drawCircleIcon',
+         this.handleDrawCircleClick
+     );
+     this.addButton(drawCircleButton);
 
-        var drawPolygonButton = this.createButton(
-            'draw-polygon',
-            'Draw polygons on the canvas',
-            '',
-            'sc-CanvasToolbar-drawPolygonIcon',
-            this.handleDrawPolygonClick
-        );
-        this.addButton(drawPolygonButton);
+     var drawPolygonButton = this.createButton(
+         'draw-polygon',
+         'Draw polygons on the canvas',
+         '',
+         'sc-CanvasToolbar-drawPolygonIcon',
+         this.handleDrawPolygonClick
+     );
+     this.addButton(drawPolygonButton);
 
-        this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
-    }
-
+     this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+     
     var toggleMarkersButton = this.createButton(
         'toggle-markers',
         'Toggle the visibility of markers on the canvas',
