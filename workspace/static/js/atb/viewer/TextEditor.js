@@ -184,10 +184,10 @@ atb.viewer.TextEditor.prototype.resize = function(width, height) {
    atb.viewer.Viewer.prototype.resize(width, height);
    
    if ( $("#save-status-" + this.useID).is(":visible") ) {
-      $('#' + this.useID).width(this.size.width).height(
-            this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-5);
+      $('#' + this.useID).height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-5);
+      $('#' + this.useID).css("width", "100%");
    } else {
-      $('#' + this.useID).width(this.size.width).height(
+      $('#' + this.useID).height(
             this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-8);
    }
 
@@ -535,8 +535,10 @@ atb.viewer.TextEditor.prototype.makeEditable = function() {
       this.loadingContent = false;
       $("#save-status-" + this.useID).show();
       $('#' + this.useID).removeClass('atb-Editor-noedit');
-      $('#' + this.useID).width(this.size.width).height(
+      $('#' + this.useID).height(
             this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-5);
+
+      $('#' + this.useID).css("width", "100%");
 
       // NOTES: toggling from editable to unediable destroys the
       // editor iframe and all associated styles / handlers. they must
@@ -559,7 +561,7 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
       this.field.makeUneditable();
       this.setTitleEditable(false);
       $("#save-status-" + this.useID).hide();
-      $('#' + this.useID).width(this.size.width).height(
+      $('#' + this.useID).height(
             this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-8);
 
       var textEditorAnnotate = this.field.getPluginByClassId('Annotation');

@@ -9,7 +9,9 @@
     cursor: pointer;
 }
 .ro-editor{
-	margin:8px;
+	margin: 8px 0 0 8px;
+	overflow-y: scroll;
+   overflow-x: hidden;
 }
 .ro-editor.editable {
 	margin:0;
