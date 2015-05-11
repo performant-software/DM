@@ -184,7 +184,9 @@ atb.viewer.TextEditor.prototype.resize = function(width, height) {
    atb.viewer.Viewer.prototype.resize(width, height);
    
    if ( $("#save-status-" + this.useID).is(":visible") ) {
-      $('#' + this.useID).height(this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-5);
+      $('.atb-Viewer').height(this.size.height);
+      $('#' + this.useID).height(
+            this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-19);
       $('#' + this.useID).css("width", "100%");
    } else {
       $('#' + this.useID).height(
@@ -535,8 +537,9 @@ atb.viewer.TextEditor.prototype.makeEditable = function() {
       this.loadingContent = false;
       $("#save-status-" + this.useID).show();
       $('#' + this.useID).removeClass('atb-Editor-noedit');
+      $('.atb-Viewer').height(this.size.height);
       $('#' + this.useID).height(
-            this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-5);
+            this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-19);
 
       $('#' + this.useID).css("width", "100%");
 
