@@ -102,10 +102,6 @@ atb.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highl
    specificResource.addProperty('oa:hasSource', this.getTextResource().bracketedUri);
    specificResource.addProperty('oa:hasSelector', highlight.bracketedUri);
 
-   var anno = this.databroker.createResource(this.databroker.createUuid());
-   anno.addProperty('rdf:type', 'oa:Annotation');
-   anno.addProperty('oa:hasTarget', this.getTextResource().bracketedUri);
-
    return highlight;
 }; 
 

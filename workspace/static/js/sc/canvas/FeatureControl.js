@@ -144,13 +144,10 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     specificResource.addProperty('oa:hasSource', '<' + canvasUri + '>');
     specificResource.addProperty('oa:hasSelector', selector.bracketedUri);
 
-    var annotation = this.databroker.createResource(null, 'oa:Annotation');
-    annotation.addProperty('oa:hasTarget', specificResource.bracketedUri);
-
     this.resetFeature();
     
     // Sync data with server after each anno is added
-    this.databroker.syncNew();
+    this.databroker.sync();
 };
 
 /**

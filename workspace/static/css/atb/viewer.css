@@ -45,10 +45,10 @@
   top: 37px;
   z-index: 1000;
   background: white;
-  border: 1px solid #c80;
+  border: 1px solid #ccc;
   border-radius: 0 0 0 8px;
-  background-color: #ffffe5;
-  color: #c80;
+  background-color: #f0f0f0;
+  color: #777;
   font-size: 0.9em;
   padding: 2px 10px;
   border-right: 0;
