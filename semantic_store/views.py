@@ -151,7 +151,7 @@ def resource_lock(request, uri):
     elif request.method == 'POST':  
         return lock(uri, request.user)
     elif request.method == 'DELETE':  
-        return unlock(uri)
+        return unlock(uri, request.user)
     else:
         return HttpResponseNotAllowed(('GET', 'POST', 'DELETE'))
 

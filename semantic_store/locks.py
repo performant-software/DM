@@ -34,12 +34,17 @@ def lock(uri, user):
         LockedResource.objects.create(identifier=uri, locked_on=datetime.now(), user=user)
         return HttpResponse(status=200)
 
-def unlock(uri):
+def unlock(uri, user):
     """ Unlock the resource """
     try:
-        lock = LockedResource.objects.get(identifier=uri)
-        lock.delete()
-        return HttpResponse(status=200)
+        if uri:
+            lock = LockedResource.objects.get(identifier=uri)
+            lock.delete()
+            return HttpResponse(status=200)
+        else:
+            print "Unlock all resourced from %s" % user.username
+            LockedResource.objects.filter(user=user).delete()
+            return HttpResponse(status=200)
     except ObjectDoesNotExist:
         # if resource wasn't found this means it wasn't locked
         # to begin with. Say all is well.

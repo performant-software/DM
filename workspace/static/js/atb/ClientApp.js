@@ -193,26 +193,33 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     this.linkingInProgress = false;
     
     var targetUri = e.uri;
+    e.viewer.cancelHover();
     
-    
-    if (this.annoLinkCreationBodyId && targetUri) {
-        var bodyId = this.annoLinkCreationBodyId;
-        this.annoLinkCreationBodyId = null;
-
-        var anno = this.databroker.dataModel.createAnno(bodyId, targetUri);
-        
-        var bezel = new atb.ui.Bezel('atb-bezel-linked');
-        bezel.show();
-        
-        this.hideLinkCreationUI();
+    // see if this viewer is locked for edit
+    var locked = $(e.viewer).find(".locked-for-edit-icon.checked").length > 0;
+    if ( locked == false ) {
+       alert("Target resource is not locked for edit.\n\nLock it and try adain.");
     } else {
-       alert("Link creation failed; one of the highlights was missing an ID. Remove and re-add the highlights and try again.");
+       
+       if (this.annoLinkCreationBodyId && targetUri) {
+           var bodyId = this.annoLinkCreationBodyId;
+           this.annoLinkCreationBodyId = null;
+   
+           var anno = this.databroker.dataModel.createAnno(bodyId, targetUri);
+           
+           var bezel = new atb.ui.Bezel('atb-bezel-linked');
+           bezel.show();
+                      
+           this.databroker.sync();
+       } else {
+          alert("Link creation failed; one of the highlights was missing an ID. Remove and re-add the highlights and try again.");
+       }
     }
 
+    this.hideLinkCreationUI();
     var exitedEvent = new atb.events.LinkingModeExited(this.annoLinkCreationAnnoId);
     this.eventDispatcher.dispatchEvent(exitedEvent);
-    
-    this.databroker.sync();
+
 };
 
 atb.ClientApp.prototype.annoLinkCreationKeyHandler_ = function (e) {
@@ -280,6 +287,16 @@ atb.ClientApp.prototype.onBeforeUnload = function (event) {
 atb.ClientApp.prototype.registerKeyboardShortcuts = function () {
     
 };
+
+$(window).on('beforeunload', function(){
+   $.ajax({
+      url: "/store/lock",
+      method: "DELETE",
+      beforeSend: function(xhr) {
+          xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+      }
+   });
+});
 
 $(function() {
    var username = $("#logged-in-user").text();

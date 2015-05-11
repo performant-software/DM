@@ -644,14 +644,21 @@ function(element, menuButtons, fReturnsResourceId) {
     goog.events.listen(element, 'mouseover', onHover, false, this);
     
     var onUnHover = function (e) {
-    	if ( this.showHoverTimerId != -1 ) {
-        	window.clearTimeout(this.showHoverTimerId);
-        	this.showHoverTimerId = -1;
+    	  if ( this.showHoverTimerId != -1 ) {
+        	  window.clearTimeout(this.showHoverTimerId);
+        	  this.showHoverTimerId = -1;
         }
         this.mouseOverUri = null;
         this.maybeHideHoverMenu();
     };
     goog.events.listen(element, 'mouseout', onUnHover, false, this);
+};
+
+atb.viewer.Viewer.prototype.cancelHover = function () {
+   if ( this.showHoverTimerId != -1 ) {
+      window.clearTimeout(this.showHoverTimerId);
+      this.showHoverTimerId = -1;
+   }
 };
 
 atb.viewer.Viewer.prototype.enableHoverMenus = function () {

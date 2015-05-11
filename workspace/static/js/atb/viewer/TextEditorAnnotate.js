@@ -221,7 +221,7 @@ atb.viewer.TextEditorAnnotate.prototype.deleteAnnotation = function(element) {
 };
 
 /**
- * Add listeners to an annotation object. 
+ * Add listeners to an annotation object.
  */
 atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	if (!this.isHighlightElement(object)) {
@@ -238,8 +238,7 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	if(!goog.events.hasListener(object, goog.events.EventType.CLICK)) {
 		goog.events.listen(object, goog.events.EventType.CLICK, function(mouseEvent) {
 			mouseEvent.stopPropagation();
-
-            this.selectAnnotationSpan(object, mouseEvent);
+         this.selectAnnotationSpan(object, mouseEvent);
 			return this.handleHighlightClick(object, mouseEvent);
 		}, false, this);
 	}
