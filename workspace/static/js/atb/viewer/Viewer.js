@@ -379,8 +379,10 @@ atb.viewer.Viewer.prototype.unlockResource = function(uri, lockIcon, lockMessage
       },
       complete: function(jqXHR, textStatus) {
          if ( textStatus == "success" ) {
-            lockMessage.text("Click to lock resource for edit");
-            lockIcon.removeClass("checked");
+            if ( lockIcon ) {
+               lockMessage.text("Click to lock resource for edit");
+               lockIcon.removeClass("checked");
+            }
             self.makeUneditable();
          } else {
             alert("Unlock failed. Please try again later.\n\nReason: "+jqXHR.responseText);

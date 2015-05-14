@@ -196,9 +196,8 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     e.viewer.cancelHover();
     
     // see if this viewer is locked for edit
-    var locked = $(e.viewer).find(".locked-for-edit-icon.checked").length > 0;
-    if ( locked == false ) {
-       alert("Target resource is not locked for edit.\n\nLock it and try adain.");
+    if ( e.viewer.isEditable() == false ) {
+       alert("Target resource is not locked for edit.\n\nLock it and try again.");
     } else {
        
        if (this.annoLinkCreationBodyId && targetUri) {

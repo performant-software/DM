@@ -127,11 +127,14 @@ atb.viewer.ViewerContainer.prototype.autoResize = function() {
 };
 
 atb.viewer.ViewerContainer.prototype.close = function() {
-    
-
-    if (this.grid) {
-        this.grid.removeViewerContainer(this);
-    }
+   if (this.viewer) {
+      if (this.viewer.isEditable()) {
+         this.viewer.unlockResource(this.viewer.uri);
+      }
+   }
+   if (this.grid) {
+      this.grid.removeViewerContainer(this);
+   }
 };
 
 atb.viewer.ViewerContainer.prototype.getIndex = function() {
