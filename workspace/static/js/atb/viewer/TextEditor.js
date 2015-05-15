@@ -572,8 +572,8 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
       textEditorAnnotate.addListenersToAllHighlights();
       
       var t = $("#save-status-" + this.useID).closest(".text-editor-toolbar");
-      t.find(".goog-toolbar-button").show();
-      t.find(".goog-toolbar-menu-button").show();
+      t.find(".goog-toolbar-button").hide();
+      t.find(".goog-toolbar-menu-button").hide();
 
       if (this.field.getCleanContents().length == 0) {
          $(this.rootDiv).append("<div id='load-status'>Loading...</div>");

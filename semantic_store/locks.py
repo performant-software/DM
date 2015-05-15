@@ -38,11 +38,12 @@ def unlock(uri, user):
     """ Unlock the resource """
     try:
         if uri:
+            print "Unlock resources %s from %s" % (uri,user.username)
             lock = LockedResource.objects.get(identifier=uri)
             lock.delete()
             return HttpResponse(status=200)
         else:
-            print "Unlock all resourced from %s" % user.username
+            print "Unlock all resources from %s" % user.username
             LockedResource.objects.filter(user=user).delete()
             return HttpResponse(status=200)
     except ObjectDoesNotExist:
