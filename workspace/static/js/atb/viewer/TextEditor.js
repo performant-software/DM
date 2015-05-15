@@ -554,8 +554,9 @@ atb.viewer.TextEditor.prototype.makeEditable = function() {
       textEditorAnnotate.addListenersToAllHighlights();
       this.addGlobalEventListeners();
       this.initPasteHandling(); 
-      $(".text-editor-toolbar .goog-toolbar-button").show();
-      $(".text-editor-toolbar .goog-toolbar-menu-button").show();
+      var t = $("#save-status-" + this.useID).closest(".text-editor-toolbar");
+      t.find(".goog-toolbar-button").show();
+      t.find(".goog-toolbar-menu-button").show();
    }
 };
 
@@ -570,8 +571,9 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
       var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
       textEditorAnnotate.addListenersToAllHighlights();
       
-      $(".text-editor-toolbar .goog-toolbar-button").hide();
-      $(".text-editor-toolbar .goog-toolbar-menu-button").hide();
+      var t = $("#save-status-" + this.useID).closest(".text-editor-toolbar");
+      t.find(".goog-toolbar-button").show();
+      t.find(".goog-toolbar-menu-button").show();
 
       if (this.field.getCleanContents().length == 0) {
          $(this.rootDiv).append("<div id='load-status'>Loading...</div>");
