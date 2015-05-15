@@ -39,6 +39,20 @@ atb.viewer.CanvasViewer.prototype.render = function(div) {
     
    this.viewer.render(this.rootDiv); 
    this.setTitleEditable(true);
+   
+
+
+   this.setupControlEventListeners();
+   this._addDocumentIconListeners();
+};
+
+atb.viewer.Viewer.prototype.resize = function(width, height) {
+   this.size = new goog.math.Size(width, height-10);
+
+   jQuery(this.rootDiv).width(width).height(height-10);
+   this.repositionLoadingSpinner();
+
+   return this;
 };
 
 atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
@@ -182,12 +196,7 @@ atb.viewer.CanvasViewer.prototype.isEditable = function() {
 atb.viewer.CanvasViewer.prototype.makeEditable = function() {
     if (!this.isEditable()) {
         this.viewer.makeEditable();
-
-        this.setupControlEventListeners();
-
         this._isEditable = true;
-
-        this._addDocumentIconListeners();
     }
 };
 
@@ -195,12 +204,16 @@ atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
         this.viewer.makeUneditable();
 
-        this.setupControlEventListeners();
         this.enableHoverMenus();
 
         this._isEditable = false;
 
-        this._addDocumentIconListeners();
+        if ( this.readOnlyClone ) {
+           $(this.documentIcon).hide();
+           var title = $(this.container.titleEl).closest(".atb-ViewerContainer-titleWrapper");
+           title.addClass("read-only-clone");
+           $(title).append("<div class='clone-header'>Read-Only Copy</div>");
+        }
     }
 };
 

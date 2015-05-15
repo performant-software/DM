@@ -57,14 +57,17 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
 };
 
 sc.canvas.CanvasToolbar.prototype.setButtonVisibility = function() {
+   var tbEle = $(this.baseDiv);
    if ( this.forReadOnly ) {
-      $(".sc-CanvasToolbar .goog-toolbar.goog-toolbar-horizontal .goog-toolbar-button").hide();
-      $(".sc-CanvasToolbar .goog-toolbar-separator ").hide();
+      tbEle.find(".goog-toolbar.goog-toolbar-horizontal .goog-toolbar-button").css("display","none");
+      tbEle.find(".goog-toolbar-separator ").css("display","none");
    } else {
-      $(".sc-CanvasToolbar .goog-toolbar.goog-toolbar-horizontal .goog-toolbar-button").show();
-      $(".sc-CanvasToolbar .goog-toolbar-separator ").show();
+      tbEle.find(".goog-toolbar.goog-toolbar-horizontal .goog-toolbar-button").css("display","inline-block");
+      tbEle.find(".goog-toolbar-separator ").css("display","inline-block");
    }
-   $("#toggle-markers").show();
+ 
+   tbEle.find("#toggle-markers").css("display","inline-block");
+
 
 };
 

@@ -181,18 +181,21 @@ atb.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (spec
 };
 
 atb.viewer.TextEditor.prototype.resize = function(width, height) {
-   atb.viewer.Viewer.prototype.resize(width, height);
-   
-   if ( $("#save-status-" + this.useID).is(":visible") ) {
+   this.size = new goog.math.Size(width, height - 10);
+
+   jQuery(this.rootDiv).width(width).height(height - 10);
+
+   if ($("#save-status-" + this.useID).is(":visible")) {
       $('.atb-Viewer').height(this.size.height);
       $('#' + this.useID).height(
-            this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-19);
+            this.size.height - jQuery(this.toolbarDiv).outerHeight(true) - 19
+                  - 10);
       $('#' + this.useID).css("width", "100%");
    } else {
       $('#' + this.useID).height(
-            this.size.height - jQuery(this.toolbarDiv).outerHeight(true)-8);
+            this.size.height - jQuery(this.toolbarDiv).outerHeight(true) - 8
+                  - 10);
    }
-
 };
 
 atb.viewer.TextEditor.prototype.render = function(div) {
@@ -577,6 +580,13 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
 
       if (this.field.getCleanContents().length == 0) {
          $(this.rootDiv).append("<div id='load-status'>Loading...</div>");
+      }
+      
+      if ( this.readOnlyClone ) {
+         $(this.documentIcon).hide();
+         var title = $(this.container.titleEl).closest(".atb-ViewerContainer-titleWrapper");
+         title.addClass("read-only-clone");
+         $(title).append("<div class='clone-header'>Read-Only Copy</div>");
       }
    }
 };

@@ -17,6 +17,15 @@
 	margin:0;
 }
 
+.clone-header {
+	  position: absolute;
+  z-index: 100;
+  top: 33px;
+  font-weight: bold;
+  color: #b00;
+  right: 10px;
+}
+
 .ro-editor a, .ro-editor a:active, .ro-editor a:visited, .ro-editor a:hover{
 	color: #04c;
 	text-decoration: underline;

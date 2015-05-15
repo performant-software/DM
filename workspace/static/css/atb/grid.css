@@ -36,6 +36,21 @@
 	position: relative
 }
 
+.atb-ViewerContainer {
+   border: 3px solid #6cc;
+   border-radius: 8px 8px 4px 4px;
+}
+.atb-ViewerContainer .atb-ViewerContainer-titleWrapper.read-only-clone {
+   background-color: #777;
+   color: #ccc;
+}
+
+.atb-ViewerContainer.locked {
+  border: 2px solid #333;
+  border-radius: 8px 8px 4px 4px;
+  opacity: 0.9;
+}
+
 .atb-ViewerContainer .atb-ViewerContainer-viewer {
 	position: relative
 }

@@ -92,9 +92,6 @@ sc.canvas.CanvasViewer.prototype.isEditable = function() {
 sc.canvas.CanvasViewer.prototype.makeEditable = function() {
    if (this.isEditable() == false) {
       this.toolbar.activate();
-//      this.toolbar = new sc.canvas.CanvasToolbar(this);
-//      this.setupControls();
-//      this.toolbarDiv = this.toolbar.getElement();
       this._isEditable = true;
    }
 };
@@ -102,10 +99,6 @@ sc.canvas.CanvasViewer.prototype.makeEditable = function() {
 sc.canvas.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
         this.toolbar.deactivate();
-//        this.toolbar = new sc.canvas.CanvasToolbar(this, true);
-//        jQuery(this.toolbarDiv).replaceWith(this.toolbar.getElement());
-//        this.toolbarDiv = this.toolbar.getElement();
-
         this._isEditable = false;
     }
 };

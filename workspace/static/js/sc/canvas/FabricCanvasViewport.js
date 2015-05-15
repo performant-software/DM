@@ -197,15 +197,15 @@ sc.canvas.FabricCanvasViewport.prototype.resize = function(width, height) {
     }
 
     var oldSize = this.size;
-    this.size = new goog.math.Size(width, height);
+    this.size = new goog.math.Size(width, height-20);
 
-    jQuery(this.baseDiv).width(width).height(height);
+    jQuery(this.baseDiv).width(width).height(height-20);
 
     if (! this.isEmpty()) {
         var center = this.getCenterCoord();
     }
 
-    this.fabricCanvas.setWidth(width).setHeight(height);
+    this.fabricCanvas.setWidth(width).setHeight(height-20);
 
     if (center) {
         this.centerOnCanvasCoord(center);

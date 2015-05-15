@@ -116,47 +116,34 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
         // Only open each resource ONCE
         var viewerGrid = this.clientApp.viewerGrid;
-        if ( viewerGrid.isOpen(viewerUri)) {
-           // Grab existing and make sure it is scrolled into view
-           // NOTE: this scroll into view is for the WORKSPACE, not the document.
-           // A separate call is required to scroll to the site of the target within the doc
-           var container = viewerGrid.getContainer(viewerUri);
-           if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
-           // IF view URI is the same as URI, this link is to a DOCUMENT. No need to scroll
-           if ( viewerUri != uri ) {
-              if ( container.viewer instanceof atb.viewer.CanvasViewer) {
-                 container.viewer.resourceZoom(resource);   
-              } else {
-                 container.viewer.selectAndMoveToSpecificResource(resource);
-              }
-           }
-        } else {
-           var deferredResource = this.databroker.getDeferredResource(uri);
+        var clone = viewerGrid.isOpen(resource.uri);
+           
+        var deferredResource = this.databroker.getDeferredResource(uri);
 
-           var viewerGrid = this.clientApp.viewerGrid;
-           var container = new atb.viewer.ViewerContainer(this.domHelper);
-           viewerGrid.addViewerContainerAt(viewerUri, container, viewerGrid.indexOf(this.viewer.container) + 1);
+        var viewerGrid = this.clientApp.viewerGrid;
+        var container = new atb.viewer.ViewerContainer(this.domHelper);
+        viewerGrid.addViewerContainerAt(viewerUri, container, viewerGrid.indexOf(this.viewer.container) + 1);
 
-           if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+        if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
 
-           var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
-           container.setViewer(viewer);
-
-           deferredResource.done(function() {
-               viewer.loadResourceByUri(uri);
-               if (this.databroker.projectController.userHasPermissionOverProject(
-                   this.databroker.user, this.uri, sc.data.ProjectController.PERMISSIONS.update)) {
-                  // Initial open of documents is ALWAYS read-only
-                  viewer.makeUneditable();
-                  viewer.lockStatus(uri,false,false,"","");
-               } else {
-                  if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
-                      if (viewer.makeUneditable) viewer.makeUneditable();
-                  }
+        deferredResource.done(function() {
+            var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
+            viewer.readOnlyClone = clone;
+            container.setViewer(viewer);
+           
+            if (!clone && this.databroker.projectController.userHasPermissionOverProject(null,null, sc.data.ProjectController.PERMISSIONS.update)) {
+               // Initial open of documents is ALWAYS read-only
+               viewer.makeUneditable();
+               viewer.lockStatus(resource.uri,false,false,"","");
+               viewer.loadResourceByUri(resource.uri);
+            } else {
+               if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
+                   if (viewer.makeUneditable) viewer.makeUneditable();
                }
-               container.autoResize();
-           }.bind(this));
-        }
+               viewer.loadResourceByUri(uri);
+            }
+            container.autoResize();
+        }.bind(this));
     }
 };
 

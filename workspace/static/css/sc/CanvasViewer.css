@@ -107,7 +107,7 @@
 .sc-CanvasViewer .sc-CanvasViewer-marquee {
    position: absolute;
    right: 4px;
-   bottom: 16px;
+   bottom: 6px;
    z-index: 1000;
    background-color: white;
    -moz-user-select: none;

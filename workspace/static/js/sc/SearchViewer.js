@@ -133,30 +133,29 @@ sc.SearchViewer.prototype._handleWorkingResourcesOpenRequest = function(event) {
 
 sc.SearchViewer.prototype.openViewerForResource = function(resource) {
     var resource = this.databroker.getResource(resource);
-    if ( this.viewerGrid.isOpen(resource.uri)) {
-       var container = this.viewerGrid.getContainer(resource.uri);
-       if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+    var clone = this.viewerGrid.isOpen(resource.uri);
+    
+
+    var container = new atb.viewer.ViewerContainer(this.domHelper);
+    this.viewerGrid.addViewerContainer(resource.uri, container);
+
+    if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+
+    var viewer = atb.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
+    viewer.readOnlyClone = clone;
+    container.setViewer(viewer);
+
+    if ( clone || !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
+        viewer.makeUneditable();
+        viewer.loadResourceByUri(resource.uri);
+        container.autoResize();
     } else {
-       var container = new atb.viewer.ViewerContainer(this.domHelper);
-       this.viewerGrid.addViewerContainer(resource.uri, container);
-   
-       if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
-   
-       var viewer = atb.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
-       container.setViewer(viewer);
-   
-       if ( !this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
-           viewer.makeUneditable();
-           viewer.loadResourceByUri(resource.uri);
-           container.autoResize();
-       } else {
-          // resources are ALWAYS locked when first opened
-          viewer.makeUneditable();
-          viewer.lockStatus(resource.uri,false,false,"","");
-          viewer.loadResourceByUri(resource.uri);
-          container.autoResize();
-          
-       }
+       // resources are ALWAYS locked when first opened
+       viewer.makeUneditable();
+       viewer.lockStatus(resource.uri,false,false,"","");
+       viewer.loadResourceByUri(resource.uri);
+       container.autoResize();
+       
     }
 };
 

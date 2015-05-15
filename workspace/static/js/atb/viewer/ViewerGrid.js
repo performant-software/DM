@@ -13,6 +13,7 @@ atb.viewer.ViewerGrid = function(opt_domHelper) {
 
    this.containers = {};
    this.wrappers = [];
+   this.clones = [];
 
    this.domHelper = opt_domHelper || new goog.dom.DomHelper();
    this.element = this.domHelper.createDom('div', {
@@ -46,28 +47,31 @@ atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, 
    var cleanUri = uri.replace("<", "").replace(">","");
    if (this.containers[cleanUri] == null) {
       this.containers[cleanUri] = container;
-      container.grid = this;
-
-      var wrapperEl = this.domHelper.createDom('div', {
-         'class' : 'atb-ViewerGrid-cell'
-      });
-      container.render(wrapperEl);
-
-      var wrapperAtIndex = this.wrappers[index];
-      if (wrapperAtIndex == null) {
-         $(this.element).append(wrapperEl);
-      } else {
-         $(wrapperAtIndex).before(wrapperEl);
-      }
-
-      container._gridWrapper = wrapperEl;
-
-      this.wrappers.splice(index,0,wrapperEl);
-
-      this._setAllContainerDimensions();
-
-      container.autoResize();
+   } else {
+      this.clones.push(container);
+      $(container.element).addClass("locked")
    }
+   container.grid = this;
+
+   var wrapperEl = this.domHelper.createDom('div', {
+      'class' : 'atb-ViewerGrid-cell'
+   });
+   container.render(wrapperEl);
+
+   var wrapperAtIndex = this.wrappers[index];
+   if (wrapperAtIndex == null) {
+      $(this.element).append(wrapperEl);
+   } else {
+      $(wrapperAtIndex).before(wrapperEl);
+   }
+
+   container._gridWrapper = wrapperEl;
+
+   this.wrappers.splice(index,0,wrapperEl);
+
+   this._setAllContainerDimensions();
+
+   container.autoResize();
 };
 
 atb.viewer.ViewerGrid.prototype.isOpen = function(uri) {
@@ -86,7 +90,12 @@ atb.viewer.ViewerGrid.prototype.removeViewerContainer = function(container) {
    var wrapper = container._gridWrapper;
    goog.array.remove(this.wrappers, wrapper);
 
-   delete this.containers[uri];
+   if (container.viewer.readOnlyClone == false) {
+      delete this.containers[uri];
+   } else {
+      var idx = this.clones.indexOf(container);
+      this.clones.splice(idx,1);
+   }
 
    jQuery(wrapper).detach();
    this._setAllContainerDimensions();
@@ -156,6 +165,9 @@ atb.viewer.ViewerGrid.prototype.resizeAllContainers = function() {
    $.each(this.containers, function(key, value) {
       value.autoResize();
    });
+   $.each(this.clones, function(idx, value) {
+      value.autoResize();
+   });
 };
 
 atb.viewer.ViewerGrid.prototype._onWindowResize = function(event) {
@@ -165,6 +177,9 @@ atb.viewer.ViewerGrid.prototype._onWindowResize = function(event) {
 
 atb.viewer.ViewerGrid.prototype.closeAllContainers = function() {
    $.each(this.containers, function(key, value) {
+      value.close();
+   });
+   $.each(this.clones, function(idx, value) {
       value.close();
    });
 };

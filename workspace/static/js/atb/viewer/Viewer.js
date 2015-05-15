@@ -33,6 +33,7 @@ goog.require('goog.events.KeyCodes');
 atb.viewer.Viewer = function (clientApp) {
     goog.events.EventTarget.call(this);
     this.showHoverTimerId = -1;
+    this.readOnlyClone = false;
     
     /** @type {string} */
     this.viewerType = 'viewer';
