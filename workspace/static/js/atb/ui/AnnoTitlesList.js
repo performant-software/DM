@@ -116,7 +116,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
         // Only open each resource ONCE
         var viewerGrid = this.clientApp.viewerGrid;
-        var clone = viewerGrid.isOpen(resource.uri);
+        var clone = viewerGrid.isOpen(viewerUri);
            
         var deferredResource = this.databroker.getDeferredResource(uri);
 
@@ -137,9 +137,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
                viewer.lockStatus(resource.uri,false,false,"","");
                viewer.loadResourceByUri(resource.uri);
             } else {
-               if (this.viewer && this.viewer.isEditable && !this.viewer.isEditable()) {
-                   if (viewer.makeUneditable) viewer.makeUneditable();
-               }
+               viewer.makeUneditable();
                viewer.loadResourceByUri(uri);
             }
             container.autoResize();
