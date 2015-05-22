@@ -86,6 +86,12 @@ atb.viewer.ViewerGrid.prototype.getContainer = function(uri) {
 
 atb.viewer.ViewerGrid.prototype.removeViewerContainer = function(container) {
    var uri = container.viewer.uri;
+   
+   // canvases don't have uri directly visible so uri will be undefined.
+   // In this case, call the getUri method to get it
+   if (!uri ) {
+      uri = container.viewer.getUri();
+   }
 
    var wrapper = container._gridWrapper;
    goog.array.remove(this.wrappers, wrapper);

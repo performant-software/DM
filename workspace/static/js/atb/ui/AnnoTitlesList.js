@@ -134,7 +134,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
             if (!clone && this.databroker.projectController.userHasPermissionOverProject(null,null, sc.data.ProjectController.PERMISSIONS.update)) {
                // Initial open of documents is ALWAYS read-only
                viewer.makeUneditable();
-               viewer.lockStatus(resource.uri,false,false,"","");
+               viewer.lockStatus(viewerUri,false,false,"","");
                viewer.loadResourceByUri(resource.uri);
             } else {
                viewer.makeUneditable();

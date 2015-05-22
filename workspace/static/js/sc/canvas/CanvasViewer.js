@@ -200,24 +200,6 @@ sc.canvas.CanvasViewer.prototype.setCanvas = function(canvas) {
             false,
             this
         );
-        canvas.addEventListener(
-            'featureShown',
-            function(event) {
-                var obj = marqueeCanvas.getFabricObjectByUri(event.uri);
-                obj.set('opacity', sc.canvas.CanvasViewer.MARQUEE_MARKER_SHOWN_OPACITY);
-            },
-            false,
-            this
-        );
-        canvas.addEventListener(
-            'featureHidden',
-            function(event) {
-                var obj = marqueeCanvas.getFabricObjectByUri(event.uri);
-                obj.set('opacity', sc.canvas.CanvasViewer.MARQUEE_MARKER_HIDDEN_OPACITY);
-            },
-            false,
-            this
-        );
     }.bind(this));
 
 

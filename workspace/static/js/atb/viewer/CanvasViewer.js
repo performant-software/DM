@@ -197,13 +197,14 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
     if (!this.isEditable()) {
         this.viewer.makeEditable();
         this._isEditable = true;
+        this.setTitleEditable(true);
     }
 };
 
 atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
     if (this.isEditable()) {
         this.viewer.makeUneditable();
-
+        this.setTitleEditable(false);
         this.enableHoverMenus();
 
         this._isEditable = false;
