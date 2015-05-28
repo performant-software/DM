@@ -102,7 +102,7 @@
  background-position-x: -576px;  	
 }
 
-#load-status {
+.text-edit-load-status {
    position: absolute;
    left: 0;
    right: 0;

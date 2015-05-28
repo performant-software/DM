@@ -454,7 +454,7 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
      $(this.toolbarDiv).append(saveStatusDiv);
 
      // Hook the toolbar into the field.
-     var myToolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
+     this.toolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
 };
 
 atb.viewer.TextEditor.prototype.handleSaveButtonClick_ = function (e) {
@@ -579,7 +579,7 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
       t.find(".goog-toolbar-menu-button").hide();
 
       if (this.field.getCleanContents().length == 0) {
-         $(this.rootDiv).append("<div id='load-status'>Loading...</div>");
+         $(this.rootDiv).append("<div class='text-edit-load-status' id='load-status-"+this.useID+"'>Loading...</div>");
       }
       
       if ( this.readOnlyClone ) {
@@ -612,9 +612,10 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     textEditorAnnotate.addListenersToAllHighlights();
                     $("#save-status-"+this.useID).text("Loaded");
                     
-                    $("#load-status").text("Loaded");
-                    $("#load-status").fadeOut(500, function() {
-                    	$("#load-status").remove();
+                    var loadStatus =  $("#load-status-"+this.useID);
+                    loadStatus.text("Loaded");
+                    loadStatus.fadeOut(500, function() {
+                       loadStatus.remove();
                     });
                     
                     if (opt_doAfter) {

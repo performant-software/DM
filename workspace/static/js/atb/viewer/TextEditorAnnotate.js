@@ -314,7 +314,16 @@ atb.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
  */
 atb.viewer.TextEditorAnnotate.prototype.queryCommandValue = function(command) {
     var isSelection = this.selectionIsAnnotation();
-    return isSelection;
+    var cnt = this.viewer.toolbarController.getToolbar().getChildCount();
+    if (isSelection) {
+       for (var i=1;i<cnt;i++) {
+          this.viewer.toolbarController.getToolbar().getChildAt(i).setEnabled(false);
+       }
+    } else {
+       for (var i=1;i<cnt;i++) {
+          this.viewer.toolbarController.getToolbar().getChildAt(i).setEnabled(true);
+       }
+    }
 };
 
 atb.viewer.TextEditorAnnotate.prototype.addListenersToAllHighlights = function () {
