@@ -1,5 +1,6 @@
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -9,7 +10,16 @@ from django.http import (
 )
 from django.views.decorators.csrf import csrf_protect
 import sys
+from semantic_store.models import LockedResource
 
+
+def unlock_all(user):
+    try:
+        print "Unlock all resources from %s" % user.username
+        LockedResource.objects.filter(user=user).delete()
+    except ObjectDoesNotExist:
+        pass
+    
 
 def sign_in(request):
     next_url = request.GET.get('next', settings.LOGIN_REDIRECT_URL)
@@ -24,6 +34,7 @@ def sign_in(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
+                unlock_all(user)
                 return redirect(next_url)
             else:
                 pass
