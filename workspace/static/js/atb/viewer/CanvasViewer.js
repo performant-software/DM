@@ -213,7 +213,9 @@ atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
            $(this.documentIcon).hide();
            var title = $(this.container.titleEl).closest(".atb-ViewerContainer-titleWrapper");
            title.addClass("read-only-clone");
-           $(title).append("<div class='clone-header'>Read-Only Copy</div>");
+           if ( this.databroker.projectController.canUserEditProject() ) {
+              $(title).append("<div class='clone-header'>Read-Only Copy</div>");
+           }
         }
     }
 };

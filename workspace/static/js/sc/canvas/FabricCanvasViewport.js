@@ -195,17 +195,20 @@ sc.canvas.FabricCanvasViewport.prototype.resize = function(width, height) {
         height = width.height;
         width = width.width;
     }
-
+    var heightHack = 20;
+    if ( height == 75 ) {
+       heightHack =0;
+    }
     var oldSize = this.size;
-    this.size = new goog.math.Size(width, height-20);
+    this.size = new goog.math.Size(width, height-heightHack);
 
-    jQuery(this.baseDiv).width(width).height(height-20);
+    jQuery(this.baseDiv).width(width).height(height-heightHack);
 
     if (! this.isEmpty()) {
         var center = this.getCenterCoord();
     }
 
-    this.fabricCanvas.setWidth(width).setHeight(height-20);
+    this.fabricCanvas.setWidth(width).setHeight(height-heightHack);
 
     if (center) {
         this.centerOnCanvasCoord(center);

@@ -94,6 +94,13 @@ sc.data.ProjectController.prototype.revokeAllPermissionsFromUser = function(user
     }, this);
 };
 
+sc.data.ProjectController.prototype.canUserEditProject = function() {
+   user = this.databroker.getResource(this.databroker.user);
+   var admin = user.hasProperty(sc.data.ProjectController.PERMISSIONS.administer, this.currentProject);
+   var update = user.hasProperty(sc.data.ProjectController.PERMISSIONS.update, this.currentProject);
+   return (admin || update);
+};
+
 sc.data.ProjectController.prototype.userHasPermissionOverProject = function(user, project, opt_permission) {
     user = this.databroker.getResource(user || this.databroker.user);
     project = this.databroker.getResource(project || this.currentProject);

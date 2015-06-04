@@ -231,7 +231,7 @@ sc.ProjectViewer.prototype.createProjectClicked = function() {
    var newProject = this.projectController.createProject(); 
    this.databroker.dataModel.setTitle(newProject, title);
    newProject.setProperty('dcterms:description', sc.data.Literal(description));
-
+   this.viewerGrid.closeAllContainers();
    this.projectController.selectProject(newProject);
    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
