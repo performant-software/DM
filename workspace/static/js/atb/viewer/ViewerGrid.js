@@ -185,7 +185,8 @@ atb.viewer.ViewerGrid.prototype.closeAllContainers = function() {
    $.each(this.containers, function(key, value) {
       value.close();
    });
-   $.each(this.clones, function(idx, value) {
+   var copy = this.clones.slice(0);
+   $.each(copy, function(idx, value) {
       value.close();
    });
 };

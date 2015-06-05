@@ -43,27 +43,23 @@ atb.resource.MarkerSummary.prototype.decorate = function() {
    this.viewport.render(this.imageDiv[0]);
 
    var showFeature = function(canvas) {
+      
+      var txt = this.databroker.dataModel.getTitle(canvas.uri);
+      $("#img-title").text(txt);
+  
+      $(".atb-markersummary-loadingSpinner").removeClass("atb-markersummary-loadingSpinner");
+      
       var featureUri = this.resource.getOneProperty('oa:hasSelector');
       var feature = canvas.getFabricObjectByUri(featureUri);
 
       if (feature) {
-         this.viewport.pauseRendering();
-
          canvas.hideMarkers();
          canvas.showObject(feature);
-
          this.viewport.zoomToFeatureByUri(featureUri);
-
-         this.viewport.resumeRendering();
       }
-      
-      var txt = this.databroker.dataModel.getTitle(canvas.uri);
-      $("#img-title").text(txt);
-      
-      $(".atb-markersummary-loadingSpinner").removeClass("atb-markersummary-loadingSpinner");
    }.bind(this);
 
-   deferredCanvas.progress(showFeature).always(showFeature);
+   deferredCanvas.progress(showFeature);
 
    $(this.div).append(this.imageDiv);
    var title = $("<div id='img-title'></div>");
