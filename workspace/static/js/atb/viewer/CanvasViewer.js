@@ -62,7 +62,7 @@ atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
     var self = this;
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
 
-    if (this.isEditable()) {
+    if ( this.databroker.projectController.canUserEditProject() &&  this.isEditable() ) {
         var menuButtons = [
             new atb.widgets.MenuItem(
                "createLink",
