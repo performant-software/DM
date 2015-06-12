@@ -359,8 +359,8 @@ atb.viewer.TextEditor.prototype.initStatusChecker = function() {
 
 atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-
-    if (this.isEditable()) {
+    
+    if ( this.databroker.projectController.canUserEditProject() &&  this.isEditable() ) {
         var menuItems = [
             new atb.widgets.MenuItem(
                 "createLink",
@@ -555,6 +555,7 @@ atb.viewer.TextEditor.prototype.makeEditable = function() {
       this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
       var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
       textEditorAnnotate.addListenersToAllHighlights();
+      this._addDocumentIconListeners();
       this.addGlobalEventListeners();
       this.initPasteHandling(); 
       var t = $("#save-status-" + this.useID).closest(".text-editor-toolbar");
@@ -573,6 +574,7 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
 
       var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
       textEditorAnnotate.addListenersToAllHighlights();
+      this._addDocumentIconListeners();
       
       var t = $("#save-status-" + this.useID).closest(".text-editor-toolbar");
       t.find(".goog-toolbar-button").hide();

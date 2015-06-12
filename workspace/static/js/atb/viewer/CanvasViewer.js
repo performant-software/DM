@@ -89,7 +89,6 @@ atb.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
         var menuButtons = [];
         this.setTitleEditable(false);
     }
-
     this.addHoverMenuListenersToElement(this.documentIcon, menuButtons, this.getUri.bind(this));
 };
 
@@ -198,6 +197,7 @@ atb.viewer.CanvasViewer.prototype.makeEditable = function() {
         this.viewer.makeEditable();
         this._isEditable = true;
         this.setTitleEditable(true);
+        this._addDocumentIconListeners();
     }
 };
 
@@ -208,6 +208,7 @@ atb.viewer.CanvasViewer.prototype.makeUneditable = function() {
         this.enableHoverMenus();
 
         this._isEditable = false;
+        this._addDocumentIconListeners();
 
         if ( this.readOnlyClone ) {
            $(this.documentIcon).hide();
