@@ -12,7 +12,7 @@ workspace/static/admin/*
 
 #python specific
 *.pyc
- 
+
 ## generic files to ignore
 *~
 \#*#
@@ -46,3 +46,6 @@ pip-selfcheck.json
 workspace/media
 /media/
 /PROD.ttl-orig
+
+# Vagrant
+.vagrant/

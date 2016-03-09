@@ -1,0 +1,19 @@
+---
+- name: restart nginx
+  service: name=nginx state=restarted enabled=yes
+
+- name: restart 4store
+  service: name=4store state=restarted enabled=yes
+
+- name: restart gunicorn
+  service: name=gunicorn state=restarted enabled=yes
+
+- name: django - collect static resources
+  django_manage: app_path=/dm command=collectstatic
+  sudo: yes
+  sudo_user: vagrant
+
+- name: django - sync database
+  django_manage: app_path=/dm command=syncdb
+  sudo: yes
+  sudo_user: vagrant

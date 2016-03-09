@@ -1,0 +1,12 @@
+---
+- name: install MySQL and its Python driver
+  apt: pkg={{ item }}
+  with_items:
+    - mysql-server
+    - python-mysqldb
+
+- name: create DM database user
+  mysql_user: name=dm password=dm priv="dm.*:ALL" state=present
+
+- name: create mysql databases
+  mysql_db: name=dm encoding=utf8 state=present

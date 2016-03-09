@@ -1,0 +1,11 @@
+CONFIG = {
+    'working_dir': '/dm',
+    'user': 'vagrant',
+    'group': 'vagrant',
+    'args': (
+        '--bind=0.0.0.0:8000',
+        '--workers=2',
+        '--timeout=600',
+        'wsgi',
+    ),
+}

@@ -1,0 +1,4 @@
+---
+- hosts: dm
+  roles:
+    - dm

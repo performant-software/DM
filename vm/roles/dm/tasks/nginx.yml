@@ -1,0 +1,3 @@
+---
+- name: install nginx
+  apt: pkg=nginx
