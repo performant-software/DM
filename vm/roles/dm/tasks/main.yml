@@ -1,4 +1,7 @@
 ---
+- name: update package manager cache
+  apt: update_cache=yes
+
 - include: 4store.yml
   tags: dm-4store
 
