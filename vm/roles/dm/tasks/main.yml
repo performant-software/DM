@@ -1,6 +1,15 @@
 ---
-- include: 4store.yml tags=dm-4store
-- include: mysql.yml tags=dm-mysql
-#- include: postgresql.yml tags=dm-postgresql
-- include: nginx.yml tags=dm-nginx
-- include: app.yml tags=dm-app
+- include: 4store.yml
+  tags: dm-4store
+
+- include: mysql.yml
+  tags: dm-mysql
+
+#- include: postgresql.yml
+#  tags: dm-postgresql
+
+- include: nginx.yml
+  tags: dm-nginx
+
+- include: app.yml
+  tags: dm-app

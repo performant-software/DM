@@ -7,10 +7,10 @@
 
 - name: create DM database user
   postgresql_user: name=dm password=dm
-  sudo: yes
-  sudo_user: postgres
+  become: yes
+  become_user: postgres
 
 - name: create DM database
   postgresql_db: name=dm owner=dm
-  sudo: yes
-  sudo_user: postgres
+  become: yes
+  become_user: postgres
