@@ -11,8 +11,8 @@
 
 - name: create DM knowledge base
   command: 4s-backend-setup dm creates=/var/lib/4store/dm/metadata.nt
-  sudo: yes
-  sudo_user: fourstore
+  become: yes
+  become_user: fourstore
   notify: restart 4store
 
 - name: make DM knowledge base the default
