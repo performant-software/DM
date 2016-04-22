@@ -5,6 +5,8 @@
     - git-core
     - python-pip
     - python-dev
+    - libjpeg-dev
+    - libjpeg8-dev
     - gunicorn
 
 - name: install Python dependencies of app
@@ -28,18 +30,18 @@
 
 - name: django - collect static resources
   django_manage: app_path=/dm command=collectstatic
-  sudo: yes
-  sudo_user: vagrant
+  become: yes
+  become_user: vagrant
 
 - name: django - sync database
   django_manage: app_path=/dm command=syncdb
-  sudo: yes
-  sudo_user: vagrant
+  become: yes
+  become_user: vagrant
 
 - name: django - migrate database
   django_manage: app_path=/dm command=migrate
-  sudo: yes
-  sudo_user: vagrant
+  become: yes
+  become_user: vagrant
 
 - name: configure gunicorn
   template: src=gunicorn-dm.j2 dest=/etc/gunicorn.d/dm
