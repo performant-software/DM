@@ -70,31 +70,22 @@ class FourStore(SPARQLUpdateStore):
 
     def _run_query(self, query):
         self.setQuery(query)
-        response = SPARQLWrapper.query(self).response
+        response = requests.post(settings.FOUR_STORE_URIS['SPARQL'], data={'query': query}).text
 
         try:
-            doc = ElementTree.parse(response)
+            doc = ElementTree.fromstring(response)
         except Exception as e:
-            if settings.DEBUG:
-                readable_response = requests.post(settings.FOUR_STORE_URIS['SPARQL'], data={'query': query})
-
-                response_text = utils.line_numbered_string(readable_response.text)
-
-                raise FourStoreException("Parsing Exception \"%s\"\nQuery: %s\nResponse:\n%s" % (e, query, response_text))
-            else:
-                raise FourStoreException("Parsing Exception \"%s\"\nQuery: %s" % (e, query))
+            raise FourStoreException("Parsing Exception \"%s\"\nQuery: %s\nResponse:\n%s" % (e, query, utils.line_numbered_string(response)))
 
         try:
-            dom = TraverseSPARQLResultDOM(doc, asDictionary=True)
+            return TraverseSPARQLResultDOM(doc, asDictionary=True)
         except Exception as e:
             raise FourStoreException("SPARQL DOM Traversal Exception \"%s\"" % e)
 
-        return TraverseSPARQLResultDOM(doc, asDictionary=True)
-
     def triples(self, (s, p, o), context=None):
         if ( isinstance(s, BNode) or
-             isinstance(p, BNode) or 
-             isinstance(o, BNode) ): 
+             isinstance(p, BNode) or
+             isinstance(o, BNode) ):
             raise Exception("SPARQLStore does not support Bnodes! See http://www.w3.org/TR/sparql11-query/#BGPsparqlBNodes")
 
         vars = []
@@ -129,8 +120,8 @@ class FourStore(SPARQLUpdateStore):
 
     def triples_choices(self, (s, p, o), context=None):
         if ( isinstance(s, BNode) or
-             isinstance(p, BNode) or 
-             isinstance(o, BNode) ): 
+             isinstance(p, BNode) or
+             isinstance(o, BNode) ):
             raise Exception("SPARQLStore does not support Bnodes! See http://www.w3.org/TR/sparql11-query/#BGPsparqlBNodes")
 
         vars = []
@@ -185,7 +176,7 @@ class FourStore(SPARQLUpdateStore):
                     context.identifier.n3())
             else:
                 q = "SELECT (count(*) as ?c) WHERE { GRAPH ?anygraph {?s ?p ?o .}}"
-            
+
             rt, vars = iter(self._run_query(q)).next()
             return int(rt.get(Variable("c")))
 
@@ -207,16 +198,7 @@ class FourStore(SPARQLUpdateStore):
         self.connection = httplib.HTTPConnection(self.host, self.port)
 
     def _do_update(self, update):
-        update = urllib.urlencode({'update': unicode(update).encode('utf-8')})
-
-        # Trying to deal with inexplicable CannotSendRequest errors
-        try:
-            self.connection.request('POST', self.path, update, self.headers)
-            return self.connection.getresponse()
-        except httplib.ImproperConnectionState as e:
-            self.reset_connection()
-            self.connection.request('POST', self.path, update, self.headers)
-            return self.connection.getresponse()
+        return requests.post(settings.FOUR_STORE_URIS['UPDATE'], data={'update': unicode(update).encode('utf-8')})
 
     def update(self, query,
                initNs={},
@@ -234,14 +216,11 @@ class FourStore(SPARQLUpdateStore):
 
         r = self._do_update(query)
         content = r.read()
-        if r.status not in (200, 204):
-            raise Exception("Could not update: %d %s\n%s" % (r.status, r.reason, content))
+        if r.status_code not in (200, 204):
+            raise Exception("Could not update: %d\n%s" % (r.status_code, r.text))
 
     def addN(self, quads):
         """ Add a list of quads to the store. """
-        if not self.connection:
-            raise Exception("UpdateEndpoint is not set - call 'open'")
-
         data = list()
         for subject, predicate, obj, context in quads:
             if ( isinstance(subject, BNode) or
@@ -253,9 +232,8 @@ class FourStore(SPARQLUpdateStore):
             triple = "%s %s %s ." % (subject.n3(), predicate.n3(), obj.n3())
             data.append("INSERT DATA { GRAPH <%s> { %s } };\n" % (context.identifier, triple))
         r = self._do_update(''.join(data))
-        if r.status not in (200, 204):
-            raise Exception("Could not update: %d %s\n%s" % (
-                r.status, r.reason, r.read()))
+        if r.status_code not in (200, 204):
+            raise Exception("Could not update: %d\n%s" % (r.status_code, r.text))
 
 class FourStoreException(Exception):
     pass

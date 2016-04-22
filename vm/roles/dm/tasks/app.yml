@@ -23,16 +23,28 @@
     - { name: "SPARQLWrapper", version: "1.7.6" }
     - { name: "SQLAlchemy", version: "0.9.4" }
 
-- name: configure app
+- name: django - configure app
   template: src=app-settings_local.py.j2 dest=/dm/settings_local.py owner=vagrant group=vagrant
-  notify:
-    - django - collect static resources
-    - django - sync database
 
-- name: configure gunicorn for app
+- name: django - collect static resources
+  django_manage: app_path=/dm command=collectstatic
+  sudo: yes
+  sudo_user: vagrant
+
+- name: django - sync database
+  django_manage: app_path=/dm command=syncdb
+  sudo: yes
+  sudo_user: vagrant
+
+- name: django - migrate database
+  django_manage: app_path=/dm command=migrate
+  sudo: yes
+  sudo_user: vagrant
+
+- name: configure gunicorn
   template: src=gunicorn-dm.j2 dest=/etc/gunicorn.d/dm
   notify: restart gunicorn
 
-- name: configure nginx for app
+- name: configure nginx
   template: src=nginx-dm.conf.j2 dest=/etc/nginx/conf.d/dm.conf
   notify: restart nginx
