@@ -1,0 +1,83 @@
+/* ATB stylesheet imports - All used stylesheets inside of ATB */
+
+@import url("atb/atb.css");
+@import url("atb/bezel.css");
+@import url("atb/editor.css");
+@import url("atb/editorframe.css");
+@import url("atb/markereditor.css");
+@import url("atb/resourceviewer.css");   /* TODO: clean this up soon */
+@import url("atb/verticaltoolbar.css");
+@import url("atb/preferences.css");
+@import url("atb/annoTitlesList.css");
+@import url("atb/viewer.css");
+@import url("atb/viewerthumbnailtimeline.css");
+@import url("atb/clientapp.css");
+@import url("atb/workingresources.css");
+/*@import url("atb/repositorybrowser.css");
+@import url("atb/breadcrumbs.css");*/
+@import url("atb/radialmenu.css");
+@import url("atb/grid.css");
+@import url("atb/audioviewer.css");
+
+@import url("sc/BreadCrumbs.css");
+@import url("sc/RepoBrowser.css");
+@import url("sc/CanvasViewer.css");
+@import url("sc/ProjectViewer.css");
+@import url("sc/SearchViewer.css");
+
+.atb-ui-viewer-simplemarkereditor-popupdiv
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	margin: 0;
+	padding: 0;
+}
+
+/** BEGIN GLASSPANE STYLES: **/
+
+	.atb-widgets-glasspane-common
+	{
+		width: 100%;
+		height: 100%;
+		top: 0px;
+		left: 0px;
+		margin: 0px;
+		padding: 0px;
+	}
+	/** Assertion: below classes must OVERRIDE the above one, at least for when atb-widgets-glasspane-glassPaneChildContainer conflicts with atb-widgets-glasspane-common... */
+	
+	.atb-widgets-glasspane-glassPane
+	{
+		position: absolute;
+	}
+	
+	.atb-widgets-glasspane-glassPaneEffect
+	{
+		position: fixed;
+		background-color: #000000;
+	}
+	
+	.atb-widgets-glasspane-glassPaneChildContainer
+	{
+		position: relative;
+		width: auto;
+		height: auto; /*Explicitly resset these */
+	}
+/** END GLASSPANE STYLES **/
+
+.atb-viewer-resourceviewer-unselectable-map-div
+{
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
+
+/*hack to fix modal dialog padding/margins:*/
+.modal-dialog-content
+{
+	margin: 0;
+	padding: 0;
+}
