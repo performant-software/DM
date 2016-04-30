@@ -3,6 +3,8 @@ package edu.drew.dm;
 import it.sauronsoftware.cron4j.Task;
 import it.sauronsoftware.cron4j.TaskExecutionContext;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.tdb.TDBFactory;
@@ -49,6 +51,17 @@ public class SemanticStore implements AutoCloseable {
 
     public Dataset getDataset() {
         return dataset;
+    }
+
+    public <T> T read(DatasetTransaction<T> tx) {
+        dataset.begin(ReadWrite.READ);
+        try {
+            final T result = tx.execute(dataset);
+            dataset.commit();
+            return result;
+        } finally {
+            dataset.end();
+        }
     }
 
     public SemanticStore withInitialData(List<String> sources) {
@@ -98,5 +111,15 @@ public class SemanticStore implements AutoCloseable {
             throw new IllegalArgumentException(dir.toString());
         }
         return dir;
+    }
+
+    public interface DatasetTransaction<T> {
+
+        default T execute(Dataset ds) {
+            return execute(ds.getDefaultModel());
+        }
+
+        T execute(Model model);
+
     }
 }

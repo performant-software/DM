@@ -35,17 +35,19 @@ public class Workspace {
 
     @Path("project_forward/")
     public Response projectForward() {
-        throw new ServiceUnavailableException("Not implemented");
+        throw Server.NOT_IMPLEMENTED;
 
     }
 
     @Path("add_image/")
     public Response addImage() {
-        throw new ServiceUnavailableException("Not implemented");
+        throw Server.NOT_IMPLEMENTED;
+
     }
 
     @Path("upload_image/")
     public Response uploadImage() {
-        throw new ServiceUnavailableException("Not implemented");
+        throw Server.NOT_IMPLEMENTED;
+
     }
 }

@@ -18,6 +18,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.mvc.freemarker.FreemarkerMvcFeature;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -129,9 +130,12 @@ public class Server {
                         bind(semanticStore).to(SemanticStore.class);
                     }
                 })
+                .register(Models.Reader.class)
+                .register(Models.Writer.class)
                 .register(Authentication.class)
                 .register(Logout.class)
                 .register(Root.class)
+                .register(Users.class)
                 .register(Workspace.class);
 
         final URI base = UriBuilder.fromUri("http://localhost/")
@@ -158,6 +162,8 @@ public class Server {
 
         return server;
     }
+
+    public static final ServiceUnavailableException NOT_IMPLEMENTED = new ServiceUnavailableException("Not implemented");
 
     @javax.ws.rs.Path("/")
     public static class Root {

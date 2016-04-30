@@ -9,16 +9,18 @@ import java.security.Principal;
 public class User implements SecurityContext, Principal {
 
     private final String account;
+    private final String uri;
     private final String firstName;
     private final String lastName;
     private final String email;
 
     public User(String account) {
-        this(account, "Joe", "Doe", "te@st.com");
+        this(account, "Joe", "Joe", "Doe", "te@st.com");
     }
 
-    public User(String account, String firstName, String lastName, String email) {
+    public User(String account, String uri, String firstName, String lastName, String email) {
         this.account = account;
+        this.uri = uri;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
