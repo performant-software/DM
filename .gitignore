@@ -49,3 +49,6 @@ workspace/media
 
 # Vagrant
 .vagrant/
+
+# Maven builds
+target/
