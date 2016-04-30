@@ -74,7 +74,7 @@
 
     var restBasePath = "${cp}/store";
 
-    initWorkspace(wsURI, mediawsURI, wsSameOriginURI, [#if user?has_content]"${user.username}"[#else]null[/#if],
+    initWorkspace(wsURI, mediawsURI, wsSameOriginURI, [#if user?has_content]"${user.name}"[#else]null[/#if],
             styleRoot, staticUrl, restBasePath);
 
 
@@ -121,7 +121,7 @@
 </script>
 [/#assign]
 
-[@base.page title="DM Workspace" headCss=headCss headScripts=headScripts headerButtons=headerButtons]
+[@base.page title="DM Workspace" headCss=headCss headScripts=headScripts headerButtons=headerButtons initScripts=initScripts]
 <div>
     <div id="grid">
 

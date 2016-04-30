@@ -75,7 +75,7 @@
                     <li id="user-dropdown" class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                             <span class="icon-user"></span>
-                            <span id="logged-in-user" title="${user.first_name?html} ${user.last_name?html}, ${user.email?html}">${user.username?html}</span>
+                            <span id="logged-in-user" title="${user.firstName?html} ${user.lastName?html}, ${user.email?html}">${user.account?html}</span>
                             <span id="logged-in-email" style="display:none">${user.email?html}</span>
                             <b class="caret"></b>
                         </a>
@@ -84,7 +84,7 @@
                                 <li><a id="create-user">Create User</a></li>
                                 <li class="divider"></li>
                             [/#if]
-                            <li><a href="${cp}/accounts/logout">Logout</a></li>
+                            <li><a href="${cp}/accounts/logout" onclick="document.execCommand && document.execCommand('ClearAuthenticationCache')">Logout</a></li>
                         </ul>
                     </li>
                 [#else]

@@ -129,6 +129,8 @@ public class Server {
                         bind(semanticStore).to(SemanticStore.class);
                     }
                 })
+                .register(Authentication.class)
+                .register(Logout.class)
                 .register(Root.class)
                 .register(Workspace.class);
 

@@ -1,6 +1,7 @@
 package edu.drew.dm;
 
 import joptsimple.OptionSet;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.mvc.Template;
 
 import javax.inject.Inject;
@@ -10,6 +11,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,10 +25,11 @@ public class Workspace {
     @GET
     @Produces("text/html")
     @Template(name = "/fluid_workspace/workspace.ftl")
-    public Map<String, Object> workspace(@Context UriInfo ui) {
+    public Map<String, Object> workspace(@Context UriInfo ui, @Context ContainerRequest cr) {
         final Map<String, Object> model = new HashMap<>();
         model.put("cp", ui.getBaseUri().getRawPath().replaceAll("/$", ""));
-        model.put("useCompiledJs", true);
+        model.put("user", cr.getSecurityContext());
+        model.put("useCompiledJs", false);
         return model;
     }
 
