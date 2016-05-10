@@ -25,12 +25,10 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.logging.LogManager;
 import java.util.stream.Collectors;
 
 /**
@@ -78,7 +76,7 @@ public class Server {
             return;
         }
 
-        configureLogging();
+        Logging.configure();
 
         final SemanticStore semanticStore = semanticStore(optionSet);
 
@@ -91,14 +89,6 @@ public class Server {
 
     private static void shutdownHook(Runnable hook) {
         Runtime.getRuntime().addShutdownHook(new Thread(hook));
-    }
-
-    private static void configureLogging() throws IOException {
-        if (System.getProperty("java.util.logging.config.file", "").isEmpty()) {
-            try (InputStream logConfig = Server.class.getResourceAsStream("/logging.properties")) {
-                LogManager.getLogManager().readConfiguration(logConfig);
-            }
-        }
     }
 
     private static SemanticStore semanticStore(OptionSet optionSet) {
