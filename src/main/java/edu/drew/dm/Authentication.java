@@ -15,6 +15,8 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Base64;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -25,6 +27,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Authentication implements ContainerRequestFilter {
 
     private final String[] PUBLIC_PATHS = { "/static", "/media" };
+
+    // FIXME: add cache expiration
+    private Map<String, User> cache = new ConcurrentHashMap<>();
+
     private final SemanticStore store;
 
     @Inject
@@ -41,54 +47,58 @@ public class Authentication implements ContainerRequestFilter {
             return;
         }
 
-
         final String auth = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
         if (auth == null) {
             throw UNAUTHORIZED;
         }
 
-        final String userPassword = new String(Base64.getDecoder().decode(auth.replaceFirst("[Bb]asic ", "").getBytes(UTF_8)), UTF_8);
-        final int colonIdx = userPassword.indexOf(":");
+        User agent = cache.get(auth);
+        if (agent == null) {
+            final String userPassword = new String(Base64.getDecoder().decode(auth.replaceFirst("[Bb]asic ", "").getBytes(UTF_8)), UTF_8);
+            final int colonIdx = userPassword.indexOf(":");
 
-        final String user = colonIdx > 0
-                ? userPassword.substring(0, colonIdx)
-                : "";
+            final String user = colonIdx > 0
+                    ? userPassword.substring(0, colonIdx)
+                    : "";
 
-        @SuppressWarnings("unused")
-        final String password = colonIdx >= 0 && colonIdx < userPassword.length()
-                ? userPassword.substring(colonIdx + 1)
-                : "";
+            @SuppressWarnings("unused")
+            final String password = colonIdx >= 0 && colonIdx < userPassword.length()
+                    ? userPassword.substring(colonIdx + 1)
+                    : "";
 
 
-        if (user.isEmpty() || password.isEmpty()) {
-            throw UNAUTHORIZED;
+            if (user.isEmpty() || password.isEmpty()) {
+                throw UNAUTHORIZED;
+            }
+
+            agent = store.query(
+                    Sparql.select()
+                            .addVar("?label").addVar("?agent").addVar("?mailbox")
+                            .addWhere("?agent", RDF.type, FOAF.Agent)
+                            .addWhere("?agent", RDFS.label, "?label")
+                            .addWhere("?agent", FOAF.mbox, "?mailbox")
+                            .addWhere("?agent", RDFS.label, NodeFactory.createLiteral(user))
+                            .build(),
+                    resultSet -> {
+                        if (resultSet.hasNext()) {
+                            final QuerySolution qs = resultSet.next();
+                            final String name = qs.getLiteral("label").toString();
+                            return new User(
+                                    name,
+                                    qs.getResource("agent").getURI(),
+                                    name,
+                                    name,
+                                    URI.create(qs.getResource("mailbox").getURI()).getSchemeSpecificPart()
+                            );
+                        }
+                        return null;
+                    }
+            );
+
         }
 
-        final User agent = store.query(
-                Sparql.select()
-                        .addVar("?label").addVar("?agent").addVar("?mailbox")
-                        .addWhere("?agent", RDF.type, FOAF.Agent)
-                        .addWhere("?agent", RDFS.label, "?label")
-                        .addWhere("?agent", FOAF.mbox, "?mailbox")
-                        .addWhere("?agent", RDFS.label, NodeFactory.createLiteral(user))
-                        .build(),
-                resultSet -> {
-                    if (resultSet.hasNext()) {
-                        final QuerySolution qs = resultSet.next();
-                        final String name = qs.getLiteral("label").toString();
-                        return new User(
-                                name,
-                                qs.getResource("agent").getURI(),
-                                name,
-                                name,
-                                URI.create(qs.getResource("mailbox").getURI()).getSchemeSpecificPart()
-                        );
-                    }
-                    return null;
-                }
-        );
-
         if (agent != null) {
+            cache.put(auth, agent);
             requestContext.setSecurityContext(agent);
             return;
         }
