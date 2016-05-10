@@ -1,9 +1,9 @@
 package edu.drew.dm;
 
 import edu.drew.dm.vocabulary.Perm;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -34,33 +34,31 @@ public class Users {
     @Path("/{user}")
     @GET
     public Model read(@PathParam("user") String user, @Context UriInfo ui) {
-        final Model model = ModelFactory.createDefaultModel();
+        final Model userDesc = Models.create();
+        final Node userLiteral = NodeFactory.createLiteral(user);
 
         store.query(
-                Sparql.select()
-                        .addVar("?s").addVar("?p").addVar("?o")
-                        .addWhere("?s", "?p", "?o")
+                Sparql.selectTriples()
                         .addWhere("?s", RDF.type, FOAF.Agent)
-                        .addWhere("?s", RDFS.label, NodeFactory.createLiteral(user))
+                        .addWhere("?s", RDFS.label, userLiteral)
                         .build(),
-                Sparql.resultSetInto(model)
+                Sparql.resultSetInto(userDesc)
         );
 
         store.query(
-                Sparql.select()
-                        .addVar("?s").addVar("?p").addVar("?o")
-                        .addWhere("?s", "?p", "?o")
-                        .addWhere("?s", RDF.type, DCTypes.Collection)
-                        .addWhere("?agent", RDF.type, FOAF.Agent)
-                        .addWhere("?agent", RDFS.label, NodeFactory.createLiteral(user))
-                        .addWhere("?agent", Perm.hasPermissionOver, "?s")
-                        .build(),
-                Sparql.resultSetInto(model)
+                Sparql.filterBasicProperties(
+                        Sparql.selectTriples()
+                                .addWhere("?s", RDF.type, DCTypes.Collection)
+                                .addWhere("?agent", RDF.type, FOAF.Agent)
+                                .addWhere("?agent", RDFS.label, userLiteral)
+                                .addWhere("?agent", Perm.hasPermissionOver, "?s")
+                ).build(),
+                Sparql.resultSetInto(userDesc)
         );
 
-        Projects.linked(model, ui);
+        Projects.linked(userDesc, ui);
 
-        return model;
+        return userDesc;
     }
 
 

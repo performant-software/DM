@@ -13,7 +13,7 @@ public class OpenArchivesTerms {
 
     public static final String NS = "http://www.openarchives.org/ore/terms/";
 
+    public static final Property aggregates = model.createProperty(NS, "aggregates");
+
     public static final Property isDescribedBy = model.createProperty(NS, "isDescribedBy");
-
-
 }

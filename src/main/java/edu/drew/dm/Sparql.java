@@ -1,51 +1,42 @@
 package edu.drew.dm;
 
-import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.sparql.vocabulary.FOAF;
-import org.apache.jena.vocabulary.DCTerms;
-import org.apache.jena.vocabulary.DCTypes;
-import org.apache.jena.vocabulary.DC_11;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 public class Sparql {
 
-    private static final Map<String, String> PREFIXES = new HashMap<>();
-
-    static {
-        PREFIXES.put("rdf", RDF.uri);
-        PREFIXES.put("rdfs", RDFS.uri);
-        PREFIXES.put("dc", DC_11.NS);
-        PREFIXES.put("dcterms", DCTerms.NS);
-        PREFIXES.put("dctypes", DCTypes.NS);
-        PREFIXES.put("foaf", FOAF.NS);
-
-        PREFIXES.put("exif", "http://www.w3.org/2003/12/exif/ns#");
-        PREFIXES.put("oa", "http://www.w3.org/ns/oa#");
-        PREFIXES.put("cnt08", "http://www.w3.org/2008/content#");
-        PREFIXES.put("prov", "http://www.w3.org/ns/prov#");
-        PREFIXES.put("skos", "http://www.w3.org/2004/02/skos/core#");
-        PREFIXES.put("trig", "http://www.w3.org/2004/03/trix/rdfg-1/");
-        PREFIXES.put("cnt", "http://www.w3.org/2011/content#");
-
-        PREFIXES.put("dm", "http://dm.drew.edu/ns/");
-        PREFIXES.put("dms", "http://dms.stanford.edu/ns/");
-        PREFIXES.put("sc", "http://www.shared-canvas.org/ns/");
-        PREFIXES.put("ore", "http://www.openarchives.org/ore/terms/");
-        PREFIXES.put("perm", Perm.NS);
-        PREFIXES.put("tei", "http://www.tei-c.org/ns/1.0/");
+    public static SelectBuilder select() {
+        return new SelectBuilder().addPrefixes(Models.PREFIXES);
     }
 
-    public static SelectBuilder select() {
-        return new SelectBuilder().addPrefixes(PREFIXES);
+    public static SelectBuilder selectTriples() {
+        return select()
+                .addVar("?s").addVar("?p").addVar("?o")
+                .addWhere("?s", "?p", "?o");
+    }
+
+    public static SelectBuilder filterBasicProperties(SelectBuilder selectBuilder) {
+        try {
+            return selectBuilder.addFilter(Stream.of(
+                    "rdf:type",
+                    "rdfs:label",
+                    "dc:title",
+                    "dcterms:description",
+                    "exif:width",
+                    "exif:height",
+                    "oa:exact",
+                    "ore:isDescribedBy"
+            ).map(prop -> "?p = " + prop.toString()).collect(Collectors.joining(" || ")));
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static SemanticStore.QueryResultHandler<Model> resultSetInto(Model model, String subjectVar, String propertyVar, String objectVar) {
