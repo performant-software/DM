@@ -38,21 +38,7 @@ public class Users {
                         .addWhere("?s", RDF.type, FOAF.Agent)
                         .addWhere("?s", RDFS.label, NodeFactory.createLiteral(user))
                         .build(),
-                resultSet -> {
-                    final Model model = ModelFactory.createDefaultModel();
-                    resultSet.forEachRemaining(qs -> {
-                        try {
-                            model.add(
-                                    qs.getResource("s").inModel(model),
-                                    model.createProperty(qs.getResource("p").getURI()),
-                                    qs.get("o").inModel(model)
-                            );
-                        } catch (Throwable t) {
-                            t.printStackTrace();
-                        }
-                    });
-                    return model;
-                }
+                Sparql.resultSetModel()
         );
     }
 
