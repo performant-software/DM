@@ -64,7 +64,7 @@ public class Models {
             if (model.isEmpty()) {
                 throw new NotFoundException();
             }
-            String lang = null;
+            String lang = "N-TRIPLE";
             if (mediaType.isCompatible(MediaType.valueOf("application/rdf+xml"))) {
                 lang = "RDF/XML";
             }
