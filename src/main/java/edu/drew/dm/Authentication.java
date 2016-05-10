@@ -1,8 +1,7 @@
 package edu.drew.dm;
 
-import com.sun.org.apache.regexp.internal.RE;
-import com.sun.xml.internal.messaging.saaj.util.Base64;
-import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -15,8 +14,10 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
+import java.util.Base64;
 import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -36,7 +37,7 @@ public class Authentication implements ContainerRequestFilter {
     public void filter(ContainerRequestContext requestContext) throws IOException {
         final String path = requestContext.getUriInfo().getPath();
 
-        if (path.isEmpty() || Stream.of(PUBLIC_PATHS).anyMatch(prefix -> path.startsWith(prefix))) {
+        if (path.isEmpty() || Stream.of(PUBLIC_PATHS).anyMatch(path::startsWith)) {
             return;
         }
 
@@ -46,37 +47,49 @@ public class Authentication implements ContainerRequestFilter {
             throw UNAUTHORIZED;
         }
 
-        final String userPassword = Base64.base64Decode(auth.replaceFirst("[Bb]asic ", ""));
+        final String userPassword = new String(Base64.getDecoder().decode(auth.replaceFirst("[Bb]asic ", "").getBytes(UTF_8)), UTF_8);
         final int colonIdx = userPassword.indexOf(":");
 
         final String user = colonIdx > 0
                 ? userPassword.substring(0, colonIdx)
-                : userPassword;
+                : "";
 
         @SuppressWarnings("unused")
         final String password = colonIdx >= 0 && colonIdx < userPassword.length()
                 ? userPassword.substring(colonIdx + 1)
-                : userPassword;
+                : "";
 
 
-        final List<User> agents = store.read(model -> model
-                .listSubjectsWithProperty(RDF.type, FOAF.Agent)
-                .filterKeep(agent -> agent.hasProperty(RDFS.label, user))
-                .mapWith(agent -> {
-                    final String label = agent.getProperty(RDFS.label).getObject().asLiteral().getString();
-                    final URI mail = URI.create(agent.getProperty(FOAF.mbox).getObject().asResource().toString());
-                    return new User(
-                            label,
-                            agent.getURI(),
-                            label,
-                            label,
-                            mail.getSchemeSpecificPart()
-                    );
-                })
-                .toList());
+        if (user.isEmpty() || password.isEmpty()) {
+            throw UNAUTHORIZED;
+        }
 
-        if (!agents.isEmpty()) {
-            requestContext.setSecurityContext(agents.stream().findFirst().orElseThrow(IllegalStateException::new));
+        final User agent = store.query(
+                Sparql.select()
+                        .addVar("?label").addVar("?agent").addVar("?mailbox")
+                        .addWhere("?agent", RDF.type, FOAF.Agent)
+                        .addWhere("?agent", RDFS.label, "?label")
+                        .addWhere("?agent", FOAF.mbox, "?mailbox")
+                        .addWhere("?agent", RDFS.label, NodeFactory.createLiteral(user))
+                        .build(),
+                resultSet -> {
+                    if (resultSet.hasNext()) {
+                        final QuerySolution qs = resultSet.next();
+                        final String name = qs.getLiteral("label").toString();
+                        return new User(
+                                name,
+                                qs.getResource("agent").getURI(),
+                                name,
+                                name,
+                                URI.create(qs.getResource("mailbox").getURI()).getSchemeSpecificPart()
+                        );
+                    }
+                    return null;
+                }
+        );
+
+        if (agent != null) {
+            requestContext.setSecurityContext(agent);
             return;
         }
 
@@ -86,7 +99,7 @@ public class Authentication implements ContainerRequestFilter {
     public static WebApplicationException unauthorized(String realm) {
         return new WebApplicationException(
                 Response.status(Response.Status.UNAUTHORIZED)
-                        .header(HttpHeaders.WWW_AUTHENTICATE, String.format("Basic realm=\"%s\"", REALM))
+                        .header(HttpHeaders.WWW_AUTHENTICATE, String.format("Basic realm=\"%s\"", realm))
                         .build()
         );
     }

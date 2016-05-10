@@ -3,8 +3,11 @@ package edu.drew.dm;
 import it.sauronsoftware.cron4j.Task;
 import it.sauronsoftware.cron4j.TaskExecutionContext;
 import org.apache.jena.query.Dataset;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ReadWrite;
-import org.apache.jena.rdf.model.Model;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.tdb.TDBFactory;
@@ -27,6 +30,7 @@ import java.util.zip.GZIPOutputStream;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 public class SemanticStore implements AutoCloseable {
+
     private static final Logger LOG = Logger.getLogger(SemanticStore.class.getName());
 
     private final File base;
@@ -62,6 +66,15 @@ public class SemanticStore implements AutoCloseable {
         } finally {
             dataset.end();
         }
+    }
+
+    public <T> T query(Query query, QueryResultHandler<T> resultHandler) {
+        return read(dataset -> {
+            LOG.fine(() -> String.join("\n", "", query.toString(), ""));
+            try (QueryExecution qe = QueryExecutionFactory.create(query, dataset)) {
+                return resultHandler.handle(qe.execSelect());
+            }
+        });
     }
 
     public SemanticStore withInitialData(List<String> sources) {
@@ -115,11 +128,11 @@ public class SemanticStore implements AutoCloseable {
 
     public interface DatasetTransaction<T> {
 
-        default T execute(Dataset ds) {
-            return execute(ds.getDefaultModel());
-        }
+        T execute(Dataset dataset);
 
-        T execute(Model model);
+    }
 
+    public interface QueryResultHandler<T> {
+        T handle(ResultSet resultSet);
     }
 }

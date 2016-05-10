@@ -1,5 +1,6 @@
 package edu.drew.dm;
 
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.vocabulary.FOAF;
@@ -30,14 +31,29 @@ public class Users {
     @Path("/{user}")
     @GET
     public Model readUser(@PathParam("user") String user) {
-        return ModelFactory.createDefaultModel().add(store.read(model -> model
-                .listSubjectsWithProperty(RDF.type, FOAF.Agent)
-                .filterKeep(agent -> agent.hasProperty(RDFS.label, user)))
-                .mapWith(agent -> agent.listProperties().toList())
-                .toList()
-                .stream()
-                .findFirst()
-                .orElseGet(Collections::emptyList));
+        return store.query(
+                Sparql.select()
+                        .addVar("?s").addVar("?p").addVar("?o")
+                        .addWhere("?s", "?p", "?o")
+                        .addWhere("?s", RDF.type, FOAF.Agent)
+                        .addWhere("?s", RDFS.label, NodeFactory.createLiteral(user))
+                        .build(),
+                resultSet -> {
+                    final Model model = ModelFactory.createDefaultModel();
+                    resultSet.forEachRemaining(qs -> {
+                        try {
+                            model.add(
+                                    qs.getResource("s").inModel(model),
+                                    model.createProperty(qs.getResource("p").getURI()),
+                                    qs.get("o").inModel(model)
+                            );
+                        } catch (Throwable t) {
+                            t.printStackTrace();
+                        }
+                    });
+                    return model;
+                }
+        );
     }
 
 
