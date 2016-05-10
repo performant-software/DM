@@ -70,7 +70,12 @@ public class SemanticStore implements AutoCloseable {
 
     public <T> T query(Query query, QueryResultHandler<T> resultHandler) {
         return read(dataset -> {
-            LOG.fine(() -> String.join("\n", "", query.toString(), ""));
+            LOG.fine(() -> String.join("\n",
+                    dataset.toString(),
+                    "----------------------------------------",
+                    query.toString(),
+                    "----------------------------------------"
+            ));
             try (QueryExecution qe = QueryExecutionFactory.create(query, dataset)) {
                 return resultHandler.handle(qe.execSelect());
             }

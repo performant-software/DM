@@ -126,6 +126,7 @@ public class Server {
                 .register(Logout.class)
                 .register(Root.class)
                 .register(Users.class)
+                .register(Projects.class)
                 .register(Workspace.class);
 
         final URI base = UriBuilder.fromUri("http://localhost/")
