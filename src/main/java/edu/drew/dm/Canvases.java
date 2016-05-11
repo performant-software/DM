@@ -50,6 +50,21 @@ public class Canvases {
         return canvasDesc;
     }
 
+    @Path("/{uri}/specific_resource/{resourceUri}")
+    @GET
+    public Model readSpecificResource(@PathParam("projectUri") String project, @PathParam("uri") String canvas, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
+
+        final Model resourceDesc = Models.create();
+
+        Projects.model(resourceDesc, store, NodeFactory.createURI(project));
+
+        Annotations.model(resourceDesc, store, NodeFactory.createURI(resourceUri));
+
+        Models.linked(resourceDesc, ui);
+
+        return resourceDesc;
+    }
+
     @Path("/{uri}")
     @PUT
     public Model update() {
@@ -58,20 +73,35 @@ public class Canvases {
 
     public static Model linked(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, SharedCanvas.Canvas).forEachRemaining(canvas -> {
-            model.removeAll(
-                    canvas,
-                    OpenArchivesTerms.isDescribedBy,
-                    null
-            );
+            model.removeAll(canvas, OpenArchivesTerms.isDescribedBy, null);
             model.listSubjectsWithProperty(OpenArchivesTerms.aggregates, canvas).forEachRemaining(project -> {
                 model.add(
                         canvas,
                         OpenArchivesTerms.isDescribedBy,
                         model.createResource(canvasResource(ui, project.getURI(), canvas.getURI()))
                 );
+
+                model.listSubjectsWithProperty(RDF.type, OpenAnnotation.SpecificResource).forEachRemaining(sr -> {
+                    model.removeAll(sr, OpenArchivesTerms.isDescribedBy, null);
+                    model.add(
+                            sr,
+                            OpenArchivesTerms.isDescribedBy,
+                            model.createResource(specificResource(ui, project.getURI(), canvas.getURI(), sr.getURI()))
+                    );
+                });
             });
         });
         return model;
+    }
+
+    private static String specificResource(UriInfo ui, String projectUri, String canvasUri, String resourceUri) {
+        return ui.getBaseUriBuilder()
+                .path(Canvases.class)
+                .path(Canvases.class, "readSpecificResource")
+                .resolveTemplate("projectUri", projectUri)
+                .resolveTemplate("uri", canvasUri)
+                .resolveTemplate("resourceUri", resourceUri)
+                .build().toString();
     }
 
     private static String canvasResource(UriInfo ui, String projectUri, String uri) {

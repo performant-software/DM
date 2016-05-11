@@ -146,6 +146,7 @@ public class Models {
         Users.linked(model, ui);
         Projects.linked(model, ui);
         Canvases.linked(model, ui);
+        Texts.linked(model, ui);
         Images.linked(model, ui);
 
         return model;

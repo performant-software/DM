@@ -7,6 +7,7 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.ValueConverter;
 import joptsimple.util.PathConverter;
+import org.glassfish.grizzly.http.CompressionConfig;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandlerRegistration;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -14,7 +15,9 @@ import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.filter.EncodingFilter;
 import org.glassfish.jersey.server.mvc.freemarker.FreemarkerMvcFeature;
 
 import javax.ws.rs.GET;
@@ -125,10 +128,13 @@ public class Server {
                 .register(Authentication.class)
                 .register(Logout.class)
                 .register(Root.class)
-                .register(Canvases.class)
+                .register(Workspace.class)
                 .register(Users.class)
                 .register(Projects.class)
-                .register(Workspace.class);
+                .register(Canvases.class)
+                .register(Texts.class);
+
+        EncodingFilter.enableFor(webAppConfig, GZipEncoder.class);
 
         final URI base = UriBuilder.fromUri("http://localhost/")
                 .path(CONTEXT_PATH_OPT.value(optionSet) + "/")
