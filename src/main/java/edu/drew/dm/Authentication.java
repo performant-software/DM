@@ -67,7 +67,7 @@ public class Authentication implements ContainerRequestFilter {
                     : "";
 
 
-            if (user.isEmpty() || password.isEmpty()) {
+            if (user.isEmpty() || password.isEmpty() || !user.equals(password)) {
                 throw UNAUTHORIZED;
             }
 
