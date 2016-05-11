@@ -93,6 +93,7 @@ public class SemanticStore implements AutoCloseable {
     public SemanticStore withInitialData(List<String> sources) {
         if (dataset.getDefaultModel().isEmpty()) {
             TDBLoader.load((GraphTDB) dataset.getDefaultModel().getGraph(), sources, true);
+            Sanitizer.clean(this);
         }
         return this;
     }
