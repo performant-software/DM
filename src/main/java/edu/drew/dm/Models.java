@@ -1,9 +1,17 @@
 package edu.drew.dm;
 
 import edu.drew.dm.vocabulary.Perm;
+import org.apache.jena.rdf.model.AnonId;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.RDFVisitor;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
@@ -14,6 +22,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
 import java.io.IOException;
@@ -23,6 +32,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -105,7 +115,7 @@ public class Models {
             if (model.isEmpty()) {
                 throw new NotFoundException();
             }
-            String lang = "N-TRIPLE";
+            String lang = "N3";
             if (mediaType.isCompatible(MediaType.valueOf("application/rdf+xml"))) {
                 lang = "RDF/XML";
             }
@@ -128,4 +138,54 @@ public class Models {
             model.write(entityStream, lang);
         }
     }
+
+    public static Model linked(Model model, UriInfo ui) {
+        Users.linked(model, ui);
+        Projects.linked(model, ui);
+        Images.linked(model, ui);
+        return model;
+    }
+
+    public static Model renameResources(Model model, Function<Resource, String>... mappings) {
+        final Map<Resource, String> mappedUris = new HashMap<>();
+        for (final StmtIterator statements = model.listStatements(); statements.hasNext(); ) {
+            final Statement stmt = statements.nextStatement();
+            final RDFNode[] nodes = new RDFNode[] {
+                    stmt.getSubject(),
+                    stmt.getPredicate(),
+                    stmt.getObject()
+            };
+            for (RDFNode node : nodes) {
+                node.visitWith(new RDFVisitor() {
+                    @Override
+                    public Object visitBlank(Resource r, AnonId id) {
+                        return null;
+                    }
+
+                    @Override
+                    public Object visitURI(Resource r, String uri) {
+                        for (Function<Resource, String> mapping : mappings) {
+                            final String mapped = mapping.apply(r);
+                            if (!mapped.equals(uri)) {
+                                mappedUris.put(r, mapped);
+                            }
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public Object visitLiteral(Literal l) {
+                        return null;
+                    }
+                });
+            }
+        }
+
+        for (Map.Entry<Resource, String> mapped : mappedUris.entrySet()) {
+            ResourceUtils.renameResource(mapped.getKey(), mapped.getValue());
+        }
+
+        return model;
+    }
+
 }

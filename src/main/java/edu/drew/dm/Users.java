@@ -1,5 +1,6 @@
 package edu.drew.dm;
 
+import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -17,6 +18,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -57,15 +59,42 @@ public class Users {
                 Sparql.resultSetInto(userDesc)
         );
 
-        Projects.linked(userDesc, ui);
-
-        return userDesc;
+        return Models.linked(userDesc, ui);
     }
-
 
     @Path("/{user}")
     @PUT
     public Model update(@PathParam("user") String user, Model model) {
         throw Server.NOT_IMPLEMENTED;
     }
+
+    public static Model linked(Model model, UriInfo ui) {
+        model.listSubjectsWithProperty(RDF.type, FOAF.Agent).forEachRemaining(agent -> {
+            model.removeAll(
+                    agent,
+                    OpenArchivesTerms.isDescribedBy,
+                    null
+            );
+            model.add(
+                    agent,
+                    OpenArchivesTerms.isDescribedBy,
+                    model.createResource(userResource(ui, agent.getRequiredProperty(RDFS.label).getString()))
+            );
+        });
+        return Models.renameResources(model, (r -> {
+            final String uri = r.getURI();
+            final URI parsed = URI.create(uri);
+            return "user".equals(parsed.getScheme()) ? userResource(ui, parsed.getSchemeSpecificPart()) : uri;
+        }));
+    }
+
+    private static String userResource(UriInfo ui, String user) {
+        return ui.getBaseUriBuilder()
+                .path(Users.class)
+                .path(Users.class, "read")
+                .resolveTemplate("user", user)
+                .build().toString();
+    }
+
+
 }

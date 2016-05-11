@@ -185,6 +185,7 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
 
    if (opt_restBasePath) {
       var syncService = new sc.data.SyncService({
+         'dmBaseUri': window.location.href.replace(/\/workspace.*/, "/store"),
          'restBasePath' : opt_restBasePath
       });
       databrokerOptions['syncService'] = syncService;

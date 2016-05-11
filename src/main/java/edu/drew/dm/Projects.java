@@ -16,7 +16,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
@@ -56,6 +55,14 @@ public class Projects {
 
         store.query(
                 Sparql.selectTriples()
+                        .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
+                        .addWhere("?s", OpenAnnotation.hasTarget, "?canvas")
+                        .build(),
+                Sparql.resultSetInto(projectDesc)
+        );
+
+        store.query(
+                Sparql.selectTriples()
                         .addWhere("?s", RDF.type, "?imageType")
                         .addWhere("?imageAnnotation", OpenAnnotation.hasTarget, "?canvas")
                         .addWhere("?imageAnnotation", OpenAnnotation.hasBody, "?s")
@@ -65,9 +72,7 @@ public class Projects {
                 Sparql.resultSetInto(projectDesc)
         );
 
-        Projects.linked(projectDesc, ui);
-
-        return projectDesc;
+        return Models.linked(projectDesc, ui);
     }
 
     @POST
@@ -97,14 +102,17 @@ public class Projects {
             model.add(
                     project,
                     OpenArchivesTerms.isDescribedBy,
-                    model.createResource(ui.getBaseUriBuilder()
-                            .path(Projects.class)
-                            .path(Projects.class, "read")
-                            .resolveTemplate("uri", project.getURI())
-                            .build().toString()
-                    )
+                    model.createResource(projectResource(ui, project.getURI()))
             );
         });
         return model;
+    }
+
+    private static String projectResource(UriInfo ui, String uri) {
+        return ui.getBaseUriBuilder()
+                .path(Projects.class)
+                .path(Projects.class, "read")
+                .resolveTemplate("uri", uri)
+                .build().toString();
     }
 }

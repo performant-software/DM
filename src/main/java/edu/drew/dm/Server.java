@@ -145,7 +145,7 @@ public class Server {
         );
         serverConfig.addHttpHandler(
                 new StaticHttpHandler(semanticStore.getImages().getAbsolutePath()),
-                HttpHandlerRegistration.builder().contextPath(contextPath + "/media/user_images/uploaded_images").build()
+                HttpHandlerRegistration.builder().contextPath(contextPath + "/images").build()
         );
 
         shutdownHook(server::shutdown);
