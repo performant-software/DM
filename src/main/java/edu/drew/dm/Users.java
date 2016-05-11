@@ -4,6 +4,7 @@ import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -33,7 +34,7 @@ public class Users {
 
     @Path("/{user}")
     @GET
-    public Model read(@PathParam("user") String user, @Context UriInfo ui) {
+    public Model read(@PathParam("user") String user, @Context UriInfo ui) throws ParseException {
         final Model userDesc = Models.create();
         final Node userLiteral = NodeFactory.createLiteral(user);
 
@@ -46,13 +47,13 @@ public class Users {
         );
 
         store.query(
-                Sparql.filterBasicProperties(
-                        Sparql.selectTriples()
-                                .addWhere("?s", RDF.type, DCTypes.Collection)
-                                .addWhere("?agent", RDF.type, FOAF.Agent)
-                                .addWhere("?agent", RDFS.label, userLiteral)
-                                .addWhere("?agent", Perm.hasPermissionOver, "?s")
-                ).build(),
+                Sparql.selectTriples()
+                        .addWhere("?s", RDF.type, DCTypes.Collection)
+                        .addWhere("?agent", RDF.type, FOAF.Agent)
+                        .addWhere("?agent", RDFS.label, userLiteral)
+                        .addWhere("?agent", Perm.hasPermissionOver, "?s")
+                        .addFilter(Sparql.basicProperties("?p"))
+                        .build(),
                 Sparql.resultSetInto(userDesc)
         );
 

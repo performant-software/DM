@@ -2,7 +2,6 @@ package edu.drew.dm;
 
 import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.sparql.lang.sparql_11.ParseException;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,23 +21,22 @@ public class Sparql {
                 .addWhere("?s", "?p", "?o");
     }
 
-    public static SelectBuilder filterBasicProperties(SelectBuilder selectBuilder) {
-        try {
-            return selectBuilder.addFilter(Stream.of(
-                    "rdf:type",
-                    "rdfs:label",
-                    "dc:title",
-                    "dcterms:description",
-                    "exif:width",
-                    "exif:height",
-                    "oa:exact",
-                    "ore:isDescribedBy"
-            ).map(prop -> "?p = " + prop.toString()).collect(Collectors.joining(" || ")));
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+    public static String propertyFilter(String propertyVar, String... acceptedValues) {
+        return Stream.of(acceptedValues).map(value -> String.join(" = ", propertyVar, value)).collect(Collectors.joining(" || "));
     }
 
+    public static String basicProperties(String propertyVar) {
+        return propertyFilter(propertyVar,
+                "rdf:type",
+                "rdfs:label",
+                "dc:title",
+                "dcterms:description",
+                "exif:width",
+                "exif:height",
+                "oa:exact",
+                "ore:isDescribedBy"
+        );
+    }
     public static SemanticStore.QueryResultHandler<Model> resultSetInto(Model model, String subjectVar, String propertyVar, String objectVar) {
         return (resultSet -> {
             resultSet.forEachRemaining(qs -> model.add(

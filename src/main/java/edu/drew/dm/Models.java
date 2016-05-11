@@ -36,7 +36,7 @@ public class Models {
         PREFIXES.put("rdfs", RDFS.uri);
         PREFIXES.put("dc", DC_11.NS);
         PREFIXES.put("dcterms", DCTerms.NS);
-        PREFIXES.put("dctypes", DCTypes.NS);
+        PREFIXES.put("dcmitype", DCTypes.NS);
         PREFIXES.put("foaf", FOAF.NS);
 
         PREFIXES.put("exif", "http://www.w3.org/2003/12/exif/ns#");

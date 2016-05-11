@@ -1,5 +1,6 @@
 package edu.drew.dm;
 
+import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -15,6 +16,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
@@ -38,20 +40,32 @@ public class Projects {
         final Model projectDesc = Models.create();
 
         store.query(
-                Sparql.filterBasicProperties(
-                        Sparql.selectTriples().addFilter("?s = <" + projectUri + ">")
-                ).build(),
+                Sparql.selectTriples()
+                        .addFilter("?s = <" + projectUri + ">")
+                        .build(),
                 Sparql.resultSetInto(projectDesc)
         );
 
         store.query(
-                Sparql.filterBasicProperties(
-                        Sparql.selectTriples().addWhere(projectUri, OpenArchivesTerms.aggregates, "?s")
-                ).build(),
+                Sparql.selectTriples()
+                        .addWhere(projectUri, OpenArchivesTerms.aggregates, "?s")
+                        .addFilter(Sparql.basicProperties("?p"))
+                        .build(),
                 Sparql.resultSetInto(projectDesc)
         );
 
-        linked(projectDesc, ui);
+        store.query(
+                Sparql.selectTriples()
+                        .addWhere("?s", RDF.type, "?imageType")
+                        .addWhere("?imageAnnotation", OpenAnnotation.hasTarget, "?canvas")
+                        .addWhere("?imageAnnotation", OpenAnnotation.hasBody, "?s")
+                        .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
+                        .addFilter(Sparql.propertyFilter("?imageType", "dcmitype:Image", "dms:Image", "dms:ImageChoice"))
+                        .build(),
+                Sparql.resultSetInto(projectDesc)
+        );
+
+        Projects.linked(projectDesc, ui);
 
         return projectDesc;
     }
