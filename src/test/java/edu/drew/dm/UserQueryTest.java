@@ -16,9 +16,7 @@ public class UserQueryTest extends SemanticStoreTestBase {
     public void queryUser() {
         final Model userModel = Models.create();
         semanticStore.query(
-                Sparql.select()
-                        .addVar("?s").addVar("?p").addVar("?o")
-                        .addWhere("?s", "?p", "?o")
+                Sparql.selectTriples()
                         .addWhere("?s", RDF.type, FOAF.Agent)
                         .addWhere("?s", RDFS.label, NodeFactory.createLiteral("lou"))
                         .build(),
