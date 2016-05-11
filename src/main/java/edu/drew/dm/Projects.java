@@ -1,6 +1,5 @@
 package edu.drew.dm;
 
-import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.graph.Node;
@@ -39,12 +38,7 @@ public class Projects {
         final Node projectUri = NodeFactory.createURI(uri);
         final Model projectDesc = Models.create();
 
-        store.query(
-                Sparql.selectTriples()
-                        .addFilter("?s = <" + projectUri + ">")
-                        .build(),
-                Sparql.resultSetInto(projectDesc)
-        );
+        Projects.model(projectDesc, store, projectUri);
 
         store.query(
                 Sparql.selectTriples()
@@ -61,24 +55,7 @@ public class Projects {
                 Sparql.resultSetInto(projectDesc)
         );
 
-        store.query(
-                Sparql.selectTriples()
-                        .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
-                        .addWhere("?s", OpenAnnotation.hasTarget, "?canvas")
-                        .build(),
-                Sparql.resultSetInto(projectDesc)
-        );
-
-        store.query(
-                Sparql.selectTriples()
-                        .addWhere("?s", RDF.type, "?imageType")
-                        .addWhere("?imageAnnotation", OpenAnnotation.hasTarget, "?canvas")
-                        .addWhere("?imageAnnotation", OpenAnnotation.hasBody, "?s")
-                        .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
-                        .addFilter(Sparql.propertyFilter("?imageType", "dcmitype:Image", "dms:Image", "dms:ImageChoice"))
-                        .build(),
-                Sparql.resultSetInto(projectDesc)
-        );
+        Canvases.model(projectDesc, store, projectUri);
 
         return Models.linked(projectDesc, ui);
     }
@@ -98,6 +75,16 @@ public class Projects {
     @DELETE
     public Model delete(@PathParam("uri") String uri) {
         throw Server.NOT_IMPLEMENTED;
+    }
+
+    public static Model model(Model model, SemanticStore store, Node projectUri) throws ParseException {
+        store.query(
+                Sparql.selectTriples()
+                        .addFilter("?s = <" + projectUri + ">")
+                        .build(),
+                Sparql.resultSetInto(model)
+        );
+        return model;
     }
 
     public static Model linked(Model model, UriInfo ui) {

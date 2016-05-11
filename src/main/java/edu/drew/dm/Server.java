@@ -125,6 +125,7 @@ public class Server {
                 .register(Authentication.class)
                 .register(Logout.class)
                 .register(Root.class)
+                .register(Canvases.class)
                 .register(Users.class)
                 .register(Projects.class)
                 .register(Workspace.class);

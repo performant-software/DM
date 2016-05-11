@@ -1,6 +1,9 @@
 package edu.drew.dm;
 
+import edu.drew.dm.vocabulary.OpenAnnotation;
+import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
+import edu.drew.dm.vocabulary.SharedCanvas;
 import org.apache.jena.rdf.model.AnonId;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -50,7 +53,7 @@ public class Models {
         PREFIXES.put("foaf", FOAF.NS);
 
         PREFIXES.put("exif", "http://www.w3.org/2003/12/exif/ns#");
-        PREFIXES.put("oa", "http://www.w3.org/ns/oa#");
+        PREFIXES.put("oa", OpenAnnotation.NS);
         PREFIXES.put("cnt08", "http://www.w3.org/2008/content#");
         PREFIXES.put("prov", "http://www.w3.org/ns/prov#");
         PREFIXES.put("skos", "http://www.w3.org/2004/02/skos/core#");
@@ -59,8 +62,8 @@ public class Models {
 
         PREFIXES.put("dm", "http://dm.drew.edu/ns/");
         PREFIXES.put("dms", "http://dms.stanford.edu/ns/");
-        PREFIXES.put("sc", "http://www.shared-canvas.org/ns/");
-        PREFIXES.put("ore", "http://www.openarchives.org/ore/terms/");
+        PREFIXES.put("sc", SharedCanvas.NS);
+        PREFIXES.put("ore", OpenArchivesTerms.NS);
         PREFIXES.put("perm", Perm.NS);
         PREFIXES.put("tei", "http://www.tei-c.org/ns/1.0/");
     }
@@ -142,7 +145,9 @@ public class Models {
     public static Model linked(Model model, UriInfo ui) {
         Users.linked(model, ui);
         Projects.linked(model, ui);
+        Canvases.linked(model, ui);
         Images.linked(model, ui);
+
         return model;
     }
 
