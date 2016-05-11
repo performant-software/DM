@@ -17,6 +17,8 @@ public class OpenAnnotation {
 
     public static final Resource Annotation = model.createResource(NS + "Annotation");
 
+    public static final Property hasSource = model.createProperty(NS, "hasSource");
+
     public static final Property hasTarget = model.createProperty(NS, "hasTarget");
 
     public static final Property hasBody = model.createProperty(NS, "hasBody");

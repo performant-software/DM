@@ -34,13 +34,16 @@ public class Canvases {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String project, @PathParam("uri") String canvas, @Context UriInfo ui) throws ParseException {
-        final Model canvasDesc = Models.create();
-
         final Node projectUri = NodeFactory.createURI(project);
+        final Node canvasUri = NodeFactory.createURI(canvas);
+
+        final Model canvasDesc = Models.create();
 
         Projects.model(canvasDesc, store, projectUri);
 
-        Canvases.model(canvasDesc, store, projectUri, NodeFactory.createURI(canvas));
+        Canvases.model(canvasDesc, store, projectUri, canvasUri);
+
+        Annotations.model(canvasDesc, store, canvasUri);
 
         Models.linked(canvasDesc, ui);
 
@@ -85,11 +88,11 @@ public class Canvases {
     }
 
     public static Model model(Model model, SemanticStore store, Node projectUri, Node canvasUri) throws ParseException {
-        SelectBuilder canvasQuery = Sparql.selectTriples()
+        final SelectBuilder canvasQuery = Sparql.selectTriples()
                 .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
                 .addWhere("?s", OpenAnnotation.hasTarget, "?canvas");
 
-        SelectBuilder imageQuery = Sparql.selectTriples()
+        final SelectBuilder imageQuery = Sparql.selectTriples()
                 .addWhere("?s", RDF.type, "?imageType")
                 .addWhere("?imageAnnotation", OpenAnnotation.hasTarget, "?canvas")
                 .addWhere("?imageAnnotation", OpenAnnotation.hasBody, "?s")
@@ -97,8 +100,16 @@ public class Canvases {
                 .addFilter(Sparql.propertyFilter("?imageType", "dcmitype:Image", "dms:Image", "dms:ImageChoice"));
 
         if (canvasUri != null) {
-            canvasQuery = canvasQuery.addFilter("?canvas = <" + canvasUri.toString() + ">");
-            imageQuery.addFilter("?canvas = <" + canvasUri.toString() + ">");
+            final String filterUri = "<" + canvasUri.toString() + ">";
+            store.query(
+                    Sparql.selectTriples()
+                        .addWhere("?s", RDF.type, SharedCanvas.Canvas)
+                        .addFilter("?s = " + filterUri)
+                    .build(),
+                    Sparql.resultSetInto(model)
+            );
+            canvasQuery.addFilter("?canvas = " + filterUri);
+            imageQuery.addFilter("?canvas = " + filterUri);
         }
 
         store.query(canvasQuery.build(), Sparql.resultSetInto(model));
