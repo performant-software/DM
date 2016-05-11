@@ -7,7 +7,6 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.ValueConverter;
 import joptsimple.util.PathConverter;
-import org.glassfish.grizzly.http.CompressionConfig;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandlerRegistration;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -133,8 +132,6 @@ public class Server {
                 .register(Projects.class)
                 .register(Canvases.class)
                 .register(Texts.class);
-
-        EncodingFilter.enableFor(webAppConfig, GZipEncoder.class);
 
         final URI base = UriBuilder.fromUri("http://localhost/")
                 .path(CONTEXT_PATH_OPT.value(optionSet) + "/")
