@@ -2,6 +2,7 @@ package edu.drew.dm;
 
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
+import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
@@ -41,6 +42,13 @@ public class Projects {
         store.query(
                 Sparql.selectTriples()
                         .addFilter("?s = <" + projectUri + ">")
+                        .build(),
+                Sparql.resultSetInto(projectDesc)
+        );
+
+        store.query(
+                Sparql.selectTriples()
+                        .addWhere("?s", Perm.hasPermissionOver, projectUri)
                         .build(),
                 Sparql.resultSetInto(projectDesc)
         );
