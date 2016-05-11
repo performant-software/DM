@@ -58,7 +58,15 @@ public class SemanticStore implements AutoCloseable {
     }
 
     public <T> T read(DatasetTransaction<T> tx) {
-        dataset.begin(ReadWrite.READ);
+        return transaction(ReadWrite.READ, tx);
+    }
+
+    public <T> T write(DatasetTransaction<T> tx) {
+       return transaction(ReadWrite.WRITE, tx);
+    }
+
+    public <T> T transaction(ReadWrite rw, DatasetTransaction<T> tx) {
+        dataset.begin(rw);
         try {
             final T result = tx.execute(dataset);
             dataset.commit();
@@ -110,8 +118,10 @@ public class SemanticStore implements AutoCloseable {
     }
 
     public SemanticStore writeDataset(OutputStream to) {
-        RDFDataMgr.write(to, dataset, Lang.NQUADS);
-        return this;
+        return write(dataset -> {
+            RDFDataMgr.write(to, dataset, Lang.NQUADS);
+            return this;
+        });
     }
 
     @Override
