@@ -158,7 +158,7 @@ function testTouchEventHandling() {
   assertEquals(target, touchCancel.target);
 }
 
-function createBrowserEvent(type, button, opt_ctrlKey) {
+function createMouseEvent(type, button, opt_ctrlKey) {
   return new goog.events.BrowserEvent({
     type: type,
     button: button,
