@@ -31,8 +31,16 @@ public class Texts {
 
     @Path("/{uri}")
     @GET
-    public Model read(@PathParam("projectUri") String project, @PathParam("uri") String text, @Context UriInfo ui) {
-        throw Server.NOT_IMPLEMENTED;
+    public Model read(@PathParam("projectUri") String project, @PathParam("uri") String text, @Context UriInfo ui) throws ParseException {
+        final Model textDesc = Models.create();
+
+        Projects.model(textDesc, store, NodeFactory.createURI(project));
+
+        Annotations.model(textDesc, store, NodeFactory.createURI(text));
+
+        Models.linked(textDesc, ui);
+
+        return textDesc;
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
