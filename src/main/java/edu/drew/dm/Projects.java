@@ -104,7 +104,7 @@ public class Projects {
     }
 
     private static String projectResource(UriInfo ui, String uri) {
-        return ui.getBaseUriBuilder()
+        return Server.baseUri(ui)
                 .path(Projects.class)
                 .path(Projects.class, "read")
                 .resolveTemplate("uri", uri)

@@ -95,7 +95,7 @@ public class Canvases {
     }
 
     private static String specificResource(UriInfo ui, String projectUri, String canvasUri, String resourceUri) {
-        return ui.getBaseUriBuilder()
+        return Server.baseUri(ui)
                 .path(Canvases.class)
                 .path(Canvases.class, "readSpecificResource")
                 .resolveTemplate("projectUri", projectUri)
@@ -105,7 +105,7 @@ public class Canvases {
     }
 
     private static String canvasResource(UriInfo ui, String projectUri, String uri) {
-        return ui.getBaseUriBuilder()
+        return Server.baseUri(ui)
                 .path(Canvases.class)
                 .path(Canvases.class, "read")
                 .resolveTemplate("projectUri", projectUri)

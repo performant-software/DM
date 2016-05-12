@@ -158,6 +158,19 @@ public class Server {
         return server;
     }
 
+    public static UriBuilder baseUri(UriInfo ui) {
+        final URI baseUri = ui.getBaseUri();
+
+        final int port = baseUri.getPort();
+        final String scheme = baseUri.getScheme();
+
+        final boolean standardPort = (
+                "http".equals(scheme) && port == 80 || "https".equals(scheme) && port == 443
+        );
+
+        return ui.getBaseUriBuilder().port(standardPort ? -1 : port);
+    }
+
     public static final ServiceUnavailableException NOT_IMPLEMENTED = new ServiceUnavailableException("Not implemented");
 
     @javax.ws.rs.Path("/")

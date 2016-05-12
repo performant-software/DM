@@ -49,7 +49,7 @@ public class Logout {
            throw Authentication.unauthorized(Authentication.REALM);
         }
 
-        return Response.temporaryRedirect(ui.getBaseUriBuilder().path(Workspace.class).build()).build();
+        return Response.temporaryRedirect(Server.baseUri(ui).path(Workspace.class).build()).build();
 
     }
 }

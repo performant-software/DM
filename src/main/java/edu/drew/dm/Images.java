@@ -19,7 +19,7 @@ public class Images {
     }
 
     public static String imageResource(UriInfo ui, String path) {
-        return ui.getBaseUriBuilder()
+        return Server.baseUri(ui)
                 .path("/images")
                 .path(path)
                 .build().toString();

@@ -34,8 +34,8 @@ public class Annotations {
                 new ModelExtract(new StatementBoundaryBase() {
                     @Override
                     public boolean stopAt(Statement s) {
-                        final Resource type = s.getSubject().getRequiredProperty(RDF.type).getObject().asResource();
-                        return Stream.of(FOAF.Agent, DCTypes.Collection).anyMatch(type::equals);
+                        final Resource type = s.getSubject().getPropertyResourceValue(RDF.type);
+                        return (type != null && Stream.of(FOAF.Agent, DCTypes.Collection).anyMatch(type::equals));
                     }
                 }).extractInto(model, annotation, storeModel);
             }

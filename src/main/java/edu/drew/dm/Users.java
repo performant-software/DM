@@ -89,7 +89,7 @@ public class Users {
     }
 
     private static String userResource(UriInfo ui, String user) {
-        return ui.getBaseUriBuilder()
+        return Server.baseUri(ui)
                 .path(Users.class)
                 .path(Users.class, "read")
                 .resolveTemplate("user", user)

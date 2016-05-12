@@ -81,7 +81,7 @@ public class Texts {
     }
 
     private static String textResource(UriInfo ui, String projectUri, String uri) {
-        return ui.getBaseUriBuilder()
+        return Server.baseUri(ui)
                 .path(Texts.class)
                 .path(Texts.class, "read")
                 .resolveTemplate("projectUri", projectUri)
@@ -90,7 +90,7 @@ public class Texts {
     }
 
     private static String specificResource(UriInfo ui, String projectUri, String textUri, String resourceUri) {
-        return ui.getBaseUriBuilder()
+        return Server.baseUri(ui)
                 .path(Canvases.class)
                 .path(Canvases.class, "readSpecificResource")
                 .resolveTemplate("projectUri", projectUri)
