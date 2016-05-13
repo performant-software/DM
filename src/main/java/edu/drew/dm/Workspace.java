@@ -24,7 +24,7 @@ public class Workspace {
 
     @GET
     @Produces("text/html")
-    @Template(name = "/fluid_workspace/workspace.ftl")
+    @Template(name = "/workspace.ftl")
     public Map<String, Object> workspace(@Context UriInfo ui, @Context ContainerRequest cr) {
         final Map<String, Object> model = new HashMap<>();
         model.put("cp", ui.getBaseUri().getRawPath().replaceAll("/$", ""));

@@ -1,3 +1,23 @@
 body {
     overflow: hidden;
 }
+
+.row-fluid #noMargin {
+    margin-left:0;
+}
+
+.tool-line {
+    position:fixed;
+    text-align: center;
+    top: 56px;
+}
+
+#grid {
+    margin-top: 60px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.modal-body .sc-RepoBrowser, .modal-body .atb-WorkingResources {
+    height: 400px;
+}
