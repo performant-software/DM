@@ -7,15 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="${cp}/static/img/favicon.png">
 
-    <link rel="stylesheet" href="${cp}/static/bootstrap/css/bootstrap.min.css" type="text/css"/>
-    [#-- <link rel="stylesheet" href="${cp}/static/bootstrap/css/bootstrap-responsive.min.css" type="text/css" media="screen" /> --]
-    <link rel="stylesheet" href="${cp}/static/fineuploader/css/fineuploader.css" type="text/css" />
-    <link rel="stylesheet" href="${cp}/static/css/base.css" type="text/css" />
-    <link rel="stylesheet" href="${cp}/static/css/dev-libraries.css" type="text/css" />
-    <link rel="stylesheet" href="${cp}/static/css/dev-atb.css" type="text/css" />
-    <link rel="stylesheet" href="${cp}/static/css/themes/dark/theme.css" type="text/css" />
-
-    <link rel="stylesheet" href="${cp}/static/css/dm/workspace.css" type="text/css" />
+    <link rel="stylesheet" href="${cp}/static/css/dm.css" type="text/css" />
 
     <script type="text/javascript">STATIC_URL = '${cp}/static/';</script>
     <script src="${cp}/static/js/closure-library/closure/goog/base.js" type="text/javascript"></script>
@@ -32,7 +24,7 @@
     <script src="${cp}/static/js/closure-library/closure/goog/base.js" type="text/javascript"></script>
     <script src="${cp}/static/js/atb-deps.js" type="text/javascript"></script>
 [/#if]
-<script src="${cp}/static/js/dm/fluid_workspace.js" type="text/javascript"></script>
+    <script src="${cp}/static/js/dm/fluid_workspace.js" type="text/javascript"></script>
 </head>
 <body>
 <div id="main-nav" class="navbar navbar-inverse navbar-fixed-top">

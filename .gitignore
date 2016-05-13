@@ -52,3 +52,6 @@ workspace/media
 
 # Maven builds
 target/
+
+# NPM/ Node
+node_modules/
