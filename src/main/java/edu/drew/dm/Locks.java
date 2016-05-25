@@ -35,4 +35,10 @@ public class Locks {
         return Response.ok().build();
 
     }
+
+    @Path("")
+    @DELETE
+    public Response unlockAll() {
+        return Response.ok().build();
+    }
 }
