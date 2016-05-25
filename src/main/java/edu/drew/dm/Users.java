@@ -18,13 +18,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import java.io.StringWriter;
 import java.net.URI;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/users")
 public class Users {
+
+    private static final Logger LOG = Logger.getLogger(Users.class.getName());
 
     private final SemanticStore store;
 
@@ -65,7 +69,13 @@ public class Users {
     @Path("/{user}")
     @PUT
     public Model update(@PathParam("user") String user, Model model) {
-        throw Server.NOT_IMPLEMENTED;
+        LOG.fine(() -> {
+            final StringWriter modelStr = new StringWriter();
+            model.write(modelStr, "N3");
+            return modelStr.toString();
+        });
+
+        return model;
     }
 
     public static Model linked(Model model, UriInfo ui) {
