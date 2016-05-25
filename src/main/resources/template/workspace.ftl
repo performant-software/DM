@@ -35,18 +35,7 @@
     </div>
 </div>
 <script type="text/javascript" >
-    // Workspace setup code
-    var staticUrl = "${cp}/static/";
-    var styleRoot = "${cp}/static/css/";
-    var wsURI = "${cp}";
-    var mediawsURI = "${cp}/media/";
-    var wsSameOriginURI = "/";
-
-    var restBasePath = "${cp}/store";
-
-    initWorkspace(wsURI, mediawsURI, wsSameOriginURI, [#if user?has_content]"${user.name}"[#else]null[/#if],
-            styleRoot, staticUrl, restBasePath);
-
+    initWorkspace("${cp}", [#if user?has_content]"${user.name}"[#else]null[/#if]);
 
     $("#new_text_button").click(function(e) {
         openBlankTextDocument();

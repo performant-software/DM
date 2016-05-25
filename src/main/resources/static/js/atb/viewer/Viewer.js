@@ -374,7 +374,7 @@ atb.viewer.Viewer.prototype.unlockResource = function(uri, lockIcon, lockMessage
    var cleanUri = uri.replace("<", "").replace(">","");
    var self = this;
    $.ajax({
-      url: "/store/lock/"+cleanUri,
+      url: [ this.clientApp.getBasePath(), "store", "lock", cleanUri ].join("/"),
       method: "DELETE",
       beforeSend: function(xhr) {
           xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
@@ -397,7 +397,7 @@ atb.viewer.Viewer.prototype.lockResource = function(uri, lockIcon, lockMessage) 
    var cleanUri = uri.replace("<", "").replace(">","");
    var self = this;
    $.ajax({
-      url: "/store/lock/"+cleanUri,
+      url: [ this.clientApp.getBasePath(), "store", "lock", cleanUri ].join("/"),
       method: "POST",
       beforeSend: function(xhr) {
           xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));

@@ -1,5 +1,5 @@
 [#ftl]
-[#macro page title="DM" pageHeader=""]
+[#macro page title="DM"]
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,13 +17,7 @@
     <script src="${cp}/static/js/jquery/plugins/jquery.cookie.js" type="text/javascript"></script>
     <script src="${cp}/static/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="${cp}/static/fineuploader/js/fineuploader-3.1.1.js"></script>
-
-[#if useCompiledJs]
     <script src="${cp}/static/js/all-js-code.js" type="text/javascript"></script>
-[#else]
-    <script src="${cp}/static/js/closure-library/closure/goog/base.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/atb-deps.js" type="text/javascript"></script>
-[/#if]
     <script src="${cp}/static/js/dm/fluid_workspace.js" type="text/javascript"></script>
 </head>
 <body>

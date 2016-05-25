@@ -17,9 +17,7 @@ goog.require('atb.events.LinkingModeExited');
 
 goog.require('sc.data.Databroker');
 
-atb.ClientApp = function (webService, username, opt_hack_set_styleRoot, databroker) {
-    var self = this;
-    
+atb.ClientApp = function (basePath, username, databroker) {
     this.domHelper = new goog.dom.DomHelper();
     
     this.databroker = databroker;
@@ -27,10 +25,11 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot, databrok
     this.eventDispatcher = new goog.events.EventTarget();
     
     this.username = username;
+
+    this.basePath = basePath;
+	this.styleRoot = basePath + "/static/css/";
     
-	this.force_styleRoot = atb.util.ReferenceUtil.applyDefaultValue(opt_hack_set_styleRoot, null);
-    
-	atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.getStyleRoot(); // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
+	atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.styleRoot; // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
 
     this.annotationBody = null;
 	this.activeAnnotation = null;
@@ -38,13 +37,11 @@ atb.ClientApp = function (webService, username, opt_hack_set_styleRoot, databrok
     
     this.popupsByName = {};
     
-    this.functionToCallBeforeUnload = null;
     goog.events.listen(window, 'beforeunload', this.onBeforeUnload, false, this);
     
     this.linkingInProgress = false;
     
     this.keyboardShortcutHandler = new goog.ui.KeyboardShortcutHandler(window);
-    this.registerKeyboardShortcuts();
 };
 
 atb.ClientApp.prototype.getEventDispatcher = function () {
@@ -55,10 +52,12 @@ atb.ClientApp.prototype.getDatabroker = function() {
     return this.databroker;
 };
 
+atb.ClientApp.prototype.getBasePath = function () {
+    return this.basePath;
+};
+
 atb.ClientApp.prototype.getStyleRoot = function () {
-	if (this.force_styleRoot !== null) {
-		return this.force_styleRoot;
-	}
+    return this.styleRoot;
 };
 
 atb.ClientApp.prototype.getActiveAnnotation = function () {
@@ -248,54 +247,16 @@ atb.ClientApp.prototype.undoLastAnnoLinkCreation = function () {
     this.hideUndoLinkCreationUI();
 };
 
-/**
- * @param f function to be called before the main workspace window unloads
- *
- * @note(tandres) If saving is being performed by the function, be sure that the "AJAX" is being
- * performed synchronously; otherwise, the save will not complete.
- */
-atb.ClientApp.prototype.registerFunctionToCallBeforeUnload = function (f) {
-    // This chaining is necessary because for loops can not be used within onBeforeUnload functions
-    
-    if (goog.isFunction(this.functionToCallBeforeUnload)) {
-        var temp = this.functionToCallBeforeUnload;
-        
-        this.functionToCallBeforeUnload = function () {
-            try {
-                temp();
-            } catch (e) {console.error(e);}
-            
-            try {
-                f();
-            } catch (e) {console.error(e);}
-        };
-    }
-    else {
-        this.functionToCallBeforeUnload = f;
-    }
-};
-
 atb.ClientApp.prototype.onBeforeUnload = function (event) {
-    if (goog.isFunction(this.functionToCallBeforeUnload)) {
-        try {
-            this.functionToCallBeforeUnload();
-        } catch (e) {console.error(e);}
-    }
+    $.ajax({
+        url: this.basePath + "/store/lock",
+        method: "DELETE",
+        async: false,
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+        }
+    });
 };
-
-atb.ClientApp.prototype.registerKeyboardShortcuts = function () {
-    
-};
-
-$(window).on('beforeunload', function(){
-   $.ajax({
-      url: "/store/lock",
-      method: "DELETE",
-      beforeSend: function(xhr) {
-          xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
-      }
-   });
-});
 
 $(function() {
    var username = $("#logged-in-user").text();

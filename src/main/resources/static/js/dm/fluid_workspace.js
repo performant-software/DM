@@ -157,7 +157,7 @@ var setupUser = function(databroker, username) {
     databroker.user.defer().done(selectProject);
 };
 
-function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, staticUrl, opt_restBasePath) {
+function initWorkspace(basePath, username) {
    cookies = new goog.net.Cookies(window.document);
    /* The following method is copied from Django documentation
     * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
@@ -181,19 +181,15 @@ function initWorkspace(wsURI, mediawsURI, wsSameOriginURI, username, styleRoot, 
       }
    });
 
-   var databrokerOptions = {};
+   var baseUri = [ window.location.protocol, "//", window.location.host, basePath ].join("");
+   goog.global.databroker = new sc.data.Databroker({
+       'syncService': new sc.data.SyncService({
+           'dmBaseUri': [baseUri, "store"].join("/"),
+           'restBasePath' : [basePath, "store"].join("/")
+       })
+   });
 
-   if (opt_restBasePath) {
-      var syncService = new sc.data.SyncService({
-         'dmBaseUri': window.location.href.replace(/\/workspace.*/, "/store"),
-         'restBasePath' : opt_restBasePath
-      });
-      databrokerOptions['syncService'] = syncService;
-   }
-
-   goog.global.databroker = new sc.data.Databroker(databrokerOptions);
-
-   goog.global.clientApp = new atb.ClientApp(null, username, styleRoot, goog.global.databroker);
+   goog.global.clientApp = new atb.ClientApp(basePath, username, goog.global.databroker);
    goog.global.clientApp.renderLinkCreationUI();
 
    setupUser(databroker, username);
