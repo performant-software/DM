@@ -29,7 +29,6 @@ public class Workspace {
         final Map<String, Object> model = new HashMap<>();
         model.put("cp", ui.getBaseUri().getRawPath().replaceAll("/$", ""));
         model.put("user", cr.getSecurityContext());
-        model.put("useCompiledJs", true);
         return model;
     }
 
