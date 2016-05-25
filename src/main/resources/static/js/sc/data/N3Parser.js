@@ -17,7 +17,8 @@ sc.data.N3Parser = function(databroker) {
 
     this.parser = new N3Parser();
 
-    if (Worker != null && Blob != null) {
+    // FIXME: reactivate async WebWorker-based parser, should this not be the cause of stalling resource loads
+    if (/*Worker != null && Blob != null*/false) {
         try {
             goog.asserts.assert(goog.global.STATIC_URL != null);
             // Apologies for the inline code, but it's necessary due to cross-site restrictions
