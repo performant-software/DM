@@ -128,6 +128,7 @@ public class Server {
                 .register(Logout.class)
                 .register(Root.class)
                 .register(Workspace.class)
+                .register(Locks.class)
                 .register(Users.class)
                 .register(Projects.class)
                 .register(Canvases.class)
