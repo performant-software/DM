@@ -89,7 +89,13 @@ public class Server {
     }
 
     private static void shutdownHook(Runnable hook) {
-        Runtime.getRuntime().addShutdownHook(new Thread(hook));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                hook.run();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }));
     }
 
     private static SemanticStore semanticStore(OptionSet optionSet) {
