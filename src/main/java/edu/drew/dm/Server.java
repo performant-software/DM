@@ -144,32 +144,9 @@ public class Server {
         final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(base, webAppConfig, false);
 
         for (NetworkListener listener : server.getListeners()) {
+            // use an unbounded worker thread pool, assuming that handler work is mostly I/O bound
             listener.getTransport().getWorkerThreadPoolConfig().setMaxPoolSize(Integer.MAX_VALUE);
         }
-
-        server.getServerConfiguration().getMonitoringConfig().getThreadPoolConfig().addProbes(new ThreadPoolProbe.Adapter() {
-
-            private final Logger LOG = Logger.getLogger(Server.class.getName() + ".threads");
-
-            private String toString(AbstractThreadPool tp) {
-                return tp.toString().replaceAll("[\n\r]+", " ");
-            }
-
-            @Override
-            public void onThreadAllocateEvent(AbstractThreadPool threadPool, Thread thread) {
-                LOG.fine(() -> String.format("- %s from %s", thread, toString(threadPool)));
-            }
-
-            @Override
-            public void onThreadReleaseEvent(AbstractThreadPool threadPool, Thread thread) {
-                LOG.fine(() -> String.format("+ %s from %s", thread, toString(threadPool)));
-            }
-
-            @Override
-            public void onMaxNumberOfThreadsEvent(AbstractThreadPool threadPool, int maxNumberOfThreads) {
-                LOG.fine(() -> String.format("! %s of %s used", maxNumberOfThreads, toString(threadPool)));
-            }
-        });
 
         final String contextPath = optionSet.valueOf(CONTEXT_PATH_OPT);
         final ServerConfiguration serverConfig = server.getServerConfiguration();
