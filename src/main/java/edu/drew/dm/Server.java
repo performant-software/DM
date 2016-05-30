@@ -10,6 +10,7 @@ import joptsimple.util.PathConverter;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandlerRegistration;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.grizzly.threadpool.AbstractThreadPool;
@@ -141,6 +142,10 @@ public class Server {
                 .build();
 
         final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(base, webAppConfig, false);
+
+        for (NetworkListener listener : server.getListeners()) {
+            listener.getTransport().getWorkerThreadPoolConfig().setMaxPoolSize(Integer.MAX_VALUE);
+        }
 
         server.getServerConfiguration().getMonitoringConfig().getThreadPoolConfig().addProbes(new ThreadPoolProbe.Adapter() {
 
