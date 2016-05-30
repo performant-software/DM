@@ -1,5 +1,6 @@
 package edu.drew.dm;
 
+import edu.drew.dm.vocabulary.DigitalMappaemundi;
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
@@ -28,9 +29,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -60,7 +63,7 @@ public class Models {
         PREFIXES.put("trig", "http://www.w3.org/2004/03/trix/rdfg-1/");
         PREFIXES.put("cnt", "http://www.w3.org/2011/content#");
 
-        PREFIXES.put("dm", "http://dm.drew.edu/ns/");
+        PREFIXES.put("dm", DigitalMappaemundi.NS);
         PREFIXES.put("dms", "http://dms.stanford.edu/ns/");
         PREFIXES.put("sc", SharedCanvas.NS);
         PREFIXES.put("ore", OpenArchivesTerms.NS);
@@ -96,7 +99,12 @@ public class Models {
             if (mediaType.isCompatible(MediaType.valueOf("text/plain"))) {
                 lang = "N-TRIPLE";
             }
-            return create().read(entityStream, "", lang);
+            return create().read(new FilterInputStream(entityStream) {
+                @Override
+                public void close() throws IOException {
+                    // no-op
+                }
+            }, "", lang);
         }
 
     }
@@ -142,14 +150,21 @@ public class Models {
         }
     }
 
-    public static Model linked(Model model, UriInfo ui) {
-        Users.linked(model, ui);
-        Projects.linked(model, ui);
-        Canvases.linked(model, ui);
-        Texts.linked(model, ui);
-        Images.linked(model, ui);
+    public static Model identifiers2Locators(Model model, UriInfo ui) {
+        Users.identifiers2Locators(model, ui);
+        Projects.identifiers2Locators(model, ui);
+        Canvases.identifiers2Locators(model, ui);
+        Texts.identifiers2Locators(model, ui);
+        Images.identifiers2Locators(model, ui);
 
         return model;
+    }
+
+    public static Model locators2Identifiers(Model model) {
+        return renameResources(model,
+                Users::locators2Identifiers,
+                Images::locators2Identifiers
+        );
     }
 
     public static Model renameResources(Model model, Function<Resource, String>... mappings) {
@@ -194,4 +209,9 @@ public class Models {
         return model;
     }
 
+    public static String n3(Model model) {
+        final StringWriter modelStr = new StringWriter();
+        model.write(modelStr, "N3");
+        return modelStr.toString();
+    }
 }

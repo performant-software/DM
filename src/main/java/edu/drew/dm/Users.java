@@ -1,10 +1,14 @@
 package edu.drew.dm;
 
+import edu.drew.dm.vocabulary.DigitalMappaemundi;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
@@ -18,9 +22,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
-import java.io.StringWriter;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -63,22 +70,24 @@ public class Users {
                 Sparql.resultSetInto(userDesc)
         );
 
-        return Models.linked(userDesc, ui);
+        return Models.identifiers2Locators(userDesc, ui);
     }
 
     @Path("/{user}")
     @PUT
-    public Model update(@PathParam("user") String user, Model model) {
-        LOG.fine(() -> {
-            final StringWriter modelStr = new StringWriter();
-            model.write(modelStr, "N3");
-            return modelStr.toString();
-        });
+    public Model update(@PathParam("user") String user, Model model, @Context  UriInfo ui) {
+        final Model generalizedModel = Models.locators2Identifiers(Models.create().add(model));
 
-        return model;
+        // we do not track the last open project (yet)
+        final List<Statement> lastOpenProjects = generalizedModel.listStatements(null, DigitalMappaemundi.lastOpenProject, (RDFNode) null).toList();
+        if (lastOpenProjects.size() != generalizedModel.size()) {
+            LOG.fine(() -> Models.n3(generalizedModel));
+        }
+
+        return Models.identifiers2Locators(generalizedModel, ui);
     }
 
-    public static Model linked(Model model, UriInfo ui) {
+    public static Model identifiers2Locators(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, FOAF.Agent).forEachRemaining(agent -> {
             model.removeAll(
                     agent,
@@ -97,6 +106,18 @@ public class Users {
             return "user".equals(parsed.getScheme()) ? userResource(ui, parsed.getSchemeSpecificPart()) : uri;
         }));
     }
+
+    public static String locators2Identifiers(Resource resource) {
+        try {
+            final String uri = resource.getURI();
+            final Matcher userMatcher = USER_URI.matcher(uri);
+            return userMatcher.find() ? new URI("user", userMatcher.group(1), null).toString() : uri;
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static final Pattern USER_URI = Pattern.compile("/store/users/(.+)$");
 
     private static String userResource(UriInfo ui, String user) {
         return Server.baseUri(ui)

@@ -11,6 +11,7 @@ import org.apache.jena.vocabulary.RDF;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -18,6 +19,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -57,7 +59,7 @@ public class Projects {
 
         Canvases.model(projectDesc, store, projectUri);
 
-        return Models.linked(projectDesc, ui);
+        return Models.identifiers2Locators(projectDesc, ui);
     }
 
     @POST
@@ -67,8 +69,25 @@ public class Projects {
 
     @Path("/{uri}")
     @PUT
-    public Model update(@PathParam("uri") String uri, Model model) {
+    public Model update(@PathParam("uri") String uri, Model model, @Context  UriInfo ui) {
+        final Model generalizedModel = Models.locators2Identifiers(model);
+        store.update(generalizedModel);
+        return Models.identifiers2Locators(generalizedModel, ui);
+    }
+
+    @Path("/{uri}/removed")
+    @POST
+    public Model cleanupLinks(@FormParam("uuids") String uuids) {
+        Logger.getLogger(Projects.class.getName()).fine(() -> uuids);
         throw Server.NOT_IMPLEMENTED;
+    }
+
+    @Path("/{uri}/remove_triples")
+    @PUT
+    public Model deleteContents(@PathParam("uri") String uri, Model model, @Context  UriInfo ui) {
+        final Model generalizedModel = Models.locators2Identifiers(model);
+        store.remove(generalizedModel);
+        return Models.identifiers2Locators(generalizedModel, ui);
     }
 
     @Path("/{uri}")
@@ -87,7 +106,7 @@ public class Projects {
         return model;
     }
 
-    public static Model linked(Model model, UriInfo ui) {
+    public static Model identifiers2Locators(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, DCTypes.Collection).forEachRemaining(project -> {
             model.removeAll(
                     project,

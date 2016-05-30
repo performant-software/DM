@@ -2,7 +2,6 @@ package edu.drew.dm;
 
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
@@ -10,6 +9,8 @@ import org.apache.jena.vocabulary.RDF;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
@@ -32,33 +33,32 @@ public class Texts {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String project, @PathParam("uri") String text, @Context UriInfo ui) throws ParseException {
-        final Model textDesc = Models.create();
+        return Models.identifiers2Locators(Annotations.graph(store, project, text), ui);
+    }
 
-        Projects.model(textDesc, store, NodeFactory.createURI(project));
+    @Path("/{uri}")
+    @POST
+    public Model create(@PathParam("projectUri") String project, @PathParam("uri") String text, Model model, @Context UriInfo ui) throws ParseException {
+        final Model generalizedModel = Models.locators2Identifiers(model);
+        store.create(generalizedModel);
+        return Models.identifiers2Locators(generalizedModel, ui);
+    }
 
-        Annotations.model(textDesc, store, NodeFactory.createURI(text));
-
-        Models.linked(textDesc, ui);
-
-        return textDesc;
+    @Path("/{uri}")
+    @PUT
+    public Model update(@PathParam("projectUri") String project, @PathParam("uri") String text, Model model, @Context UriInfo ui) throws ParseException {
+        final Model generalizedModel = Models.locators2Identifiers(model);
+        store.update(generalizedModel);
+        return Models.identifiers2Locators(generalizedModel, ui);
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String project, @PathParam("uri") String text, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
-        final Model resourceDesc = Models.create();
-
-        Projects.model(resourceDesc, store, NodeFactory.createURI(project));
-
-        Annotations.model(resourceDesc, store, NodeFactory.createURI(resourceUri));
-
-        Models.linked(resourceDesc, ui);
-
-        return resourceDesc;
-
+        return Models.identifiers2Locators(Annotations.graph(store, project, resourceUri), ui);
     }
 
-    public static Model linked(Model model, UriInfo ui) {
+    public static Model identifiers2Locators(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, DCTypes.Text).forEachRemaining(text -> {
             model.removeAll(text, OpenArchivesTerms.isDescribedBy, null);
             model.listSubjectsWithProperty(OpenArchivesTerms.aggregates, text).forEachRemaining(project -> {

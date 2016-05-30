@@ -2,6 +2,7 @@ package edu.drew.dm;
 
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelExtract;
 import org.apache.jena.rdf.model.Resource;
@@ -12,6 +13,7 @@ import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
 
+import javax.ws.rs.core.UriInfo;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -42,5 +44,15 @@ public class Annotations {
 
             return model;
         });
+    }
+
+    public static Model graph(SemanticStore store, String project, String rootUri) throws ParseException {
+        final Model graph = Models.create();
+
+        Projects.model(graph, store, NodeFactory.createURI(project));
+
+        model(graph, store, NodeFactory.createURI(rootUri));
+
+        return graph;
     }
 }

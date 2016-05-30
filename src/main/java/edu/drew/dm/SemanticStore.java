@@ -8,6 +8,8 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.tdb.TDBFactory;
@@ -87,6 +89,32 @@ public class SemanticStore implements AutoCloseable {
             try (QueryExecution qe = QueryExecutionFactory.create(query, dataset)) {
                 return resultHandler.handle(qe.execSelect());
             }
+        });
+    }
+
+    public Model create(Model created) {
+        return add(created, false);
+    }
+
+    public Model update(Model created) {
+        return add(created, true);
+    }
+
+    public Model remove(Model removed) {
+        return write(ds -> {
+            ds.getDefaultModel().remove(removed);
+            return removed;
+        });
+    }
+
+    protected Model add(Model added, boolean removeBeforehand) {
+        return write(ds -> {
+            final Model model = ds.getDefaultModel();
+            if (removeBeforehand) {
+                added.listSubjects().forEachRemaining(subject -> model.removeAll(subject, null, null));
+            }
+            model.add(added);
+            return added;
         });
     }
 

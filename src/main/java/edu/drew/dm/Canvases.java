@@ -34,35 +34,18 @@ public class Canvases {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String project, @PathParam("uri") String canvas, @Context UriInfo ui) throws ParseException {
-        final Node projectUri = NodeFactory.createURI(project);
-        final Node canvasUri = NodeFactory.createURI(canvas);
-
-        final Model canvasDesc = Models.create();
-
-        Projects.model(canvasDesc, store, projectUri);
-
-        Canvases.model(canvasDesc, store, projectUri, canvasUri);
-
-        Annotations.model(canvasDesc, store, canvasUri);
-
-        Models.linked(canvasDesc, ui);
-
-        return canvasDesc;
+        return Models.identifiers2Locators(Canvases.model(
+                Annotations.graph(store, project, canvas),
+                store,
+                NodeFactory.createURI(project),
+                NodeFactory.createURI(canvas)
+        ), ui);
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String project, @PathParam("uri") String canvas, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
-
-        final Model resourceDesc = Models.create();
-
-        Projects.model(resourceDesc, store, NodeFactory.createURI(project));
-
-        Annotations.model(resourceDesc, store, NodeFactory.createURI(resourceUri));
-
-        Models.linked(resourceDesc, ui);
-
-        return resourceDesc;
+        return Models.identifiers2Locators(Annotations.graph(store, project, resourceUri), ui);
     }
 
     @Path("/{uri}")
@@ -71,7 +54,7 @@ public class Canvases {
         throw Server.NOT_IMPLEMENTED;
     }
 
-    public static Model linked(Model model, UriInfo ui) {
+    public static Model identifiers2Locators(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, SharedCanvas.Canvas).forEachRemaining(canvas -> {
             model.removeAll(canvas, OpenArchivesTerms.isDescribedBy, null);
             model.listSubjectsWithProperty(OpenArchivesTerms.aggregates, canvas).forEachRemaining(project -> {
