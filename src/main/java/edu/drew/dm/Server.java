@@ -12,11 +12,11 @@ import org.glassfish.grizzly.http.server.HttpHandlerRegistration;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
+import org.glassfish.grizzly.threadpool.AbstractThreadPool;
+import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.message.GZipEncoder;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.server.filter.EncodingFilter;
 import org.glassfish.jersey.server.mvc.freemarker.FreemarkerMvcFeature;
 
 import javax.ws.rs.GET;
@@ -31,6 +31,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -139,7 +140,31 @@ public class Server {
                 .port(PORT_OPT.value(optionSet))
                 .build();
 
-        final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(base, webAppConfig);
+        final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(base, webAppConfig, false);
+
+        server.getServerConfiguration().getMonitoringConfig().getThreadPoolConfig().addProbes(new ThreadPoolProbe.Adapter() {
+
+            private final Logger LOG = Logger.getLogger(Server.class.getName() + ".threads");
+
+            private String toString(AbstractThreadPool tp) {
+                return tp.toString().replaceAll("[\n\r]+", " ");
+            }
+
+            @Override
+            public void onThreadAllocateEvent(AbstractThreadPool threadPool, Thread thread) {
+                LOG.fine(() -> String.format("- %s from %s", thread, toString(threadPool)));
+            }
+
+            @Override
+            public void onThreadReleaseEvent(AbstractThreadPool threadPool, Thread thread) {
+                LOG.fine(() -> String.format("+ %s from %s", thread, toString(threadPool)));
+            }
+
+            @Override
+            public void onMaxNumberOfThreadsEvent(AbstractThreadPool threadPool, int maxNumberOfThreads) {
+                LOG.fine(() -> String.format("! %s of %s used", maxNumberOfThreads, toString(threadPool)));
+            }
+        });
 
         final String contextPath = optionSet.valueOf(CONTEXT_PATH_OPT);
         final ServerConfiguration serverConfig = server.getServerConfiguration();
