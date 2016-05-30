@@ -36,7 +36,6 @@ public class Locks {
 
     }
 
-    @Path("")
     @DELETE
     public Response unlockAll() {
         return Response.ok().build();
