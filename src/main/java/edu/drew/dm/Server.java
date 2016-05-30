@@ -13,8 +13,6 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
-import org.glassfish.grizzly.threadpool.AbstractThreadPool;
-import org.glassfish.grizzly.threadpool.ThreadPoolProbe;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -32,7 +30,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
