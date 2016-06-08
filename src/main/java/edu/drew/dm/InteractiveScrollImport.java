@@ -1,11 +1,15 @@
 package edu.drew.dm;
 
+import edu.drew.dm.vocabulary.Content;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.vocabulary.DCTypes;
+import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
 import java.io.File;
 import java.io.FilterWriter;
@@ -45,12 +49,26 @@ public class InteractiveScrollImport {
             }
         });
 
+        model.listSubjectsWithProperty(RDF.type, DCTypes.Text)
+                .forEachRemaining(text -> {
+                    text.addProperty(RDF.type, Content.ContentAsChars);
+                    text.addProperty(RDFS.label, text.getRequiredProperty(DC_11.title).getObject().asLiteral().getString());
+                });
+
         model.listSubjectsWithProperty(RDF.type, FOAF.Project)
-                .forEachRemaining(project -> model.add(
-                        model.createResource("user:lou"),
-                        Perm.hasPermissionOver,
-                        project
-                ));
+                .forEachRemaining(project -> {
+                    project.removeAll(DC_11.title);
+
+                    project.addProperty(RDFS.label, "Interactive Scrolls");
+                    project.addProperty(DC_11.title, "Interactive Scrolls");
+
+                    model.add(
+                            model.createResource("user:lou"),
+                            Perm.hasPermissionOver,
+                            project
+                    );
+                });
+
 
         try (final FilterWriter writer = new FilterWriter(new PrintWriter(System.out)) {
             @Override
