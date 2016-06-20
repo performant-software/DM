@@ -3,6 +3,8 @@ package edu.drew.dm;
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.SimpleSelector;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -15,6 +17,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import java.util.Collections;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -48,7 +51,7 @@ public class Texts {
     @PUT
     public Model update(@PathParam("projectUri") String project, @PathParam("uri") String text, Model model, @Context UriInfo ui) throws ParseException {
         final Model generalizedModel = Models.locators2Identifiers(model);
-        store.update(generalizedModel);
+        store.merge(generalizedModel, Collections.emptySet());
         return Models.identifiers2Locators(generalizedModel, ui);
     }
 

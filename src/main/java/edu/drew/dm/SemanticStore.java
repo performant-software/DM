@@ -9,12 +9,15 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.tdb.TDBLoader;
 import org.apache.jena.tdb.store.GraphTDB;
+import org.apache.jena.vocabulary.RDF;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,7 +26,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -93,11 +101,11 @@ public class SemanticStore implements AutoCloseable {
     }
 
     public Model create(Model created) {
-        return add(created, false);
-    }
+        return write(ds -> {
+            ds.getDefaultModel().add(created);
+            return created;
+        });
 
-    public Model update(Model created) {
-        return add(created, true);
     }
 
     public Model remove(Model removed) {
@@ -107,14 +115,30 @@ public class SemanticStore implements AutoCloseable {
         });
     }
 
-    protected Model add(Model added, boolean removeBeforehand) {
+    public Model merge(Model update, Set<Property> multiValuedProperties) {
+        final Map<StatementHead, LinkedList<Statement>> statementsByHead = new LinkedHashMap<>();
+        update.listStatements().forEachRemaining(stmt -> statementsByHead
+                .computeIfAbsent(new StatementHead(stmt), k -> new LinkedList<>())
+                .add(stmt)
+        );
+
         return write(ds -> {
             final Model model = ds.getDefaultModel();
-            if (removeBeforehand) {
-                added.listSubjects().forEachRemaining(subject -> model.removeAll(subject, null, null));
-            }
-            model.add(added);
-            return added;
+
+            statementsByHead.forEach((head, statements) -> {
+                if (RDF.type.equals(head.predicate) || multiValuedProperties.contains(head.predicate)) {
+                    model.add(statements);
+                    return;
+                }
+
+                model.removeAll(head.subject, head.predicate, null);
+                if (statements.size() > 1) {
+                    LOG.warning(statements::toString);
+                }
+                model.add(statements.getLast());
+            });
+
+            return update;
         });
     }
 
@@ -178,5 +202,33 @@ public class SemanticStore implements AutoCloseable {
 
     public interface QueryResultHandler<T> {
         T handle(ResultSet resultSet);
+    }
+
+    private static class StatementHead {
+        private final Resource subject;
+        private final Property predicate;
+
+        private StatementHead(Statement stmt) {
+            this(stmt.getSubject(), stmt.getPredicate());
+        }
+
+        private StatementHead(Resource subject, Property predicate) {
+            this.subject = subject;
+            this.predicate = predicate;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof StatementHead) {
+                StatementHead other = (StatementHead) obj;
+                return subject.equals(other.subject) && predicate.equals(other.predicate);
+            }
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(subject, predicate);
+        }
     }
 }

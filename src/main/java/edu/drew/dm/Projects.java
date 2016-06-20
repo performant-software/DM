@@ -19,6 +19,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
+import java.util.Collections;
 import java.util.logging.Logger;
 
 /**
@@ -71,7 +72,7 @@ public class Projects {
     @PUT
     public Model update(@PathParam("uri") String uri, Model model, @Context  UriInfo ui) {
         final Model generalizedModel = Models.locators2Identifiers(model);
-        store.update(generalizedModel);
+        store.merge(generalizedModel, Collections.singleton(OpenArchivesTerms.aggregates));
         return Models.identifiers2Locators(generalizedModel, ui);
     }
 
@@ -97,13 +98,7 @@ public class Projects {
     }
 
     public static Model model(Model model, SemanticStore store, Node projectUri) throws ParseException {
-        store.query(
-                Sparql.selectTriples()
-                        .addFilter("?s = <" + projectUri + ">")
-                        .build(),
-                Sparql.resultSetInto(model)
-        );
-        return model;
+        return store.read(ds -> model.add(ds.getDefaultModel().createResource(projectUri.getURI()).listProperties()));
     }
 
     public static Model identifiers2Locators(Model model, UriInfo ui) {

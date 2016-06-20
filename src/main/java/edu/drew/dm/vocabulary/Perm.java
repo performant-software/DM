@@ -4,6 +4,10 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
@@ -24,4 +28,13 @@ public class Perm {
     public static final Property mayAugment = model.createProperty(NS, "mayAugment");
 
     public static final Property mayAdminister = model.createProperty(NS, "mayAdminister");
+
+    public static final Set<Property> ALL_PROPERTIES = new HashSet<>(Arrays.asList(
+            hasPermissionOver,
+            mayRead,
+            mayUpdate,
+            mayDelete,
+            mayAugment,
+            mayAdminister
+    ));
 }
