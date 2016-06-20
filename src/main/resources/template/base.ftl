@@ -1,4 +1,6 @@
 [#ftl]
+[#-- @ftlvariable name="cp" type="java.lang.String" --]
+[#-- @ftlvariable name="local" type="java.lang.Boolean" --]
 [#macro page title="DM"]
 <!DOCTYPE html>
 <html>
@@ -17,8 +19,11 @@
     <script src="${cp}/static/js/jquery/plugins/jquery.cookie.js" type="text/javascript"></script>
     <script src="${cp}/static/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="${cp}/static/fineuploader/js/fineuploader-3.1.1.js"></script>
-    <script src="${cp}/static/js/all-js-code.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/dm/fluid_workspace.js" type="text/javascript"></script>
+    [#if local]
+        <script src="${cp}/static/js/dm/fluid_workspace.js" type="text/javascript"></script>
+    [#else]
+        <script src="${cp}/static/js/all-js-code.js" type="text/javascript"></script>
+    [/#if]
 </head>
 <body>
 <div id="main-nav" class="navbar navbar-inverse navbar-fixed-top">

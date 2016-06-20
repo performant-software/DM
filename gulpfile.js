@@ -42,7 +42,7 @@ gulp.task("google-closure-compile", ["google-closure-deps"], function(callback) 
     closureCompile([
         "closure-library/closure/bin/build/closurebuilder.py",
         "--root=.",
-        "--input=\"atb/Includes.js\"",
+        "--input=\"dm/fluid_workspace.js\"",
         "--output_mode=compiled",
         "--compiler_jar=compiler.jar",
         "--compiler_flags=\"--language_in=ECMASCRIPT5\""

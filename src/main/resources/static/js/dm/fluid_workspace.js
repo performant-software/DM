@@ -1,3 +1,5 @@
+goog.provide("dm.FluidWorkspace");
+
 goog.require("atb.ClientApp");
 
 goog.require('atb.viewer.Finder');
