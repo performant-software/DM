@@ -1,5 +1,6 @@
 package edu.drew.dm;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.sauronsoftware.cron4j.Scheduler;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
@@ -15,6 +16,7 @@ import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.mvc.freemarker.FreemarkerMvcFeature;
 
@@ -24,6 +26,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.ContextResolver;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -118,13 +121,27 @@ public class Server {
     }
 
     private static HttpServer httpServer(OptionSet optionSet, SemanticStore semanticStore) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
         final ResourceConfig webAppConfig = new ResourceConfig()
                 .register(FreemarkerMvcFeature.class)
                 .property(FreemarkerMvcFeature.TEMPLATE_BASE_PATH, "/template/")
+                .register(JacksonFeature.class)
                 .register(new AbstractBinder() {
                     @Override
                     protected void configure() {
                         bind(semanticStore).to(SemanticStore.class);
+                    }
+                })
+                .register(new AbstractBinder() {
+                    @Override
+                    protected void configure() {
+                        bind(objectMapper).to(ObjectMapper.class);
+                    }
+                })
+                .register(new ContextResolver<ObjectMapper>() {
+                    @Override
+                    public ObjectMapper getContext(Class<?> type) {
+                        return objectMapper;
                     }
                 })
                 .register(Models.Reader.class)

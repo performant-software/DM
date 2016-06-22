@@ -1,5 +1,9 @@
 package edu.drew.dm;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.graph.Node;
@@ -11,16 +15,21 @@ import org.apache.jena.vocabulary.RDF;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collections;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -29,10 +38,12 @@ import java.util.logging.Logger;
 public class Projects {
 
     private final SemanticStore store;
+    private final ObjectMapper objectMapper;
 
     @Inject
-    public Projects(SemanticStore store) {
+    public Projects(SemanticStore store, ObjectMapper objectMapper) {
         this.store = store;
+        this.objectMapper = objectMapper;
     }
 
     @Path("/{uri}")
@@ -74,6 +85,36 @@ public class Projects {
         final Model generalizedModel = Models.locators2Identifiers(model);
         store.merge(generalizedModel, Collections.singleton(OpenArchivesTerms.aggregates));
         return Models.identifiers2Locators(generalizedModel, ui);
+    }
+
+    @Path("/{uri}/search")
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query) {
+        final ObjectNode result = objectMapper.createObjectNode();
+
+        result.putArray("results")
+                .addObject()
+                .put("uri", "http://www.google.de/")
+                .put("url", "http://www.google.de/")
+                .put("title", "Google")
+                .put("highlighted_title", "Google")
+                .put("text", "Google")
+                .put("highlighted_text", "Google");
+
+        // optional, only in case of a suggestion
+        result.put("spelling_suggestion", query);
+
+        return result ;
+    }
+
+    @Path("/{uri}/search_autocomplete")
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    public JsonNode autocomplete(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String prefix) {
+        return IntStream.range(0, 10)
+                .mapToObj(i -> String.format("%s_%02d", prefix, i))
+                .collect(objectMapper::createArrayNode, ArrayNode::add, ArrayNode::addAll);
     }
 
     @Path("/{uri}/removed")
