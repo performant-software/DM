@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
+import edu.drew.dm.vocabulary.SharedCanvas;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelExtract;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -49,27 +49,24 @@ public class Projects {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("uri") String uri, @Context UriInfo ui) throws ParseException {
-        final Node projectUri = NodeFactory.createURI(uri);
-        final Model projectDesc = Models.create();
-
-        Projects.model(projectDesc, store, projectUri);
+        final Model projectDesc = store.read(ds -> Projects.model(uri, ds.getDefaultModel(), Models.create()));
 
         store.query(
                 Sparql.selectTriples()
-                        .addWhere("?s", Perm.hasPermissionOver, projectUri)
+                        .addWhere("?s", Perm.hasPermissionOver, uri)
                         .build(),
                 Sparql.resultSetInto(projectDesc)
         );
 
         store.query(
                 Sparql.selectTriples()
-                        .addWhere(projectUri, OpenArchivesTerms.aggregates, "?s")
+                        .addWhere(uri, OpenArchivesTerms.aggregates, "?s")
                         .addFilter(Sparql.basicProperties("?p"))
                         .build(),
                 Sparql.resultSetInto(projectDesc)
         );
 
-        Canvases.model(projectDesc, store, projectUri);
+        Canvases.model(projectDesc, store, uri);
 
         return Models.identifiers2Locators(projectDesc, ui);
     }
@@ -85,6 +82,27 @@ public class Projects {
         final Model generalizedModel = Models.locators2Identifiers(model);
         store.merge(generalizedModel, Collections.singleton(OpenArchivesTerms.aggregates));
         return Models.identifiers2Locators(generalizedModel, ui);
+    }
+
+    @Path("/{uri}/share")
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    public JsonNode isShared(@PathParam("uri") String uri) {
+        return objectMapper.createObjectNode().put("public", false);
+    }
+
+    @Path("/{uri}/share")
+    @Produces(MediaType.APPLICATION_JSON)
+    @POST
+    public JsonNode share(@PathParam("uri") String uri) {
+        return objectMapper.createObjectNode().put("success", false);
+    }
+
+    @Path("/{uri}/share")
+    @Produces(MediaType.APPLICATION_JSON)
+    @DELETE
+    public JsonNode unshare(@PathParam("uri") String uri) {
+        return objectMapper.createObjectNode().put("success", true);
     }
 
     @Path("/{uri}/search")
@@ -117,6 +135,24 @@ public class Projects {
                 .collect(objectMapper::createArrayNode, ArrayNode::add, ArrayNode::addAll);
     }
 
+    @Path("/{uri}/download.ttl")
+    @GET
+    public Model download(@PathParam("uri") String uri) {
+        return store.read(ds -> {
+            final Model target = Models.create();
+            final Model source = ds.getDefaultModel();
+
+            new ModelExtract(Annotations.PROJECT_BOUNDARY).extractInto(target, source.createResource(uri), source);
+
+            target.listSubjectsWithProperty(RDF.type, SharedCanvas.Canvas)
+                    .forEachRemaining(canvas -> Annotations.graph(canvas.getURI(), source, target));
+
+            target.removeAll(null, OpenArchivesTerms.isDescribedBy, null);
+
+            return target;
+        });
+    }
+
     @Path("/{uri}/removed")
     @POST
     public Model cleanupLinks(@FormParam("uuids") String uuids) {
@@ -138,8 +174,8 @@ public class Projects {
         throw Server.NOT_IMPLEMENTED;
     }
 
-    public static Model model(Model model, SemanticStore store, Node projectUri) throws ParseException {
-        return store.read(ds -> model.add(ds.getDefaultModel().createResource(projectUri.getURI()).listProperties()));
+    public static Model model(String uri, Model source, Model target) {
+        return target.add(source.createResource(uri).listProperties());
     }
 
     public static Model identifiers2Locators(Model model, UriInfo ui) {

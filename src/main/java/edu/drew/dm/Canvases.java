@@ -4,8 +4,6 @@ import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.SharedCanvas;
 import org.apache.jena.arq.querybuilder.SelectBuilder;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.RDF;
@@ -37,8 +35,8 @@ public class Canvases {
         return Models.identifiers2Locators(Canvases.model(
                 Annotations.graph(store, project, canvas),
                 store,
-                NodeFactory.createURI(project),
-                NodeFactory.createURI(canvas)
+                project,
+                canvas
         ), ui);
     }
 
@@ -96,11 +94,11 @@ public class Canvases {
                 .build().toString();
     }
 
-    public static Model model(Model model, SemanticStore store, Node projectUri) throws ParseException {
-        return model(model, store, projectUri, null);
+    public static Model model(Model model, SemanticStore store, String uri) throws ParseException {
+        return model(model, store, uri, null);
     }
 
-    public static Model model(Model model, SemanticStore store, Node projectUri, Node canvasUri) throws ParseException {
+    public static Model model(Model model, SemanticStore store, String projectUri, String canvasUri) throws ParseException {
         final SelectBuilder canvasQuery = Sparql.selectTriples()
                 .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
                 .addWhere("?s", OpenAnnotation.hasTarget, "?canvas");
