@@ -8,6 +8,7 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.ValueConverter;
 import joptsimple.util.PathConverter;
+import org.glassfish.grizzly.http.CompressionConfig;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandlerRegistration;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -43,6 +44,9 @@ public class Server {
     private static final OptionParser OPTION_PARSER = new OptionParser();
 
     private static final OptionSpec<Void> HELP_OPT = OPTION_PARSER.accepts("help").forHelp();
+
+    private static final OptionSpec<Void> GZIP_OPT = OPTION_PARSER.accepts("gzip");
+
 
     private static final OptionSpec<Path> DATA_DIR_OPT = OPTION_PARSER
             .accepts("data").withRequiredArg().withValuesConvertedBy(new PathConverter()).defaultsTo(Paths.get("dm"));
@@ -166,6 +170,13 @@ public class Server {
         for (NetworkListener listener : server.getListeners()) {
             // use an unbounded worker thread pool, assuming that handler work is mostly I/O bound
             listener.getTransport().getWorkerThreadPoolConfig().setMaxPoolSize(Integer.MAX_VALUE);
+
+            if (optionSet.has(GZIP_OPT)) {
+                final CompressionConfig compressionConfig = listener.getCompressionConfig();
+                compressionConfig.setCompressionMode(CompressionConfig.CompressionMode.ON);
+                compressionConfig.setCompressionMinSize(860); // http://webmasters.stackexchange.com/questions/31750/what-is-recommended-minimum-object-size-for-gzip-performance-benefits
+                compressionConfig.setCompressableMimeTypes("application/javascript", "application/json", "application/xml", "text/css", "text/html", "text/javascript", "text/plain", "text/turtle", "text/xml");
+            }
         }
 
         final String contextPath = optionSet.valueOf(CONTEXT_PATH_OPT);
