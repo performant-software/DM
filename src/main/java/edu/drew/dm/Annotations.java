@@ -31,7 +31,7 @@ public class Annotations {
             final Model source = ds.getDefaultModel();
             final Model target = Models.create();
 
-            Projects.model(project, source, target);
+            target.add(source.createResource(project).listProperties());
 
             graph(rootUri, source, target);
 

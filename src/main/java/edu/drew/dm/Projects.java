@@ -9,7 +9,8 @@ import edu.drew.dm.vocabulary.Perm;
 import edu.drew.dm.vocabulary.SharedCanvas;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelExtract;
-import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
 
@@ -48,23 +49,24 @@ public class Projects {
 
     @Path("/{uri}")
     @GET
-    public Model read(@PathParam("uri") String uri, @Context UriInfo ui) throws ParseException {
-        final Model projectDesc = store.read(ds -> Projects.model(uri, ds.getDefaultModel(), Models.create()));
+    public Model read(@PathParam("uri") String uri, @Context UriInfo ui) {
+        final Model projectDesc = Models.create();
 
-        store.query(
-                Sparql.selectTriples()
-                        .addWhere("?s", Perm.hasPermissionOver, uri)
-                        .build(),
-                Sparql.resultSetInto(projectDesc)
-        );
+        store.read(ds -> {
+            final Resource project = ds.getDefaultModel().createResource(uri);
 
-        store.query(
-                Sparql.selectTriples()
-                        .addWhere(uri, OpenArchivesTerms.aggregates, "?s")
-                        .addFilter(Sparql.basicProperties("?p"))
-                        .build(),
-                Sparql.resultSetInto(projectDesc)
-        );
+            projectDesc.add(project.listProperties());
+
+            project.getModel().listSubjectsWithProperty(Perm.hasPermissionOver, project)
+                    .forEachRemaining(agent -> projectDesc.add(agent.listProperties()));
+
+
+            project.getModel().listObjectsOfProperty(project, OpenArchivesTerms.aggregates)
+                    .mapWith(RDFNode::asResource)
+                    .forEachRemaining(part -> projectDesc.add(part.listProperties()));
+
+            return projectDesc;
+        });
 
         Canvases.model(projectDesc, store, uri);
 
@@ -172,10 +174,6 @@ public class Projects {
     @DELETE
     public Model delete(@PathParam("uri") String uri) {
         throw Server.NOT_IMPLEMENTED;
-    }
-
-    public static Model model(String uri, Model source, Model target) {
-        return target.add(source.createResource(uri).listProperties());
     }
 
     public static Model identifiers2Locators(Model model, UriInfo ui) {

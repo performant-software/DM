@@ -1,8 +1,8 @@
 package edu.drew.dm;
 
-import org.apache.jena.graph.NodeFactory;
-import org.apache.jena.query.QuerySolution;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -71,30 +72,21 @@ public class Authentication implements ContainerRequestFilter {
                 throw UNAUTHORIZED;
             }
 
-            agent = store.query(
-                    Sparql.select()
-                            .addVar("?label").addVar("?agent").addVar("?mailbox")
-                            .addWhere("?agent", RDF.type, FOAF.Agent)
-                            .addWhere("?agent", RDFS.label, "?label")
-                            .addWhere("?agent", FOAF.mbox, "?mailbox")
-                            .addWhere("?agent", RDFS.label, NodeFactory.createLiteral(user))
-                            .build(),
-                    resultSet -> {
-                        if (resultSet.hasNext()) {
-                            final QuerySolution qs = resultSet.next();
-                            final String name = qs.getLiteral("label").toString();
-                            return new User(
-                                    name,
-                                    qs.getResource("agent").getURI(),
-                                    name,
-                                    name,
-                                    URI.create(qs.getResource("mailbox").getURI()).getSchemeSpecificPart()
-                            );
-                        }
-                        return null;
-                    }
-            );
-
+            agent = store.read(ds -> {
+                final ExtendedIterator<User> users = ds.getDefaultModel().listSubjectsWithProperty(RDFS.label, user)
+                        .filterKeep(subject -> subject.hasProperty(RDF.type, FOAF.Agent))
+                        .mapWith(subject -> new User(
+                                user,
+                                subject.getURI(),
+                                user,
+                                user,
+                                Optional.ofNullable(subject.getPropertyResourceValue(FOAF.mbox))
+                                        .map(Resource::getURI)
+                                        .map(uri -> URI.create(uri).getSchemeSpecificPart())
+                                        .orElseThrow(IllegalStateException::new)
+                        ));
+                return (users.hasNext() ? users.next() : null);
+            });
         }
 
         if (agent != null) {

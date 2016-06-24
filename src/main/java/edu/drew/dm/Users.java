@@ -2,9 +2,8 @@ package edu.drew.dm;
 
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.vocabulary.FOAF;
@@ -43,28 +42,23 @@ public class Users {
 
     @Path("/{user}")
     @GET
-    public Model read(@PathParam("user") String user, @Context UriInfo ui) throws ParseException {
+    public Model read(@PathParam("user") String user, @Context UriInfo ui) {
         final Model userDesc = Models.create();
-        final Node userLiteral = NodeFactory.createLiteral(user);
 
-        store.query(
-                Sparql.selectTriples()
-                        .addWhere("?s", RDF.type, FOAF.Agent)
-                        .addWhere("?s", RDFS.label, userLiteral)
-                        .build(),
-                Sparql.resultSetInto(userDesc)
-        );
+        store.read(ds -> {
+            ds.getDefaultModel().listSubjectsWithProperty(RDFS.label, user)
+                    .filterKeep(subject -> subject.hasProperty(RDF.type, FOAF.Agent))
+                    .forEachRemaining(agent -> {
+                        userDesc.add(agent.listProperties());
 
-        store.query(
-                Sparql.selectTriples()
-                        .addWhere("?s", RDF.type, DCTypes.Collection)
-                        .addWhere("?agent", RDF.type, FOAF.Agent)
-                        .addWhere("?agent", RDFS.label, userLiteral)
-                        .addWhere("?agent", Perm.hasPermissionOver, "?s")
-                        .addFilter(Sparql.basicProperties("?p"))
-                        .build(),
-                Sparql.resultSetInto(userDesc)
-        );
+                        agent.getModel().listObjectsOfProperty(agent, Perm.hasPermissionOver)
+                                .mapWith(RDFNode::asResource)
+                                .filterKeep(subject -> subject.hasProperty(RDF.type, DCTypes.Collection))
+                                .forEachRemaining(project -> userDesc.add(project.listProperties()));
+                    });
+
+            return userDesc;
+        });
 
         return Models.identifiers2Locators(userDesc, ui);
     }

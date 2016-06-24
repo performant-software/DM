@@ -3,9 +3,10 @@ package edu.drew.dm;
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.SharedCanvas;
-import org.apache.jena.arq.querybuilder.SelectBuilder;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
+import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
 
 import javax.inject.Inject;
@@ -94,38 +95,29 @@ public class Canvases {
                 .build().toString();
     }
 
-    public static Model model(Model model, SemanticStore store, String uri) throws ParseException {
+    public static Model model(Model model, SemanticStore store, String uri) {
         return model(model, store, uri, null);
     }
 
-    public static Model model(Model model, SemanticStore store, String projectUri, String canvasUri) throws ParseException {
-        final SelectBuilder canvasQuery = Sparql.selectTriples()
-                .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
-                .addWhere("?s", OpenAnnotation.hasTarget, "?canvas");
+    public static Model model(Model model, SemanticStore store, String projectUri, String canvasUri) {
+        return store.read(ds  -> {
+            ds.getDefaultModel().createResource(projectUri).listProperties(OpenArchivesTerms.aggregates)
+                    .mapWith(stmt -> stmt.getObject().asResource())
+                    .filterKeep(part -> part.hasProperty(RDF.type, SharedCanvas.Canvas))
+                    .filterKeep(canvas -> canvasUri == null ? true : canvasUri.equals(canvas.getURI()))
+                    .forEachRemaining(canvas -> {
+                        model.add(canvas.listProperties());
 
-        final SelectBuilder imageQuery = Sparql.selectTriples()
-                .addWhere("?s", RDF.type, "?imageType")
-                .addWhere("?imageAnnotation", OpenAnnotation.hasTarget, "?canvas")
-                .addWhere("?imageAnnotation", OpenAnnotation.hasBody, "?s")
-                .addWhere(projectUri, OpenArchivesTerms.aggregates, "?canvas")
-                .addFilter(Sparql.propertyFilter("?imageType", "dcmitype:Image", "dms:Image", "dms:ImageChoice"));
-
-        if (canvasUri != null) {
-            final String filterUri = "<" + canvasUri.toString() + ">";
-            store.query(
-                    Sparql.selectTriples()
-                        .addWhere("?s", RDF.type, SharedCanvas.Canvas)
-                        .addFilter("?s = " + filterUri)
-                    .build(),
-                    Sparql.resultSetInto(model)
-            );
-            canvasQuery.addFilter("?canvas = " + filterUri);
-            imageQuery.addFilter("?canvas = " + filterUri);
-        }
-
-        store.query(canvasQuery.build(), Sparql.resultSetInto(model));
-        store.query(imageQuery.build(), Sparql.resultSetInto(model));
-
-        return model;
+                        canvas.getModel().listSubjectsWithProperty(OpenAnnotation.hasTarget, canvas)
+                                .forEachRemaining(annotation -> {
+                                    model.add(annotation.listProperties());
+                                    final Resource body = annotation.getPropertyResourceValue(OpenAnnotation.hasBody);
+                                    if (DCTypes.Image.equals(body.getPropertyResourceValue(RDF.type))) {
+                                        model.add(body.listProperties());
+                                    }
+                                });
+                    });
+            return model;
+        });
     }
 }
