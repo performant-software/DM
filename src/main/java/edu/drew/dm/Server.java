@@ -156,7 +156,7 @@ public class Server {
                 .register(Canvases.class)
                 .register(Texts.class);
 
-        final URI base = UriBuilder.fromUri("http://localhost/")
+        final URI base = UriBuilder.fromUri("http://0.0.0.0/")
                 .path(CONTEXT_PATH_OPT.value(optionSet) + "/")
                 .port(PORT_OPT.value(optionSet))
                 .build();
