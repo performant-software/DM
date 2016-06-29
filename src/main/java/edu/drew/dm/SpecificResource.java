@@ -25,7 +25,7 @@ public class SpecificResource {
             .filterKeep(subject -> subject.hasProperty(RDF.type, OpenAnnotation.Annotation))
             .forEachRemaining(annotation -> {
                 target.add(annotation.listProperties());
-                Projects.graph(annotation, target, r -> false);
+                Projects.traversal(annotation, target, Projects::allNeighbors);
             });
 
         return target;

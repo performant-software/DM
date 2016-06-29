@@ -12,7 +12,7 @@ public class Annotations {
 
     public static Model graph(String uri, Model source, Model target) {
         annotations(source, source.createResource(uri))
-                .forEachRemaining(annotation -> Projects.graph(annotation, target, r -> false));
+                .forEachRemaining(annotation -> Projects.traversal(annotation, target, Projects::allNeighbors));
 
         return target;
     }

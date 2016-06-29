@@ -41,7 +41,7 @@ public class Texts {
             final Resource text = source.createResource(uri);
 
             if (project.hasProperty(OpenArchivesTerms.aggregates, text)) {
-                Projects.graph(text, target, Models.isOfType(SharedCanvas.Canvas, DCTypes.Text));
+                Projects.traversal(text, target, Projects::annotationContext);
             }
         });
     }
@@ -66,9 +66,9 @@ public class Texts {
             final Resource text = source.createResource(textUri);
             final Resource resource = source.createResource(resourceUri);
 
-            if (project.hasProperty(OpenArchivesTerms.aggregates, text) && resource.hasProperty(OpenAnnotation.hasSource, text)) {
-                Projects.graph(resource, target, Models.isOfType(DCTypes.Collection));
-            }
+            //if (project.hasProperty(OpenArchivesTerms.aggregates, text) && resource.hasProperty(OpenAnnotation.hasSource, text)) {
+                Projects.traversal(resource, target, Projects::resourceContext);
+            //}
         });
     }
 

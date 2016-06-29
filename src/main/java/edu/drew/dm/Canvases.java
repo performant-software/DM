@@ -51,7 +51,7 @@ public class Canvases {
             final Resource canvas = source.createResource(uri);
 
             if (project.hasProperty(OpenArchivesTerms.aggregates, canvas)) {
-                Projects.graph(canvas, target, Models.isOfType(DCTypes.Text).or(Models.isOfType(SharedCanvas.Canvas).and(r -> !r.equals(canvas))));
+                Projects.traversal(canvas, target, Projects::annotationContext);
             }
         });
     }
@@ -65,7 +65,7 @@ public class Canvases {
             final Resource resource = source.createResource(resourceUri);
 
             //if (project.hasProperty(OpenArchivesTerms.aggregates, canvas) && resource.hasProperty(OpenAnnotation.hasSource, canvas)) {
-                Projects.graph(resource, target, Models.isOfType(DCTypes.Collection, SharedCanvas.Canvas));
+                Projects.traversal(resource, target, Projects::resourceContext);
             //}
         });
     }
