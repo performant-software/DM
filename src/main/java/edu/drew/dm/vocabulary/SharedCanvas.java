@@ -2,6 +2,7 @@ package edu.drew.dm.vocabulary;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
 /**
@@ -15,4 +16,5 @@ public class SharedCanvas {
 
     public static final Resource Canvas = model.createResource(NS + "Canvas");
 
+    public static final Resource painting = model.createResource(NS + "painting");
 }

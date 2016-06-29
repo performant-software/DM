@@ -4,13 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import edu.drew.dm.vocabulary.SharedCanvas;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelExtract;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
 
@@ -29,6 +31,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
@@ -50,27 +57,24 @@ public class Projects {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("uri") String uri, @Context UriInfo ui) {
-        final Model projectDesc = Models.create();
+        return store.read((source, target) -> {
+            final Resource project = source.createResource(uri);
 
-        store.read(ds -> {
-            final Resource project = ds.getDefaultModel().createResource(uri);
-
-            projectDesc.add(project.listProperties());
+            target.add(project.listProperties());
 
             project.getModel().listSubjectsWithProperty(Perm.hasPermissionOver, project)
-                    .forEachRemaining(agent -> projectDesc.add(agent.listProperties()));
+                    .forEachRemaining(agent -> target.add(agent.listProperties()));
 
 
             project.getModel().listObjectsOfProperty(project, OpenArchivesTerms.aggregates)
                     .mapWith(RDFNode::asResource)
-                    .forEachRemaining(part -> projectDesc.add(part.listProperties()));
-
-            return projectDesc;
+                    .forEachRemaining(part -> {
+                        target.add(part.listProperties());
+                        if (part.hasProperty(RDF.type, SharedCanvas.Canvas)) {
+                            Canvases.imageAnnotations(part, target);
+                        }
+                    });
         });
-
-        Canvases.model(projectDesc, store, uri);
-
-        return Models.identifiers2Locators(projectDesc, ui);
     }
 
     @POST
@@ -81,9 +85,14 @@ public class Projects {
     @Path("/{uri}")
     @PUT
     public Model update(@PathParam("uri") String uri, Model model, @Context  UriInfo ui) {
-        final Model generalizedModel = Models.locators2Identifiers(model);
-        store.merge(generalizedModel, Collections.singleton(OpenArchivesTerms.aggregates));
-        return Models.identifiers2Locators(generalizedModel, ui);
+        return store.merge(model);
+    }
+
+    @Path("/{uri}/cleanup")
+    @Produces(MediaType.TEXT_PLAIN)
+    @POST
+    public String cleanup(@PathParam("uri") String uri) {
+        return String.format("%d orphaned text removed, %d orphaned annotations removed.", 0, 0);
     }
 
     @Path("/{uri}/share")
@@ -103,7 +112,7 @@ public class Projects {
     @Path("/{uri}/share")
     @Produces(MediaType.APPLICATION_JSON)
     @DELETE
-    public JsonNode unshare(@PathParam("uri") String uri) {
+    public JsonNode revokeShare(@PathParam("uri") String uri) {
         return objectMapper.createObjectNode().put("success", true);
     }
 
@@ -140,18 +149,8 @@ public class Projects {
     @Path("/{uri}/download.ttl")
     @GET
     public Model download(@PathParam("uri") String uri) {
-        return store.read(ds -> {
-            final Model target = Models.create();
-            final Model source = ds.getDefaultModel();
-
-            new ModelExtract(Annotations.PROJECT_BOUNDARY).extractInto(target, source.createResource(uri), source);
-
-            target.listSubjectsWithProperty(RDF.type, SharedCanvas.Canvas)
-                    .forEachRemaining(canvas -> Annotations.graph(canvas.getURI(), source, target));
-
-            target.removeAll(null, OpenArchivesTerms.isDescribedBy, null);
-
-            return target;
+        return store.read((source, target) -> {
+            graph(source.createResource(uri), target, r -> false);
         });
     }
 
@@ -165,9 +164,7 @@ public class Projects {
     @Path("/{uri}/remove_triples")
     @PUT
     public Model deleteContents(@PathParam("uri") String uri, Model model, @Context  UriInfo ui) {
-        final Model generalizedModel = Models.locators2Identifiers(model);
-        store.remove(generalizedModel);
-        return Models.identifiers2Locators(generalizedModel, ui);
+        return store.remove(model);
     }
 
     @Path("/{uri}")
@@ -178,11 +175,6 @@ public class Projects {
 
     public static Model identifiers2Locators(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, DCTypes.Collection).forEachRemaining(project -> {
-            model.removeAll(
-                    project,
-                    OpenArchivesTerms.isDescribedBy,
-                    null
-            );
             model.add(
                     project,
                     OpenArchivesTerms.isDescribedBy,
@@ -198,5 +190,62 @@ public class Projects {
                 .path(Projects.class, "read")
                 .resolveTemplate("uri", uri)
                 .build().toString();
+    }
+
+    public static Model graph(Resource root, Model target, Predicate<Resource> stopAt) {
+        final Queue<Resource> frontier = new LinkedList<>(Collections.singleton(root));
+        final Set<Resource> visited = new HashSet<>();
+        while (!frontier.isEmpty()) {
+            final Resource resource = frontier.remove();
+            target.add(resource.listProperties());
+            visited.add(resource);
+            if (!stopAt.test(resource)) {
+                frontier(resource).stream().filter(r -> !visited.contains(r) && !stopAt.test(r)).forEach(frontier::add);
+            }
+        }
+        return target;
+    }
+
+    private static Set<Resource> frontier(Resource r) {
+        final Model model = r.getModel();
+        final Set<Resource> resourceTypes = model.listObjectsOfProperty(r, RDF.type).mapWith(RDFNode::asResource).toSet();
+        if (resourceTypes.contains(FOAF.Agent)) {
+            return Collections.emptySet();
+        }
+        if (resourceTypes.contains(DCTypes.Collection)) {
+            return r.listProperties(OpenArchivesTerms.aggregates)
+                    .mapWith(Statement::getObject).mapWith(RDFNode::asResource)
+                    .andThen(model.listSubjectsWithProperty(Perm.hasPermissionOver, r))
+                    .toSet();
+        }
+        if (resourceTypes.contains(DCTypes.Image)) {
+            return model.listSubjectsWithProperty(OpenAnnotation.hasBody, r).toSet();
+        }
+        if (resourceTypes.contains(SharedCanvas.Canvas) || resourceTypes.contains(DCTypes.Text)) {
+            return model.listSubjectsWithProperty(OpenAnnotation.hasSource, r)
+                    .andThen(model.listSubjectsWithProperty(OpenAnnotation.hasTarget, r))
+                    .andThen(model.listSubjectsWithProperty(OpenAnnotation.hasBody, r))
+                    .andThen(model.listSubjectsWithProperty(OpenArchivesTerms.aggregates, r))
+                    .toSet();
+        }
+        if (resourceTypes.contains(OpenAnnotation.SpecificResource)) {
+            return model.listSubjectsWithProperty(OpenAnnotation.hasTarget, r)
+                    .andThen(model.listSubjectsWithProperty(OpenAnnotation.hasBody, r))
+                    .andThen(model.listObjectsOfProperty(r, OpenAnnotation.hasSelector).mapWith(RDFNode::asResource))
+                    .andThen(model.listObjectsOfProperty(r, OpenAnnotation.hasSource).mapWith(RDFNode::asResource))
+                    .toSet();
+        }
+        if (resourceTypes.contains(OpenAnnotation.Annotation)) {
+            return r.listProperties(OpenAnnotation.hasTarget)
+                    .andThen(r.listProperties(OpenAnnotation.hasBody))
+                    .mapWith(Statement::getObject)
+                    .mapWith(RDFNode::asResource)
+                    .toSet();
+        }
+        if (resourceTypes.contains(OpenAnnotation.TextQuoteSelector) || resourceTypes.contains(OpenAnnotation.SvgSelector)) {
+            return model.listSubjectsWithProperty(OpenAnnotation.hasSelector, r)
+                    .toSet();
+        }
+        return Collections.emptySet();
     }
 }

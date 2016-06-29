@@ -1,5 +1,7 @@
 package edu.drew.dm;
 
+import edu.drew.dm.vocabulary.OpenArchivesTerms;
+import edu.drew.dm.vocabulary.Perm;
 import it.sauronsoftware.cron4j.Task;
 import it.sauronsoftware.cron4j.TaskExecutionContext;
 import org.apache.jena.query.Dataset;
@@ -26,12 +28,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -42,6 +47,14 @@ import java.util.zip.GZIPOutputStream;
 public class SemanticStore implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(SemanticStore.class.getName());
+
+    public static final Set<Property> MULTI_VALUED_PROPERTIES = new HashSet<>();
+
+    static {
+        MULTI_VALUED_PROPERTIES.add(RDF.type);
+        MULTI_VALUED_PROPERTIES.addAll(Perm.ALL_PROPERTIES);
+        MULTI_VALUED_PROPERTIES.add(OpenArchivesTerms.aggregates);
+    }
 
     private final File base;
     private final File images;
@@ -87,19 +100,27 @@ public class SemanticStore implements AutoCloseable {
     }
 
     public <T> T query(Query query, QueryResultHandler<T> resultHandler) {
-        return read(dataset -> {
+        return read(ds -> {
             LOG.finer(() -> String.join("\n",
-                    dataset.toString(),
+                    ds.toString(),
                     "----------------------------------------",
                     query.toString(),
                     "----------------------------------------"
             ));
-            try (QueryExecution qe = QueryExecutionFactory.create(query, dataset)) {
+            try (QueryExecution qe = QueryExecutionFactory.create(query, ds)) {
                 return resultHandler.handle(qe.execSelect());
             }
         });
     }
 
+    public Model read(BiConsumer<Model, Model> reader) {
+        return read(ds -> {
+            final Model source = ds.getDefaultModel();
+            final Model target = Models.create();
+            reader.accept(source, target);
+            return target;
+        });
+    }
     public Model create(Model created) {
         return write(ds -> {
             ds.getDefaultModel().add(created);
@@ -115,7 +136,7 @@ public class SemanticStore implements AutoCloseable {
         });
     }
 
-    public Model merge(Model update, Set<Property> multiValuedProperties) {
+    public Model merge(Model update) {
         final Map<StatementHead, LinkedList<Statement>> statementsByHead = new LinkedHashMap<>();
         update.listStatements().forEachRemaining(stmt -> statementsByHead
                 .computeIfAbsent(new StatementHead(stmt), k -> new LinkedList<>())
@@ -126,7 +147,7 @@ public class SemanticStore implements AutoCloseable {
             final Model model = ds.getDefaultModel();
 
             statementsByHead.forEach((head, statements) -> {
-                if (RDF.type.equals(head.predicate) || multiValuedProperties.contains(head.predicate)) {
+                if (MULTI_VALUED_PROPERTIES.contains(head.predicate)) {
                     model.add(statements);
                     return;
                 }

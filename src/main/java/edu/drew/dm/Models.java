@@ -1,6 +1,7 @@
 package edu.drew.dm;
 
 import edu.drew.dm.vocabulary.DigitalMappaemundi;
+import edu.drew.dm.vocabulary.Exif;
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
@@ -9,6 +10,7 @@ import org.apache.jena.rdf.model.AnonId;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.RDFVisitor;
 import org.apache.jena.rdf.model.Resource;
@@ -24,6 +26,7 @@ import org.apache.jena.vocabulary.RDFS;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
@@ -36,9 +39,16 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -55,7 +65,7 @@ public class Models {
         PREFIXES.put("dcmitype", DCTypes.NS);
         PREFIXES.put("foaf", FOAF.NS);
 
-        PREFIXES.put("exif", "http://www.w3.org/2003/12/exif/ns#");
+        PREFIXES.put("exif", Exif.NS);
         PREFIXES.put("oa", OpenAnnotation.NS);
         PREFIXES.put("cnt08", "http://www.w3.org/2008/content#");
         PREFIXES.put("prov", "http://www.w3.org/ns/prov#");
@@ -99,17 +109,20 @@ public class Models {
             if (mediaType.isCompatible(MediaType.valueOf("text/plain"))) {
                 lang = "N-TRIPLE";
             }
-            return create().read(new FilterInputStream(entityStream) {
+            return locators2Identifiers(create().read(new FilterInputStream(entityStream) {
                 @Override
                 public void close() throws IOException {
                     // no-op
                 }
-            }, "", lang);
+            }, "", lang));
         }
 
     }
 
     public static class Writer implements MessageBodyWriter<Model> {
+
+        @Context
+        private UriInfo ui;
 
         @Override
         public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -126,6 +139,9 @@ public class Models {
             if (model.isEmpty()) {
                 throw new NotFoundException();
             }
+
+            identifiers2Locators(model, ui);
+
             String lang = "N3";
             if (mediaType.isCompatible(MediaType.valueOf("application/rdf+xml"))) {
                 lang = "RDF/XML";
@@ -151,6 +167,8 @@ public class Models {
     }
 
     public static Model identifiers2Locators(Model model, UriInfo ui) {
+        model.removeAll(null, OpenArchivesTerms.isDescribedBy, null);
+
         Users.identifiers2Locators(model, ui);
         Projects.identifiers2Locators(model, ui);
         Canvases.identifiers2Locators(model, ui);
@@ -213,5 +231,19 @@ public class Models {
         final StringWriter modelStr = new StringWriter();
         model.write(modelStr, "N3");
         return modelStr.toString();
+    }
+
+    public static Resource uuid(Model model) {
+        try {
+            return model.createResource(new URI("urn:uuid", UUID.randomUUID().toString(), null).toString());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Predicate<Resource> isOfType(Resource... types) {
+        final Set<Resource> typesSet = new HashSet<>(Arrays.asList(types));
+        return r -> r.listProperties(RDF.type).mapWith(Statement::getObject).mapWith(RDFNode::asResource)
+                .filterKeep(typesSet::contains).hasNext();
     }
 }

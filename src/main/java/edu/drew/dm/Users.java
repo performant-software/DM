@@ -20,7 +20,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,8 +28,6 @@ import java.util.regex.Pattern;
  */
 @Path("/store/users")
 public class Users {
-
-    private static final Logger LOG = Logger.getLogger(Users.class.getName());
 
     private final SemanticStore store;
 
@@ -43,43 +40,28 @@ public class Users {
     @Path("/{user}")
     @GET
     public Model read(@PathParam("user") String user, @Context UriInfo ui) {
-        final Model userDesc = Models.create();
-
-        store.read(ds -> {
-            ds.getDefaultModel().listSubjectsWithProperty(RDFS.label, user)
+        return store.read((source, target) -> {
+            source.listSubjectsWithProperty(RDFS.label, user)
                     .filterKeep(subject -> subject.hasProperty(RDF.type, FOAF.Agent))
                     .forEachRemaining(agent -> {
-                        userDesc.add(agent.listProperties());
+                        target.add(agent.listProperties());
 
                         agent.getModel().listObjectsOfProperty(agent, Perm.hasPermissionOver)
                                 .mapWith(RDFNode::asResource)
                                 .filterKeep(subject -> subject.hasProperty(RDF.type, DCTypes.Collection))
-                                .forEachRemaining(project -> userDesc.add(project.listProperties()));
+                                .forEachRemaining(project -> target.add(project.listProperties()));
                     });
-
-            return userDesc;
         });
-
-        return Models.identifiers2Locators(userDesc, ui);
     }
 
     @Path("/{user}")
     @PUT
     public Model update(@PathParam("user") String user, Model model, @Context  UriInfo ui) throws ParseException {
-        final Model generalizedModel = Models.locators2Identifiers(Models.create().add(model));
-
-        store.merge(generalizedModel, Perm.ALL_PROPERTIES);
-
-        return Models.identifiers2Locators(generalizedModel, ui);
+        return store.merge(model);
     }
 
     public static Model identifiers2Locators(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, FOAF.Agent).forEachRemaining(agent -> {
-            model.removeAll(
-                    agent,
-                    OpenArchivesTerms.isDescribedBy,
-                    null
-            );
             model.add(
                     agent,
                     OpenArchivesTerms.isDescribedBy,

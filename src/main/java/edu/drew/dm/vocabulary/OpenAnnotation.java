@@ -17,6 +17,10 @@ public class OpenAnnotation {
 
     public static final Resource Annotation = model.createResource(NS + "Annotation");
 
+    public static final Resource SvgSelector = model.createResource(NS + "SvgSelector");
+
+    public static final Resource TextQuoteSelector = model.createResource(NS + "TextQuoteSelector");
+
     public static final Resource SpecificResource = model.createResource(NS + "SpecificResource");
 
     public static final Property hasSource = model.createProperty(NS, "hasSource");
@@ -24,4 +28,8 @@ public class OpenAnnotation {
     public static final Property hasTarget = model.createProperty(NS, "hasTarget");
 
     public static final Property hasBody = model.createProperty(NS, "hasBody");
+
+    public static final Property hasSelector = model.createProperty(NS, "hasSelector");
+
+    public static final Property motivatedBy = model.createProperty(NS, "motivatedBy");
 }
