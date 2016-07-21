@@ -114,6 +114,8 @@ public class Server {
         final SemanticStore semanticStore = new SemanticStore(storeDir).withInitialData(initialData);
         shutdownHook(semanticStore::close);
 
+        semanticStore.index().build();
+
         return semanticStore;
     }
 

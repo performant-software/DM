@@ -29,6 +29,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -84,7 +85,7 @@ public class Projects {
 
     @Path("/{uri}")
     @PUT
-    public Model update(@PathParam("uri") String uri, Model model, @Context  UriInfo ui) {
+    public Model update(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
         return store.merge(model);
     }
 
@@ -119,30 +120,37 @@ public class Projects {
     @Path("/{uri}/search")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query) {
+    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query, @Context UriInfo ui) throws Exception {
+
+        final boolean singleWordQuery = query.matches("[A-Za-z0-9]+");
+
         final ObjectNode result = objectMapper.createObjectNode();
 
-        result.putArray("results")
-                .addObject()
-                .put("uri", "http://www.google.de/")
-                .put("url", "http://www.google.de/")
-                .put("title", "Google")
-                .put("highlighted_title", "Google")
-                .put("text", "Google")
-                .put("highlighted_text", "Google");
+        final ArrayNode results = result.putArray("results");
 
-        // optional, only in case of a suggestion
-        result.put("spelling_suggestion", query);
+        store.index().search(uri, singleWordQuery ? String.format("title:%s^10 OR text:%s", query, query) : query, 100, hit -> {
 
-        return result ;
+            results.addObject()
+                    .put("uri", hit.uri)
+                    .put("url", Texts.textResource(ui, uri, hit.uri))
+                    .put("title", hit.title)
+                    .put("highlighted_title", hit.titleHighlighted.isEmpty() ? hit.title : hit.titleHighlighted)
+                    .put("text", hit.text)
+                    .put("highlighted_text", hit.textHighlighted);
+        });
+
+        if (results.size() == 0 && singleWordQuery) {
+            store.index().checkSpelling(query).ifPresent(suggestion -> result.put("spelling_suggestion", suggestion));
+        }
+
+        return result;
     }
 
     @Path("/{uri}/search_autocomplete")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public JsonNode autocomplete(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String prefix) {
-        return IntStream.range(0, 10)
-                .mapToObj(i -> String.format("%s_%02d", prefix, i))
+    public JsonNode autocomplete(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String prefix) throws IOException {
+        return Stream.of(store.index().suggest(prefix, 10))
                 .collect(objectMapper::createArrayNode, ArrayNode::add, ArrayNode::addAll);
     }
 
@@ -163,7 +171,7 @@ public class Projects {
 
     @Path("/{uri}/remove_triples")
     @PUT
-    public Model deleteContents(@PathParam("uri") String uri, Model model, @Context  UriInfo ui) {
+    public Model deleteContents(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
         return store.remove(model);
     }
 

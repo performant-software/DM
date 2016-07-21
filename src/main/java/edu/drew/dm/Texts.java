@@ -40,9 +40,7 @@ public class Texts {
             final Resource project = source.createResource(projectUri);
             final Resource text = source.createResource(uri);
 
-            if (project.hasProperty(OpenArchivesTerms.aggregates, text)) {
-                Projects.traversal(text, target, Projects::annotationContext);
-            }
+            Projects.traversal(text, target, Projects::annotationContext);
         });
     }
 
@@ -92,7 +90,7 @@ public class Texts {
         return model;
     }
 
-    private static String textResource(UriInfo ui, String projectUri, String uri) {
+    public static String textResource(UriInfo ui, String projectUri, String uri) {
         return Server.baseUri(ui)
                 .path(Texts.class)
                 .path(Texts.class, "read")

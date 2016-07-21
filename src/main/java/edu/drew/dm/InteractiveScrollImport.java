@@ -51,7 +51,7 @@ public class InteractiveScrollImport {
 
         model.listSubjectsWithProperty(RDF.type, DCTypes.Text)
                 .forEachRemaining(text -> {
-                    text.addProperty(RDF.type, Content.ContentAsChars);
+                    text.addProperty(RDF.type, Content.ContentAsText);
                     text.addProperty(RDFS.label, text.getRequiredProperty(DC_11.title).getObject().asLiteral().getString());
                 });
 

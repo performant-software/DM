@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
@@ -60,12 +59,18 @@ public class SemanticStore implements AutoCloseable {
     private final File images;
     private final Dataset dataset;
     private final File datasetBackups;
+    private final Index index;
 
     public SemanticStore(File base) {
         this.base = directory(base);
         this.images = directory(new File(base, "images"));
         this.dataset = TDBFactory.createDataset(directory(new File(base, "triple-store")).getAbsolutePath());
         this.datasetBackups = directory(new File(base, "ttl-dumps"));
+        this.index = new Index(this);
+    }
+
+    public Index index() {
+        return index;
     }
 
     public File getBase() {
@@ -205,10 +210,20 @@ public class SemanticStore implements AutoCloseable {
 
     @Override
     public void close() {
-        this.dataset.close();
+        try {
+            this.index.close();
+        } catch (Throwable t) {
+            // ignored
+        }
+
+        try {
+            this.dataset.close();
+        } catch (Throwable t) {
+            // ignored
+        }
     }
 
-    private static File directory(File dir) {
+    public static File directory(File dir) {
         if (!dir.isDirectory() && !dir.mkdirs()) {
             throw new IllegalArgumentException(dir.toString());
         }
