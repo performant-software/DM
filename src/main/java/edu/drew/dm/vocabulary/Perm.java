@@ -29,12 +29,21 @@ public class Perm {
 
     public static final Property mayAdminister = model.createProperty(NS, "mayAdminister");
 
-    public static final Set<Property> ALL_PROPERTIES = new HashSet<>(Arrays.asList(
-            hasPermissionOver,
-            mayRead,
-            mayUpdate,
-            mayDelete,
-            mayAugment,
-            mayAdminister
-    ));
+    public static final Set<Property> ALL_PROPERTIES = new HashSet<>();
+
+    public static final Set<Property> USER_PERMISSIONS = new HashSet<>();
+    public static final Set<Property> ADMIN_PERMISSIONS = new HashSet<>();
+
+    static {
+        USER_PERMISSIONS.add(hasPermissionOver);
+        USER_PERMISSIONS.add(mayRead);
+        USER_PERMISSIONS.add(mayUpdate);
+        USER_PERMISSIONS.add(mayDelete);
+        USER_PERMISSIONS.add(mayAugment);
+
+        ADMIN_PERMISSIONS.add(mayAdminister);
+
+        ALL_PROPERTIES.addAll(USER_PERMISSIONS);
+        ALL_PROPERTIES.addAll(ADMIN_PERMISSIONS);
+    }
 }

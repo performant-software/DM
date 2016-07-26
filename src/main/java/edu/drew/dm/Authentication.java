@@ -1,6 +1,9 @@
 package edu.drew.dm;
 
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
@@ -77,13 +80,22 @@ public class Authentication implements ContainerRequestFilter {
                         .filterKeep(subject -> subject.hasProperty(RDF.type, FOAF.Agent))
                         .mapWith(subject -> new User(
                                 user,
-                                subject.getURI(),
-                                user,
-                                user,
+                                Optional.ofNullable(subject.getProperty(FOAF.firstName))
+                                        .map(Statement::getObject)
+                                        .map(RDFNode::asLiteral)
+                                        .map(Literal::getString)
+                                        .orElse(user),
+                                Optional.ofNullable(subject.getProperty(FOAF.surname))
+                                        .map(Statement::getObject)
+                                        .map(RDFNode::asLiteral)
+                                        .map(Literal::getString)
+                                        .orElse(user),
                                 Optional.ofNullable(subject.getPropertyResourceValue(FOAF.mbox))
                                         .map(Resource::getURI)
                                         .map(uri -> URI.create(uri).getSchemeSpecificPart())
-                                        .orElseThrow(IllegalStateException::new)
+                                        .orElseThrow(IllegalStateException::new),
+                                true,
+                                ""
                         ));
                 return (users.hasNext() ? users.next() : null);
             });

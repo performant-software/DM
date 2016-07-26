@@ -1,6 +1,8 @@
 package edu.drew.dm;
 
 import javax.ws.rs.core.SecurityContext;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 
 /**
@@ -8,22 +10,20 @@ import java.security.Principal;
  */
 public class User implements SecurityContext, Principal {
 
-    private final String account;
-    private final String uri;
-    private final String firstName;
-    private final String lastName;
-    private final String email;
+    public final String account;
+    public final String firstName;
+    public final String lastName;
+    public final String email;
+    public final boolean admin;
+    public final String password;
 
-    public User(String account) {
-        this(account, "Joe", "Joe", "Doe", "te@st.com");
-    }
-
-    public User(String account, String uri, String firstName, String lastName, String email) {
+    public User(String account, String firstName, String lastName, String email, boolean admin, String password) {
         this.account = account;
-        this.uri = uri;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.admin = admin;
+        this.password = password;
     }
 
     public String getAccount() {
@@ -42,18 +42,30 @@ public class User implements SecurityContext, Principal {
         return email;
     }
 
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public String uri() {
+        return uri(account);
+    }
+
+    public String mbox() {
+        return mbox(email);
+    }
+
     @Override
     public Principal getUserPrincipal() {
         return this;
     }
 
     public boolean isSuperuser() {
-        return isUserInRole("ADMIN");
+        return isUserInRole("admin");
     }
 
     @Override
     public boolean isUserInRole(String role) {
-        return true;
+        return admin && "admin".equalsIgnoreCase(role);
     }
 
     @Override
@@ -70,4 +82,21 @@ public class User implements SecurityContext, Principal {
     public String getName() {
         return account;
     }
+
+    public static String uri(String name) {
+        try {
+            return new URI("user", name, null).toString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String mbox(String email) {
+        try {
+            return new URI("mailto", email, null).toString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

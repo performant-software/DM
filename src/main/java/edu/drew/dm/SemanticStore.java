@@ -1,5 +1,6 @@
 package edu.drew.dm;
 
+import au.com.bytecode.opencsv.CSVReader;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import it.sauronsoftware.cron4j.Task;
@@ -16,16 +17,20 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.tdb.TDBLoader;
 import org.apache.jena.tdb.store.GraphTDB;
+import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
@@ -38,6 +43,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -173,6 +179,49 @@ public class SemanticStore implements AutoCloseable {
             TDBLoader.load((GraphTDB) dataset.getDefaultModel().getGraph(), sources, true);
             Sanitizer.clean(this);
         }
+        return this;
+    }
+
+    public SemanticStore withUsers(CSVReader csv) throws IOException {
+        final User[] users = csv.readAll().stream()
+                .skip(1)
+                .map(user -> new User(
+                        user[0],
+                        user[1],
+                        user[2],
+                        user[3],
+                        Boolean.parseBoolean(user[4]),
+                        user[5]
+                ))
+                .toArray(User[]::new);
+
+        final Set<Resource> projects = read((source, target) -> target.add(source.listStatements(null, RDF.type, DCTypes.Collection))).listSubjects().toSet();
+
+        final Model userModel = Models.create();
+
+        for (User user : users) {
+            final Resource userResource = userModel.createResource(user.uri())
+                    .addProperty(RDF.type, FOAF.Agent)
+                    .addProperty(RDFS.label, user.account)
+                    .addProperty(FOAF.firstName, user.firstName)
+                    .addProperty(FOAF.surname, user.lastName)
+                    .addProperty(FOAF.mbox, userModel.createResource(user.mbox()));
+
+            for (Resource project : projects) {
+                for (Property permission : Perm.USER_PERMISSIONS) {
+                    userResource.addProperty(permission, project);
+                }
+                if (user.admin) {
+                    for (Property permission : Perm.ADMIN_PERMISSIONS) {
+                        userResource.addProperty(permission, project);
+                    }
+
+                }
+            }
+        }
+
+        merge(userModel);
+
         return this;
     }
 

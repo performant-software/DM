@@ -76,13 +76,9 @@ public class Users {
     }
 
     public static String locators2Identifiers(Resource resource) {
-        try {
-            final String uri = resource.getURI();
-            final Matcher userMatcher = USER_URI.matcher(uri);
-            return userMatcher.find() ? new URI("user", userMatcher.group(1), null).toString() : uri;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        final String uri = resource.getURI();
+        final Matcher userMatcher = USER_URI.matcher(uri);
+        return userMatcher.find() ? User.uri(userMatcher.group(1)): uri;
     }
 
     private static final Pattern USER_URI = Pattern.compile("/store/users/(.+)$");

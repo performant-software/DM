@@ -1,5 +1,6 @@
 package edu.drew.dm;
 
+import au.com.bytecode.opencsv.CSVReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.sauronsoftware.cron4j.Scheduler;
 import joptsimple.NonOptionArgumentSpec;
@@ -31,7 +32,10 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ContextResolver;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -47,7 +51,6 @@ public class Server {
     private static final OptionSpec<Void> HELP_OPT = OPTION_PARSER.accepts("help").forHelp();
 
     private static final OptionSpec<Void> GZIP_OPT = OPTION_PARSER.accepts("gzip");
-
 
     private static final OptionSpec<Path> DATA_DIR_OPT = OPTION_PARSER
             .accepts("data").withRequiredArg().withValuesConvertedBy(new PathConverter()).defaultsTo(Paths.get("dm"));
@@ -74,9 +77,11 @@ public class Server {
                 }
             });
 
+    public static final  OptionSpec<Path> USERS_OPT = OPTION_PARSER.accepts("users")
+            .withOptionalArg().withValuesConvertedBy(new PathConverter());
+
     public static final NonOptionArgumentSpec<Path> INIT_FILES_OPT = OPTION_PARSER.nonOptions()
             .withValuesConvertedBy(new PathConverter());
-
 
     public static void main(String[] args) throws Exception {
         final OptionSet optionSet = OPTION_PARSER.parse(args);
@@ -106,13 +111,31 @@ public class Server {
         }));
     }
 
-    private static SemanticStore semanticStore(OptionSet optionSet) {
+    private static SemanticStore semanticStore(OptionSet optionSet) throws IOException {
         final File storeDir = DATA_DIR_OPT.value(optionSet).toFile();
+
         final List<String> initialData = INIT_FILES_OPT.values(optionSet)
                 .stream().map(p -> p.toUri().toString()).collect(Collectors.toList());
 
-        final SemanticStore semanticStore = new SemanticStore(storeDir).withInitialData(initialData);
+        SemanticStore semanticStore = new SemanticStore(storeDir);
         shutdownHook(semanticStore::close);
+
+        final boolean emptyBeforeInit = semanticStore.getDataset().getDefaultModel().isEmpty();
+
+        semanticStore = semanticStore.withInitialData(initialData);
+
+        if (emptyBeforeInit) {
+            try (CSVReader usersCsv = new CSVReader(new InputStreamReader(Server.class.getResourceAsStream("/users.csv"), StandardCharsets.UTF_8))) {
+                semanticStore = semanticStore.withUsers(usersCsv);
+            }
+        }
+
+        final Path users = USERS_OPT.value(optionSet);
+        if (users != null) {
+            try (CSVReader usersCsv = new CSVReader(Files.newBufferedReader(users))) {
+                semanticStore = semanticStore.withUsers(usersCsv);
+            }
+        }
 
         semanticStore.index().build();
 
