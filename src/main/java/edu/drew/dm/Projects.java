@@ -37,7 +37,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -140,7 +139,7 @@ public class Projects {
         });
 
         if (results.size() == 0 && singleWordQuery) {
-            store.index().checkSpelling(query).ifPresent(suggestion -> result.put("spelling_suggestion", suggestion));
+            Stream.of(store.index().suggest(uri, query, 10)).findFirst().ifPresent(suggestion -> result.put("spelling_suggestion", suggestion));
         }
 
         return result;
@@ -150,16 +149,14 @@ public class Projects {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode autocomplete(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String prefix) throws IOException {
-        return Stream.of(store.index().suggest(prefix, 10))
+        return Stream.of(store.index().suggest(uri, prefix, 10))
                 .collect(objectMapper::createArrayNode, ArrayNode::add, ArrayNode::addAll);
     }
 
     @Path("/{uri}/download.ttl")
     @GET
     public Model download(@PathParam("uri") String uri) {
-        return store.read((source, target) -> {
-            traversal(source.createResource(uri), target, Projects::allNeighbors);
-        });
+        return store.read((source, target) -> traversal(source.createResource(uri), target, Projects::allNeighbors));
     }
 
     @Path("/{uri}/removed")

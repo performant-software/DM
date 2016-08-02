@@ -15,9 +15,15 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.MultiTerms;
+import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
@@ -35,17 +41,23 @@ import org.apache.lucene.search.highlight.QueryScorer;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
+import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.spell.SpellChecker;
+import org.apache.lucene.search.suggest.InputIterator;
 import org.apache.lucene.search.suggest.SortedInputIterator;
 import org.apache.lucene.search.suggest.analyzing.AnalyzingInfixSuggester;
+import org.apache.lucene.search.suggest.analyzing.FuzzySuggester;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.jsoup.Jsoup;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -101,7 +113,6 @@ public class Index implements AutoCloseable {
             this.searcherManager = new SearcherManager(textIndex, new SearcherFactory());
             this.spellChecker = new SpellChecker(spellcheckerIndex);
             this.suggester = new AnalyzingInfixSuggester(suggesterIndex, analyzer);
-
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -124,13 +135,11 @@ public class Index implements AutoCloseable {
 
             IndexSearcher searcher = searcherManager.acquire();
             try {
-                spellChecker.indexDictionary(new LuceneDictionary(searcher.getIndexReader(), "all"), writerConfig(), false);
+                final IndexReader indexReader = searcher.getIndexReader();
+                final ProjectScopedDictionary dictionary = new ProjectScopedDictionary(indexReader);
 
-                suggester.build(new SortedInputIterator(
-                        new RAMDirectory(),
-                        getClass().getName(),
-                        new LuceneDictionary(searcher.getIndexReader(), "all").getEntryIterator()
-                ));
+                spellChecker.indexDictionary(dictionary, writerConfig(), false);
+                suggester.build(dictionary);
             } finally {
                 searcherManager.release(searcher);
             }
@@ -187,8 +196,8 @@ public class Index implements AutoCloseable {
         return Stream.of(spellChecker.suggestSimilar(word, 5)).findFirst();
     }
 
-    public String[] suggest(String word, int limit) throws IOException {
-        return suggester.lookup(word, false, limit).stream().map(r -> r.key.toString()).toArray(String[]::new);
+    public String[] suggest(String project, String word, int limit) throws IOException {
+        return suggester.lookup(word, Collections.singleton(new BytesRef(project)), false, limit).stream().map(r -> r.key.toString()).toArray(String[]::new);
     }
 
     public String highlighted(Highlighter highlighter, Fields termVectors, String field, String value) throws IOException, InvalidTokenOffsetsException {
@@ -292,5 +301,64 @@ public class Index implements AutoCloseable {
         TEXT_FIELD_TYPE.setStoreTermVectorOffsets(true);
         TEXT_FIELD_TYPE.setStoreTermVectorPositions(true);
         TEXT_FIELD_TYPE.freeze();
+    }
+
+    private static class ProjectScopedDictionary implements Dictionary {
+
+        private final IndexReader indexReader;
+
+        public ProjectScopedDictionary(IndexReader indexReader) throws IOException {
+            this.indexReader = indexReader;
+        }
+
+        @Override
+        public InputIterator getEntryIterator() throws IOException {
+            final TermsEnum terms = MultiFields.getTerms(this.indexReader, "all").iterator();
+            return new InputIterator() {
+                @Override
+                public long weight() {
+                    try {
+                        return terms.docFreq();
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+
+                @Override
+                public BytesRef payload() {
+                    return null;
+                }
+
+                @Override
+                public boolean hasPayloads() {
+                    return false;
+                }
+
+                @Override
+                public Set<BytesRef> contexts() {
+                    final Set<BytesRef> contexts = new HashSet<>();
+                    try {
+                        final PostingsEnum postings = terms.postings(null);
+                        int docId;
+                        while ((docId = postings.nextDoc()) != PostingsEnum.NO_MORE_DOCS) {
+                            contexts.add(new BytesRef(indexReader.document(docId).get("project")));
+                        }
+                        return contexts;
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+
+                @Override
+                public boolean hasContexts() {
+                    return true;
+                }
+
+                @Override
+                public BytesRef next() throws IOException {
+                    return terms.next();
+                }
+            };
+        }
     }
 }
