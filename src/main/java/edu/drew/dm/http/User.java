@@ -1,4 +1,4 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
 import javax.ws.rs.core.SecurityContext;
 import java.net.URI;

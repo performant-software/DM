@@ -1,7 +1,7 @@
-package edu.drew.dm;
+package edu.drew.dm.data;
 
-import edu.drew.dm.vocabulary.Content;
-import edu.drew.dm.vocabulary.OpenArchivesTerms;
+import edu.drew.dm.semantics.Content;
+import edu.drew.dm.semantics.OpenArchivesTerms;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -19,10 +19,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.MultiTerms;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -42,22 +40,20 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.search.spell.Dictionary;
-import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.search.suggest.InputIterator;
-import org.apache.lucene.search.suggest.SortedInputIterator;
 import org.apache.lucene.search.suggest.analyzing.AnalyzingInfixSuggester;
-import org.apache.lucene.search.suggest.analyzing.FuzzySuggester;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.jsoup.Jsoup;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -70,11 +66,6 @@ import java.util.stream.Stream;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 public class Index implements AutoCloseable {
-
-    private final FSDirectory spellcheckerIndex;
-    private final FSDirectory suggesterIndex;
-    private final SpellChecker spellChecker;
-    private final AnalyzingInfixSuggester suggester;
 
     public static class Hit {
 
@@ -96,19 +87,24 @@ public class Index implements AutoCloseable {
 
     private static final Logger LOG = Logger.getLogger(Index.class.getName());
 
-    private final SemanticStore store;
+    private final SemanticDatabase db;
 
     private final Analyzer analyzer = new EnglishAnalyzer();
 
     private final FSDirectory textIndex;
-    private final SearcherManager searcherManager;
+    private final FSDirectory spellcheckerIndex;
+    private final FSDirectory suggesterIndex;
 
-    public Index(SemanticStore store) {
+    private final SearcherManager searcherManager;
+    private final SpellChecker spellChecker;
+    private final AnalyzingInfixSuggester suggester;
+
+    public Index(FileSystem fs, SemanticDatabase db) {
         try {
-            this.store = store;
-            this.textIndex = indexDirectory("text");
-            this.spellcheckerIndex = indexDirectory("spellchecker");
-            this.suggesterIndex = indexDirectory("suggester");
+            this.db = db;
+            this.textIndex = indexDirectory(fs, "text");
+            this.spellcheckerIndex = indexDirectory(fs, "spellchecker");
+            this.suggesterIndex = indexDirectory(fs, "suggester");
 
             this.searcherManager = new SearcherManager(textIndex, new SearcherFactory());
             this.spellChecker = new SpellChecker(spellcheckerIndex);
@@ -118,31 +114,57 @@ public class Index implements AutoCloseable {
         }
     }
 
-    public void build() {
+    public boolean isEmpty() {
         try {
+            final IndexSearcher indexSearcher = searcherManager.acquire();
+            try {
+                return (indexSearcher.getIndexReader().numDocs() == 0);
+            } finally {
+                searcherManager.release(indexSearcher);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public Index initialized() {
+        if (isEmpty()) {
+            LOG.info(() -> "Initializing empty index");
+            build();
+        }
+        return this;
+    }
+
+    public Index build() {
+        try {
+            final long startTime = System.currentTimeMillis();
+
             try (IndexWriter indexWriter = writer(textIndex)) {
                 indexWriter.deleteAll();
-                store.read((source, target) -> source.listResourcesWithProperty(RDF.type, DCTypes.Text)
-                        .filterKeep(r -> r.hasProperty(RDFS.label))
-                        .filterKeep(r -> r.hasProperty(Content.chars))
-                        .forEachRemaining(r -> index(indexWriter, r)));
+                db.read((source, target) -> {
 
+                    source.listResourcesWithProperty(RDF.type, DCTypes.Text)
+                            .filterKeep(r -> r.hasProperty(RDFS.label))
+                            .filterKeep(r -> r.hasProperty(Content.chars))
+                            .forEachRemaining(r -> index(indexWriter, r));
+                });
             }
-
             searcherManager.maybeRefresh();
-
-            spellChecker.clearIndex();
 
             IndexSearcher searcher = searcherManager.acquire();
             try {
                 final IndexReader indexReader = searcher.getIndexReader();
                 final ProjectScopedDictionary dictionary = new ProjectScopedDictionary(indexReader);
 
+                spellChecker.clearIndex();
                 spellChecker.indexDictionary(dictionary, writerConfig(), false);
                 suggester.build(dictionary);
             } finally {
                 searcherManager.release(searcher);
             }
+
+            LOG.fine(() -> String.format("Index built after %s", Duration.ofMillis(System.currentTimeMillis() - startTime)));
+            return this;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -223,8 +245,6 @@ public class Index implements AutoCloseable {
                     .asLiteral().getString()
                     .replaceAll("\\s+", " ").trim();
 
-            LOG.fine(() -> String.format("+ '%s'", title));
-
             final String htmlText = resource.getRequiredProperty(Content.chars).getObject()
                     .asLiteral().getString();
 
@@ -272,8 +292,8 @@ public class Index implements AutoCloseable {
                 .setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     }
 
-    protected FSDirectory indexDirectory(String name) throws IOException {
-        final FSDirectory indexDirectory = FSDirectory.open(SemanticStore.directory(new File(store.getBase(), name + "-index")).toPath());
+    protected FSDirectory indexDirectory(FileSystem fs, String name) throws IOException {
+        final FSDirectory indexDirectory = FSDirectory.open(fs.directory(String.join("-", name, "index")).toPath());
 
         try (IndexWriter writer = writer(indexDirectory)) {
             writer.commit();
@@ -306,6 +326,8 @@ public class Index implements AutoCloseable {
     private static class ProjectScopedDictionary implements Dictionary {
 
         private final IndexReader indexReader;
+
+        private final Map<Integer, BytesRef> projects = new HashMap<>();
 
         public ProjectScopedDictionary(IndexReader indexReader) throws IOException {
             this.indexReader = indexReader;
@@ -341,7 +363,11 @@ public class Index implements AutoCloseable {
                         final PostingsEnum postings = terms.postings(null);
                         int docId;
                         while ((docId = postings.nextDoc()) != PostingsEnum.NO_MORE_DOCS) {
-                            contexts.add(new BytesRef(indexReader.document(docId).get("project")));
+                            BytesRef project = ProjectScopedDictionary.this.projects.get(docId);
+                            if (project == null) {
+                                projects.put(docId, project = new BytesRef(indexReader.document(docId).get("project")));
+                            }
+                            contexts.add(project);
                         }
                         return contexts;
                     } catch (IOException e) {

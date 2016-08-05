@@ -1,11 +1,11 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.SemanticStore;
+import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.Server;
-import edu.drew.dm.vocabulary.OpenAnnotation;
-import edu.drew.dm.vocabulary.OpenArchivesTerms;
+import edu.drew.dm.semantics.OpenAnnotation;
+import edu.drew.dm.semantics.OpenArchivesTerms;
+import edu.drew.dm.semantics.Traversals;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -26,52 +26,38 @@ import javax.ws.rs.core.UriInfo;
 public class Texts {
 
 
-    private final SemanticStore store;
+    private final SemanticDatabase db;
 
     @Inject
-    public Texts(SemanticStore store) {
-        this.store = store;
+    public Texts(SemanticDatabase db) {
+        this.db = db;
     }
 
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) throws ParseException {
-        return store.read((source, target) -> {
-
-            final Resource project = source.createResource(projectUri);
-            final Resource text = source.createResource(uri);
-
-            Projects.traversal(text, target, Projects::annotationContext);
-        });
-    }
-
-    @Path("/{uri}")
-    @POST
-    public Model create(@PathParam("projectUri") String project, @PathParam("uri") String text, Model model, @Context UriInfo ui) throws ParseException {
-        return store.create(model);
-    }
-
-    @Path("/{uri}")
-    @PUT
-    public Model update(@PathParam("projectUri") String project, @PathParam("uri") String text, Model model, @Context UriInfo ui) throws ParseException {
-        return store.merge(model);
+        return db.read((source, target) -> SemanticDatabase.traverse(Traversals::annotationContext, source.createResource(uri), target));
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String projectUri, @PathParam("uri") String textUri, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
-        return store.read((source, target) -> {
-            final Resource project = source.createResource(projectUri);
-            final Resource text = source.createResource(textUri);
-            final Resource resource = source.createResource(resourceUri);
-
-            //if (project.hasProperty(OpenArchivesTerms.aggregates, text) && resource.hasProperty(OpenAnnotation.hasSource, text)) {
-                Projects.traversal(resource, target, Projects::resourceContext);
-            //}
-        });
+        return db.read((source, target) -> SemanticDatabase.traverse(Traversals::resourceContext, source.createResource(resourceUri), target));
     }
 
-    public static Model identifiers2Locators(Model model, UriInfo ui) {
+    @Path("/{uri}")
+    @POST
+    public Model create(@PathParam("projectUri") String project, @PathParam("uri") String text, Model model, @Context UriInfo ui) throws ParseException {
+        return db.merge(model);
+    }
+
+    @Path("/{uri}")
+    @PUT
+    public Model update(@PathParam("projectUri") String project, @PathParam("uri") String text, Model model, @Context UriInfo ui) throws ParseException {
+        return db.merge(model);
+    }
+
+    public static Model externalize(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, DCTypes.Text).forEachRemaining(text -> {
             model.listSubjectsWithProperty(OpenArchivesTerms.aggregates, text).forEachRemaining(project -> {
                 model.add(

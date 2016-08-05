@@ -1,11 +1,10 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.Models;
-import edu.drew.dm.SemanticStore;
+import edu.drew.dm.semantics.Models;
+import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.Server;
-import edu.drew.dm.User;
-import edu.drew.dm.vocabulary.OpenArchivesTerms;
-import edu.drew.dm.vocabulary.Perm;
+import edu.drew.dm.semantics.OpenArchivesTerms;
+import edu.drew.dm.semantics.Perm;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -32,10 +31,10 @@ import java.util.regex.Pattern;
 @Path("/store/users")
 public class Users {
 
-    private final SemanticStore store;
+    private final SemanticDatabase store;
 
     @Inject
-    public Users(SemanticStore store) {
+    public Users(SemanticDatabase store) {
         this.store = store;
     }
 
@@ -63,7 +62,14 @@ public class Users {
         return store.merge(model);
     }
 
-    public static Model identifiers2Locators(Model model, UriInfo ui) {
+    @Path("/{uri}/remove_triples")
+    @PUT
+    public Model remove(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
+        return store.remove(model);
+    }
+
+
+    public static Model externalize(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, FOAF.Agent).forEachRemaining(agent -> {
             model.add(
                     agent,
@@ -78,7 +84,7 @@ public class Users {
         }));
     }
 
-    public static String locators2Identifiers(Resource resource) {
+    public static String internalize(Resource resource) {
         final String uri = resource.getURI();
         final Matcher userMatcher = USER_URI.matcher(uri);
         return userMatcher.find() ? User.uri(userMatcher.group(1)): uri;

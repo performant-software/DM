@@ -1,15 +1,15 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.Images;
-import edu.drew.dm.Models;
-import edu.drew.dm.SemanticStore;
+import edu.drew.dm.data.Images;
+import edu.drew.dm.semantics.Models;
+import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.Server;
-import edu.drew.dm.vocabulary.Exif;
-import edu.drew.dm.vocabulary.OpenAnnotation;
-import edu.drew.dm.vocabulary.OpenArchivesTerms;
-import edu.drew.dm.vocabulary.SharedCanvas;
+import edu.drew.dm.semantics.Exif;
+import edu.drew.dm.semantics.OpenAnnotation;
+import edu.drew.dm.semantics.OpenArchivesTerms;
+import edu.drew.dm.semantics.SharedCanvas;
+import edu.drew.dm.semantics.Traversals;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
@@ -40,38 +40,25 @@ import java.io.InputStream;
 @Path("/store/projects/{projectUri}/canvases")
 public class Canvases {
 
-    private final SemanticStore store;
+    private final SemanticDatabase store;
+    private final Images images;
 
     @Inject
-    public Canvases(SemanticStore store) {
+    public Canvases(SemanticDatabase store, Images images) {
         this.store = store;
+        this.images = images;
     }
 
     @Path("/{uri}")
     @GET
-    public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) throws ParseException {
-        return store.read((source, target) -> {
-            final Resource project = source.createResource(projectUri);
-            final Resource canvas = source.createResource(uri);
-
-            if (project.hasProperty(OpenArchivesTerms.aggregates, canvas)) {
-                Projects.traversal(canvas, target, Projects::annotationContext);
-            }
-        });
+    public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) {
+        return store.read((source, target) -> SemanticDatabase.traverse(Traversals::annotationContext, source.createResource(uri), target));
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String projectUri, @PathParam("uri") String canvasUri, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
-        return store.read((source, target) -> {
-            final Resource project = source.createResource(projectUri);
-            final Resource canvas = source.createResource(canvasUri);
-            final Resource resource = source.createResource(resourceUri);
-
-            //if (project.hasProperty(OpenArchivesTerms.aggregates, canvas) && resource.hasProperty(OpenAnnotation.hasSource, canvas)) {
-                Projects.traversal(resource, target, Projects::resourceContext);
-            //}
-        });
+        return store.read((source, target) -> SemanticDatabase.traverse(Traversals::resourceContext, source.createResource(resourceUri), target));
     }
 
     @Path("/create")
@@ -83,12 +70,12 @@ public class Canvases {
                         @FormDataParam("image_file") InputStream imageFileContents,
                         @Context UriInfo ui) throws IOException {
 
-        final File imageFile = Images.create(store, imageFileMetadata.getFileName(), imageFileContents);
+        final File imageFile = images.create(imageFileMetadata.getFileName(), imageFileContents);
         final Dimension imageDimension = Images.dimension(imageFile);
 
         final Model model = Models.create();
 
-        final Resource canvas = Models.uuid(model)
+        final org.apache.jena.rdf.model.Resource canvas = Models.uuid(model)
                 .addProperty(RDF.type, SharedCanvas.Canvas);
 
         if (!title.isEmpty()) {
@@ -98,7 +85,7 @@ public class Canvases {
                     .addProperty(Exif.height, model.createTypedLiteral(imageDimension.getHeight()));
         }
 
-        final Resource image = Images.imageResource(model, imageFile.getName())
+        final org.apache.jena.rdf.model.Resource image = Images.imageResource(model, imageFile.getName())
                 .addProperty(RDF.type, DCTypes.Image)
                 .addProperty(Exif.width, model.createTypedLiteral(imageDimension.getWidth()))
                 .addProperty(Exif.height, model.createTypedLiteral(imageDimension.getHeight()));
@@ -121,7 +108,7 @@ public class Canvases {
         throw Server.NOT_IMPLEMENTED;
     }
 
-    public static Model identifiers2Locators(Model model, UriInfo ui) {
+    public static Model externalize(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, SharedCanvas.Canvas).forEachRemaining(canvas -> {
             model.listSubjectsWithProperty(OpenArchivesTerms.aggregates, canvas).forEachRemaining(project -> {
                 model.add(
@@ -161,11 +148,11 @@ public class Canvases {
                 .build().toString();
     }
 
-    public static Model imageAnnotations(Resource canvas, Model target) {
+    public static Model imageAnnotations(org.apache.jena.rdf.model.Resource canvas, Model target) {
         canvas.getModel().listSubjectsWithProperty(OpenAnnotation.hasTarget, canvas)
                 .forEachRemaining(annotation -> {
                     target.add(annotation.listProperties());
-                    final Resource body = annotation.getPropertyResourceValue(OpenAnnotation.hasBody);
+                    final org.apache.jena.rdf.model.Resource body = annotation.getPropertyResourceValue(OpenAnnotation.hasBody);
                     if (DCTypes.Image.equals(body.getPropertyResourceValue(RDF.type))) {
                         target.add(body.listProperties());
                     }

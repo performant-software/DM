@@ -8,11 +8,16 @@ import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 public class Logging {
+
+    public static Logger inClass(Class<?> clz) {
+        return Logger.getLogger(clz.getName());
+    }
 
     public static void configure() throws IOException {
         if (System.getProperty("java.util.logging.config.file", "").isEmpty()) {

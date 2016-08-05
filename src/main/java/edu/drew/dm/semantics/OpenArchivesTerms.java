@@ -1,4 +1,4 @@
-package edu.drew.dm.vocabulary;
+package edu.drew.dm.semantics;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;

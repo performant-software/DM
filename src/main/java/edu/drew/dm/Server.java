@@ -2,14 +2,23 @@ package edu.drew.dm;
 
 import au.com.bytecode.opencsv.CSVReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.drew.dm.data.FileSystem;
+import edu.drew.dm.data.Images;
+import edu.drew.dm.data.Index;
+import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.http.Authentication;
 import edu.drew.dm.http.Canvases;
 import edu.drew.dm.http.Locks;
 import edu.drew.dm.http.Logout;
+import edu.drew.dm.http.ModelReaderWriter;
 import edu.drew.dm.http.Projects;
 import edu.drew.dm.http.Texts;
 import edu.drew.dm.http.Users;
 import edu.drew.dm.http.Workspace;
+import edu.drew.dm.task.Indexing;
+import edu.drew.dm.task.SemanticDatabaseBackup;
+import edu.drew.dm.task.SemanticDatabaseInitialization;
+import edu.drew.dm.task.UserbaseInitialization;
 import it.sauronsoftware.cron4j.Scheduler;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
@@ -24,6 +33,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
+import org.glassfish.hk2.utilities.Binder;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -100,11 +110,44 @@ public class Server {
 
         Logging.configure();
 
-        final SemanticStore semanticStore = semanticStore(optionSet);
+        final File storeDir = DATA_DIR_OPT.value(optionSet).toFile();
 
-        scheduler().schedule("0 */12 * * *", semanticStore.datasetDumpTask());
+        final List<String> initialData = INIT_FILES_OPT.values(optionSet)
+                .stream().map(p -> p.toUri().toString()).collect(Collectors.toList());
 
-        httpServer(optionSet, semanticStore);
+        final FileSystem fs = new FileSystem(storeDir);
+        SemanticDatabase db = new SemanticDatabase(fs);
+        shutdownHook(db::close);
+
+        SemanticDatabaseInitialization.execute(db, initialData);
+
+        try (CSVReader usersCsv = new CSVReader(new InputStreamReader(Server.class.getResourceAsStream("/users.csv"), StandardCharsets.UTF_8))) {
+            UserbaseInitialization.execute(db, usersCsv);
+        }
+
+        final Path users = USERS_OPT.value(optionSet);
+        if (users != null) {
+            try (CSVReader usersCsv = new CSVReader(Files.newBufferedReader(users))) {
+                UserbaseInitialization.execute(db, usersCsv);
+            }
+        }
+
+        final SemanticDatabase finalDb = db;
+        final Index index = new Index(fs, db).initialized();
+        final Images images = new Images(fs);
+
+        final Scheduler scheduler = scheduler();
+        scheduler.schedule("0 */12 * * *", new SemanticDatabaseBackup(fs, db));
+        scheduler.schedule("*/5 * * * *", new Indexing(db, index));
+
+        httpServer(optionSet, images, new AbstractBinder() {
+            @Override
+            protected void configure() {
+                bind(finalDb).to(SemanticDatabase.class);
+                bind(index).to(Index.class);
+                bind(images).to(Images.class);
+            }
+        });
 
         Thread.sleep(Long.MAX_VALUE);
     }
@@ -119,37 +162,6 @@ public class Server {
         }));
     }
 
-    private static SemanticStore semanticStore(OptionSet optionSet) throws IOException {
-        final File storeDir = DATA_DIR_OPT.value(optionSet).toFile();
-
-        final List<String> initialData = INIT_FILES_OPT.values(optionSet)
-                .stream().map(p -> p.toUri().toString()).collect(Collectors.toList());
-
-        SemanticStore semanticStore = new SemanticStore(storeDir);
-        shutdownHook(semanticStore::close);
-
-        final boolean emptyBeforeInit = semanticStore.getDataset().getDefaultModel().isEmpty();
-
-        semanticStore = semanticStore.withInitialData(initialData);
-
-        if (emptyBeforeInit) {
-            try (CSVReader usersCsv = new CSVReader(new InputStreamReader(Server.class.getResourceAsStream("/users.csv"), StandardCharsets.UTF_8))) {
-                semanticStore = semanticStore.withUsers(usersCsv);
-            }
-        }
-
-        final Path users = USERS_OPT.value(optionSet);
-        if (users != null) {
-            try (CSVReader usersCsv = new CSVReader(Files.newBufferedReader(users))) {
-                semanticStore = semanticStore.withUsers(usersCsv);
-            }
-        }
-
-        semanticStore.index().build();
-
-        return semanticStore;
-    }
-
     private static Scheduler scheduler() {
         final Scheduler scheduler = new Scheduler();
         scheduler.setDaemon(true);
@@ -158,19 +170,14 @@ public class Server {
         return scheduler;
     }
 
-    private static HttpServer httpServer(OptionSet optionSet, SemanticStore semanticStore) throws IOException {
+    private static HttpServer httpServer(OptionSet optionSet, Images images, Binder dependencyBinder) throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
         final ResourceConfig webAppConfig = new ResourceConfig()
                 .register(FreemarkerMvcFeature.class)
                 .property(FreemarkerMvcFeature.TEMPLATE_BASE_PATH, "/template/")
                 .register(JacksonFeature.class)
                 .register(MultiPartFeature.class)
-                .register(new AbstractBinder() {
-                    @Override
-                    protected void configure() {
-                        bind(semanticStore).to(SemanticStore.class);
-                    }
-                })
+                .register(dependencyBinder)
                 .register(new AbstractBinder() {
                     @Override
                     protected void configure() {
@@ -183,8 +190,7 @@ public class Server {
                         return objectMapper;
                     }
                 })
-                .register(Models.Reader.class)
-                .register(Models.Writer.class)
+                .register(ModelReaderWriter.class)
                 .register(Authentication.class)
                 .register(Logout.class)
                 .register(Root.class)
@@ -222,7 +228,7 @@ public class Server {
                 HttpHandlerRegistration.builder().contextPath(contextPath + "/static").build()
         );
         serverConfig.addHttpHandler(
-                new StaticHttpHandler(semanticStore.getImages().getAbsolutePath()),
+                new StaticHttpHandler(images.baseDirectory.getPath()),
                 HttpHandlerRegistration.builder().contextPath(contextPath + "/images").build()
         );
 

@@ -1,7 +1,6 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.SemanticStore;
-import edu.drew.dm.User;
+import edu.drew.dm.data.SemanticDatabase;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -37,10 +36,10 @@ public class Authentication implements ContainerRequestFilter {
     // FIXME: add cache expiration
     private Map<String, User> cache = new ConcurrentHashMap<>();
 
-    private final SemanticStore store;
+    private final SemanticDatabase store;
 
     @Inject
-    public Authentication(SemanticStore store) {
+    public Authentication(SemanticDatabase store) {
         this.store = store;
     }
 

@@ -1,4 +1,4 @@
-package edu.drew.dm.vocabulary;
+package edu.drew.dm.semantics;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -7,15 +7,12 @@ import org.apache.jena.rdf.model.Property;
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
-public class Exif {
+public class DigitalMappaemundi {
 
     private static final Model model = ModelFactory.createDefaultModel();
 
-    public static final String NS = "http://www.w3.org/2003/12/exif/ns#";
+    public static final String NS = "http://dm.drew.edu/ns/";
 
-    public static final Property width = model.createProperty(NS, "width");
-
-    public static final Property height = model.createProperty(NS, "height");
-
+    public static final Property lastOpenProject = model.createProperty(NS, "lastOpenProject");
 
 }
