@@ -1,7 +1,7 @@
 package edu.drew.dm.data;
 
 import edu.drew.dm.semantics.Content;
-import edu.drew.dm.semantics.OpenArchivesTerms;
+import edu.drew.dm.semantics.Traversals;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -50,13 +50,14 @@ import org.jsoup.Jsoup;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -66,6 +67,18 @@ import java.util.stream.Stream;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 public class Index implements AutoCloseable {
+
+    public static class Search {
+        public static final Search EMPTY = new Search(new Hit[0], null);
+
+        public final Hit[] results;
+        public final String spellingSuggestion;
+
+        public Search(Hit[] results, String spellingSuggestion) {
+            this.results = results;
+            this.spellingSuggestion = spellingSuggestion;
+        }
+    }
 
     public static class Hit {
 
@@ -142,11 +155,15 @@ public class Index implements AutoCloseable {
             try (IndexWriter indexWriter = writer(textIndex)) {
                 indexWriter.deleteAll();
                 db.read((source, target) -> {
+                    final Set<Resource> projects = source.listSubjectsWithProperty(RDF.type, DCTypes.Collection).toSet();
+                    for (Resource project : projects) {
 
-                    source.listResourcesWithProperty(RDF.type, DCTypes.Text)
-                            .filterKeep(r -> r.hasProperty(RDFS.label))
-                            .filterKeep(r -> r.hasProperty(Content.chars))
-                            .forEachRemaining(r -> index(indexWriter, r));
+                        SemanticDatabase.traverse(Traversals::projectContext, project, resource -> {
+                            if (resource.hasProperty(RDF.type, DCTypes.Text) && resource.hasProperty(RDFS.label) && resource.hasProperty(Content.chars)) {
+                                index(indexWriter, project, resource);
+                            }
+                        });
+                    }
                 });
             }
             searcherManager.maybeRefresh();
@@ -167,55 +184,75 @@ public class Index implements AutoCloseable {
             return this;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } catch (Throwable t) {
+            LOG.log(Level.SEVERE, t, t::getMessage);
+            throw new RuntimeException(t);
         }
     }
 
-    public void search(String projectUri, String queryStr, int limit, Consumer<Hit> hits) throws ParseException, IOException, InvalidTokenOffsetsException {
-        final QueryParser queryParser = new QueryParser("text", analyzer);
-        queryParser.setAllowLeadingWildcard(true);
-
-        final Query query = new BooleanQuery.Builder()
-                .add(queryParser.parse(queryStr), BooleanClause.Occur.MUST)
-                .add(new TermQuery(new Term("project", projectUri)), BooleanClause.Occur.MUST)
-                .build();
-
-        LOG.fine(() -> String.format("? %s [%s @ %s]", query, queryStr, projectUri));
-
-        final IndexSearcher indexSearcher = searcherManager.acquire();
-
-        final Highlighter highlighter = new Highlighter(
-                new SimpleHTMLFormatter(
-                        "<span class=\"sc-SearchResultItem-match-highlight\">",
-                        "</span>"
-                ),
-                new QueryScorer(query)
-        );
-
+    public Search search(String projectUri, String query, int limit) {
         try {
-            final TopDocs topDocs = indexSearcher.search(query, limit);
-            for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-                final Document indexEntry = indexSearcher.doc(scoreDoc.doc);
-                final Fields termVectors = indexSearcher.getIndexReader().getTermVectors(scoreDoc.doc);
-
-                final String text = indexEntry.get("text");
-                final String title = indexEntry.get("title");
-
-                hits.accept(new Hit(
-                        indexEntry.get("uri"),
-                        title,
-                        text,
-                        highlighted(highlighter, termVectors, "title", title),
-                        highlighted(highlighter, termVectors, "text", text)
-
-                ));
+            final boolean singleWordQuery = query.matches("[A-Za-z0-9]+");
+            if (singleWordQuery) {
+                query = String.format("title:%s^10 OR text:%s", query, query);
             }
-        } finally {
-            searcherManager.release(indexSearcher);
-        }
-    }
 
-    public Optional<String> checkSpelling(String word) throws IOException {
-        return Stream.of(spellChecker.suggestSimilar(word, 5)).findFirst();
+            final QueryParser queryParser = new QueryParser("text", analyzer);
+            queryParser.setAllowLeadingWildcard(true);
+
+            final Query indexQuery = new BooleanQuery.Builder()
+                    .add(queryParser.parse(query), BooleanClause.Occur.MUST)
+                    .add(new TermQuery(new Term("project", projectUri)), BooleanClause.Occur.MUST)
+                    .build();
+
+            if (LOG.isLoggable(Level.FINER)) {
+                LOG.finer(String.format("? %s [%s @ %s]", indexQuery, query, projectUri));
+            }
+
+            final Highlighter highlighter = new Highlighter(
+                    new SimpleHTMLFormatter(
+                            "<span class=\"sc-SearchResultItem-match-highlight\">",
+                            "</span>"
+                    ),
+                    new QueryScorer(indexQuery)
+            );
+
+            final List<Hit> hits = new ArrayList<>(limit);
+            final IndexSearcher indexSearcher = searcherManager.acquire();
+            try {
+                final TopDocs topDocs = indexSearcher.search(indexQuery, limit);
+                for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                    final Document indexEntry = indexSearcher.doc(scoreDoc.doc);
+                    final Fields termVectors = indexSearcher.getIndexReader().getTermVectors(scoreDoc.doc);
+
+                    final String text = indexEntry.get("text");
+                    final String title = indexEntry.get("title");
+
+                    hits.add(new Hit(
+                            indexEntry.get("uri"),
+                            title,
+                            text,
+                            highlighted(highlighter, termVectors, "title", title),
+                            highlighted(highlighter, termVectors, "text", text)
+
+                    ));
+                }
+            } finally {
+                searcherManager.release(indexSearcher);
+            }
+
+            String suggestion = null;
+            if (hits.size() == 0 && singleWordQuery) {
+                suggestion = Stream.of(suggest(projectUri, query, 10)).findFirst().orElse(null);
+            }
+            return new Search(hits.toArray(new Hit[hits.size()]), suggestion);
+        } catch (ParseException e) {
+            return Search.EMPTY;
+        } catch (IOException e) {
+           throw new UncheckedIOException(e);
+        } catch (InvalidTokenOffsetsException e) {
+           throw new RuntimeException(e);
+        }
     }
 
     public String[] suggest(String project, String word, int limit) throws IOException {
@@ -239,33 +276,25 @@ public class Index implements AutoCloseable {
                 .collect(Collectors.joining(" [...] "));
     }
 
-    public void index(IndexWriter indexWriter, Resource resource) {
+    public void index(IndexWriter indexWriter, Resource project, Resource text) {
         try {
-            final String title = resource.getRequiredProperty(RDFS.label).getObject()
+            final String title = text.getRequiredProperty(RDFS.label).getObject()
                     .asLiteral().getString()
                     .replaceAll("\\s+", " ").trim();
 
-            final String htmlText = resource.getRequiredProperty(Content.chars).getObject()
+            final String htmlText = text.getRequiredProperty(Content.chars).getObject()
                     .asLiteral().getString();
 
             final String plainText = Jsoup.parse(htmlText).body().text();
 
-            final String uri = resource.getURI();
-            final Set<String> projects = resource.getModel()
-                    .listSubjectsWithProperty(OpenArchivesTerms.aggregates, resource)
-                    .mapWith(Resource::getURI).toSet();
+            final Document indexEntry = new Document();
+            indexEntry.add(new StringField("uri", text.getURI(), Field.Store.YES));
+            indexEntry.add(new StringField("project", project.getURI(), Field.Store.YES));
+            indexEntry.add(new Field("title", title, TEXT_FIELD_TYPE));
+            indexEntry.add(new Field("text", plainText, TEXT_FIELD_TYPE));
+            indexEntry.add(new Field("all", String.join("\n", title, plainText), TEXT_FIELD_TYPE));
 
-            for (String project : projects) {
-                final Document indexEntry = new Document();
-                indexEntry.add(new StringField("uri", uri, Field.Store.YES));
-                indexEntry.add(new StringField("project", project, Field.Store.YES));
-                indexEntry.add(new Field("title", title, TEXT_FIELD_TYPE));
-                indexEntry.add(new Field("text", plainText, TEXT_FIELD_TYPE));
-                indexEntry.add(new Field("all", String.join("\n", title, plainText), TEXT_FIELD_TYPE));
-
-                indexWriter.addDocument(indexEntry);
-
-            }
+            indexWriter.addDocument(indexEntry);
 
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -287,12 +316,12 @@ public class Index implements AutoCloseable {
         return new IndexWriter(directory, writerConfig());
     }
 
-    protected IndexWriterConfig writerConfig() {
+    private IndexWriterConfig writerConfig() {
         return new IndexWriterConfig(analyzer)
                 .setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     }
 
-    protected FSDirectory indexDirectory(FileSystem fs, String name) throws IOException {
+    private FSDirectory indexDirectory(FileSystem fs, String name) throws IOException {
         final FSDirectory indexDirectory = FSDirectory.open(fs.directory(String.join("-", name, "index")).toPath());
 
         try (IndexWriter writer = writer(indexDirectory)) {
@@ -329,7 +358,7 @@ public class Index implements AutoCloseable {
 
         private final Map<Integer, BytesRef> projects = new HashMap<>();
 
-        public ProjectScopedDictionary(IndexReader indexReader) throws IOException {
+        ProjectScopedDictionary(IndexReader indexReader) throws IOException {
             this.indexReader = indexReader;
         }
 

@@ -25,6 +25,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -135,15 +136,19 @@ public class SemanticDatabase implements AutoCloseable {
         });
     }
 
-    public static Model traverse(Function<Resource, Stream<Resource>> traversal, Resource start, Model target) {
+    public static void traverse(Function<Resource, Stream<Resource>> traversal, Resource start, Consumer<Resource> consumer) {
         final Queue<Resource> frontier = new LinkedList<>(Collections.singleton(start));
         final Set<Resource> visited = new HashSet<>();
         while (!frontier.isEmpty()) {
             final Resource resource = frontier.remove();
-            target.add(resource.listProperties());
+            consumer.accept(resource);
             visited.add(resource);
             traversal.apply(resource).filter(r -> !visited.contains(r)).forEach(frontier::add);
         }
+    }
+
+    public static Model traverse(Function<Resource, Stream<Resource>> traversal, Resource start, Model target) {
+        traverse(traversal, start, resource -> target.add(resource.listProperties()));
         return target;
     }
 

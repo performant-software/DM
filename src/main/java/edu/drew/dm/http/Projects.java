@@ -148,30 +148,28 @@ public class Projects {
     @Path("/{uri}/search")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query, @Context UriInfo ui) throws Exception {
+    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query, @QueryParam("limit") @DefaultValue("100") int limit, @Context UriInfo ui) throws Exception {
+        final Index.Search search = index.search(uri, query, limit);
+        final ObjectNode response = objectMapper.createObjectNode();
 
-        final boolean singleWordQuery = query.matches("[A-Za-z0-9]+");
+        Stream.of(search.results)
+                .map(hit -> objectMapper.createObjectNode()
+                        .put("uri", hit.uri)
+                        .put("url", Texts.textResource(ui, uri, hit.uri))
+                        .put("title", hit.title)
+                        .put("highlighted_title", hit.titleHighlighted.isEmpty() ? hit.title : hit.titleHighlighted)
+                        .put("text", hit.text)
+                        .put("highlighted_text", hit.textHighlighted)
+                )
+                .collect(() -> response.putArray("results"), ArrayNode::add, ArrayNode::addAll);
 
-        final ObjectNode result = objectMapper.createObjectNode();
+        // FIXME: spell checking is not project-scoped
+        /*
+        Optional.ofNullable(search.spellingSuggestion)
+                .ifPresent(suggestion -> response.put("spelling_suggestion", suggestion));
+        */
 
-        final ArrayNode results = result.putArray("results");
-
-        index.search(uri, singleWordQuery ? String.format("title:%s^10 OR text:%s", query, query) : query, 100, hit -> {
-
-            results.addObject()
-                    .put("uri", hit.uri)
-                    .put("url", Texts.textResource(ui, uri, hit.uri))
-                    .put("title", hit.title)
-                    .put("highlighted_title", hit.titleHighlighted.isEmpty() ? hit.title : hit.titleHighlighted)
-                    .put("text", hit.text)
-                    .put("highlighted_text", hit.textHighlighted);
-        });
-
-        if (results.size() == 0 && singleWordQuery) {
-            Stream.of(index.suggest(uri, query, 10)).findFirst().ifPresent(suggestion -> result.put("spelling_suggestion", suggestion));
-        }
-
-        return result;
+        return response;
     }
 
     @Path("/{uri}/search_autocomplete")
