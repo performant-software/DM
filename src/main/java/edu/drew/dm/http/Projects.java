@@ -1,9 +1,11 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import edu.drew.dm.SemanticStore;
+import edu.drew.dm.Server;
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;

@@ -1,5 +1,7 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
+import edu.drew.dm.SemanticStore;
+import edu.drew.dm.User;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;

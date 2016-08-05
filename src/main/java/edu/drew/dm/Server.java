@@ -2,6 +2,14 @@ package edu.drew.dm;
 
 import au.com.bytecode.opencsv.CSVReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.drew.dm.http.Authentication;
+import edu.drew.dm.http.Canvases;
+import edu.drew.dm.http.Locks;
+import edu.drew.dm.http.Logout;
+import edu.drew.dm.http.Projects;
+import edu.drew.dm.http.Texts;
+import edu.drew.dm.http.Users;
+import edu.drew.dm.http.Workspace;
 import it.sauronsoftware.cron4j.Scheduler;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;

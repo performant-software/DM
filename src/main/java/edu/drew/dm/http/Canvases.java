@@ -1,5 +1,9 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
+import edu.drew.dm.Images;
+import edu.drew.dm.Models;
+import edu.drew.dm.SemanticStore;
+import edu.drew.dm.Server;
 import edu.drew.dm.vocabulary.Exif;
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;

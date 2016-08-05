@@ -1,8 +1,9 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
+import edu.drew.dm.SemanticStore;
+import edu.drew.dm.Server;
 import edu.drew.dm.vocabulary.OpenAnnotation;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
-import edu.drew.dm.vocabulary.SharedCanvas;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;

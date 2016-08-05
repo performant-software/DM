@@ -1,5 +1,6 @@
-package edu.drew.dm;
+package edu.drew.dm.util;
 
+import edu.drew.dm.Models;
 import edu.drew.dm.vocabulary.Content;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;

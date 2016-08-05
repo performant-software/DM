@@ -1,10 +1,11 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
+
+import edu.drew.dm.Server;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.RedirectionException;
 import javax.ws.rs.core.Context;

@@ -1,4 +1,4 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

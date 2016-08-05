@@ -1,5 +1,9 @@
 package edu.drew.dm;
 
+import edu.drew.dm.http.Canvases;
+import edu.drew.dm.http.Projects;
+import edu.drew.dm.http.Texts;
+import edu.drew.dm.http.Users;
 import edu.drew.dm.vocabulary.DigitalMappaemundi;
 import edu.drew.dm.vocabulary.Exif;
 import edu.drew.dm.vocabulary.OpenAnnotation;
@@ -10,7 +14,6 @@ import org.apache.jena.rdf.model.AnonId;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.RDFVisitor;
 import org.apache.jena.rdf.model.Resource;

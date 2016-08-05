@@ -1,5 +1,6 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
+import edu.drew.dm.Server;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.mvc.Template;
 

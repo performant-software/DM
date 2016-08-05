@@ -1,5 +1,9 @@
-package edu.drew.dm;
+package edu.drew.dm.http;
 
+import edu.drew.dm.Models;
+import edu.drew.dm.SemanticStore;
+import edu.drew.dm.Server;
+import edu.drew.dm.User;
 import edu.drew.dm.vocabulary.OpenArchivesTerms;
 import edu.drew.dm.vocabulary.Perm;
 import org.apache.jena.rdf.model.Model;
@@ -19,7 +23,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
