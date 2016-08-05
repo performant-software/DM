@@ -1,2 +1,0 @@
-from pprint import pprint; from django.conf import settings; from rdflib.graph import Graph, ConjunctiveGraph; from rdflib import URIRef, RDF; from rdflib.namespace import Namespace; from semantic_store import store as main_store; from ld import collection; identifier = URIRef(settings.RDFLIB_STORE_GRAPH_URI); main_graph = ConjunctiveGraph(main_store, identifier=identifier) 
-
