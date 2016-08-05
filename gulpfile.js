@@ -5,9 +5,11 @@ var child_process = require("child_process");
 var gulp = require("gulp");
 var gutil = require("gulp-util");
 var webpack = require("webpack");
+var browserSync = require("browser-sync");
 
 gulp.task("default", ["build"]);
 gulp.task("build", ["webpack", "google-closure-compile"]);
+gulp.task("dev", ["browser-sync"]);
 gulp.task("clean", []);
 
 function closureCompile(cmd, targetFile, callback) {
@@ -56,5 +58,20 @@ gulp.task("webpack", function (callback) {
 
         // webpack wants to generate a JS resource, which is empty in our case
         fs.unlink("src/main/resources/static/styles.js", callback);
+    });
+});
+
+gulp.task("browser-sync", function() {
+    browserSync.create().init({
+        proxy: {
+            target: "localhost:8080",
+            proxyReq: [
+                function(req) {
+                    req.setHeader("Host", "localhost:3000");
+                }
+            ]
+        },
+        files: ["src/main/resources/static"],
+        serveStatic: ["src/main/resources"]
     });
 });
