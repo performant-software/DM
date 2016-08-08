@@ -1,7 +1,7 @@
 package edu.drew.dm.data;
 
+import edu.drew.dm.http.Projects;
 import edu.drew.dm.semantics.Content;
-import edu.drew.dm.semantics.Traversals;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -158,7 +158,7 @@ public class Index implements AutoCloseable {
                     final Set<Resource> projects = source.listSubjectsWithProperty(RDF.type, DCTypes.Collection).toSet();
                     for (Resource project : projects) {
 
-                        SemanticDatabase.traverse(Traversals::projectContext, project, resource -> {
+                        Projects.SCOPE.visit(project, resource -> {
                             if (resource.hasProperty(RDF.type, DCTypes.Text) && resource.hasProperty(RDFS.label) && resource.hasProperty(Content.chars)) {
                                 index(indexWriter, project, resource);
                             }

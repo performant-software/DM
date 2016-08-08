@@ -10,10 +10,11 @@ import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.semantics.Models;
+import edu.drew.dm.semantics.OpenAnnotation;
 import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
 import edu.drew.dm.semantics.SharedCanvas;
-import edu.drew.dm.semantics.Traversals;
+import edu.drew.dm.semantics.Traversal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -36,6 +37,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -100,7 +103,7 @@ public class Projects {
         final Model removed = store.write(ds -> {
             final Model model = ds.getDefaultModel();
             final Resource project = model.createResource(uri);
-            final Model toRemove = Models.create().add(SemanticDatabase.traverse(Traversals::projectContext, project, Models.create()));
+            final Model toRemove = SCOPE.copy(project, Models.create());
 
             model.listSubjectsWithProperty(RDF.type, FOAF.Agent)
                     .forEachRemaining(user -> user.listProperties()
@@ -183,7 +186,7 @@ public class Projects {
     @Path("/{uri}/download.ttl")
     @GET
     public Model download(@PathParam("uri") String uri) {
-        return store.read((source, target) -> SemanticDatabase.traverse(Traversals::projectContext, source.createResource(uri), target));
+        return store.read((source, target) -> SCOPE.copy(source.createResource(uri), target));
     }
 
     @Path("/{uri}/removed")
@@ -217,5 +220,47 @@ public class Projects {
                 .resolveTemplate("uri", uri)
                 .build().toString();
     }
+
+    public static Traversal SCOPE = new Traversal()
+            .configureType(
+                    DCTypes.Collection,
+                    Collections.singleton(Perm.hasPermissionOver),
+                    Collections.singleton(OpenArchivesTerms.aggregates)
+            )
+            .configureType(
+                    DCTypes.Image,
+                    Collections.singleton(OpenAnnotation.hasBody),
+                    Collections.emptySet()
+            )
+            .configureType(
+                    SharedCanvas.Canvas,
+                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenAnnotation.hasBody, OpenArchivesTerms.aggregates),
+                    Collections.emptySet()
+            )
+            .configureType(
+                    DCTypes.Text,
+                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenAnnotation.hasBody, OpenArchivesTerms.aggregates),
+                    Collections.emptySet()
+            )
+            .configureType(
+                    OpenAnnotation.SpecificResource,
+                    Arrays.asList(OpenAnnotation.hasTarget, OpenAnnotation.hasBody),
+                    Arrays.asList(OpenAnnotation.hasSelector, OpenAnnotation.hasSource)
+            )
+            .configureType(
+                    OpenAnnotation.Annotation,
+                    Collections.emptySet(),
+                    Arrays.asList(OpenAnnotation.hasTarget, OpenAnnotation.hasBody)
+            )
+            .configureType(
+                    OpenAnnotation.TextQuoteSelector,
+                    Collections.singleton(OpenAnnotation.hasSelector),
+                    Collections.emptySet()
+            )
+            .configureType(
+                    OpenAnnotation.SvgSelector,
+                    Collections.singleton(OpenAnnotation.hasSelector),
+                    Collections.emptySet()
+            );
 
 }

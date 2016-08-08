@@ -8,7 +8,6 @@ import edu.drew.dm.semantics.Exif;
 import edu.drew.dm.semantics.OpenAnnotation;
 import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.SharedCanvas;
-import edu.drew.dm.semantics.Traversals;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
@@ -52,13 +51,13 @@ public class Canvases {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) {
-        return store.read((source, target) -> SemanticDatabase.traverse(Traversals::annotationContext, source.createResource(uri), target));
+        return store.read((source, target) -> Annotations.SCOPE.copy(source.createResource(uri), target));
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String projectUri, @PathParam("uri") String canvasUri, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
-        return store.read((source, target) -> SemanticDatabase.traverse(Traversals::resourceContext, source.createResource(resourceUri), target));
+        return store.read((source, target) -> Annotations.SPECIFIC_RESOURCE_SCOPE.copy(source.createResource(resourceUri), target));
     }
 
     @Path("/create")

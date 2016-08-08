@@ -12,6 +12,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.tdb.TDBFactory;
+import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 
 import java.io.OutputStream;
@@ -136,18 +137,18 @@ public class SemanticDatabase implements AutoCloseable {
         });
     }
 
-    public static void traverse(Function<Resource, Stream<Resource>> traversal, Resource start, Consumer<Resource> consumer) {
+    public static void traverse(Function<Resource, ExtendedIterator<Resource>> traversal, Resource start, Consumer<Resource> consumer) {
         final Queue<Resource> frontier = new LinkedList<>(Collections.singleton(start));
         final Set<Resource> visited = new HashSet<>();
         while (!frontier.isEmpty()) {
             final Resource resource = frontier.remove();
             consumer.accept(resource);
             visited.add(resource);
-            traversal.apply(resource).filter(r -> !visited.contains(r)).forEach(frontier::add);
+            traversal.apply(resource).filterDrop(visited::contains).forEachRemaining(frontier::add);
         }
     }
 
-    public static Model traverse(Function<Resource, Stream<Resource>> traversal, Resource start, Model target) {
+    public static Model traverse(Function<Resource, ExtendedIterator<Resource>> traversal, Resource start, Model target) {
         traverse(traversal, start, resource -> target.add(resource.listProperties()));
         return target;
     }
