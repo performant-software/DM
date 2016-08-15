@@ -137,7 +137,7 @@ public class Server {
         final Images images = new Images(fs);
 
         final Scheduler scheduler = scheduler();
-        scheduler.schedule("0 */12 * * *", new SemanticDatabaseBackup(fs, db));
+        scheduler.schedule("0 * * * *", new SemanticDatabaseBackup(fs, db));
         scheduler.schedule("*/5 * * * *", new Indexing(db, index));
 
         httpServer(optionSet, images, new AbstractBinder() {
