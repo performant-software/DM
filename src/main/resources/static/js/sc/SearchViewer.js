@@ -18,6 +18,7 @@ sc.SearchViewer = function(clientApp, opt_domHelper) {
     this.databroker = clientApp.databroker;
     this.searchClient = this.databroker.searchClient;
     this.projectController = this.databroker.projectController;
+    goog.events.listen(this.projectController, "projectSelected", this._handleProjectSelected, false, this);
 
     this.viewerGrid = clientApp.viewerGrid;
 
@@ -163,6 +164,13 @@ sc.SearchViewer.prototype._handleSearchFieldKeydown = function(event) {
     if (event.keyCode == goog.events.KeyCodes.ENTER || event.keyCode == goog.events.KeyCodes.MAC_ENTER) {
         this.query(this.searchField.value);
     }
+};
+
+sc.SearchViewer.prototype._handleProjectSelected = function(event) {
+    this.searchField.value = "";
+    this.hideMessage();
+    this.clearResults();
+    this.clearSearchDetails();
 };
 
 sc.SearchViewer.prototype.setSearchDetails = function(query, results, spellingSuggestion) {
