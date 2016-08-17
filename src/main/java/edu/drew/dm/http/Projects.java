@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.drew.dm.Logging;
 import edu.drew.dm.Server;
-import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.semantics.Models;

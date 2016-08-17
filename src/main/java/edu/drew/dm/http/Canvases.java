@@ -1,6 +1,5 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.data.Images;
 import edu.drew.dm.semantics.Models;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.Server;

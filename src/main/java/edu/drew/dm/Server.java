@@ -3,11 +3,11 @@ package edu.drew.dm;
 import au.com.bytecode.opencsv.CSVReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.drew.dm.data.FileSystem;
-import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.http.Authentication;
 import edu.drew.dm.http.Canvases;
+import edu.drew.dm.http.Images;
 import edu.drew.dm.http.Locks;
 import edu.drew.dm.http.Logout;
 import edu.drew.dm.http.ModelReaderWriter;
@@ -32,7 +32,6 @@ import org.glassfish.grizzly.http.server.HttpHandlerRegistration;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
-import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.hk2.utilities.Binder;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -228,7 +227,7 @@ public class Server {
                 HttpHandlerRegistration.builder().contextPath(contextPath + "/static").build()
         );
         serverConfig.addHttpHandler(
-                new StaticHttpHandler(images.baseDirectory.getPath()),
+                images,
                 HttpHandlerRegistration.builder().contextPath(contextPath + "/images").build()
         );
 
