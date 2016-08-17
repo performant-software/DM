@@ -5,8 +5,10 @@ goog.require('goog.string');
 goog.require('goog.object');
 goog.require('goog.structs.Map');
 goog.require('goog.structs.Set');
-goog.require('sc.data.Resource');
+goog.require('goog.events.Event');
+goog.require('goog.events.EventTarget');
 
+goog.require('sc.data.Resource');
 goog.require('sc.data.Quad');
 goog.require('sc.data.BNode');
 goog.require('sc.data.QuadStore');
@@ -34,6 +36,8 @@ goog.require('sc.data.SearchClient');
  * @author tandres@drew.edu (Tim Andres)
  */
 sc.data.Databroker = function(options) {
+    goog.events.EventTarget.call(this);
+
     this.options = {};
     goog.object.extend(this.options, sc.data.Databroker.DEFAULT_OPTIONS, options || {});
 
@@ -44,15 +48,21 @@ sc.data.Databroker = function(options) {
     this.syncService = this.options.syncService || new sc.data.SyncService();
     this.syncService.databroker = this;
 
-    this._setupParsersAndSerializers();
+    this.parsers = [];
+    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+    this.parseableTypes = new goog.structs.Set();
+
+    this.serializers = [];
+    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
+
+    // Note: ordering here matters for preferred formats
+    this.registerParser(new sc.data.N3Parser(this));
+    this.registerParser(new sc.data.RDFQueryParser(this));
+    this.registerSerializer(new sc.data.RDFQuerySerializer(this));
+    this.registerSerializer(new sc.data.TurtleSerializer(this));
 
     this.receivedUrls = new goog.structs.Set();
     this.failedUrls = new goog.structs.Set();
-
-    this.jqXhrs = new goog.structs.Set();
-    this.jqXhrsByUrl = new goog.structs.Map();
-
-    this.rdfByUrl = new goog.structs.Map();
 
     this._bNodeCounter = 0;
     
@@ -70,6 +80,8 @@ sc.data.Databroker = function(options) {
     this.projectController = new sc.data.ProjectController(this);
     this.searchClient = new sc.data.SearchClient(this);
 };
+
+goog.inherits(sc.data.Databroker, goog.events.EventTarget);
 
 sc.data.Databroker.SYNC_INTERVAL = 60 * 1000;
 
@@ -112,40 +124,6 @@ sc.data.Databroker.DEFAULT_OPTIONS = {
     corsEnabledDomains: [],
     user: null
 };
-
-// Note: ordering here matters for preferred formats
-sc.data.Databroker.DEFAULT_PARSER_CLASSES = [sc.data.N3Parser, sc.data.RDFQueryParser];
-sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES = [sc.data.RDFQuerySerializer, sc.data.TurtleSerializer];
-
-sc.data.Databroker.prototype._setupParsersAndSerializers = function() {
-    this.parsers = [];
-    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-    this.parseableTypes = new goog.structs.Set();
-
-    this.serializers = [];
-    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-
-    if (this.options.parsers == null) {
-        goog.structs.forEach(sc.data.Databroker.DEFAULT_PARSER_CLASSES, function(cls) {
-            var parser = new cls(this);
-            this.registerParser(parser);
-        }, this);
-    }
-    else {
-        goog.structs.forEach(this.options.parsers, this.registerParser, this);
-    }
-
-    if (this.options.serializers == null) {
-        goog.structs.forEach(sc.data.Databroker.DEFAULT_SERIALIZER_CLASSES, function(cls) {
-            var serializer = new cls(this);
-            this.registerSerializer(serializer);
-        }, this);
-    }
-    else {
-        goog.structs.forEach(this.options.serializers, this.registerSerializer, this);
-    }
-};
-
 
 /**
  * Returns a proxied url without checking if proxying is necessary.
@@ -211,58 +189,35 @@ sc.data.Databroker.prototype.getQuadStore = function() {
 /**
  * Fetches an rdf formatted file, and calls the handler with the jQuery.rdfquery object
  * @param {string} url
- * @param {?function(jQuery.rdfquery, Object, string)} handler
- * @param {?boolean} opt_forceReload false by default to use cached resources.
+ * @param {function(jQuery.rdfquery, Object, string)} [handler]
  */
-sc.data.Databroker.prototype.fetchRdf = function(url, handler, opt_forceReload) {
-    var self = this;
-
-    if (! jQuery.isFunction(handler)) {
-        handler = jQuery.noop;
-    }
-
-    var proxiedUrl = this.proxyUrl(url);
-
+sc.data.Databroker.prototype.fetchRdf = function(url, handler) {
     var deferred = jQuery.Deferred();
 
-    var successHandler = function(data, textStatus, jqXhr) {
-        self.receivedUrls.add(url);
-
-        if (data) {
-            self.processResponse(data, url, jqXhr, function() {
-                handler.apply(this, arguments);
-                deferred.resolveWith(this, arguments);
-            });
-        }
-        else {
-            // Received a successful response with no data, such as a 204
-        }
-    };
-
-    var errorHandler = function(jqXhr, textStatus, errorThrown) {
-        self.failedUrls.add(url);
-
-        deferred.rejectWith(this, arguments);
-    };
-
-    if (this.jqXhrsByUrl.containsKey(url) && !opt_forceReload) {
-        var jqXhr = this.jqXhrsByUrl.get(url);
-        jqXhr.done(successHandler).fail(errorHandler);
-    }
-    else {
-        var jqXhr = jQuery.ajax({
-            type: 'GET',
-            url: proxiedUrl,
-            success: successHandler,
-            error: errorHandler,
-            headers: {
-                'Accept': this.parseableTypes.getValues().join(', ')
+    jQuery.ajax({
+        type: 'GET',
+        url: this.proxyUrl(url),
+        headers: {
+            'Accept': this.parseableTypes.getValues().join(', ')
+        },
+        success: function (data, textStatus, jqXhr) {
+            this.receivedUrls.add(url);
+            if (data) {
+                this.processResponse(data, url, jqXhr, function () {
+                    (handler || jQuery.noop).apply(this, arguments);
+                    deferred.resolveWith(this, arguments);
+                });
             }
-        });
+            else {
+                // Received a successful response with no data, such as a 204
+            }
+        }.bind(this),
+        error: function (jqXhr, textStatus, errorThrown) {
+            this.failedUrls.add(url);
 
-        this.jqXhrs.add(jqXhr);
-        this.jqXhrsByUrl.set(url, jqXhr);
-    }
+            deferred.rejectWith(this, arguments);
+        }.bind(this)
+    });
 
     return deferred;
 };
@@ -302,14 +257,21 @@ sc.data.Databroker.prototype.getBNodeHandledQuad = function(quad, bNodeMapping) 
 sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handler) {
     var responseHeaders = jqXhr.getAllResponseHeaders();
     var type = sc.data.Parser.parseContentType(responseHeaders);
-    this.processRdfData(data, type, handler);
+    this.processRdfData(data, url, type, function(data) {
+        var event = new goog.events.Event("read", this);
+        event.url = url;
+        event.data = data;
+        this.dispatchEvent(event);
+
+        handler(data);
+    }.bind(this));
 };
 
-sc.data.Databroker.prototype.processRdfData = function(data, format, handler) {
+sc.data.Databroker.prototype.processRdfData = function(data, url, format, handler) {
     var bNodeMapping = new goog.structs.Map();
 
-    this.parseRdf(data, format, function(quadBatch, done, error) {
-        for (var i=0, len=quadBatch.length; i<len; i++) {
+    this.parseRdf(data, url, format, function(quadBatch, done, error) {
+        for (var i = 0, len = quadBatch.length; i < len; i++) {
             var bNodeHandledQuad = this.getBNodeHandledQuad(quadBatch[i], bNodeMapping);
             if (!this.deletedQuadsStore.containsQuad(bNodeHandledQuad)) {
                 this.quadStore.addQuad(bNodeHandledQuad);
@@ -325,13 +287,12 @@ sc.data.Databroker.prototype.processRdfData = function(data, format, handler) {
     }.bind(this));
 };
 
-sc.data.Databroker.prototype.parseRdf = function(data, format, handler) {
-    var parsers = this.parsersByType.get(format, true);
-    if (parsers.length == 0) parsers = this.parsers;
+sc.data.Databroker.prototype.parseRdf = function(data, url, format, handler) {
+    var parsers = [sc.data.N3Parser, sc.data.RDFQueryParser];
 
     var success = false;
-    for (var i=0, len=parsers.length; i<len; i++) {
-        var parser = parsers[i];
+    for (var i = 0, len = parsers.length; i < len; i++) {
+        var parser = new parsers[i](this);
 
         try {
             parser.parse(data, null, handler);
@@ -484,80 +445,50 @@ sc.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
 };
 
 /**
- * Returns a set of urls to request for a resource, including guesses if no data is known about the resource
- * @param {string} uri
- * @return {goog.structs.Set.<string>}
- */
-sc.data.Databroker.prototype.getUrlsToRequestForResource = function(uri, opt_forceReload) {
-    return this.getUrlsToRequestForResources([uri], opt_forceReload);
-};
-
-/**
  * Returns a jQuery.deferred object which will be updated as data is gathered about a resource
  * .done() and .progress() may be called on the returned object to add callback handlers for the loaded
  * resource.
  * @param {string} uri
- * @param {Array|goog.structs.Collection} opt_urlsToRequest A list of urls which should be queried for the resource.
  * @return {jQuery.deferred}
  */
-sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToRequest) {
+sc.data.Databroker.prototype.getDeferredResource = function(uri) {
     var self = this;
 
-    if (uri instanceof sc.data.Resource) {
-        uri = uri.uri;
-    }
-    else {
-        uri = sc.data.Term.unwrapUri(uri);
-    }
+    uri = (uri instanceof sc.data.Resource) ? uri.uri : sc.data.Term.unwrapUri(uri);
 
     var deferredResource = jQuery.Deferred();
 
-    if (opt_urlsToRequest) {
-        var urlsToRequest = this.getUrlsToRequestForResource(uri, null, true);
-        urlsToRequest.addAll(opt_urlsToRequest);
-    }
-    else {
-        var urlsToRequest = this.getUrlsToRequestForResource(uri);
-    }
+    var urlsToRequest = this.getUrlsToRequestForResources([uri]);
     if (urlsToRequest.getCount() == 0) {
-        deferredResource.resolveWith(this, [this.getResource(uri), this]);
+        return deferredResource.resolveWith(this, [this.getResource(uri), this]);
     }
-    else {
-        if (this.knowsAboutResource(uri)) {
-            deferredResource.notifyWith(this, [this.getResource(uri), this]);
-        }
 
-        var deferredCollection = new sc.util.DeferredCollection();
+    var deferredFetches = [""];
+    var failedFetches = [];
+    var successfulFetches = [];
 
-        var urlsToRequestArr = urlsToRequest.getValues();
-        for (var i = 0, len = urlsToRequestArr.length; i < len; i++) {
-            var url = urlsToRequestArr[i];
-
-            var jqXhr = this.fetchRdf(url, function(rdf, data) {
-                deferredResource.notifyWith(this, [self.getResource(uri), self]);
-            }, true);
-            deferredCollection.add(jqXhr);
-        }
-
-        deferredCollection.allComplete(function(deferreds, collection) {
-            if (! collection.areAllFailed()) {
-                deferredResource.resolveWith(this, [self.getResource(uri), self]);
-            }
-        });
-
-        deferredCollection.allFailed(function(deferreds, collection) {
+    var checkCompletion = function() {
+        if ((failedFetches.length + successfulFetches.length) == deferredFetches.length) {
             var resource = self.getResource(uri);
-
-            if (resource.hasPredicate('ore:isDescribedBy')) {
-                deferredResource.rejectWith(this, [resource, self]);
+            if (successfulFetches.length) {
+                deferredResource.notifyWith(self, [resource, self]).resolveWith(self, [resource, self]);
+            } else {
+                deferredResource.rejectWith(self, [resource, self]);
             }
-            else {
-                deferredResource.resolveWith(this, [resource, self]);
-            }
-        });
+        }
     }
+
+    urlsToRequest.getValues().forEach(function(url) {
+        deferredFetches.push(url);
+        this.fetchRdf(url)
+            .fail(function() { failedFetches.push(url); checkCompletion(); })
+            .done(function() { successfulFetches.push(url); checkCompletion(); });
+    }, this);
+
+    successfulFetches.push("");
 
     return deferredResource;
+
 };
 
 sc.data.Databroker.prototype.knowsAboutResource = function(uri) {

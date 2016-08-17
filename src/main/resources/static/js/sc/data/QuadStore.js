@@ -11,7 +11,7 @@ goog.require('sc.util.DefaultDict');
  * 
  * @author tandres@drew.edu (Tim Andres)
  * 
- * @param {?array.<sc.data.Quad>} opt_quads Quads to add to the store.
+ * @param {array.<sc.data.Quad>} [opt_quads] Quads to add to the store.
  */
 sc.data.QuadStore = function(opt_quads) {
     this.quads = new goog.structs.Set();
