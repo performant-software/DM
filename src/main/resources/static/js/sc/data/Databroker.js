@@ -302,10 +302,7 @@ sc.data.Databroker.prototype.getBNodeHandledQuad = function(quad, bNodeMapping) 
 sc.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handler) {
     var responseHeaders = jqXhr.getAllResponseHeaders();
     var type = sc.data.Parser.parseContentType(responseHeaders);
-
-    window.setTimeout(function() {
-        this.processRdfData(data, type, handler);
-    }.bind(this), 1);
+    this.processRdfData(data, type, handler);
 };
 
 sc.data.Databroker.prototype.processRdfData = function(data, format, handler) {
@@ -320,9 +317,7 @@ sc.data.Databroker.prototype.processRdfData = function(data, format, handler) {
         }
 
         if (done) {
-            window.setTimeout(function() {
-                handler(data);
-            }, 1);
+            handler(data);
         }
         if (error) {
             console.error(error);
@@ -517,52 +512,50 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri, opt_urlsToReque
 
     var deferredResource = jQuery.Deferred();
 
-    window.setTimeout(function() {
-        if (opt_urlsToRequest) {
-            var urlsToRequest = this.getUrlsToRequestForResource(uri, null, true);
-            urlsToRequest.addAll(opt_urlsToRequest);
+    if (opt_urlsToRequest) {
+        var urlsToRequest = this.getUrlsToRequestForResource(uri, null, true);
+        urlsToRequest.addAll(opt_urlsToRequest);
+    }
+    else {
+        var urlsToRequest = this.getUrlsToRequestForResource(uri);
+    }
+    if (urlsToRequest.getCount() == 0) {
+        deferredResource.resolveWith(this, [this.getResource(uri), this]);
+    }
+    else {
+        if (this.knowsAboutResource(uri)) {
+            deferredResource.notifyWith(this, [this.getResource(uri), this]);
         }
-        else {
-            var urlsToRequest = this.getUrlsToRequestForResource(uri);
+
+        var deferredCollection = new sc.util.DeferredCollection();
+
+        var urlsToRequestArr = urlsToRequest.getValues();
+        for (var i = 0, len = urlsToRequestArr.length; i < len; i++) {
+            var url = urlsToRequestArr[i];
+
+            var jqXhr = this.fetchRdf(url, function(rdf, data) {
+                deferredResource.notifyWith(this, [self.getResource(uri), self]);
+            }, true);
+            deferredCollection.add(jqXhr);
         }
-        if (urlsToRequest.getCount() == 0) {
-            deferredResource.resolveWith(this, [this.getResource(uri), this]);
-        }
-        else {
-            if (this.knowsAboutResource(uri)) {
-                deferredResource.notifyWith(this, [this.getResource(uri), this]);
+
+        deferredCollection.allComplete(function(deferreds, collection) {
+            if (! collection.areAllFailed()) {
+                deferredResource.resolveWith(this, [self.getResource(uri), self]);
             }
+        });
 
-            var deferredCollection = new sc.util.DeferredCollection();
+        deferredCollection.allFailed(function(deferreds, collection) {
+            var resource = self.getResource(uri);
 
-            var urlsToRequestArr = urlsToRequest.getValues();
-            for (var i = 0, len = urlsToRequestArr.length; i < len; i++) {
-                var url = urlsToRequestArr[i];
-
-                var jqXhr = this.fetchRdf(url, function(rdf, data) {
-                    deferredResource.notifyWith(this, [self.getResource(uri), self]);
-                }, true);
-                deferredCollection.add(jqXhr);
+            if (resource.hasPredicate('ore:isDescribedBy')) {
+                deferredResource.rejectWith(this, [resource, self]);
             }
-
-            deferredCollection.allComplete(function(deferreds, collection) {
-                if (! collection.areAllFailed()) {
-                    deferredResource.resolveWith(this, [self.getResource(uri), self]);
-                }
-            });
-
-            deferredCollection.allFailed(function(deferreds, collection) {
-                var resource = self.getResource(uri);
-
-                if (resource.hasPredicate('ore:isDescribedBy')) {
-                    deferredResource.rejectWith(this, [resource, self]);
-                }
-                else {
-                    deferredResource.resolveWith(this, [resource, self]);
-                }
-            });
-        }
-    }.bind(this), 10);
+            else {
+                deferredResource.resolveWith(this, [resource, self]);
+            }
+        });
+    }
 
     return deferredResource;
 };
