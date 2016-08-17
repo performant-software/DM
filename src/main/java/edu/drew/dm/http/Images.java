@@ -93,7 +93,7 @@ public class Images extends StaticHttpHandler {
                 imageFile.getPath(),
                 "-resize",
                 String.format("%sx%s", width, height),
-                "fd:1"
+                String.format("%s:-", type)
         ).start();
 
         try (
