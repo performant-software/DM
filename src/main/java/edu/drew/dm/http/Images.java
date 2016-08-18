@@ -50,6 +50,7 @@ public class Images extends StaticHttpHandler {
 
     public Images(FileSystem fs) {
         super(fs.images().getPath());
+        setFileCacheEnabled(false);
         this.baseDirectory = fs.images();
         this.convertPath = detectConvertPath();
     }
