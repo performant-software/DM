@@ -9,7 +9,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Response;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
-import org.glassfish.grizzly.http.util.MimeType;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -23,7 +22,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -44,6 +42,8 @@ public class Images extends StaticHttpHandler {
 
     private static final Logger LOG = Logging.inClass(Images.class);
 
+    private static final int THUMBNAIL_SIZE = 100;
+
     public final File baseDirectory;
 
     private final String convertPath;
@@ -60,57 +60,24 @@ public class Images extends StaticHttpHandler {
         if (imageFile == null || !imageFile.canRead()) {
             return super.handle(uri, request, response);
         }
-        final String width = request.getParameter("w");
-        final String height = request.getParameter("h");
-        if (width == null || height == null) {
+        final String widthStr = request.getParameter("w");
+        final String heightStr = request.getParameter("h");
+        if (widthStr == null || heightStr == null) {
             return super.handle(uri, request, response);
         }
 
-        if (scaledImage(imageFile, Integer.parseInt(width), Integer.parseInt(height), response)) {
-            return true;
-        }
+        final int width = Integer.parseInt(widthStr);
+        final int height = Integer.parseInt(heightStr);
+
+        uri = thumbnailOf(imageFile)
+                .filter(thumb -> width < THUMBNAIL_SIZE && height < THUMBNAIL_SIZE)
+                .map(thumb -> {
+                    final String thumbUri = baseDirectory.toPath().relativize(thumb.toPath()).toString();
+                    return thumbUri;
+                })
+                .orElse(uri);
 
         return super.handle(uri, request, response);
-    }
-
-    private boolean scaledImage(File imageFile, int width, int height, Response response) throws IOException {
-        if (convertPath == null) {
-            return false;
-        }
-
-        final String imageFileName = imageFile.getName();
-        final String[] imageNameComponents = imageFileName.split(Pattern.quote("."));
-
-        final String type = imageNameComponents[imageNameComponents.length - 1];
-        final String mimeType = MimeType.get(type);
-        if (mimeType == null) {
-            return false;
-        }
-
-        response.setContentType(mimeType);
-        final Process convert = new ProcessBuilder(
-                convertPath,
-                imageFile.getPath(),
-                "-resize",
-                String.format("%sx%s", width, height),
-                String.format("%s:-", type)
-        ).start();
-
-        try (
-                final InputStream scaled = convert.getInputStream();
-                final OutputStream out = response.getOutputStream()
-        ) {
-            final byte[] buf = new byte[8192];
-            int read;
-            while ((read = scaled.read(buf)) != -1) {
-                out.write(buf, 0, read);
-            }
-
-            convert.waitFor();
-        } catch (InterruptedException e) {
-            // ignored
-        }
-        return true;
     }
 
     private static String detectConvertPath() {
@@ -135,6 +102,47 @@ public class Images extends StaticHttpHandler {
         return null;
     }
 
+    public Optional<File> thumbnailOf(File image) throws IOException {
+        final File thumbnail = thumbnailFileOf(image);
+
+        if (!thumbnail.isFile() && convertPath != null) {
+            synchronized (this) {
+                final Process convert = new ProcessBuilder(
+                        convertPath,
+                        image.getPath(),
+                        "-resize",
+                        String.format("%dx%d", THUMBNAIL_SIZE, THUMBNAIL_SIZE),
+                        thumbnail.getPath()
+                ).start();
+                try {
+                    convert.waitFor();
+                } catch (InterruptedException e) {
+                    // ignored
+                }
+            }
+        }
+
+        return Optional.of(thumbnail).filter(File::exists);
+    }
+
+    public File thumbnailFileOf(File image) {
+        final String[] fileNameComponents = imageFileNameComponents(image);
+        return new File(image.getParentFile(), String.format("%s_thumb.%s", fileNameComponents));
+    }
+
+    private static String[] imageFileNameComponents(File image) {
+        final String imageFileName = image.getName();
+
+        final int dotIdx = imageFileName.lastIndexOf('.');
+        if (dotIdx > 0 && dotIdx < (imageFileName.length() - 1)) {
+            return new String[] {
+                imageFileName.substring(0, dotIdx),
+                imageFileName.substring(dotIdx + 1)
+            };
+        }
+        throw new IllegalArgumentException(image.toString());
+    }
+
     public File create(String fileName, InputStream contents) throws IOException {
         final HashSet<String> existing = new HashSet<>(Arrays.asList(baseDirectory.list()));
 
@@ -155,6 +163,8 @@ public class Images extends StaticHttpHandler {
                     out.write(read);
                 }
             }
+
+            thumbnailOf(file).orElseThrow(IllegalArgumentException::new);
             return file;
         }
         throw new IllegalStateException();
@@ -162,10 +172,11 @@ public class Images extends StaticHttpHandler {
 
     public void delete(Resource resource) {
         final File image = new File(baseDirectory, URI.create(resource.getURI()).getSchemeSpecificPart());
-        if (image.isFile()) {
-            final boolean deleted = image.delete();
-            LOG.fine(() -> String.format("Delete %s: %s", image, deleted));
-        }
+
+        final Boolean imageDeleted = Optional.of(image).filter(File::isFile).map(File::delete).orElse(false);
+        final boolean thumbnailDeleted = Optional.of(thumbnailFileOf(image)).filter(File::isFile).map(File::delete).orElse(false);
+
+        LOG.fine(() -> String.format("Delete %s: %s/%s", image, imageDeleted, thumbnailDeleted));
     }
 
     public static String internalize(Resource resource) {
