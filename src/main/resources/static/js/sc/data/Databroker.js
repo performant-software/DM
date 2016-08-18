@@ -48,18 +48,18 @@ sc.data.Databroker = function(options) {
     this.syncService = this.options.syncService || new sc.data.SyncService();
     this.syncService.databroker = this;
 
-    this.parsers = [];
-    this.parsersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-    this.parseableTypes = new goog.structs.Set();
+    this.parsers = [sc.data.N3Parser, sc.data.RDFQueryParser];
 
-    this.serializers = [];
-    this.serializersByType = new sc.util.DefaultDict(sc.util.DefaultDict.GENERATORS.list);
-
-    // Note: ordering here matters for preferred formats
-    this.registerParser(new sc.data.N3Parser(this));
-    this.registerParser(new sc.data.RDFQueryParser(this));
-    this.registerSerializer(new sc.data.RDFQuerySerializer(this));
-    this.registerSerializer(new sc.data.TurtleSerializer(this));
+    this.serializersByType = {
+        'application/rdf+xml': sc.data.RDFQuerySerializer,
+        'application/xml': sc.data.RDFQuerySerializer,
+        'text/rdf+xml': sc.data.RDFQuerySerializer,
+        'text/xml': sc.data.RDFQuerySerializer,
+        'application/json': sc.data.RDFQuerySerializer,
+        'text/json': sc.data.RDFQuerySerializer,
+        'text/turtle': sc.data.TurtleSerializer,
+        'text/n3': sc.data.TurtleSerializer
+    };
 
     this.receivedUrls = new goog.structs.Set();
     this.failedUrls = new goog.structs.Set();
@@ -198,7 +198,16 @@ sc.data.Databroker.prototype.fetchRdf = function(url, handler) {
         type: 'GET',
         url: this.proxyUrl(url),
         headers: {
-            'Accept': this.parseableTypes.getValues().join(', ')
+            'Accept': [
+                'text/turtle',
+                'text/n3',
+                'text/xml',
+                'application/xml',
+                'application/rdf+xml',
+                'text/rdf+xml',
+                'text/json',
+                'application/json'
+            ].join(', ')
         },
         success: function (data, textStatus, jqXhr) {
             this.receivedUrls.add(url);
@@ -288,11 +297,9 @@ sc.data.Databroker.prototype.processRdfData = function(data, url, format, handle
 };
 
 sc.data.Databroker.prototype.parseRdf = function(data, url, format, handler) {
-    var parsers = [sc.data.N3Parser, sc.data.RDFQueryParser];
-
     var success = false;
-    for (var i = 0, len = parsers.length; i < len; i++) {
-        var parser = new parsers[i](this);
+    for (var i = 0, len = this.parsers.length; i < len; i++) {
+        var parser = new this.parsers[i](this);
 
         try {
             parser.parse(data, null, handler);
@@ -307,30 +314,6 @@ sc.data.Databroker.prototype.parseRdf = function(data, url, format, handler) {
     if (!success) {
         console.error('RDF could not be parsed', data);
     }
-};
-
-sc.data.Databroker.prototype.registerParser = function(parser) {
-    if (parser.databroker != this) {
-        throw "Parser must be instantiated with a reference to this databroker";
-    }
-
-    this.parsers.push(parser);
-    goog.structs.forEach(parser.parseableTypes, function(type) {
-        this.parsersByType.get(type).push(parser);
-
-        this.parseableTypes.add(type);
-    }, this);
-};
-
-sc.data.Databroker.prototype.registerSerializer = function(serializer) {
-    if (serializer.databroker != this) {
-        throw "Serializer must be instantiated with a reference to this databroker";
-    }
-
-    this.serializers.push(serializer);
-    goog.structs.forEach(serializer.serializableTypes, function(type) {
-        this.serializersByType.get(type).push(serializer);
-    }, this);
 };
 
 /**
@@ -375,14 +358,7 @@ sc.data.Databroker.prototype.dumpQuadStore = function(opt_outputType) {
 
 sc.data.Databroker.prototype.serializeQuads = function(quads, opt_format, handler) {
     var format = opt_format || 'application/rdf+xml';
-
-    var serializers = this.serializersByType.get(format);
-    for (var i=0, len=serializers.length; i<len; i++) {
-        var serializer = serializers[i];
-
-        serializer.serialize(quads, opt_format, handler);
-        break;
-    }
+    (new this.serializersByType[format](this)).serialize(quads, format, handler);
 };
 
 /**
@@ -486,6 +462,7 @@ sc.data.Databroker.prototype.getDeferredResource = function(uri) {
     }, this);
 
     successfulFetches.push("");
+    checkCompletion();
 
     return deferredResource;
 
