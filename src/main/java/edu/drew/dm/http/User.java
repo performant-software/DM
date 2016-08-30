@@ -14,6 +14,8 @@ import java.util.Base64;
  */
 public class User implements SecurityContext, Principal {
 
+    public static final User GUEST = new User("guest", "Guest", "User", "guest@dm.local", false, "guest");
+
     public final String account;
     public final String firstName;
     public final String lastName;
@@ -49,6 +51,8 @@ public class User implements SecurityContext, Principal {
     public boolean isAdmin() {
         return admin;
     }
+
+    public boolean isGuest() { return "guest".equals(account); }
 
     public String uri() {
         return uri(account);

@@ -9,7 +9,7 @@ import edu.drew.dm.http.Authentication;
 import edu.drew.dm.http.Canvases;
 import edu.drew.dm.http.Images;
 import edu.drew.dm.http.Locks;
-import edu.drew.dm.http.Logout;
+import edu.drew.dm.http.Accounts;
 import edu.drew.dm.http.ModelReaderWriter;
 import edu.drew.dm.http.Projects;
 import edu.drew.dm.http.Texts;
@@ -191,7 +191,7 @@ public class Server {
                 })
                 .register(ModelReaderWriter.class)
                 .register(Authentication.class)
-                .register(Logout.class)
+                .register(Accounts.class)
                 .register(Root.class)
                 .register(Workspace.class)
                 .register(Locks.class)

@@ -74,7 +74,9 @@
                     </ul>
                 </li>
                 <li class="divider-vertical"></li>
-                [#if user?has_content]
+                [#if user.guest]
+                    <li><a href="${cp}/accounts/login">login</a></li>
+                [#else]
                     <li id="user-dropdown" class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                             <span class="icon-user"></span>
@@ -86,8 +88,6 @@
                             <li><a href="${cp}/accounts/logout" onclick="document.execCommand && document.execCommand('ClearAuthenticationCache')">Logout</a></li>
                         </ul>
                     </li>
-                [#else]
-                    <li><a href="${cp}/accounts/login">login</a></li>
                 [/#if]
             </ul>
         </div>

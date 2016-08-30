@@ -22,12 +22,8 @@ public class Workspace {
     @GET
     @Produces("text/html")
     @Template(name = "/workspace.ftl")
-    public Map<String, Object> workspace(@Context UriInfo ui, @Context ContainerRequest cr) {
-        final Map<String, Object> model = new HashMap<>();
-        model.put("local", ui.getBaseUri().getHost().startsWith("localhost"));
-        model.put("cp", ui.getBaseUri().getRawPath().replaceAll("/$", ""));
-        model.put("user", cr.getSecurityContext());
-        return model;
+    public Map<String, Object> workspace(@Context ContainerRequest cr) {
+        return Templates.model(cr);
     }
 
     @Path("project_forward/")
