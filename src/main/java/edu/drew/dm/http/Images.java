@@ -128,7 +128,7 @@ public class Images extends StaticHttpHandler {
 
     public File thumbnailFileOf(File image) {
         final String[] fileNameComponents = imageFileNameComponents(image);
-        return new File(image.getParentFile(), String.format("%s_thumb.%s", fileNameComponents));
+        return new File(image.getParentFile(), String.format("%s_thumb.%s", fileNameComponents[0], fileNameComponents[1]));
     }
 
     private static String[] imageFileNameComponents(File image) {
