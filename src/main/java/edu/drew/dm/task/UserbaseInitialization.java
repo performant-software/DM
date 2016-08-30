@@ -1,6 +1,7 @@
 package edu.drew.dm.task;
 
 import au.com.bytecode.opencsv.CSVReader;
+import edu.drew.dm.semantics.DigitalMappaemundi;
 import edu.drew.dm.semantics.Models;
 import edu.drew.dm.http.User;
 import edu.drew.dm.data.SemanticDatabase;
@@ -32,13 +33,14 @@ public class UserbaseInitialization {
                             user[2],
                             user[3],
                             Boolean.parseBoolean(user[4]),
-                            user[5]
+                            User.passwordHash(user[5])
                     ))
                     .toArray(User[]::new);
 
             final Set<Resource> projects = db.read((source, target) -> target.add(source.listStatements(null, RDF.type, DCTypes.Collection))).listSubjects().toSet();
 
             final Model userModel = Models.create();
+            final Model passwordModel = Models.create();
 
             for (User user : users) {
                 final Resource userResource = userModel.createResource(user.uri())
@@ -47,6 +49,9 @@ public class UserbaseInitialization {
                         .addProperty(FOAF.firstName, user.firstName)
                         .addProperty(FOAF.surname, user.lastName)
                         .addProperty(FOAF.mbox, userModel.createResource(user.mbox()));
+
+                passwordModel.createResource(user.uri())
+                        .addProperty(DigitalMappaemundi.password, user.password);
 
                 for (Resource project : projects) {
                     for (Property permission : Perm.USER_PERMISSIONS) {
@@ -62,6 +67,7 @@ public class UserbaseInitialization {
             }
 
             db.merge(userModel);
+            db.write(ds -> SemanticDatabase.merge(SemanticDatabase.passwords(ds), passwordModel));
 
             return db;
         } catch (IOException e) {

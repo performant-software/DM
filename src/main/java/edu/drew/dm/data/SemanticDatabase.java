@@ -1,5 +1,6 @@
 package edu.drew.dm.data;
 
+import edu.drew.dm.semantics.DigitalMappaemundi;
 import edu.drew.dm.semantics.Models;
 import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
@@ -29,7 +30,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -58,6 +58,10 @@ public class SemanticDatabase implements AutoCloseable {
 
     public SemanticDatabase(FileSystem fs) {
         this.dataset = TDBFactory.createDataset(fs.triples().getPath());
+    }
+
+    public static Model passwords(Dataset ds) {
+        return ds.getNamedModel(DigitalMappaemundi.password.getURI());
     }
 
     public boolean isEmpty() {
@@ -111,30 +115,30 @@ public class SemanticDatabase implements AutoCloseable {
     }
 
     public Model merge(Model update) {
+        return write(ds -> merge(ds.getDefaultModel(), update));
+    }
+
+    public static Model merge(Model target, Model update) {
         final Map<StatementHead, LinkedList<Statement>> statementsByHead = new LinkedHashMap<>();
         update.listStatements().forEachRemaining(stmt -> statementsByHead
                 .computeIfAbsent(new StatementHead(stmt), k -> new LinkedList<>())
                 .add(stmt)
         );
 
-        return write(ds -> {
-            final Model model = ds.getDefaultModel();
+        statementsByHead.forEach((head, statements) -> {
+            if (MULTI_VALUED_PROPERTIES.contains(head.predicate)) {
+                target.add(statements);
+                return;
+            }
 
-            statementsByHead.forEach((head, statements) -> {
-                if (MULTI_VALUED_PROPERTIES.contains(head.predicate)) {
-                    model.add(statements);
-                    return;
-                }
-
-                model.removeAll(head.subject, head.predicate, null);
-                if (statements.size() > 1) {
-                    LOG.warning(statements::toString);
-                }
-                model.add(statements.getLast());
-            });
-
-            return update;
+            target.removeAll(head.subject, head.predicate, null);
+            if (statements.size() > 1) {
+                LOG.warning(statements::toString);
+            }
+            target.add(statements.getLast());
         });
+
+        return update;
     }
 
     public static void traverse(Function<Resource, ExtendedIterator<Resource>> traversal, Resource start, Consumer<Resource> consumer) {
@@ -155,7 +159,7 @@ public class SemanticDatabase implements AutoCloseable {
 
     public SemanticDatabase writeTo(OutputStream to) {
         return read(ds -> {
-            RDFDataMgr.write(to, ds, Lang.NQUADS);
+            RDFDataMgr.write(to, ds.getDefaultModel(), Lang.NQUADS);
             return this;
         });
     }

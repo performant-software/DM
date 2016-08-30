@@ -15,4 +15,6 @@ public class DigitalMappaemundi {
 
     public static final Property lastOpenProject = model.createProperty(NS, "lastOpenProject");
 
+    public static final Property password = model.createProperty(NS, "password");
+
 }

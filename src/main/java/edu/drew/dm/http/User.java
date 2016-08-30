@@ -3,7 +3,11 @@ package edu.drew.dm.http;
 import javax.ws.rs.core.SecurityContext;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.util.Base64;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -99,4 +103,14 @@ public class User implements SecurityContext, Principal {
         }
     }
 
+    public static String passwordHash(String password) {
+        try {
+
+            final MessageDigest md = MessageDigest.getInstance("SHA-256");
+            final byte[] digest = md.digest(password.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

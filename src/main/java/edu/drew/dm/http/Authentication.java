@@ -1,6 +1,7 @@
 package edu.drew.dm.http;
 
 import edu.drew.dm.data.SemanticDatabase;
+import edu.drew.dm.semantics.DigitalMappaemundi;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -33,8 +34,7 @@ public class Authentication implements ContainerRequestFilter {
 
     private final String[] PUBLIC_PATHS = { "/static", "/media" };
 
-    // FIXME: add cache expiration
-    private Map<String, User> cache = new ConcurrentHashMap<>();
+    private final Map<String, User> cache = new ConcurrentHashMap<>();
 
     private final SemanticDatabase store;
 
@@ -72,13 +72,15 @@ public class Authentication implements ContainerRequestFilter {
                     : "";
 
 
-            if (user.isEmpty() || password.isEmpty() || !user.equals(password)) {
+            if (user.isEmpty() || password.isEmpty()) {
                 throw UNAUTHORIZED;
             }
 
+            final String passwordHash = User.passwordHash(password);
             agent = store.read(ds -> {
                 final ExtendedIterator<User> users = ds.getDefaultModel().listSubjectsWithProperty(RDFS.label, user)
                         .filterKeep(subject -> subject.hasProperty(RDF.type, FOAF.Agent))
+                        .filterKeep(subject -> subject.inModel(SemanticDatabase.passwords(ds)).hasProperty(DigitalMappaemundi.password, passwordHash))
                         .mapWith(subject -> new User(
                                 user,
                                 Optional.ofNullable(subject.getProperty(FOAF.firstName))
