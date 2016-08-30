@@ -83,10 +83,6 @@
                             <b class="caret"></b>
                         </a>
                         <ul class="dropdown-menu">
-                            [#if user.superuser]
-                                <li><a id="create-user">Create User</a></li>
-                                <li class="divider"></li>
-                            [/#if]
                             <li><a href="${cp}/accounts/logout" onclick="document.execCommand && document.execCommand('ClearAuthenticationCache')">Logout</a></li>
                         </ul>
                     </li>
@@ -100,33 +96,6 @@
 
 [#nested]
 
-<div class="modal hide fade create-user-modal" role="dialog" aria-labelledby="create-user-modal" aria-hidden="true" style="display: none;">
-    <div class="modal-header">
-        <button class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h4 class="modal-title">Create User</h4>
-    </div>
-    <div class="modal-body">
-        <p id="new-user-error"></p>
-        <form id="new-user" class="new-user" name="user" role="form" method="POST" action="${cp}/accounts/create/">
-            ${csrfToken!''}
-            <label for="name">Username:</label>
-            <input type="text" id="name" name="name" class="form-control">
-            <label for="email">Email address:</label>
-            <input type="text" id="email" name="email" class="form-control">
-            <label for="email">Password:</label>
-            <input type="password" id="password" name="password" class="form-control">
-            <label for="email">Password confirmation:</label>
-            <input type="password" id="password-confirmation" name="password-confirmation" class="form-control">
-            <div class="checkbox">
-                <label><input id="admin-checkbox" name="admin" type="checkbox"> Administrator</label>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Cancel</button>
-        <input class="btn btn-primary" type="submit" value="Create" id="submit-new-user">
-    </div>
-</div>
 </body>
 </html>
 [/#macro]

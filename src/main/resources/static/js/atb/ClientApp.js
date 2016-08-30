@@ -274,41 +274,4 @@ $(function() {
           });
        }
    });
-   
-   $("#create-user").on("click", function() {
-      $(".create-user-modal").modal('show');
-   });
-   $("#submit-new-user").on("click", function() {
-       $("#new-user-error").text("");
-      var name = $("#name").val();
-      var email = $("#email").val();
-      var pass = $("#password").val();
-      var passConf  = $("#password-confirmation").val();
-      var admin = $("#admin-checkbox").is(':checked');
-      if ( name.length==0 || email.length==0 || pass.length==0 || passConf.length==0  ) {
-         $("#new-user-error").text("All fields are required!");
-         return;
-      }
-      if (pass != passConf ) {
-         $("#new-user-error").text("Passwords do not match");
-         return;
-      }
-      var token = $("[name='csrfmiddlewaretoken']").val();
-      $.ajax({
-         url: "/accounts/create/",
-         method: "POST",
-         data: { name: name, email: email, pass: pass, admin: admin},
-         beforeSend: function(xhr, settings) {
-            xhr.setRequestHeader("X-CSRFToken", token);
-         },
-         complete: function(jqXHR, textStatus ) {
-            if (textStatus == "success" ) {
-               alert("Account created");
-               $(".create-user-modal").modal('hide');
-            } else {
-               alert("Create user failed: "+jqXHR.responseText);
-            }
-         }
-      });
-   });
 });
