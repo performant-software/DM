@@ -119,6 +119,7 @@ public class Server {
         shutdownHook(db::close);
 
         SemanticDatabaseInitialization.execute(db, initialData);
+        UserbaseInitialization.initGuestAccess(db);
 
         try (CSVReader usersCsv = new CSVReader(new InputStreamReader(Server.class.getResourceAsStream("/users.csv"), StandardCharsets.UTF_8))) {
             UserbaseInitialization.execute(db, usersCsv);

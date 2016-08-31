@@ -23,6 +23,20 @@ import java.util.Set;
  */
 public class UserbaseInitialization {
 
+    public static SemanticDatabase initGuestAccess(SemanticDatabase db) {
+        final Model guestModel = Models.create();
+
+        guestModel.createResource(User.GUEST.uri())
+                .addProperty(RDF.type, FOAF.Agent)
+                .addProperty(RDFS.label, User.GUEST.account)
+                .addProperty(FOAF.firstName, User.GUEST.firstName)
+                .addProperty(FOAF.surname, User.GUEST.lastName)
+                .addProperty(FOAF.mbox, guestModel.createResource(User.GUEST.mbox()));
+
+        db.merge(guestModel);
+        return db;
+    }
+
     public static SemanticDatabase execute(SemanticDatabase db, CSVReader csv) {
         try {
             final User[] users = csv.readAll().stream()
@@ -35,6 +49,7 @@ public class UserbaseInitialization {
                             Boolean.parseBoolean(user[4]),
                             User.passwordHash(user[5])
                     ))
+                    .filter(User::isGuest)
                     .toArray(User[]::new);
 
             final Set<Resource> projects = db.read((source, target) -> target.add(source.listStatements(null, RDF.type, DCTypes.Collection))).listSubjects().toSet();

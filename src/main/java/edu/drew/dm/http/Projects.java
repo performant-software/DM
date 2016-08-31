@@ -130,21 +130,36 @@ public class Projects {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode isShared(@PathParam("uri") String uri) {
-        return objectMapper.createObjectNode().put("public", false);
+        return objectMapper.createObjectNode().put("public", (boolean) store.read(ds ->
+                ds.getDefaultModel().containsAll(publishedProject(uri))
+        ));
     }
 
     @Path("/{uri}/share")
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     public JsonNode share(@PathParam("uri") String uri) {
-        return objectMapper.createObjectNode().put("success", false);
+        store.merge(publishedProject(uri));
+        return objectMapper.createObjectNode().put("success", true);
     }
 
     @Path("/{uri}/share")
     @Produces(MediaType.APPLICATION_JSON)
     @DELETE
     public JsonNode revokeShare(@PathParam("uri") String uri) {
+        store.remove(publishedProject(uri));
         return objectMapper.createObjectNode().put("success", true);
+    }
+
+    private static Model publishedProject(String uri) {
+        final Model model = Models.create();
+        final Resource projectResource = model.createResource(uri);
+
+        model.createResource(User.GUEST.uri())
+                .addProperty(Perm.hasPermissionOver, projectResource)
+                .addProperty(Perm.mayRead, projectResource);
+
+        return model;
     }
 
     @Path("/{uri}/search")
