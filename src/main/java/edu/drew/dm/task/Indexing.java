@@ -32,5 +32,6 @@ public class Indexing extends Task {
             LOG.fine(() -> String.format("Build index after %d database writes", databaseWrites));
             index.build();
         }
+        index.refresh();
     }
 }

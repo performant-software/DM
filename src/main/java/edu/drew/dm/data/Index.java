@@ -148,6 +148,14 @@ public class Index implements AutoCloseable {
         return this;
     }
 
+    public void refresh() {
+        try {
+            searcherManager.maybeRefresh();
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, e, e::getMessage);
+        }
+    }
+
     public Index build() {
         try {
             final long startTime = System.currentTimeMillis();
@@ -166,7 +174,7 @@ public class Index implements AutoCloseable {
                     }
                 });
             }
-            searcherManager.maybeRefresh();
+            searcherManager.maybeRefreshBlocking();
 
             IndexSearcher searcher = searcherManager.acquire();
             try {
@@ -181,13 +189,10 @@ public class Index implements AutoCloseable {
             }
 
             LOG.fine(() -> String.format("Index built after %s", Duration.ofMillis(System.currentTimeMillis() - startTime)));
-            return this;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         } catch (Throwable t) {
             LOG.log(Level.SEVERE, t, t::getMessage);
-            throw new RuntimeException(t);
         }
+        return this;
     }
 
     public Search search(String projectUri, String query, int limit) {
@@ -296,8 +301,8 @@ public class Index implements AutoCloseable {
 
             indexWriter.addDocument(indexEntry);
 
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        } catch (Throwable t) {
+            LOG.log(Level.WARNING, t, t::getMessage);
         }
     }
 
