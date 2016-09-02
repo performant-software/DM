@@ -69,14 +69,10 @@ public class UserbaseInitialization {
                         .addProperty(DigitalMappaemundi.password, user.password);
 
                 for (Resource project : projects) {
-                    for (Property permission : Perm.USER_PERMISSIONS) {
-                        userResource.addProperty(permission, project);
-                    }
                     if (user.admin) {
-                        for (Property permission : Perm.ADMIN_PERMISSIONS) {
+                        for (Property permission : Perm.ALL_PROPERTIES) {
                             userResource.addProperty(permission, project);
                         }
-
                     }
                 }
             }
