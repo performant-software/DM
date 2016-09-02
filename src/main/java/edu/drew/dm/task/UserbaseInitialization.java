@@ -49,7 +49,7 @@ public class UserbaseInitialization {
                             Boolean.parseBoolean(user[4]),
                             User.passwordHash(user[5])
                     ))
-                    .filter(User::isGuest)
+                    .filter(user -> !user.isGuest())
                     .toArray(User[]::new);
 
             final Set<Resource> projects = db.read((source, target) -> target.add(source.listStatements(null, RDF.type, DCTypes.Collection))).listSubjects().toSet();
