@@ -15,6 +15,7 @@ import edu.drew.dm.http.Projects;
 import edu.drew.dm.http.Texts;
 import edu.drew.dm.http.Users;
 import edu.drew.dm.http.Workspace;
+import edu.drew.dm.task.FlattenImageDirectory;
 import edu.drew.dm.task.Indexing;
 import edu.drew.dm.task.SemanticDatabaseBackup;
 import edu.drew.dm.task.SemanticDatabaseInitialization;
@@ -132,9 +133,11 @@ public class Server {
             }
         }
 
+        final Images images = new Images(fs);
+        FlattenImageDirectory.execute(images, db);
+
         final SemanticDatabase finalDb = db;
         final Index index = new Index(fs, db).initialized();
-        final Images images = new Images(fs);
 
         final Scheduler scheduler = scheduler();
         scheduler.schedule("0 * * * *", new SemanticDatabaseBackup(fs, db));

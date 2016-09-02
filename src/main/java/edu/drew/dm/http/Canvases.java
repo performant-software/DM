@@ -84,7 +84,7 @@ public class Canvases {
                     .addProperty(Exif.height, model.createTypedLiteral(imageDimension.getHeight()));
         }
 
-        final Resource image = Images.imageResource(model, imageFile.getName())
+        final Resource image = model.createResource(Images.imageUri(imageFile.getName()))
                 .addProperty(RDF.type, DCTypes.Image)
                 .addProperty(Exif.width, model.createTypedLiteral(imageDimension.getWidth()))
                 .addProperty(Exif.height, model.createTypedLiteral(imageDimension.getHeight()));

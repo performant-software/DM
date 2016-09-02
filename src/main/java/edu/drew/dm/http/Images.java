@@ -211,9 +211,9 @@ public class Images extends StaticHttpHandler {
         return imageFile(URI.create(resource.getURI()).getSchemeSpecificPart());
     }
 
-    public static Resource imageResource(Model model, String name) {
+    public static String imageUri(String name) {
         try {
-            return model.createResource(new URI("image", name, null).toString());
+            return new URI("image", name, null).toString();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
