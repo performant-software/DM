@@ -14,11 +14,13 @@ import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
 import edu.drew.dm.semantics.SharedCanvas;
 import edu.drew.dm.semantics.Traversal;
+import edu.drew.dm.task.ProjectBundle;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
+import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
 
 import javax.inject.Inject;
@@ -33,13 +35,21 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -48,14 +58,14 @@ import java.util.stream.Stream;
 @Path("/store/projects")
 public class Projects {
 
-    private final SemanticDatabase store;
+    private final SemanticDatabase db;
     private final Index index;
     private final Images images;
     private final ObjectMapper objectMapper;
 
     @Inject
-    public Projects(SemanticDatabase store, Index index, Images images, ObjectMapper objectMapper) {
-        this.store = store;
+    public Projects(SemanticDatabase db, Index index, Images images, ObjectMapper objectMapper) {
+        this.db = db;
         this.index = index;
         this.images = images;
         this.objectMapper = objectMapper;
@@ -64,7 +74,7 @@ public class Projects {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("uri") String uri, @Context UriInfo ui) {
-        return store.read((source, target) -> {
+        return db.read((source, target) -> {
             final Resource project = source.createResource(uri);
 
             target.add(project.listProperties());
@@ -93,13 +103,13 @@ public class Projects {
     @Path("/{uri}")
     @PUT
     public Model update(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
-        return store.merge(model);
+        return db.merge(model);
     }
 
     @Path("/{uri}")
     @DELETE
     public Model delete(@PathParam("uri") String uri) {
-        final Model removed = store.write(ds -> {
+        final Model removed = db.write(ds -> {
             final Model model = ds.getDefaultModel();
             final Resource project = model.createResource(uri);
             final Model toRemove = SCOPE.copy(project, Models.create());
@@ -113,7 +123,7 @@ public class Projects {
             return toRemove;
         });
 
-        final Set<Resource> orphanedImages = store.read(ds -> removed.listSubjectsWithProperty(RDF.type, DCTypes.Image).filterDrop(image -> ds.getDefaultModel().containsResource(image)).toSet());
+        final Set<Resource> orphanedImages = db.read(ds -> removed.listSubjectsWithProperty(RDF.type, DCTypes.Image).filterDrop(image -> ds.getDefaultModel().containsResource(image)).toSet());
         orphanedImages.forEach(images::delete);
 
         return removed;
@@ -130,7 +140,7 @@ public class Projects {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode isShared(@PathParam("uri") String uri) {
-        return objectMapper.createObjectNode().put("public", (boolean) store.read(ds ->
+        return objectMapper.createObjectNode().put("public", (boolean) db.read(ds ->
                 ds.getDefaultModel().containsAll(publishedProject(uri))
         ));
     }
@@ -139,7 +149,7 @@ public class Projects {
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     public JsonNode share(@PathParam("uri") String uri) {
-        store.merge(publishedProject(uri));
+        db.merge(publishedProject(uri));
         return objectMapper.createObjectNode().put("success", true);
     }
 
@@ -147,7 +157,7 @@ public class Projects {
     @Produces(MediaType.APPLICATION_JSON)
     @DELETE
     public JsonNode revokeShare(@PathParam("uri") String uri) {
-        store.remove(publishedProject(uri));
+        db.remove(publishedProject(uri));
         return objectMapper.createObjectNode().put("success", true);
     }
 
@@ -197,10 +207,26 @@ public class Projects {
                 .collect(objectMapper::createArrayNode, ArrayNode::add, ArrayNode::addAll);
     }
 
-    @Path("/{uri}/download.ttl")
+    @Path("/{uri}/download")
     @GET
-    public Model download(@PathParam("uri") String uri) {
-        return store.read((source, target) -> SCOPE.copy(source.createResource(uri), target));
+    public Response download(@PathParam("uri") String uri) {
+        final Model project = db.read((source, target) -> Projects.SCOPE.copy(source.createResource(uri), target));
+
+        final String title = Optional.ofNullable(project.createResource(uri).getProperty(DC_11.title))
+                .map(label -> label.getLiteral().getString())
+                .orElse(uri);
+
+        final String escapedTitle = Pattern.compile("[^A-Za-z0-9]").matcher(title).replaceAll("_");
+
+        return Response.ok()
+                .type(new MediaType("application", "zip"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, String.format(
+                        "attachment; filename=\"%s_%s.zip\"",
+                        escapedTitle,
+                        DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES))
+                ))
+                .entity((StreamingOutput) output -> ProjectBundle.write(images, project, output))
+                .build();
     }
 
     @Path("/{uri}/removed")
@@ -213,7 +239,7 @@ public class Projects {
     @Path("/{uri}/remove_triples")
     @PUT
     public Model deleteContents(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
-        return store.remove(model);
+        return db.remove(model);
     }
 
     public static Model externalize(Model model, UriInfo ui) {

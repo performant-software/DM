@@ -172,7 +172,7 @@ public class Images extends StaticHttpHandler {
     }
 
     public void delete(Resource resource) {
-        final File image = new File(baseDirectory, URI.create(resource.getURI()).getSchemeSpecificPart());
+        final File image = imageFile(resource);
 
         final Boolean imageDeleted = Optional.of(image).filter(File::isFile).map(File::delete).orElse(false);
         final boolean thumbnailDeleted = Optional.of(thumbnailFileOf(image)).filter(File::isFile).map(File::delete).orElse(false);
@@ -202,6 +202,13 @@ public class Images extends StaticHttpHandler {
                     .path(parsed.getSchemeSpecificPart())
                     .build().toString();
         }));
+    }
+
+    public File imageFile(String name) {
+        return new File(baseDirectory, name);
+    }
+    public File imageFile(Resource resource) {
+        return imageFile(URI.create(resource.getURI()).getSchemeSpecificPart());
     }
 
     public static Resource imageResource(Model model, String name) {

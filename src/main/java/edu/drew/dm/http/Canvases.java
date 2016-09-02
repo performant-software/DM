@@ -8,6 +8,7 @@ import edu.drew.dm.semantics.OpenAnnotation;
 import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.SharedCanvas;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
@@ -73,7 +74,7 @@ public class Canvases {
 
         final Model model = Models.create();
 
-        final org.apache.jena.rdf.model.Resource canvas = Models.uuid(model)
+        final Resource canvas = Models.uuid(model)
                 .addProperty(RDF.type, SharedCanvas.Canvas);
 
         if (!title.isEmpty()) {
@@ -83,7 +84,7 @@ public class Canvases {
                     .addProperty(Exif.height, model.createTypedLiteral(imageDimension.getHeight()));
         }
 
-        final org.apache.jena.rdf.model.Resource image = Images.imageResource(model, imageFile.getName())
+        final Resource image = Images.imageResource(model, imageFile.getName())
                 .addProperty(RDF.type, DCTypes.Image)
                 .addProperty(Exif.width, model.createTypedLiteral(imageDimension.getWidth()))
                 .addProperty(Exif.height, model.createTypedLiteral(imageDimension.getHeight()));
@@ -146,11 +147,11 @@ public class Canvases {
                 .build().toString();
     }
 
-    public static Model imageAnnotations(org.apache.jena.rdf.model.Resource canvas, Model target) {
+    public static Model imageAnnotations(Resource canvas, Model target) {
         canvas.getModel().listSubjectsWithProperty(OpenAnnotation.hasTarget, canvas)
                 .forEachRemaining(annotation -> {
                     target.add(annotation.listProperties());
-                    final org.apache.jena.rdf.model.Resource body = annotation.getPropertyResourceValue(OpenAnnotation.hasBody);
+                    final Resource body = annotation.getPropertyResourceValue(OpenAnnotation.hasBody);
                     if (DCTypes.Image.equals(body.getPropertyResourceValue(RDF.type))) {
                         target.add(body.listProperties());
                     }

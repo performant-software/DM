@@ -2,6 +2,7 @@ package edu.drew.dm.http;
 
 import edu.drew.dm.semantics.Models;
 import edu.drew.dm.semantics.OpenArchivesTerms;
+import edu.drew.dm.util.IO;
 import org.apache.jena.rdf.model.Model;
 
 import javax.ws.rs.NotFoundException;
@@ -12,7 +13,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,12 +42,7 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
         if (mediaType.isCompatible(MediaType.valueOf("text/plain"))) {
             lang = "N-TRIPLE";
         }
-        return internalize(Models.create().read(new FilterInputStream(entityStream) {
-            @Override
-            public void close() throws IOException {
-                // no-op
-            }
-        }, "", lang));
+        return internalize(Models.create().read(new IO.NonClosingInputStream(entityStream), "", lang));
     }
 
     @Override
@@ -76,7 +71,7 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
             lang = "N-TRIPLE";
         }
 
-        externalize(model, ui).write(entityStream, lang);
+        externalize(model, ui).write(new IO.NonClosingOutputStream(entityStream), lang);
     }
 
     @Override
