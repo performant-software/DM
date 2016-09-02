@@ -63,7 +63,6 @@ sc.canvas.FabricCanvasViewport.prototype._renderCanvas = function() {
 
     this.isRendering = false;
     this.isAwaitingRenderFinish = false;
-    this.dispatchEvent(new goog.events.Event("canvasRendered", this));
 };
 
 sc.canvas.FabricCanvasViewport.prototype.complainIfNoCanvas = function() {

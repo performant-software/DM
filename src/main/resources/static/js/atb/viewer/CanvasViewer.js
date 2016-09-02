@@ -403,7 +403,11 @@ atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
     var resource = this.databroker.getResource(uri);
 
     if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
-        this.setCanvasByUri(resource.getUri());
+        //this.mainViewport.listenOnce("canvasRendered", this.mainViewport.zoomToFit, false, this.mainViewport);
+
+        this.setCanvasByUri(resource.getUri()).done((function() {
+            this.viewer.mainViewport.zoomToFit();
+        }).bind(this));
         this.uri = resource.uri;
     }
     else if (resource.hasAnyType('oa:SpecificResource')) {
