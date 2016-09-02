@@ -114,7 +114,7 @@ goog.addDependency('../../../sc/data/Graph.js', ['sc.data.Graph'], ['sc.data.Qua
 goog.addDependency('../../../sc/data/N3Parser.js', ['sc.data.N3Parser'], ['goog.asserts', 'n3.parser', 'sc.data.Parser'], false);
 goog.addDependency('../../../sc/data/NamespaceManager.js', ['sc.data.NamespaceManager'], ['goog.string', 'goog.structs.Map'], false);
 goog.addDependency('../../../sc/data/Parser.js', ['sc.data.ParseError', 'sc.data.Parser'], ['goog.debug.Error', 'sc.data.Quad'], false);
-goog.addDependency('../../../sc/data/ProjectController.js', ['sc.data.ProjectController'], ['goog.events.EventTarget', 'goog.structs'], false);
+goog.addDependency('../../../sc/data/ProjectController.js', ['sc.data.ProjectController'], ['goog.History', 'goog.events.EventTarget', 'goog.structs'], false);
 goog.addDependency('../../../sc/data/Quad.js', ['sc.data.Quad'], [], false);
 goog.addDependency('../../../sc/data/QuadStore.js', ['sc.data.QuadStore'], ['goog.structs.Set', 'sc.util.DefaultDict'], false);
 goog.addDependency('../../../sc/data/RDFQueryParser.js', ['sc.data.RDFQueryParser'], ['jquery.rdfquery', 'sc.data.Parser'], false);
