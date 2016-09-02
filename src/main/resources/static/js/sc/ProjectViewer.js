@@ -93,14 +93,15 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
 };
 
 sc.ProjectViewer.prototype.generatePublicUrl = function() {
-   var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
-   $.ajax({
-      url: url,
+    var projectUri = this.projectController.getCurrentProject().uri,
+        projectShortcut = this.projectController.currentProjectShortcut();
+
+    $.ajax({
+      url: this.databroker.syncService.restUrl(projectUri) + 'share',
       method: "POST",
       complete: function(jqXHR, textStatus) {
          if (textStatus === "success" ) {
-            var json = $.parseJSON(jqXHR.responseText);
-            $("#public-url").text(json.url);
+            $("#public-url").text([goog.global.baseUri, "workspace", "#" + projectShortcut].join("/"));
             $(".pub-url-group").removeClass("hidden");
          } else {
             alert("Unable generate public URL for this project: "+jqXHR.responseText);

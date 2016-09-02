@@ -1,5 +1,6 @@
 goog.provide('sc.data.ProjectController');
 
+goog.require('goog.History');
 goog.require('goog.events.EventTarget');
 goog.require('goog.structs');
 
@@ -7,7 +8,9 @@ sc.data.ProjectController = function(databroker) {
     goog.events.EventTarget.call(this);
 
     this.databroker = databroker;
+    this.history = new goog.History();
 };
+
 goog.inherits(sc.data.ProjectController, goog.events.EventTarget);
 
 sc.data.ProjectController.PERMISSIONS = {
@@ -135,6 +138,7 @@ sc.data.ProjectController.prototype.selectProject = function(project) {
             this.databroker.user.setProperty('dm:lastOpenProject', this.currentProject.bracketedUri);
         }
 
+        this.history.setToken(sc.data.ProjectController.projectShortcut(this.currentProject.uri));
         this.fireProjectSelected();
         return true;
     }
@@ -143,18 +147,43 @@ sc.data.ProjectController.prototype.selectProject = function(project) {
     }
 };
 
+sc.data.ProjectController.prototype.linkedProject = function() {
+    var linkedProject = this.history.getToken();
+    if (!linkedProject) {
+        return undefined;
+    }
+    return this.findProjects()
+        .filter(function(project) { return sc.data.ProjectController.projectShortcut(project) == linkedProject; })
+        .shift();
+}
+
 sc.data.ProjectController.prototype.autoSelectProject = function(user) {
     user = this.databroker.getResource(user || this.databroker.user);
+
+    var linkedProject = this.linkedProject();
+    if (linkedProject) {
+        this.selectProject(linkedProject);
+        return true;
+    }
 
     var lastOpened = user.getOneProperty('dm:lastOpenProject');
     if (lastOpened) {
         this.selectProject(lastOpened);
         return true;
     }
-    else {
-        return false;
-    }
+
+    return false;
 };
+
+sc.data.ProjectController.projectShortcut = function(uri) {
+    var start = uri.lastIndexOf(":") + 1;
+    return uri.substring(start, Math.min(start + 8, uri.length));
+};
+
+sc.data.ProjectController.prototype.currentProjectShortcut = function() {
+    var currentProject = this.getCurrentProject();
+    return currentProject ? sc.data.ProjectController.projectShortcut(currentProject.uri) : undefined;
+}
 
 sc.data.ProjectController.prototype.getCurrentProject = function() {
    return this.currentProject;

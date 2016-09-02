@@ -183,10 +183,10 @@ function initWorkspace(basePath, username) {
       }
    });
 
-   var baseUri = [ window.location.protocol, "//", window.location.host, basePath ].join("");
+   goog.global.baseUri = [ window.location.protocol, "//", window.location.host, basePath ].join("");
    goog.global.databroker = new sc.data.Databroker({
        'syncService': new sc.data.SyncService({
-           'dmBaseUri': [baseUri, "store"].join("/"),
+           'dmBaseUri': [goog.global.baseUri, "store"].join("/"),
            'restBasePath' : [basePath, "store"].join("/")
        })
    });
