@@ -210,11 +210,14 @@ public class Projects {
     @Path("/{uri}/download")
     @GET
     public Response download(@PathParam("uri") String uri) {
-        final Model project = db.read((source, target) -> Projects.SCOPE.copy(source.createResource(uri), target));
+        final Model project = db.read((source, target) -> SCOPE.copy(source.createResource(uri), target));
 
         final String title = Optional.ofNullable(project.createResource(uri).getProperty(DC_11.title))
                 .map(label -> label.getLiteral().getString())
                 .orElse(uri);
+
+        project.listSubjectsWithProperty(RDF.type, FOAF.Agent)
+                .forEachRemaining(agent -> project.remove(agent.listProperties()));
 
         final String escapedTitle = Pattern.compile("[^A-Za-z0-9]").matcher(title).replaceAll("_");
 
