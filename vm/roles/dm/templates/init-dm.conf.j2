@@ -1,0 +1,19 @@
+description "DM"
+author "Gregor Middell <gregor@middell.net>"
+
+setuid dm
+setgid dm
+
+console log
+
+start on started network-services
+stop on stopping network-services
+
+respawn
+respawn limit 5 10
+
+script
+    exec 2>&1
+    chdir /home/dm/app
+    exec java -jar target/dm-{{ dm_version }}.jar --data=/home/dm/data
+end script

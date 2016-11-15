@@ -2,18 +2,5 @@
 - name: restart nginx
   service: name=nginx state=restarted enabled=yes
 
-- name: restart 4store
-  service: name=4store state=restarted enabled=yes
-
-- name: restart gunicorn
-  service: name=gunicorn state=restarted enabled=yes
-
-- name: django - collect static resources
-  django_manage: app_path=/dm command=collectstatic
-  become: yes
-  become_user: vagrant
-
-- name: django - sync database
-  django_manage: app_path=/dm command=syncdb
-  become: yes
-  become_user: vagrant
+- name: restart dm
+  service: name=dm state=restarted enabled=yes

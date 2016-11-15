@@ -1,51 +1,47 @@
 ---
-- name: install app infrastructure (git etc.)
-  apt: pkg={{ item }}
-  with_items:
-    - git-core
-    - python-pip
-    - python-dev
-    - libjpeg-dev
-    - libjpeg8-dev
-    - gunicorn
+- name: install git
+  apt:
+    pkg: "git-core"
+    state: "latest"
 
-- name: install Python dependencies of app
-  pip: name={{ item.name }} version={{ item.version }}
-  with_items:
-    - { name: "django", version: "1.5.4" }
-    - { name: "django-haystack", version: "2.3.1" }
-    - { name: "south", version: "0.8.2" }
-    - { name: "beautifulsoup4", version: "4.3.2" }
-    - { name: "html5lib", version: "0.95" }
-    - { name: "isodate", version: "0.5.0" }
-    - { name: "Pillow", version: "2.6.1" }
-    - { name: "pyparsing", version: "2.0.3" }
-    - { name: "requests", version: "2.2.1" }
-    - { name: "six", version: "1.8.0" }
-    - { name: "SPARQLWrapper", version: "1.7.6" }
-    - { name: "SQLAlchemy", version: "0.9.4" }
+- name: install imagemagick
+  apt:
+    pkg: "imagemagick"
+    state: "latest"
 
-- name: django - configure app
-  template: src=app-settings_local.py.j2 dest=/dm/settings_local.py owner=vagrant group=vagrant
+- name: create dm user
+  user: name=dm comment="DM" shell=/bin/bash
 
-- name: django - collect static resources
-  django_manage: app_path=/dm command=collectstatic
-  become: yes
-  become_user: vagrant
+- name: install upstart job
+  template:
+    src: "templates/init-dm.conf.j2"
+    dest: "/etc/init/dm.conf"
+  notify: restart dm
 
-- name: django - sync database
-  django_manage: app_path=/dm command=syncdb
-  become: yes
-  become_user: vagrant
+- name: checkout sources from GitHub
+  git:
+    repo: "https://github.com/performant-software/DM.git"
+    dest: "/home/dm/app"
+    version: "develop"
+    depth: 2
+    accept_hostkey: True
+  become: True
+  become_user: dm
+  register: git_checkout
 
-- name: django - migrate database
-  django_manage: app_path=/dm command=migrate
-  become: yes
-  become_user: vagrant
+- name: stop dm for (re-)build
+  service: name=dm state=stopped
+  when: git_checkout|changed
 
-- name: configure gunicorn
-  template: src=gunicorn-dm.j2 dest=/etc/gunicorn.d/dm
-  notify: restart gunicorn
+- name: build backend
+  command: mvn clean package
+  args:
+    chdir: "/home/dm/app"
+    creates: "/home/dm/app/target/dm-{{ dm_version }}.jar"
+  become: True
+  become_user: dm
+  when: git_checkout|changed
+  notify: restart dm
 
 - name: configure nginx
   template: src=nginx-dm.conf.j2 dest=/etc/nginx/conf.d/dm.conf

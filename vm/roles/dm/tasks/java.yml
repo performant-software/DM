@@ -1,0 +1,25 @@
+---
+- name: add webupd8 repository
+  apt_repository:
+    repo: "ppa:webupd8team/java"
+    state: "present"
+
+- name: automatically select oracle license
+  debconf:
+    name: 'oracle-java8-installer'
+    question: 'shared/accepted-oracle-license-v1-1'
+    value: 'true'
+    vtype: 'select'
+
+- name: install oracle jdk8
+  apt:
+    pkg: "{{ item }}"
+    state: "latest"
+  with_items:
+    - oracle-java8-installer
+    - oracle-java8-set-default
+
+- name: install maven build tool
+  apt:
+    pkg: "maven"
+    state: "latest"

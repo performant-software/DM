@@ -1,22 +1,14 @@
-upstream app_server {
-    server 127.0.0.1:8000 fail_timeout=0;
-}
-
 server {
-    listen 80;
-    server_name dm.local;
+    listen 80 default_server;
+    listen [::]:80 default_server ipv6only=on;
+
+    root /var/www;
+    
     client_max_body_size 50M;
 
-    root /dm;
-
     location / {
-      try_files $uri @proxy_to_app;
-    }
-
-    location @proxy_to_app {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header Host $http_host;
-      proxy_redirect off;
-      proxy_pass http://app_server;
+      proxy_pass http://localhost:8080/;
     }
 }
