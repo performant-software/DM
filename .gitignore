@@ -55,3 +55,5 @@ target/
 
 # NPM/ Node
 node_modules/
+
+dm.sh

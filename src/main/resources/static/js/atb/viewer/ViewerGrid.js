@@ -45,6 +45,10 @@ atb.viewer.ViewerGrid.prototype.addViewerContainer = function(uri, container) {
 
 atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, index) {
    var cleanUri = uri.replace("<", "").replace(">","");
+   
+   // Override location of new windows.
+   var index = this.wrappers.length;
+
    if (this.containers[cleanUri] == null) {
       this.containers[cleanUri] = container;
    } else {
@@ -59,10 +63,11 @@ atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, 
    container.render(wrapperEl);
 
    var wrapperAtIndex = this.wrappers[index];
+
    if (wrapperAtIndex == null) {
       $(this.element).append(wrapperEl);
    } else {
-      $(wrapperAtIndex).before(wrapperEl);
+      $(wrapperAtIndex).after(wrapperEl);
    }
 
    container._gridWrapper = wrapperEl;

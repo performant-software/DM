@@ -196,10 +196,7 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     });
     var delProjBtn = this.domHelper.createDom('button', {'class': 'btn btn-primary', 'id': 'del-project'}, 'Delete Project');
     this.modalFooter.appendChild(delProjBtn);
-    
-    var cleanProjBtn = this.domHelper.createDom('button', {'class': 'btn btn-primary', 'id': 'clean-project'}, 'Clean Up Project');
-    this.modalFooter.appendChild(cleanProjBtn);
-    
+        
     this.modalFooter.appendChild(footerCloseButton);
     this.modalElement.appendChild(this.modalFooter);
     
