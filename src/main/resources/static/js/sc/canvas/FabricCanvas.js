@@ -103,7 +103,7 @@ sc.canvas.FabricCanvas.RDF_ENUM = {
  * The default styles to be applied to features on the canvas
  */
 sc.canvas.FabricCanvas.DEFAULT_FEATURE_STYLES = {
-    fill: 'rgba(15, 108, 214, 0.6)',
+    fill: 'rgba(15, 108, 214, 0)',
     stroke: 'rgba(3, 75, 158, 0.7)',
     strokeWidth: 5,
     selectable: false,

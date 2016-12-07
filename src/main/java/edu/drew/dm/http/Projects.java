@@ -175,7 +175,7 @@ public class Projects {
     @Path("/{uri}/search")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query, @QueryParam("limit") @DefaultValue("100") int limit, @Context UriInfo ui) throws Exception {
+    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query, @QueryParam("limit") @DefaultValue("2000") int limit, @Context UriInfo ui) throws Exception {
         final Index.Search search = index.search(uri, query, limit);
         final ObjectNode response = objectMapper.createObjectNode();
 
