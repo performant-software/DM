@@ -19,28 +19,19 @@ goog.require('sc.data.Databroker');
 
 atb.ClientApp = function (basePath, username, databroker) {
     this.domHelper = new goog.dom.DomHelper();
-    
     this.databroker = databroker;
-    
     this.eventDispatcher = new goog.events.EventTarget();
-    
     this.username = username;
-
     this.basePath = basePath;
-	this.styleRoot = basePath + "/static/css/";
-    
-	atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.styleRoot; // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
-
+    this.styleRoot = basePath + "/static/css/";
+    atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.styleRoot; // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
     this.annotationBody = null;
-	this.activeAnnotation = null;
+    this.activeAnnotation = null;
     this.createdAnnoLinkIds = [];
-    
     this.popupsByName = {};
-    
     goog.events.listen(window, 'beforeunload', this.onBeforeUnload, false, this);
-    
+    goog.events.listen(window, 'load', this.onLoad, false, this);
     this.linkingInProgress = false;
-    
     this.keyboardShortcutHandler = new goog.ui.KeyboardShortcutHandler(window);
 };
 
@@ -61,16 +52,16 @@ atb.ClientApp.prototype.getStyleRoot = function () {
 };
 
 atb.ClientApp.prototype.getActiveAnnotation = function () {
-	return this.activeAnnotation;
+  return this.activeAnnotation;
 };
 
 atb.ClientApp.prototype.setActiveAnnotation = function (set_active_annotation) {
-	this.activeAnnotation = set_active_annotation;
+  this.activeAnnotation = set_active_annotation;
 };
 
 atb.ClientApp.prototype.clearActiveAnnotation = function () {
-	this.setActiveAnnotation(null);
-	this.setAnnotationBody(null);
+  this.setActiveAnnotation(null);
+  this.setAnnotationBody(null);
 };
 
 
@@ -158,20 +149,20 @@ atb.ClientApp.prototype.cancelAnnoLinking = function () {
 };
 
 atb.ClientApp.prototype.renderLinkCreationUI = function () {
-	this.linkCreationPopup = $("<div id='cancel-link'>Cancel link creation</div>");
-	$("body").append(this.linkCreationPopup);
-	var that = this;
-	this.linkCreationPopup.on("click", function() {
-		that.cancelAnnoLinking();
-	});
+  this.linkCreationPopup = $("<div id='cancel-link'>Cancel link creation</div>");
+  $("body").append(this.linkCreationPopup);
+  var that = this;
+  this.linkCreationPopup.on("click", function() {
+    that.cancelAnnoLinking();
+  });
 };
 
 atb.ClientApp.prototype.showLinkCreationUI = function () {
-	this.linkCreationPopup.fadeIn();
+  this.linkCreationPopup.fadeIn();
 };
 
 atb.ClientApp.prototype.hideLinkCreationUI = function () {
-	this.linkCreationPopup.fadeOut();
+  this.linkCreationPopup.fadeOut();
 };
 
 atb.ClientApp.prototype.createAnnoLinkAddListeners_ = function () {
@@ -258,6 +249,12 @@ atb.ClientApp.prototype.onBeforeUnload = function (event) {
     });
 };
 
+atb.ClientApp.prototype.onLoad = function (event) {
+  if (this.username === 'guest') {
+    $("li.sc-ProjectViewer-projectChoice").first().trigger("click");
+  }
+};
+
 $(function() {
    var username = $("#logged-in-user").text();
    if (username.indexOf("guest_") == 0 ) {
@@ -265,13 +262,36 @@ $(function() {
       $(".sc-ProjectViewer-createProjectButton").hide();
       $(".sc-ProjectViewer-modal .nav-pills").hide();
    }
-   
+
+   $("#logout-link").click(function(){
+      $.ajax({
+        url: '/accounts/logout/',
+        method: 'GET',
+        username: 'asdf',
+        password: 'asdf',
+        async: false,
+        success: function(){
+          window.location.replace(window.location.host);
+        },
+        error: function(){
+          window.location.replace(window.location.host);
+        }
+     });
+   });
+
    $(window).on('beforeunload', function(){
-      if ( $("#logged-in-user").text() === "Guest" ) {
-          $.ajax({
-              url: '/accounts/logout/',
-              async:false
-          });
-       }
+      $.ajax({
+        url: '/accounts/logout/',
+        method: 'GET',
+        username: 'asdf',
+        password: 'asdf',
+        async: false,
+        success: function(){
+          window.location.replace(window.location.host);
+        },
+        error: function(){
+          window.location.replace(window.location.host);
+        }
+     });
    });
 });

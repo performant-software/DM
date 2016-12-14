@@ -463,6 +463,8 @@ atb.viewer.Viewer.prototype.lockStatus = function(resourceUri, isLocked, isLockH
    this.rootDiv.appendChild(lockMessage[0]);
    if ( $.trim($("#logged-in-user").text()) == "Guest" ) {
       lockIcon.hide();
+   } else {
+      $(".lock-for-edit-icon:not(.checked)").trigger("click");
    }
 }
 
