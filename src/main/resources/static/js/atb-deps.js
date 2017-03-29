@@ -44,7 +44,7 @@ goog.addDependency('../../../atb/viewer/TextEditorProperties.js', ['atb.viewer.T
 goog.addDependency('../../../atb/viewer/Viewer.js', ['atb.viewer.Viewer'], ['atb.Util', 'atb.ui.AnnoTitlesList', 'atb.util.StyleUtil', 'atb.widgets.Toolbar', 'goog.events', 'goog.events.EventTarget', 'goog.events.EventType', 'goog.events.KeyCodes', 'goog.math.Coordinate', 'goog.math.Size', 'goog.ui.Popup'], false);
 goog.addDependency('../../../atb/viewer/ViewerContainer.js', ['atb.viewer.ViewerContainer'], ['goog.dom.DomHelper', 'goog.events.EventTarget'], false);
 goog.addDependency('../../../atb/viewer/ViewerFactory.js', ['atb.viewer.ViewerFactory'], ['sc.data.DataModel'], false);
-goog.addDependency('../../../atb/viewer/ViewerGrid.js', ['atb.viewer.ViewerGrid'], ['goog.array', 'goog.dom.DomHelper', 'goog.events', 'goog.events.EventTarget', 'goog.math.Size', 'goog.structs.Map', 'goog.structs.Set'], false);
+goog.addDependency('../../../atb/viewer/ViewerGrid.js', ['atb.viewer.ViewerGrid'], ['goog.array', 'goog.dom.DomHelper', 'goog.events', 'goog.events.EventTarget', 'goog.fx.DragListGroup', 'goog.math.Size', 'goog.structs.Map', 'goog.structs.Set'], false);
 goog.addDependency('../../../atb/widgets/BreadCrumbs.js', ['atb.widgets.BreadCrumbs'], ['goog.array', 'goog.dom.DomHelper', 'goog.structs.Map'], false);
 goog.addDependency('../../../atb/widgets/DialogWidget.js', ['atb.widgets.DialogWidget'], ['atb.util.ReferenceUtil', 'atb.util.StyleUtil', 'atb.widgets.MenuButtonSet', 'atb.widgets.MenuUtil', 'goog.dom', 'goog.ui.Dialog', 'goog.ui.Dialog.ButtonSet'], false);
 goog.addDependency('../../../atb/widgets/ForegroundMenuDisplayer.js', ['atb.widgets.ForegroundMenuDisplayer'], ['atb.widgets.GlassPane', 'goog.events.EventType'], false);
