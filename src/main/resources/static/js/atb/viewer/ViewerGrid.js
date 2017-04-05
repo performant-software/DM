@@ -7,6 +7,7 @@ goog.require('goog.math.Size');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.events');
 goog.require('goog.events.EventTarget');
+goog.require('goog.fx.DragListGroup');
 
 atb.viewer.ViewerGrid = function(opt_domHelper) {
    goog.events.EventTarget.call(this);
@@ -24,6 +25,17 @@ atb.viewer.ViewerGrid = function(opt_domHelper) {
 
    goog.events.listen(this.domHelper.getWindow(), 'resize',
          this._onWindowResize, false, this);
+
+   this.dlg = new goog.fx.DragListGroup();
+   this.dlg.setDraggerElClass('cursor_move');
+   this.dlg.addDragList(this.element, goog.fx.DragListDirection.RIGHT_2D);
+   this.dlg.init();
+   goog.events.listen(this.dlg, goog.fx.DragListGroup.EventType.BEFOREDRAGSTART,
+         this._onBeforeDragStart.bind(this));
+   goog.events.listen(this.dlg, goog.fx.DragListGroup.EventType.DRAGSTART,
+         this._onDragStart);
+   goog.events.listen(this.dlg, goog.fx.DragListGroup.EventType.DRAGEND,
+         this._onWrapperDragEnd.bind(this));
 };
 goog.inherits(atb.viewer.ViewerGrid, goog.events.EventTarget);
 
@@ -45,7 +57,7 @@ atb.viewer.ViewerGrid.prototype.addViewerContainer = function(uri, container) {
 
 atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, index) {
    var cleanUri = uri.replace("<", "").replace(">","");
-   
+
    // Override location of new windows.
    var index = this.wrappers.length;
 
@@ -62,13 +74,7 @@ atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, 
    });
    container.render(wrapperEl);
 
-   var wrapperAtIndex = this.wrappers[index];
-
-   if (wrapperAtIndex == null) {
-      $(this.element).append(wrapperEl);
-   } else {
-      $(wrapperAtIndex).after(wrapperEl);
-   }
+   this.dlg.addItemToDragList(this.element, wrapperEl, index);
 
    container._gridWrapper = wrapperEl;
 
@@ -91,7 +97,7 @@ atb.viewer.ViewerGrid.prototype.getContainer = function(uri) {
 
 atb.viewer.ViewerGrid.prototype.removeViewerContainer = function(container) {
    var uri = container.viewer.uri;
-   
+
    // canvases don't have uri directly visible so uri will be undefined.
    // In this case, call the getUri method to get it
    if (!uri ) {
@@ -185,6 +191,22 @@ atb.viewer.ViewerGrid.prototype._onWindowResize = function(event) {
    this.resizeAllContainers();
    window.setTimeout(this.resizeAllContainers.bind(this), 20);
 };
+
+atb.viewer.ViewerGrid.prototype._onBeforeDragStart = function(event) {
+   if (!(goog.dom.classes.has(event.event.target, "atb-ViewerContainer-title") || goog.dom.classes.has(event.event.target, "atb-ViewerContainer-titleWrapper"))) {
+      event.preventDefault();
+      event.stopPropagation();
+   }
+}
+
+atb.viewer.ViewerGrid.prototype._onDragStart = function(event) {
+   jQuery(event.draggerEl).width(jQuery(event.currDragItem).width());
+}
+
+atb.viewer.ViewerGrid.prototype._onWrapperDragEnd = function(event) {
+   this.wrappers = goog.array.toArray(this.domHelper.getChildren(this.element));
+   this._setAllContainerDimensions();
+}
 
 atb.viewer.ViewerGrid.prototype.closeAllContainers = function() {
    $.each(this.containers, function(key, value) {
