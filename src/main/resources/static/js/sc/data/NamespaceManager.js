@@ -81,15 +81,14 @@ sc.data.NamespaceManager.prototype.autoExpand = function (ns) {
     else {
         var prefixRegex = /^([^:]+):([^:]+)$/;
         var match = prefixRegex.exec(ns);
-        
+
         if (match) {
             var prefix = match[1];
             var fragment = match[2];
-            
+
             return this.expand(prefix, fragment);
         }
     }
-    
     throw "Namespace " + ns + " could not be expanded";
 };
 

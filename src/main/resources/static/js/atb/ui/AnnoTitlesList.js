@@ -102,7 +102,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     var eventDispatcher = this.clientApp.getEventDispatcher();
     var resourceClickEvent = new atb.events.ResourceClick(uri, eventDispatcher, this);
     var viewerUri = uri;
-    
+
     // If this respource is a link, the URI above refers to the target link on
     // the other document. Find the URI of the SOURCE as this is the URI that will
     // be closed when the user closes the editor. If we don't have this URI, the viewgrid
@@ -112,12 +112,12 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
        var src = resource.getOneResourceByProperty('oa:hasSource');
        viewerUri = src.uri;
     }
-    
+
     if (eventDispatcher.dispatchEvent(resourceClickEvent)) {
         // Only open each resource ONCE
         var viewerGrid = this.clientApp.viewerGrid;
         var clone = viewerGrid.isOpen(viewerUri);
-           
+
         var deferredResource = this.databroker.getDeferredResource(uri);
 
         var viewerGrid = this.clientApp.viewerGrid;
@@ -130,7 +130,7 @@ atb.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
             var viewer = atb.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
             viewer.readOnlyClone = clone;
             container.setViewer(viewer);
-           
+
             if (!clone && this.databroker.projectController.userHasPermissionOverProject(null,null, sc.data.ProjectController.PERMISSIONS.update)) {
                // Initial open of documents is ALWAYS read-only
                viewer.makeUneditable();
@@ -180,7 +180,7 @@ atb.ui.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
       this.removeSummary(summary, this.targetSummaries);
    }
    this.databroker.sync();
-}; 
+};
 
 
 atb.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv, relationType) {
@@ -261,8 +261,9 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
     if (uri instanceof sc.data.Resource) uri = uri.uri;
 
     console.log('uri of hovered resource', uri);
+    console.trace();
     this.uri = uri;
-    
+
     jQuery(this.noAnnosDiv).hide();
     jQuery(this.loadingDiv).show();
 
@@ -343,4 +344,4 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
     }.bind(this);
     deferredResource.done(withResource);
     // withResource(this.databroker.getResource(uri));
-}; 
+};

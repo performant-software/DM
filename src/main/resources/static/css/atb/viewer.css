@@ -37,7 +37,7 @@
 }
 
 .sc-CanvasViewer .lock-message  {
-   top: 38px;	
+   top: 38px;
 }
 
 .editor-status {
@@ -66,7 +66,7 @@
   display:none;
 }
 .lock-for-edit-icon {
-   background: url("../../img/edit2.png") no-repeat 0 0 transparent;   	
+   background: url("../../img/edit2.png") no-repeat 0 0 transparent;
    height: 24px;
    width: 24px;
    position: absolute;
@@ -79,7 +79,7 @@
 .lock-for-edit-icon.checked {
     background-color: #dfd;
   border: 1px solid #090;
-  border-radius: 3px;	
+  border-radius: 3px;
 }
 .lock-for-edit-icon.locked {
   opacity: 0.3;
@@ -87,7 +87,7 @@
 }
 
 .text-editor-toolbar {
-  border-top: 1px solid #ccc;	
+  border-top: 1px solid #ccc;
 }
 
 .text-editor-toolbar .goog-toolbar {
@@ -95,11 +95,11 @@
 	height: 32px;
 }
 .editor-status.goog-toolbar.goog-toolbar-horizontal {
-      height: auto;	
+      height: auto;
 }
 
 .atb-viewer-documentIcon:hover {
- background-position-x: -576px;  	
+ background-position-x: -576px;
 }
 
 .text-edit-load-status {
@@ -112,7 +112,7 @@
    color: #777;
 }
 
-.atb-viewer-documentIconHighlight {    
+.atb-viewer-documentIconHighlight {
    background-position-x: -576px;
 }
 
@@ -127,6 +127,8 @@
     border: 1px solid #777;
     border-radius: 8px 8px 0 0;
     z-index: 100000;
+    min-height: 175px;
+    min-width: 100px;
 }
 
 .atb-hoverMenu .goog-toolbar {
@@ -151,7 +153,7 @@
     width: 16px;
     height: 16px;
     position: absolute;
-    
+
     background-color: transparent;
     background: url("../../img/icons-16x16-sprite.png") -784px 0 no-repeat;
 }

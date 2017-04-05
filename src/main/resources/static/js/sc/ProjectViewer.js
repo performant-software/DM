@@ -24,12 +24,12 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
 
     this.modalElement = this.domHelper.createDom('div', {'class': 'modal hide fade sc-ProjectViewer-modal'});
     this._buildModalElement();
-    
+
     var ss = this.databroker.syncService;
     var pc = this.projectController;
     var self = this;
     setTimeout(function() {
-       
+
       // Toggle public access
       $("#public-access").on("click", function(e) {
          if ( $("#public-access").is(':checked') ) {
@@ -43,7 +43,7 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
             }
          }
       });
-      
+
       // Clean orphans from project
       $("#clean-project").on("click", function() {
         if ( $("#clean-project").hasClass("disabled") ) {
@@ -61,7 +61,7 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
            }
         });
       });
-      
+
       // Delete entire project
       $("#del-project").on("click", function() {
          if ( $("#del-project").hasClass("disabled") ) {
@@ -86,7 +86,7 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
             });
          }
       });
-   }, 10); 
+   }, 10);
 
 
     goog.events.listen(this.projectController, 'projectSelected', this._onProjectSelected, false, this);
@@ -142,7 +142,7 @@ sc.ProjectViewer.prototype._buildButtonGroup = function() {
 
     this.buttonGroupElement.appendChild(this.projectTitleButton);
 
-    this.dropdownButton = this.domHelper.createDom('button', {'class': 'btn dropdown-toggle btn-inverse'}, 
+    this.dropdownButton = this.domHelper.createDom('button', {'class': 'btn dropdown-toggle btn-inverse'},
         this.domHelper.createDom('span', {'class': 'caret'}));
     $(this.dropdownButton).attr({
         'data-toggle': 'dropdown',
@@ -196,10 +196,10 @@ sc.ProjectViewer.prototype._buildModalElement = function() {
     });
     var delProjBtn = this.domHelper.createDom('button', {'class': 'btn btn-primary', 'id': 'del-project'}, 'Delete Project');
     this.modalFooter.appendChild(delProjBtn);
-        
+
     this.modalFooter.appendChild(footerCloseButton);
     this.modalElement.appendChild(this.modalFooter);
-    
+
     // Footer 2 - create new project
     var f2 = $("<div class='modal-footer' id='create-footer'></div");
     var cancel = $("<button class='btn btn-primary' id='cancel-proj'>Cancel</button>");
@@ -225,8 +225,8 @@ sc.ProjectViewer.prototype.createProjectClicked = function() {
       alert("A title is required!");
       return;
    }
-   
-   var newProject = this.projectController.createProject(); 
+
+   var newProject = this.projectController.createProject();
    this.databroker.dataModel.setTitle(newProject, title);
    newProject.setProperty('dcterms:description', sc.data.Literal(description));
    this.viewerGrid.closeAllContainers();
@@ -234,7 +234,7 @@ sc.ProjectViewer.prototype.createProjectClicked = function() {
    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.administer]);
    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.update]);
    this.projectController.grantPermissionsToUser(userUri, null, [sc.data.ProjectController.PERMISSIONS.read]);
-   
+
    this.databroker.sync();
    this.hideModal();
 }
@@ -270,14 +270,14 @@ sc.ProjectViewer.prototype._buildHeader = function() {
        addSubmenuUl.appendChild(newTextButtonLi);
        addSubmenuUl.appendChild(uploadCanvasButtonLi);
        nav.appendChild(addButtonLi);
-   
-       var editButtonLi = this.domHelper.createDom('li', {}, 
+
+       var editButtonLi = this.domHelper.createDom('li', {},
            this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
                this.domHelper.createDom('span', {'class': 'icon-cog'}), 'Project Info and Sharing'));
        goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
        nav.appendChild(editButtonLi);
     }
-    
+
     var downloadButtonLi = this.domHelper.createDom('li', {},
         this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
             this.domHelper.createDom('span', {'class': 'icon-download'}), 'Download'));
@@ -307,26 +307,26 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     descriptionControls.appendChild(this.descriptionInput);
     descriptionGroup.appendChild(descriptionControls);
     this.editElement.append( $(descriptionGroup) );
-    
+
     // public access
     var publicPanel = this.domHelper.createDom('div', {'class': 'panel panel-default pub-access'});
     var publicBody = this.domHelper.createDom('div', {'class': 'panel-body'});
     publicPanel.appendChild(publicBody);
-    
+
     var cbDiv = this.domHelper.createDom('div', {'class': 'checkbox'});
     publicBody.appendChild(cbDiv);
     var cbLbl = this.domHelper.createDom('label','', "Publicly Accessible?");
     cbDiv.appendChild(cbLbl);
     var cb = this.domHelper.createDom('input', {'type': 'checkbox', 'id': 'public-access'});
     cbLbl.appendChild(cb);
-    
+
     var urlDiv = this.domHelper.createDom('div', {'class': 'hidden control-group pub-url-group'});
     publicBody.appendChild(urlDiv);
     var urlLbl = this.domHelper.createDom('label','', "URL:");
     urlDiv.appendChild(urlLbl);
     var url = this.domHelper.createDom('p',{'id': 'public-url'}, "http://dm.performantsoftware.com/projects/98hs73hx");
     urlDiv.appendChild(url);
-   
+
     this.editElement.append( $(publicPanel) );
 
 
@@ -590,13 +590,13 @@ sc.ProjectViewer.prototype.updatePermissionsUI = function() {
 	        var canRead = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.read);
 	        var canModify = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.update);
 	        var isAdmin = this.projectController.userHasPermissionOverProject(user, null, sc.data.ProjectController.PERMISSIONS.administer);
-	
+
 	        var readCheck = (canRead ? checked() : unchecked());
 	        var modifyCheck = (canModify ? checked() : unchecked());
 	        var adminCheck = (isAdmin ? checked() : unchecked());
-	
+
 	        this._sanityCheckPermissionsUI(readCheck, modifyCheck, adminCheck);
-	
+
 	        var tr = this.domHelper.createDom('tr', {},
 	            this.domHelper.createDom('td', {'about': user}, username),
 	            this.domHelper.createDom('td', {}, readCheck),
@@ -604,11 +604,11 @@ sc.ProjectViewer.prototype.updatePermissionsUI = function() {
 	            this.domHelper.createDom('td', {}, adminCheck)
 	        );
 	        $(tr).attr('about', user);
-	
+
 	        if (this.databroker.user.equals(user)) {
 	            $(tr).addClass('info');
 	        }
-	
+
 	        fragment.appendChild(tr);
 	        this.permissionsRows.push(tr);
         }
@@ -637,7 +637,7 @@ sc.ProjectViewer.prototype.updatePermissionsUI = function() {
             else if (!this.projectController.userHasPermissionOverProject(null, null, sc.data.ProjectController.PERMISSIONS.update)) {
                 modifyCheck.disabled = true;
             }
-        }, this);   
+        }, this);
     }
 
     var tbody = $(this.permissionsTable).find('tbody');
@@ -680,7 +680,7 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
    $("#create-footer").hide();
    $("#main-footer").show();
    $(".sc-ProjectViewer-modal .nav-pills").hide();
-   
+
    $(".sc-ProjectViewer-permissions-table").show();
    $(".pub-access").show();
    $(".form-actions").show();
@@ -692,14 +692,14 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
       var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
       $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
 
-      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user, uri, 
+      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user, uri,
           sc.data.ProjectController.PERMISSIONS.administer)) {
          $("#del-project").show();
          $("#clean-project").show();
          $(".sc-ProjectViewer-modal .nav-pills").show();
       }
 
-      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user, 
+      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user,
           uri, sc.data.ProjectController.PERMISSIONS.update)) {
          $(".sc-ProjectViewer-modal .nav-pills").show();
       }
@@ -708,7 +708,7 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
    }
 
    this.updateEditUI();
-}; 
+};
 
 
 sc.ProjectViewer.prototype.showModal = function() {
@@ -727,7 +727,7 @@ sc.ProjectViewer.prototype._handleNewProjectButtonClick = function(event) {
     event.stopPropagation();
 
     $(this.dropdownButton).dropdown('toggle');
-    
+
     this.showModal();
     this.editElement.removeClass("hidden");
     this.workingResourcesElement.removeClass("hidden").addClass("hidden");
@@ -797,7 +797,7 @@ sc.ProjectViewer.prototype.updateProjectChoices = function() {
     }
 
     this.setProjectChoicesByUris(projectUris);
-    
+
     if ( projectUris.length === 1) {
        var username = $("#logged-in-user").text();
        if (username === "Guest")  {
@@ -851,7 +851,7 @@ sc.ProjectViewer.prototype.openViewerForResource = function(resource) {
     var resource = this.databroker.getResource(resource);
 
     var clone = this.viewerGrid.isOpen(resource.uri);
-    
+
     var container = new atb.viewer.ViewerContainer(this.domHelper);
     this.viewerGrid.addViewerContainer(resource.uri, container);
 
@@ -866,7 +866,7 @@ sc.ProjectViewer.prototype.openViewerForResource = function(resource) {
         viewer.loadResourceByUri(resource.uri);
         container.autoResize();
     } else {
-    
+
        // resources are ALWAYS locked when first opened
        viewer.makeUneditable();
        viewer.lockStatus(resource.uri,false,false,"","");
@@ -900,22 +900,22 @@ sc.ProjectViewer.prototype._handleSaveButtonClick = function(event) {
 
 sc.ProjectViewer.prototype._handleEditButtonClick = function(event) {
     event.stopPropagation();
-    
+
     $(".sc-ProjectViewer-projectEdit").children().addClass("disabled");
     $("#public-access").prop('checked', false);
     $(".pub-url-group").removeClass("hidden").addClass("hidden");
     $("#main-footer").hide();
-     
+
     this.editElement.removeClass("hidden");
     this.workingResourcesElement.removeClass("hidden").addClass("hidden");
     this.uploadCanvasElement.removeClass("hidden").addClass("hidden");
-    
+
     var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
     $.getJSON(url,function( data,status, xhr ) {
         $(".sc-ProjectViewer-projectEdit").children().removeClass("disabled");
         if  (  status == "success" ) {
            if ( data.public ) {
-             $("#public-access").prop('checked', true); 
+             $("#public-access").prop('checked', true);
              $("#public-url").text( data.url );
              $(".pub-url-group").removeClass("hidden");
            }

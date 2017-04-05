@@ -77,16 +77,16 @@ sc.data.Resource.prototype.dump = function() {
             }, this
         );
     }, this);
-    
+
     var dump = {};
-    
+
     goog.structs.forEach(ddict, function(predicates, context) {
         dump[context] = {};
         goog.structs.forEach(predicates, function(objects, predicate) {
             dump[context][predicate] = objects.getValues();
         }, this);
     }, this);
-    
+
     return dump;
 };
 
@@ -164,7 +164,7 @@ sc.data.Resource.prototype.escapeProperty = function(property) {
             return property;
         }
     };
-    
+
     if (goog.isArray(property)) {
         var result = [];
         goog.structs.forEach(property, function(p) {
@@ -181,7 +181,7 @@ sc.data.Resource.prototype.escapeProperties = sc.data.Resource.prototype.escapeP
 sc.data.Resource.prototype.getProperties = function(predicate) {
     var properties = this.getUnescapedProperties(predicate);
     properties = this.escapeProperties(properties);
-    
+
     return properties;
 };
 
@@ -198,7 +198,7 @@ sc.data.Resource.prototype.getOneUnescapedProperty = function(predicate) {
 
 sc.data.Resource.prototype.getOneProperty = function(predicate) {
     var property = this.getOneUnescapedProperty(predicate);
-    
+
     if (property) {
         return this.escapeProperty(property);
     }
@@ -280,13 +280,13 @@ sc.data.Resource.prototype.markModificationTime = function() {
 sc.data.Resource.prototype.addProperty = function(predicate, object) {
     predicate = this.namespaces.autoExpand(predicate);
     object = this.namespaces.autoExpand(object);
-    
+
     var quad = new sc.data.Quad(this.bracketedUri, predicate, object, this.graph.context);
-    
+
     this.databroker.addNewQuad(quad);
 
     this.markModificationTime();
-    
+
     return this;
 };
 
@@ -344,11 +344,11 @@ sc.data.Resource.prototype.addValuesByProperty = function(valuesByProperty) {
     for (var property in valuesByProperty) {
         if (valuesByProperty.hasOwnProperty(property)) {
             var values = valuesByProperty[property];
-            
+
             if (jQuery.isArray(values)) {
                 for (var i=0, len=values.length; i<len; i++) {
                     var value = values[i];
-                    
+
                     this.addProperty(predicate, value);
                 }
             }
@@ -357,7 +357,7 @@ sc.data.Resource.prototype.addValuesByProperty = function(valuesByProperty) {
             }
         }
     }
-    
+
     return this;
 };
 
@@ -380,7 +380,7 @@ sc.data.Resource.prototype.hasType = function(type) {
     if ( types.contains(type) ) {
       return true;
     }
-    
+
     // project has DM host specific stuff in it.
     // use a regex to match any host
     var regex = /<http:\/\/.*\/ns\/Project>/;
@@ -398,11 +398,11 @@ sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
     if (! possibleTypes) {
         return types.getCount() > 0;
     }
-    
+
     if (!jQuery.isArray(possibleTypes)) {
         typesToTest = arguments;
     }
-    
+
     var regex = /<http:\/\/.*\/ns\/Project>/;
 
     for (var i = 0, len = typesToTest.length; i < len; i++) {
@@ -411,7 +411,7 @@ sc.data.Resource.prototype.hasAnyType = function(possibleTypes) {
         if (types.contains(possibleType)) {
             return true;
         }
-        
+
         // match project from any host
         var match = regex.exec(possibleType);
         if (match) {
@@ -470,7 +470,7 @@ sc.data.Resource.prototype.isSameAs = function(other) {
     else {
         var uri = other;
     }
-    
+
     return this.databroker.areEquivalentUris(this.bracketedUri, uri);
 };
 
@@ -479,7 +479,7 @@ sc.data.Resource.prototype.equals = sc.data.Resource.prototype.isSameAs;
 /**
  * Returns the uris of all resources which are marked as owl:sameAs this
  * this resource.
- * 
+ *
  * Note: all querying methods already query these equivalent
  * resources, so manually repeating queries on these other resources is
  * unnecessary.

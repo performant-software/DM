@@ -97,9 +97,9 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
 
     repoBrowser.addEventListener('add_request', function(event) {
         var resource = event.resource;
-        var manuscriptResource = databroker.getResource(event.manifestUri); // If the added resource was a manuscript, then 
+        var manuscriptResource = databroker.getResource(event.manifestUri); // If the added resource was a manuscript, then
         // this will be the same as resource
-        
+
         var manuscriptUri = manuscriptResource.getUri();
 
         databroker.projectController.addResourceToProject(resource);
@@ -149,6 +149,7 @@ var setupUser = function(databroker, username) {
                 if (goog.global.projectViewer) {
                     projectViewer.updateButtonUI();
                     projectViewer.updateModalUI();
+                    projectViewer.showModal();
                 }
             };
 

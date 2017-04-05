@@ -38,6 +38,17 @@ atb.widgets.WorkingResources = function(databroker, opt_domHelper) {
         'class': 'atb-WorkingResources-scroller'
     });
 
+    this.dlg = new goog.fx.DragListGroup();
+    this.dlg.setDraggerElClass('atb-WorkingResources-dragger');
+    this.dlg.addDragList(this.scrollingDiv, goog.fx.DragListDirection.DOWN);
+    this.dlg.init();
+    goog.events.listen(this.dlg, goog.fx.DragListGroup.EventType.BEFOREDRAGSTART,
+          this._onBeforeDragStart.bind(this));
+    goog.events.listen(this.dlg, goog.fx.DragListGroup.EventType.DRAGSTART,
+          this._onDragStart);
+    goog.events.listen(this.dlg, goog.fx.DragListGroup.EventType.DRAGEND,
+          this._onDragEnd.bind(this));
+
     this.div.appendChild(this.scrollingDiv);
 
     this.itemsByUri = new goog.structs.Map();
@@ -146,13 +157,14 @@ atb.widgets.WorkingResources.prototype.createItem = function(uri) {
             if (this.databroker.projectController.userHasPermissionOverProject(
                     this.databroker.user, this.uri, sc.data.ProjectController.PERMISSIONS.update)) {
                 item.showRemoveButton();
+                item.showReorderButton();
             }
         }
 
         this.updateItem(item);
     }
 
-   
+
     return item;
 };
 
@@ -242,7 +254,7 @@ atb.widgets.WorkingResources.prototype.updateManuscript = function(item, opt_isF
                     image.getOneProperty('exif:height')
                 ).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE);
 
-                var src = thumbSrc + '?w=' + Math.round(size.width) + '&h=' + 
+                var src = thumbSrc + '?w=' + Math.round(size.width) + '&h=' +
                     Math.round(size.height);
 
                 item.setThumb(src, size.width, size.height);
@@ -310,7 +322,7 @@ atb.widgets.WorkingResources.prototype.updateText = function(item) {
     var uri = item.getUri();
     var resource = this.databroker.getResource(uri);
 
-    
+
 };
 
 atb.widgets.WorkingResources.prototype.refreshCurrentItems = function() {
@@ -338,13 +350,13 @@ atb.widgets.WorkingResources.prototype.refreshItem = function(item) {
             var onLoaded = function(sequence) {
                 this.updateItem(item, true);
             }.bind(this);
-            
+
             var aggregatedUris = this.databroker.dataModel.findManuscriptAggregationUris(uri);
             for (var i=0; i<aggregatedUris.length; i++) {
                 this.databroker.getDeferredResource(aggregatedUris[i]).
                     progress(onUpdate).done(onLoaded);
             }
-             
+
             /*
             var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
             var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(uri)[0];
@@ -416,17 +428,13 @@ atb.widgets.WorkingResources.prototype.addItem = function(item) {
 };
 
 atb.widgets.WorkingResources.prototype.addItems = function(items) {
-    var fragment = this.domHelper.getDocument().createDocumentFragment();
-
     goog.structs.forEach(items, function(item) {
         this.itemsByUri.set(item.getUri(), item);
 
         this.addListenersToItem(item);
 
-        item.render(fragment);
+        item.addToDragList(this.dlg, this.scrollingDiv);
     }, this);
-
-    this.scrollingDiv.appendChild(fragment);
 };
 
 atb.widgets.WorkingResources.prototype.removeItemByUri = function(uri) {
@@ -449,4 +457,20 @@ atb.widgets.WorkingResources.prototype.removeItemByUri = function(uri) {
 
         return true;
     }
+};
+
+atb.widgets.WorkingResources.prototype._onBeforeDragStart = function(event) {
+   if (!goog.dom.classes.has(event.event.target, "atb-WorkingResourcesItem-reorder")) {
+      event.preventDefault();
+      event.stopPropagation();
+   }
+};
+
+atb.widgets.WorkingResources.prototype._onDragStart = function(event) {
+   jQuery(event.draggerEl).width(jQuery(event.currDragItem).width());
+};
+
+atb.widgets.WorkingResources.prototype._onDragEnd = function(event) {
+   var itemUris = jQuery(".atb-WorkingResourcesItem").map(function() { return jQuery(this).data("uri"); }).toArray();
+  //  this.databroker.projectController.reorderProjectContents(this.uri, itemUris);
 };

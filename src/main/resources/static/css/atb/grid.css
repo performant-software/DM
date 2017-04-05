@@ -79,7 +79,8 @@
 	margin: 0;
 	margin-right: 14px;
 	overflow: hidden;
-	white-space: nowrap
+	white-space: nowrap;
+	cursor: move;
 }
 
 .atb-ViewerContainer .atb-ViewerContainer-title-editing {

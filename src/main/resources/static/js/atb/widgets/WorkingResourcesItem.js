@@ -14,7 +14,8 @@ atb.widgets.WorkingResourcesItem = function(databroker, uri, opt_domHelper) {
 
     this.title = '';
     this.div = this.domHelper.createDom('div', {
-        'class': 'atb-WorkingResourcesItem'
+        'class': 'atb-WorkingResourcesItem',
+        'data-uri': this.uri
     });
 
     this.attributeDivsByName = new goog.structs.Map();
@@ -45,6 +46,12 @@ atb.widgets.WorkingResourcesItem.prototype.setupLayout_ = function() {
     jQuery(this.removeButton).hide();
     goog.events.listen(this.removeButton, 'click', this.handleRemoveClick, false, this);
 
+    this.reorderButton = this.domHelper.createDom('div', {
+        'class': 'atb-WorkingResourcesItem-reorder icon-th-list',
+        'title': 'Drag to reorder the resource within the collection'
+    });
+    jQuery(this.reorderButton).hide();
+
     this.clearDiv = this.domHelper.createDom('div', {
         'style': 'clear: both;'
     });
@@ -53,6 +60,7 @@ atb.widgets.WorkingResourcesItem.prototype.setupLayout_ = function() {
     this.div.appendChild(this.titleDiv);
     this.div.appendChild(this.attributesDiv);
     this.div.appendChild(this.removeButton);
+    this.div.appendChild(this.reorderButton);
 
     this.div.appendChild(this.clearDiv);
 };
@@ -74,6 +82,10 @@ atb.widgets.WorkingResourcesItem.prototype.handleRemoveClick = function(event) {
 
 atb.widgets.WorkingResourcesItem.prototype.render = function(div) {
     div.appendChild(this.div);
+};
+
+atb.widgets.WorkingResourcesItem.prototype.addToDragList = function(dragListGroup, dragList) {
+    dragListGroup.addItemToDragList(dragList, this.div);
 };
 
 atb.widgets.WorkingResourcesItem.prototype.getElement = function() {
@@ -125,4 +137,12 @@ atb.widgets.WorkingResourcesItem.prototype.showRemoveButton = function() {
 
 atb.widgets.WorkingResourcesItem.prototype.hideRemoveButton = function() {
     jQuery(this.removeButton).hide();
+};
+
+atb.widgets.WorkingResourcesItem.prototype.showReorderButton = function() {
+    jQuery(this.reorderButton).show();
+};
+
+atb.widgets.WorkingResourcesItem.prototype.hideReorderButton = function() {
+    jQuery(this.reorderButton).hide();
 };

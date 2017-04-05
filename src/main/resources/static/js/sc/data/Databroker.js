@@ -65,7 +65,7 @@ sc.data.Databroker = function(options) {
     this.failedUrls = new goog.structs.Set();
 
     this._bNodeCounter = 0;
-    
+
     this.newQuadStore = new sc.data.QuadStore();
     this.deletedQuadsStore = new sc.data.QuadStore();
 
@@ -479,7 +479,7 @@ sc.data.Databroker.prototype.knowsAboutResource = function(uri) {
                     this.quadStore.numQuadsMatchingQuery(null, null, uri, null) +
                     this.quadStore.numQuadsMatchingQuery(null, null, null, uri);
     }, this);
-    
+
     return numQuads > 0;
 };
 
@@ -491,7 +491,7 @@ sc.data.Databroker.prototype.hasResourceData = function(uri) {
     goog.structs.forEach(this.getEquivalentUris(resource.bracketedUri), function(uri) {
         numQuads += this.quadStore.numQuadsMatchingQuery(uri, null, null, null);
     }, this);
-    
+
     return numQuads > 0;
 };
 
@@ -543,7 +543,7 @@ sc.data.Databroker.prototype.createResource = function(uri, type) {
     }
 
     this.newResourceUris.add(resource.bracketedUri);
-    
+
     return resource;
 };
 
@@ -554,15 +554,15 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
     else {
         var uris = [uri_s];
     }
-    
+
     var sameUris = new goog.structs.Set();
-    
+
     for (var i=0, len=uris.length; i<len; i++) {
         var uri = uris[i];
         uri = sc.data.Term.wrapUri(uri);
-        
+
         sameUris.add(uri);
-        
+
         if (!sc.data.Term.isUri(uri)) {
             continue;
         }
@@ -572,7 +572,7 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
         sameUris.addAll(this.quadStore.objectsSetMatchingQuery(
             uri, this.namespaces.expand('owl', 'sameAs'), null, null));
     }
-    
+
     if (sc.data.Term.isWrappedUri(uris[0])) {
         return sameUris.getValues();
     }
@@ -584,46 +584,46 @@ sc.data.Databroker.prototype.getEquivalentUris = function(uri_s) {
 sc.data.Databroker.prototype.areEquivalentUris = function(uriA, uriB) {
     uriA = sc.data.Term.wrapUri(uriA);
     uriB = sc.data.Term.wrapUri(uriB);
-    
+
     if (uriA == uriB) {
         return true;
     }
 
     var numQuads = this.quadStore.numQuadsMatchingQuery(uriA, this.namespaces.expand('owl', 'sameAs'), uriB, null) +
         this.quadStore.numQuadsMatchingQuery(uriB, this.namespaces.expand('owl', 'sameAs'), uriA, null);
-    
+
     return numQuads > 0;
 };
 
 sc.data.Databroker.prototype.getUrisSetWithProperty = function(predicate, object) {
     var equivalentObjects = this.getEquivalentUris(object);
-    
+
     var uris = new goog.structs.Set();
-    
+
     for (var i=0, len=equivalentObjects.length; i<len; i++) {
         var equivalentObject = equivalentObjects[i];
-        
+
         uris.addAll(this.quadStore.subjectsSetMatchingQuery(
             null,
             this.namespaces.autoExpand(predicate),
             this.namespaces.autoExpand(object),
             null));
     }
-    
+
     return uris;
 };
 
 sc.data.Databroker.prototype.getUrisWithProperty = function(predicate, object) {
     var uris = this.getUrisSetWithProperty(predicate, object);
-    
+
     return sc.data.Term.unwrapUri(uris.getValues());
 };
 
 sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predicate) {
     var equivalentUris = this.getEquivalentUris(uri);
-    
+
     var properties = new goog.structs.Set();
-    
+
     for (var i=0, len=equivalentUris.length; i<len; i++) {
         var equivalentUri = equivalentUris[i];
 
@@ -633,13 +633,13 @@ sc.data.Databroker.prototype.getPropertiesSetForResource = function(uri, predica
             null,
             null));
     }
-    
+
     return properties;
 };
 
 sc.data.Databroker.prototype.getPropertiesForResource = function(uri, predicate) {
     var properties = this.getPropertiesSetForResource(uri, predicate);
-    
+
     if (sc.data.Term.isWrappedUri(uri)) {
         return properties.getValues();
     }
@@ -669,16 +669,16 @@ sc.data.Databroker.prototype.guessResourceUrls = function(uri) {
             ];
         }
     };
-    
+
     var guesses = [];
-    
+
     var equivalentUris = this.getEquivalentUris(uri);
     for (var i=0, len=equivalentUris.length; i<len; i++) {
         var equivalentUri = equivalentUris[i];
-        
+
         guesses = guesses.concat(appendExtensions(equivalentUri));
     }
-    
+
     var filteredGuesses = [];
 
     for (var i = 0, len = guesses.length; i < len; i++) {
@@ -703,12 +703,12 @@ sc.data.Databroker.prototype.guessResourceUrls = function(uri) {
 
 sc.data.Databroker.prototype.getResourceDescribers = function(uri) {
     uri = sc.data.Term.wrapUri(uri);
-    
+
     var describerUrls = this.getPropertiesSetForResource(uri, 'ore:isDescribedBy');
     if (describerUrls.getCount() == 0) {
         describerUrls.addAll(this.getUrisSetWithProperty('ore:describes', uri));
     }
-    
+
     return sc.data.Term.unwrapUri(describerUrls.getValues());
 };
 
@@ -727,7 +727,7 @@ sc.data.Databroker.prototype.getResourcesDescribedByUrl = function(url) {
         this.namespaces.expand('ore', 'isDescribedBy'),
         url,
         null));
-    
+
     return sc.data.Term.unwrapUri(uris.getValues());
 };
 
@@ -747,7 +747,7 @@ sc.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
     uris.push(firstUri);
 
     var restUri = list.getOneProperty('rdf:rest');
-    
+
     var nilUri = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
 
     while (restUri && restUri != nilUri) {
@@ -813,5 +813,3 @@ sc.data.Databroker.getUri = function(obj) {
         return obj.unwrapped();
     }
 };
-
-    
