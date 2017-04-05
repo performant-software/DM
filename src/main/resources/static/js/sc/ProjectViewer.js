@@ -845,6 +845,9 @@ sc.ProjectViewer.prototype.switchToProject = function(project) {
 sc.ProjectViewer.prototype._onProjectSelected = function(event) {
     this.updateButtonUI();
     this.updateModalUI();
+    if ( this.isGuest ) {
+      this.showModal();
+    }
 };
 
 sc.ProjectViewer.prototype.openViewerForResource = function(resource) {

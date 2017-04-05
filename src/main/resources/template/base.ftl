@@ -85,7 +85,7 @@
                             <b class="caret"></b>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a href="${cp}/accounts/logout" onclick="document.execCommand && document.execCommand('ClearAuthenticationCache')">Logout</a></li>
+                            <li><a id="logout-link" href="${cp}/accounts/logout" onclick="document.execCommand && document.execCommand('ClearAuthenticationCache')">Logout</a></li>
                         </ul>
                     </li>
                 [/#if]
