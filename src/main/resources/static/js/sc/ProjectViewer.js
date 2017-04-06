@@ -537,7 +537,9 @@ sc.ProjectViewer.prototype._buildAddUser = function(fragment) {
     goog.events.listen(addButton, 'click', function(event) {
         event.stopPropagation();
 
-        var username = $(usernameInput).val();
+        var username = goog.string.trim($(usernameInput).val() || "");
+        if (username.length == 0) return;
+
         var userUri = this.databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null);
         var user = this.databroker.getResource(userUri);
 
