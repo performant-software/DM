@@ -57,10 +57,14 @@ public class Images extends StaticHttpHandler {
 
     @Override
     protected boolean handle(String uri, Request request, Response response) throws Exception {
+        // decode URI for filesystem-level handling
+        uri = URI.create(uri).getPath();
+
         final File imageFile = (uri == null ? null : new File(baseDirectory, uri));
         if (imageFile == null || !imageFile.canRead()) {
             return super.handle(uri, request, response);
         }
+
         final String widthStr = request.getParameter("w");
         final String heightStr = request.getParameter("h");
         if (widthStr == null || heightStr == null) {
@@ -144,29 +148,44 @@ public class Images extends StaticHttpHandler {
         throw new IllegalArgumentException(image.toString());
     }
 
+    public String cleanFileName(String fileName) {
+        // remove non-printables
+        fileName = NON_PRINTABLE_CHARS.matcher(fileName).replaceAll("");
+
+        // replace punctuation and spaces
+        fileName = PUNCT_AND_SPACE_CHARS.matcher(fileName).replaceAll("_");
+
+        return fileName;
+    }
+
+    private static final Pattern NON_PRINTABLE_CHARS = Pattern.compile("[^\\p{Print}]");
+    private static final Pattern PUNCT_AND_SPACE_CHARS = Pattern.compile("[\\p{Punct}\\x20]&&^[.]]");
+
     public File create(String fileName, InputStream contents) throws IOException {
+        fileName = cleanFileName(fileName);
+        
         final HashSet<String> existing = new HashSet<>(Arrays.asList(baseDirectory.list()));
 
-        for (int fn = 0; fn < 1000; fn++) {
-            if (existing.contains(fileName)) {
-                if (fn > 0) {
-                    fileName = String.format("%d_%s", fn, fileName);
-                }
+        String fileNameCandidate = fileName;
+        for (int fn = 1; fn < 1000; fn++) {
+            if (existing.contains(fileNameCandidate)) {
+                fileNameCandidate = String.format("%d_%s", fn, fileName);
                 continue;
-            }
-            final File file = new File(baseDirectory, fileName);
-            try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
-                while (true) {
-                    int read = contents.read();
-                    if (read == -1) {
-                        break;
+            } else {
+                final File file = new File(baseDirectory, fileNameCandidate);
+                try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+                    while (true) {
+                        int read = contents.read();
+                        if (read == -1) {
+                            break;
+                        }
+                        out.write(read);
                     }
-                    out.write(read);
                 }
-            }
 
-            thumbnailOf(file).orElseThrow(IllegalArgumentException::new);
-            return file;
+                thumbnailOf(file).orElseThrow(IllegalArgumentException::new);
+                return file;
+            }
         }
         throw new IllegalStateException();
     }
