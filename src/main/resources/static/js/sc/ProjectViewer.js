@@ -92,16 +92,24 @@ sc.ProjectViewer = function(clientApp, opt_domHelper) {
     goog.events.listen(this.projectController, 'projectSelected', this._onProjectSelected, false, this);
 };
 
+sc.ProjectViewer.prototype.currentProjectPublicUrl = function() {
+    return [
+        goog.global.baseUri,
+        "workspace",
+        "#" + (this.projectController.currentProjectShortcut() || "")
+    ].join("/");
+};
+
 sc.ProjectViewer.prototype.generatePublicUrl = function() {
     var projectUri = this.projectController.getCurrentProject().uri,
-        projectShortcut = this.projectController.currentProjectShortcut();
+        projectPublicUrl = this.currentProjectPublicUrl();
 
     $.ajax({
       url: this.databroker.syncService.restUrl(projectUri) + 'share',
       method: "POST",
       complete: function(jqXHR, textStatus) {
          if (textStatus === "success" ) {
-            $("#public-url").text([goog.global.baseUri, "workspace", "#" + projectShortcut].join("/"));
+            $("#public-url").text(projectPublicUrl);
             $(".pub-url-group").removeClass("hidden");
          } else {
             alert("Unable generate public URL for this project: "+jqXHR.responseText);
@@ -324,7 +332,7 @@ sc.ProjectViewer.prototype._buildEditSection = function() {
     publicBody.appendChild(urlDiv);
     var urlLbl = this.domHelper.createDom('label','', "URL:");
     urlDiv.appendChild(urlLbl);
-    var url = this.domHelper.createDom('p',{'id': 'public-url'}, "http://dm.performantsoftware.com/projects/98hs73hx");
+    var url = this.domHelper.createDom('p',{'id': 'public-url'});
     urlDiv.appendChild(url);
 
     this.editElement.append( $(publicPanel) );
@@ -691,6 +699,7 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
 
       var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
       $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
+      $("#public-url").text(this.currentProjectPublicUrl());
 
       if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user, uri,
           sc.data.ProjectController.PERMISSIONS.administer)) {
@@ -705,6 +714,7 @@ sc.ProjectViewer.prototype.updateModalUI = function() {
       }
    } else {
       $(this.modalTitle).text('No project selected');
+      $("#public-url").text("");
    }
 
    this.updateEditUI();
