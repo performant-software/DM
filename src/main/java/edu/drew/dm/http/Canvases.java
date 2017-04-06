@@ -1,9 +1,9 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.Server;
+import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.semantics.Exif;
+import edu.drew.dm.semantics.Models;
 import edu.drew.dm.semantics.OpenAnnotation;
 import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.SharedCanvas;
@@ -17,9 +17,14 @@ import org.apache.jena.vocabulary.RDFS;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.awt.Dimension;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -28,10 +33,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import java.awt.Dimension;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -99,6 +100,18 @@ public class Canvases {
                 .addProperty(OpenArchivesTerms.aggregates, canvas);
 
         return store.merge(model);
+    }
+
+    @Path("/{uri}/rename")
+    @POST
+    public Model rename(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @FormParam("title") @DefaultValue("") String title) {
+        if (!title.isEmpty()) {
+            return store.merge(Models.create().createResource(uri)
+                    .addProperty(RDFS.label, title)
+                    .addProperty(DC_11.title, title)
+                    .getModel());
+        }
+        return Models.create();
     }
 
     @Path("/{projectUri}")
