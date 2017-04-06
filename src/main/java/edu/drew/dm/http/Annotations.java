@@ -29,22 +29,22 @@ public class Annotations {
     public static final Traversal SCOPE = new Traversal()
             .configureType(
                     SharedCanvas.Canvas,
-                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenArchivesTerms.aggregates),
+                    Arrays.asList(OpenAnnotation.hasBody, OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenArchivesTerms.aggregates),
                     Collections.emptySet()
             )
             .configureType(
                     DCTypes.Text,
-                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenArchivesTerms.aggregates),
+                    Arrays.asList(OpenAnnotation.hasBody, OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenArchivesTerms.aggregates),
                     Collections.emptySet()
             )
             .configureType(
                     OpenAnnotation.SpecificResource,
                     Collections.singleton(OpenAnnotation.hasTarget),
-                    Collections.singleton(OpenAnnotation.hasSelector)
+                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasSelector)
             )
             .configureType(
                     OpenAnnotation.Annotation,
                     Collections.emptySet(),
-                    Arrays.asList(OpenAnnotation.hasTarget, OpenAnnotation.hasBody)
+                    Arrays.asList(OpenAnnotation.hasBody, OpenAnnotation.hasTarget)
             );
 }
