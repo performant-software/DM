@@ -1,15 +1,3 @@
-#working copy specific files
-settings_local.py
-runserver
-collectstatic
-workspace/media/*
-
-#deployment specific files
-django.wsgi
-
-static/*
-workspace/static/admin/*
-
 #python specific
 *.pyc
 
@@ -22,30 +10,6 @@ workspace/static/admin/*
 *.DS_Store
 *.swp
 *.out
-
-manage_command_examples_local.sh
-
-# locally saved data exported from old version
-output/*
-*backup.sql
-data/*
-*.ttl
-*.rdf
-
-# prevent user-uploaded images from being stored in repo
-media/user_images/uploaded_images/*
-media/*
-
-# python executables created by virtualenv
-bin
-lib
-include
-.Python
-*.log
-pip-selfcheck.json
-workspace/media
-/media/
-/PROD.ttl-orig
 
 # Vagrant
 .vagrant/
