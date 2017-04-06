@@ -27,6 +27,12 @@ atb.widgets.WorkingResourcesText.prototype.setupLayout_ = function() {
     jQuery(this.removeButton).hide();
     goog.events.listen(this.removeButton, 'click', this.handleRemoveClick, false, this);
 
+    this.reorderButton = this.domHelper.createDom('div', {
+        'class': 'atb-WorkingResourcesItem-reorder icon-th-list',
+        'title': 'Drag to reorder the resource within the collection'
+    });
+    jQuery(this.reorderButton).hide();
+
     this.clearDiv = this.domHelper.createDom('div', {
         'style': 'clear: both;'
     });
@@ -35,6 +41,7 @@ atb.widgets.WorkingResourcesText.prototype.setupLayout_ = function() {
     this.div.appendChild(this.titleDiv);
     this.div.appendChild(this.attributesDiv);
     this.div.appendChild(this.removeButton);
+    this.div.appendChild(this.reorderButton);
 
     this.div.appendChild(this.clearDiv);
 };

@@ -128,6 +128,27 @@ sc.data.ProjectController.prototype.findProjectContents = function(project) {
     }
 };
 
+sc.data.ProjectController.prototype.reorderProjectContents = function(project, uris) {
+    project = this.databroker.getResource(project || this.currentProject);
+
+    var list = project;
+    var nilUri = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
+
+    for (var i = 0; i < uris.length; i++) {
+      list.addProperty("rdf:first", this.databroker.getResource(uris[i]));
+      if (i < uris.length - 1) {
+        var restResource = this.databroker.createResource(null, "rdf:List");
+        list.addProperty("rdf:rest", restResource);
+        list = restResource;
+      }
+      else {
+        list.addProperty("rdf:rest", nilUri);
+      }
+    }
+
+    this.databroker.sync();
+};
+
 sc.data.ProjectController.prototype.selectProject = function(project) {
     project = this.databroker.getResource(project);
 

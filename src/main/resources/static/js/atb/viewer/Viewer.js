@@ -34,24 +34,24 @@ atb.viewer.Viewer = function (clientApp) {
     goog.events.EventTarget.call(this);
     this.showHoverTimerId = -1;
     this.readOnlyClone = false;
-    
+
     /** @type {string} */
     this.viewerType = 'viewer';
-    
+
     this.setClientApp(clientApp);
-    
+
     /** @type {sc.data.Databroker} */
     this.databroker = this.clientApp.getDatabroker();
-    
+
     /** @type {HtmlElement} */
     this.rootDiv = null;
-    
+
     /** @type {goog.math.Coordinate} */
     this.mousePosition = new goog.math.Coordinate(0,0);
-    
+
     this.mouseOverUri = null;
     this.mouseIsOverFloatingMenu = false;
-    
+
     /** @type {boolean} */
     this.hoverMenusEnabled = true;
     /** @type {boolean} */
@@ -101,10 +101,10 @@ atb.viewer.Viewer.prototype.resize = function(width, height) {
 atb.viewer.Viewer.prototype.render = function (div) {
     /** @type {goog.dom.DomHelper} */
     this.domHelper = this.getDomHelper();
-    
+
     /** @type {HtmlElement} */
     this.rootDiv = this.domHelper.createDom('div', {'class': 'atb-Viewer'});
-    
+
     var spinnerTop = 70;
     var spinnerLeft = 50; // These coordinates will be changed when
                           // showLoadingSpinner() is called
@@ -115,7 +115,7 @@ atb.viewer.Viewer.prototype.render = function (div) {
     });
     jQuery(this.spinner).hide();
     this.rootDiv.appendChild(this.spinner);
-    
+
     this.errorIcon = this.domHelper.createDom('div',
     {
         'style': 'top:' + spinnerTop + 'px; left: ' + spinnerLeft + 'px;',
@@ -124,7 +124,7 @@ atb.viewer.Viewer.prototype.render = function (div) {
     jQuery(this.errorIcon).hide();
     this.rootDiv.appendChild(this.errorIcon);
 
-    
+
     this.messageDiv = this.domHelper.createDom(
         'div',
         {'class': 'atb-finder-blankIndicator'},
@@ -132,22 +132,22 @@ atb.viewer.Viewer.prototype.render = function (div) {
     );
     jQuery(this.messageDiv).hide();
     this.rootDiv.appendChild(this.messageDiv);
-    
+
     var hoverMenuDiv = goog.dom.createDom('div',
                                       {'class': 'basic-popup atb-hoverMenu'});
     this.domHelper.getDocument().body.appendChild(hoverMenuDiv);
     this.hoverMenuPopup = new goog.ui.Popup(hoverMenuDiv);
 //  this.hoverMenuPopup.setTransition(new goog.fx.dom.FadeIn(hoverMenuDiv, 100),
 //                                  new goog.fx.dom.FadeOut(hoverMenuDiv, 200));
-    
+
     goog.events.listen(this.rootDiv, 'mousemove', function (e) {
         this.mousePosition.x = e.clientX;
         this.mousePosition.y = e.screenY;
     }, false, this);
-    
+
     goog.events.listen(this.domHelper.getWindow(), 'keydown',
                        this.handleKeyDown_, false, this);
-    
+
     var eventDispatcher = this.clientApp.getEventDispatcher();
     goog.events.listen(eventDispatcher,
                        atb.events.LinkingModeEntered.EVENT_TYPE, function (e) {
@@ -169,7 +169,7 @@ atb.viewer.Viewer.prototype.render = function (div) {
 atb.viewer.Viewer.prototype.handleKeyDown_ = function (event) {
     if (this.isShowingHoverMenu && event.keyCode == goog.events.KeyCodes.ESC) {
         event.stopPropagation();
-        
+
         this.hideHoverMenu();
     }
 };
@@ -182,7 +182,7 @@ atb.viewer.Viewer.prototype.getElement = function () {
     if (! this.rootDiv) {
         this.render();
     }
-    
+
     return this.rootDiv;
 };
 
@@ -222,7 +222,7 @@ atb.viewer.Viewer.prototype.getDomHelper = function () {
             throw "Viewer does not yet have a container";
         }
     }
-    
+
     return this.domHelper;
 };
 
@@ -232,12 +232,12 @@ atb.viewer.Viewer.prototype.getDomHelper = function () {
  */
 atb.viewer.Viewer.prototype.setTitleEditable = function (editable) {
     var container = this.getContainer();
-    
+
     if (! container) {
         throw "Viewer does not yet have a container. " +
         "Call setTitleEditable() after rendering.";
     }
-    
+
     container.setTitleEditable(editable);
 };
 
@@ -247,24 +247,24 @@ atb.viewer.Viewer.prototype.setTitleEditable = function (editable) {
  */
 atb.viewer.Viewer.prototype.setTitle = function (title) {
     var container = this.getContainer();
-    
+
     if (! container) {
         throw "Viewer does not yet have a container." +
         "Call setTitleEditable() after rendering.";
     }
-    
+
     container.setTitle(title);
 };
 
 atb.viewer.Viewer.prototype.repositionLoadingSpinner = function() {
     var div = this.rootDiv;
-    
+
     var top = jQuery(div).height() / 2 - 16;
     var left = jQuery(div).width() / 2 - 16;
-    
+
     if (top < 0) top = 0;
     if (left < 0) left = 0;
-    
+
     jQuery(this.spinner).css({'top': top, 'left': left});
 };
 
@@ -273,7 +273,7 @@ atb.viewer.Viewer.prototype.repositionLoadingSpinner = function() {
  */
 atb.viewer.Viewer.prototype.showLoadingSpinner = function () {
     this.repositionLoadingSpinner();
-    
+
     jQuery(this.spinner).fadeIn(200);
 };
 
@@ -286,17 +286,17 @@ atb.viewer.Viewer.prototype.hideLoadingSpinner = function () {
 
 atb.viewer.Viewer.prototype.flashErrorIcon = function () {
     this.hideLoadingSpinner();
-    
+
     var div = this.rootDiv;
-    
+
     var top = jQuery(div).height() / 2 - 18;
     var left = jQuery(div).width() / 2 - 18;
-    
+
     if (top < 0) top = 0;
     if (left < 0) left = 0;
-    
+
     jQuery(this.errorIcon).css({'top': top, 'left': left});
-    
+
     var self = this;
 	jQuery(this.errorIcon).fadeIn(200, function () {
 		window.setTimeout(function () {
@@ -307,24 +307,24 @@ atb.viewer.Viewer.prototype.flashErrorIcon = function () {
 
 /**
  * Shows a textual message which floats centered over the viewer
- * 
+ *
  * @param text {string}
  */
 atb.viewer.Viewer.prototype.showMessage = function (text) {
     jQuery(this.messageDiv).text(text);
-    
+
     // Calculate the height of the div without actually showing it
     jQuery(this.messageDiv).css({'visibility': 'hidden', 'display': 'block'});
     var textHeight = jQuery(this.messageDiv).height();
     jQuery(this.messageDiv).css({'display': 'none', 'visibility': 'visible'});
-    
+
     var div = this.rootDiv;
-    
+
     var top = (jQuery(div).height()) / 2 - (textHeight / 2);
     var left = 0;
     var width = jQuery(div).width();
     jQuery(this.messageDiv).css({'top': top, 'left': left, 'width': width});
-    
+
     jQuery(this.messageDiv).fadeIn(400);
 };
 
@@ -345,7 +345,7 @@ atb.viewer.Viewer.prototype.unHighlightDocumentIcon = function () {
 
 atb.viewer.Viewer.prototype.flashDocumentIconHighlight = function () {
     this.highlightDocumentIcon();
-    
+
     var timeoutFns = [
         this.unHighlightDocumentIcon,
         this.highlightDocumentIcon,
@@ -432,24 +432,24 @@ atb.viewer.Viewer.prototype.lockStatus = function(resourceUri, isLocked, isLockH
          lockIcon.addClass('checked');
       } else {
          lockMessage.text("Locked by "+lockedBy+" for edit on "+lockedOn);
-         lockIcon.addClass('locked');    
+         lockIcon.addClass('locked');
       }
    }
-   
+
    $(lockIcon).on("mouseover", function() {
       lockMessage.show();
    });
    $(lockIcon).on("mouseout", function() {
       lockMessage.hide();
    });
-   
+
    var self = this;
    $(lockIcon).on("click", function() {
       // someone else has locked it.do nothing
       if ( $(this).hasClass("locked")) {
          return;
-      } 
-      
+      }
+
       if ( $(this).hasClass("checked")) {
          // you locked it; release lock
          self.unlockResource( $(this).data("uri") , lockIcon, lockMessage);
@@ -458,7 +458,7 @@ atb.viewer.Viewer.prototype.lockStatus = function(resourceUri, isLocked, isLockH
          self.lockResource( $(this).data("uri") , lockIcon, lockMessage);
       }
    });
-   
+
    this.rootDiv.appendChild(lockIcon[0]);
    this.rootDiv.appendChild(lockMessage[0]);
    if ( $.trim($("#logged-in-user").text()) == "Guest" ) {
@@ -503,32 +503,34 @@ atb.viewer.Viewer.prototype.isEditable = function() {
 atb.viewer.Viewer.prototype.showHoverMenu =
 function(menuButtons, resourceId, opt_position) {
     this.hideHoverMenu();
-    
+
     if (this.hoverMenusEnabled == false) {
         return;
     }
-    
+
     this.isShowingHoverMenu = true;
-    
+
     var menuDiv = this.hoverMenuPopup.getElement();
-    
+
+    if (jQuery(menuDiv).hasClass("ui-resizable"))
+      jQuery(menuDiv).resizable("destroy");
     jQuery(menuDiv).children().detach();
-    
+
     var contextMenu = new atb.widgets.Toolbar(menuDiv, menuButtons);
-    
+
     contextMenu.setWidthHack(atb.viewer.Viewer.CONTEXT_MENU_WIDTH);
-    
+
     var annoTitlesList = new atb.ui.AnnoTitlesList(this.clientApp, this,
                                                    resourceId, this.domHelper);
     annoTitlesList.render(menuDiv);
     this.annoTitlesList = annoTitlesList;
-    
+
     var closeButton = this.domHelper.createDom('div', {
         'class': 'atb-hoverMenu-closeButton',
         'title': 'Close this hover menu (ESC)'
     });
     menuDiv.appendChild(closeButton);
-    
+
     var position = null;
     if (opt_position) {
         position = new goog.math.Coordinate(opt_position.x, opt_position.y);
@@ -540,7 +542,7 @@ function(menuButtons, resourceId, opt_position) {
             mousePosition.y - jQuery(menuDiv).height()/2
         );
     }
- 
+
     position = atb.util.StyleUtil.maintainPopupPositionWithinWindow(
         position,
         menuDiv,
@@ -549,22 +551,23 @@ function(menuButtons, resourceId, opt_position) {
     this.hoverMenuPopup.setPosition(
         new goog.positioning.ClientPosition(position)
     );
-    
+
     goog.events.listen(menuDiv, 'mouseover', function (e) {
                            this.mouseIsOverFloatingMenu = true;
                        }, false, this);
     goog.events.listen(menuDiv, 'mouseout', function (e) {
                            this.mouseIsOverFloatingMenu = false;
-                           
+
                            this.maybeHideHoverMenu();
                        }, false, this);
     goog.events.listen(closeButton, 'click', function (e) {
                            e.stopPropagation();
-                           
+
                            this.hideHoverMenu();
                        }, false, this);
-    
+
     this.hoverMenuPopup.setVisible(true);
+    jQuery(menuDiv).resizable();
 };
 
 /**
@@ -573,9 +576,9 @@ function(menuButtons, resourceId, opt_position) {
 atb.viewer.Viewer.prototype.hideHoverMenu = function () {
     this.mouseIsOverFloatingMenu = false;
     this.isShowingHoverMenu = false;
-    
+
     this.hoverMenuPopup.setVisible(false);
-    
+
     this.cancelMaybeHideHoverMenuCommand();
 
     this.annoTitlesList = null;
@@ -589,10 +592,10 @@ atb.viewer.Viewer.prototype.maybeHideHoverMenu = function () {
     if (this.maybeHideHoverMenuTimeoutId != null) {
         return;
     }
-    
+
     var afterTimer = function () {
         this.cancelMaybeHideHoverMenuCommand();
-        
+
         if (! (this.mouseIsOverFloatingMenu ||
                this.mouseOverUri)) {
             this.hideHoverMenu();
@@ -630,7 +633,7 @@ function(element, menuButtons, fReturnsResourceId) {
         else {
             this.mouseOverUri = fReturnsResourceId;
         }
-        
+
         var afterTimer = function () {
         	this.showHoverTimerId = -1;
             if (this.mouseOverUri) {
@@ -647,7 +650,7 @@ function(element, menuButtons, fReturnsResourceId) {
         this.showHoverTimerId = window.setTimeout(afterTimer, atb.viewer.Viewer.HOVER_SHOW_DELAY);
     };
     goog.events.listen(element, 'mouseover', onHover, false, this);
-    
+
     var onUnHover = function (e) {
     	  if ( this.showHoverTimerId != -1 ) {
         	  window.clearTimeout(this.showHoverTimerId);
@@ -672,7 +675,7 @@ atb.viewer.Viewer.prototype.enableHoverMenus = function () {
 
 atb.viewer.Viewer.prototype.disableHoverMenus = function () {
     this.hoverMenusEnabled = false;
-    
+
     this.hideHoverMenu();
 };
 
@@ -680,7 +683,7 @@ atb.viewer.Viewer.prototype.equals = function (other) {
     if (!goog.isFunction(other.getUid)) {
         return false;
     }
-    
+
     return this.getUid() == other.getUid();
 };
 
