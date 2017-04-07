@@ -136,6 +136,7 @@
     background: #ccc;
     border-bottom: 1px solid #999;
     border-radius: 8px 8px 0 0;
+    z-index: 2;
 }
 
 .atb-hoverMenu-closeButton {
@@ -145,6 +146,7 @@
     position: absolute;
     top: 5px;
     right: 5px;
+    z-index: 3;
 }
 
 .atb-hoverMenu-calloutTriangle {

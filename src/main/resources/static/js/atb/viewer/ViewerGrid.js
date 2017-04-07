@@ -52,14 +52,14 @@ atb.viewer.ViewerGrid.prototype.decorate = function(div) {
 };
 
 atb.viewer.ViewerGrid.prototype.addViewerContainer = function(uri, container) {
-   this.addViewerContainerAt(uri, container, 0);
+   this.addViewerContainerAt(uri, container, this.wrappers.length);
 };
 
 atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, index) {
    var cleanUri = uri.replace("<", "").replace(">","");
 
    // Override location of new windows.
-   var index = this.wrappers.length;
+  //  var index = this.wrappers.length;
 
    if (this.containers[cleanUri] == null) {
       this.containers[cleanUri] = container;
@@ -193,7 +193,7 @@ atb.viewer.ViewerGrid.prototype._onWindowResize = function(event) {
 };
 
 atb.viewer.ViewerGrid.prototype._onBeforeDragStart = function(event) {
-   if (!(goog.dom.classes.has(event.event.target, "atb-ViewerContainer-title") || goog.dom.classes.has(event.event.target, "atb-ViewerContainer-titleWrapper"))) {
+   if (!goog.dom.classes.has(event.event.target, "atb-ViewerContainer-titleWrapper")) {
       event.preventDefault();
       event.stopPropagation();
    }

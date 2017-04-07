@@ -25,31 +25,31 @@ goog.require("atb.util.Map");
 atb.widgets.Toolbar = function(set_targetDiv, opt_initialMenuItems)
 {
 	goog.asserts.assert(!atb.util.ReferenceUtil.isBadReferenceValue(set_targetDiv), "null targetDiv given!");
-	
+
 	//Call superclass's constructor:
 	atb.widgets.IMenu.call(this);
 	//, set_targetDiv);
-	
+
 	this.baseDiv = set_targetDiv;
-	
+
 	this.buttonGroups = [];
-	
+
 	var emptyButtons = [];
 	this.toolbarEntries = [];
-	
+
 	this.buttonsByName = new atb.util.Map();
-	
-	
+
+
 	//this.myToolbar = this._makeToolbarHelper( this.baseDiv, true);
 	//debugPrint(""+goog.ui.Container.Orientation.VERTICAL);
 	this.myToolbar = goog.ui.editor.DefaultToolbar.makeToolbar( emptyButtons, this.baseDiv );
 	//debugViewObject(this.myToolbar);
 	//this.myToolbar.setOrientation(goog.ui.Container.Orientation.VERTICAL);//HACK
 	this.baseDiv.style.display = "none";
-	
+
 	opt_initialMenuItems = atb.util.ReferenceUtil.applyDefaultValue(opt_initialMenuItems, []);
 	this.addItems(opt_initialMenuItems);
-	
+
 };
 
 goog.inherits(atb.widgets.Toolbar, atb.widgets.IMenu);
@@ -61,7 +61,7 @@ atb.widgets.Toolbar.prototype._onShowMenu = function()
 {
 	this._onRepaint();
 	//orlolupaatelol..?^
-	
+
 	//toolbarEntries
 	this.baseDiv.style.left = ""+this.x+"px";
 	this.baseDiv.style.top = ""+this.y+"px";
@@ -87,7 +87,7 @@ atb.widgets.Toolbar.prototype._onRepaint = function()
 		var entry = this.toolbarEntries[i];
 		var menuItem = entry.menuItem;
 		var button = entry.button;
-		
+
 		if (menuItem.isEnabled())
 		{
 			button.setEnabled(true);
@@ -96,7 +96,7 @@ atb.widgets.Toolbar.prototype._onRepaint = function()
 		{
 			button.setEnabled(false);
 		}
-		
+
 		//button.setEnabled(false);
 		//debugPrint("!!");
 	}
@@ -129,10 +129,10 @@ atb.widgets.Toolbar.prototype._addMenuItem = function(menuItem)
 	var buttonCaption = "";
 	var buttonStyleClasses = "";
 	var useButtonGroup = menuItem.getButtonGroup();
-	
+
 	var self=this;
 	//var myToolbar = this.myToolbar;
-	
+
 	var bToggleButton = false;
 	if (useButtonGroup)
 	{
@@ -142,24 +142,24 @@ atb.widgets.Toolbar.prototype._addMenuItem = function(menuItem)
 	{
 		useButtonGroup = null;
 	}
-	
+
 	if (menuItem.isToggleButton_hack())
 	{
 		bToggleButton = true;//HACl
 	}
-	
+
 	var usingConstructor = ( bToggleButton ) ? goog.ui.editor.ToolbarFactory.makeToggleButton : goog.ui.editor.ToolbarFactory.makeButton;
-	
+
 	var newButton = usingConstructor(
 		toolButtonId,
 		tooltip,
 		buttonCaption,
 		buttonStyleClasses
 	);
-	
+
 	//HACK:
-	var element = newButton.getContent(); 
-	
+	var element = newButton.getContent();
+
 	var domGenerator = menuItem.getDomGenerator();
 	var generated = domGenerator(menuItem, element);
 
@@ -174,10 +174,10 @@ atb.widgets.Toolbar.prototype._addMenuItem = function(menuItem)
 			}
 		}
 	}
-	
-	
+
+
 	newButton.queryable = true;//?????
-	
+
 	var handler = function(event)
 	{
 		if (bToggleButton)
@@ -223,7 +223,7 @@ atb.widgets.Toolbar.prototype._addMenuItem = function(menuItem)
 		self.raiseMenuActionEvent(menuItem);
 	};
 	newButton._hack_buttonGroup = useButtonGroup;//HACK
-	
+
 	if(useButtonGroup!=null)
 	{
 		if (!self.buttonGroups[useButtonGroup])
@@ -232,20 +232,20 @@ atb.widgets.Toolbar.prototype._addMenuItem = function(menuItem)
 		}
 		self.buttonGroups[useButtonGroup].push(newButton);
 	}
-	
+
 	goog.events.listen(newButton, goog.ui.Component.EventType.ACTION, handler);
-	
+
 	//this.myToolbarButtons.push({
 	this.toolbarEntries.push({
 		menuItem: menuItem,
 		button: newButton//,
 	});
-	
+
 	/*if (!menuItem.isEnabled())
 	{
-		
+
 	}*/
-	
+
 	newButton.setEnabled(menuItem.isEnabled());
 	//myToolbar.addChildAt(newButton, 0, true);
 	this.myToolbar.addChildAt(newButton, 0, true);
@@ -320,7 +320,7 @@ atb.widgets.Toolbar.prototype.selectButtonByName = function(buttonName) //hack t
 				b.setChecked(false);
 			}
 		}
-		
+
 		button.setChecked(true);
 		return true;
 	}
