@@ -56,6 +56,8 @@ atb.viewer.Viewer = function (clientApp) {
     this.hoverMenusEnabled = true;
     /** @type {boolean} */
     this.isShowingHoverMenu = false;
+
+    this.contextMenuWidth = atb.viewer.Viewer.CONTEXT_MENU_WIDTH;
 };
 goog.inherits(atb.viewer.Viewer, goog.events.EventTarget);
 
@@ -518,7 +520,7 @@ function(menuButtons, resourceId, opt_position) {
 
     var contextMenu = new atb.widgets.Toolbar(menuDiv, menuButtons);
 
-    contextMenu.setWidthHack(atb.viewer.Viewer.CONTEXT_MENU_WIDTH);
+    contextMenu.setWidthHack(this.contextMenuWidth);
 
     var annoTitlesList = new atb.ui.AnnoTitlesList(this.clientApp, this,
                                                    resourceId, this.domHelper);
@@ -574,6 +576,9 @@ function(menuButtons, resourceId, opt_position) {
  * Hides the current hover menu, if it exists and is being shown
  */
 atb.viewer.Viewer.prototype.hideHoverMenu = function () {
+    if (this.hoverMenuPopup.getElement().style.width)
+      this.contextMenuWidth = this.hoverMenuPopup.getElement().style.width;
+
     this.mouseIsOverFloatingMenu = false;
     this.isShowingHoverMenu = false;
 

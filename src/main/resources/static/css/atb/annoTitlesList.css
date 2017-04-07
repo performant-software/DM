@@ -53,6 +53,7 @@
 }
 
 .atb-annoTitlesList-bodyTitles, .atb-annoTitlesList-targetTitles {
+    padding-top: 5px;
     /*padding-bottom: 5px;*/
 }
 
