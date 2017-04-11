@@ -58,6 +58,7 @@ atb.viewer.Viewer = function (clientApp) {
     this.isShowingHoverMenu = false;
 
     this.contextMenuWidth = atb.viewer.Viewer.CONTEXT_MENU_WIDTH;
+    this.contextMenuHeight = atb.viewer.Viewer.CONTEXT_MENU_HEIGHT;
 };
 goog.inherits(atb.viewer.Viewer, goog.events.EventTarget);
 
@@ -384,7 +385,7 @@ atb.viewer.Viewer.prototype.unlockResource = function(uri, lockIcon, lockMessage
       complete: function(jqXHR, textStatus) {
          if ( textStatus == "success" ) {
             if ( lockIcon ) {
-               lockMessage.text("Click to lock resource for edit");
+               lockMessage.text("Click to enable editing on resource");
                lockIcon.removeClass("checked");
             }
             self.makeUneditable();
@@ -409,7 +410,7 @@ atb.viewer.Viewer.prototype.lockResource = function(uri, lockIcon, lockMessage) 
             return;
          }
          if ( textStatus == "success" ) {
-            lockMessage.text("Locked for edit");
+            lockMessage.text("Editing enabled");
             lockIcon.addClass("checked");
             self.makeEditable();
          } else {
@@ -423,11 +424,11 @@ atb.viewer.Viewer.prototype.lockStatus = function(resourceUri, isLocked, isLockH
    var lockIcon = $("<div data-uri='"+resourceUri+"' class='lock-for-edit-icon'></div>");
    var lockMessage = $("<div class='lock-message'></div>");
    if ( isLocked == false ) {
-      lockMessage.text("Click to lock resource for edit");
+      lockMessage.text("Click to enable editing on resource");
    } else {
       if ( isLockHolder ) {
          if (lockedOn == null ) {
-            lockMessage.text("Locked for edit");
+            lockMessage.text("Editing enabled");
          } else {
             lockMessage.text("Locked for edit on "+lockedOn);
          }
@@ -465,6 +466,8 @@ atb.viewer.Viewer.prototype.lockStatus = function(resourceUri, isLocked, isLockH
    this.rootDiv.appendChild(lockMessage[0]);
    if ( $.trim($("#logged-in-user").text()) == "Guest" ) {
       lockIcon.hide();
+   } else {
+     $(".lock-for-edit-icon:not(.checked)").trigger("click");
    }
 }
 
@@ -478,6 +481,7 @@ atb.viewer.Viewer.HOVER_HIDE_DELAY = 750;
  * The default width for context menus (in pixels)
  */
 atb.viewer.Viewer.CONTEXT_MENU_WIDTH = 275;
+atb.viewer.Viewer.CONTEXT_MENU_HEIGHT = 175;
 
 /**
  * Returns the last known position of the mouse over this viewer relative to the
@@ -514,13 +518,9 @@ function(menuButtons, resourceId, opt_position) {
 
     var menuDiv = this.hoverMenuPopup.getElement();
 
-    if (jQuery(menuDiv).hasClass("ui-resizable"))
-      jQuery(menuDiv).resizable("destroy");
     jQuery(menuDiv).children().detach();
 
     var contextMenu = new atb.widgets.Toolbar(menuDiv, menuButtons);
-
-    contextMenu.setWidthHack(this.contextMenuWidth);
 
     var annoTitlesList = new atb.ui.AnnoTitlesList(this.clientApp, this,
                                                    resourceId, this.domHelper);
@@ -544,6 +544,10 @@ function(menuButtons, resourceId, opt_position) {
             mousePosition.y - jQuery(menuDiv).height()/2
         );
     }
+
+    var $scrollerDiv = jQuery(menuDiv).find(".atb-annoTitlesList-scroller");
+    $scrollerDiv.width(this.contextMenuWidth);
+    $scrollerDiv.height(this.contextMenuHeight);
 
     position = atb.util.StyleUtil.maintainPopupPositionWithinWindow(
         position,
@@ -569,15 +573,19 @@ function(menuButtons, resourceId, opt_position) {
                        }, false, this);
 
     this.hoverMenuPopup.setVisible(true);
-    jQuery(menuDiv).resizable();
+
+    $scrollerDiv.resizable();
 };
 
 /**
  * Hides the current hover menu, if it exists and is being shown
  */
 atb.viewer.Viewer.prototype.hideHoverMenu = function () {
-    if (this.hoverMenuPopup.getElement().style.width)
-      this.contextMenuWidth = this.hoverMenuPopup.getElement().style.width;
+    var $scrollerDiv = jQuery(this.hoverMenuPopup.getElement()).find(".atb-annoTitlesList-scroller");
+    if ($scrollerDiv.length > 0) {
+      this.contextMenuWidth = $scrollerDiv.width();
+      this.contextMenuHeight = $scrollerDiv.height();
+    }
 
     this.mouseIsOverFloatingMenu = false;
     this.isShowingHoverMenu = false;

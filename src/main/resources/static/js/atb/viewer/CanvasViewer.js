@@ -412,12 +412,10 @@ atb.viewer.CanvasViewer.prototype.loadResourceByUri = function(uri) {
     }
     else if (resource.hasAnyType('oa:SpecificResource')) {
         this.loadSpecificResource(resource);
-        this.uri = resource.uri;
     }
     else if (resource.hasAnyType('oa:SvgSelector')) {
         var specificResource = this.databroker.getResource(this.databroker.dataModel.findSelectorSpecificResourceUri(uri));
         this.loadSpecificResource(specificResource);
-        this.uri = resource.uri;
     }
 };
 

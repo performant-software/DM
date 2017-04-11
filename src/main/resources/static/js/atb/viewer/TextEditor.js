@@ -31,6 +31,7 @@ goog.require('atb.viewer.Viewer');
 goog.require('atb.Util');
 goog.require('atb.widgets.IMenu');
 goog.require('atb.widgets.Toolbar');
+goog.require('goog.ui.ToolbarSeparator');
 goog.require('atb.widgets.MenuItem');
 goog.require('atb.widgets.MenuUtil');
 goog.require('atb.util.StyleUtil');
@@ -57,22 +58,22 @@ goog.require('atb.events.ResourceModified');
  * @constructor
  *
  * @extends {atb.viewer.Viewer}
- * 
+ *
  * @param clientApp {!atb.ClientApp}
  * @param opt_initialTextContent {string=}
  * @param opt_annoBodyId {string=}
  **/
 atb.viewer.TextEditor = function(clientApp, opt_initialTextContent) {
 	atb.viewer.Viewer.call(this, clientApp);
-    
+
     this.viewerType = 'text editor';
 	 this.unsavedChanges = false;
 	 this.loadingContent = false;
 	 this.loadError = false;
     this.styleRoot = this.clientApp.getStyleRoot();
-	
+
 	 this.useID = 'atb_ui_editor_' + goog.string.getRandomString();
-	
+
     this.purpose = 'other';
 };
 goog.inherits(atb.viewer.TextEditor, atb.viewer.Viewer);
@@ -84,9 +85,28 @@ atb.viewer.TextEditor.VIEWER_TYPE = 'text editor';
  * @return {string} the html contents of the editor with unwanted tags (such as <script>) removed
  **/
 atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
-    var cleanContents = this.field.getCleanContents();
+	  var $annotationsToShow = null;
+		if (!this.toggleMarkersButton.isChecked()) {
+			this.toggleMarkersButton.setChecked(true);
+			var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
+			$annotationsToShow = $annotations.filter(":visible");
+		  jQuery(this.editorIframeElement).contents().find("span.atb-editor-annotationplaceholder").remove();
+			$annotations.show();
+		}
+
+		var cleanContents = this.field.getCleanContents();
     //cleanContents = cleanContents.replace(/'/g, "&#39;");
     // cleanContents = cleanContents.replace(/"/g, "&quot;");
+
+		if (!($annotationsToShow == null)) {
+			this.toggleMarkersButton.setChecked(false);
+			var $otherAnnotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").not($annotationsToShow);
+			$otherAnnotations.each(function() {
+				jQuery(this).after("<span class='atb-editor-annotationplaceholder'>" + jQuery(this).text() + "</span>");
+			});
+			$otherAnnotations.hide();
+		}
+
     return cleanContents;
 };
 
@@ -139,7 +159,7 @@ atb.viewer.TextEditor.prototype.saveContents = function() {
 /**
  * scrollIntoView centers the editor view scroll with the tag roughly in the
  * center
- * 
+ *
  * @param tag
  *           {Element} highlight span
  */
@@ -160,7 +180,7 @@ atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
 
     var scrollTop = elementCenterY - Math.round(editorHeight / 2);
     if (scrollTop < 0) scrollTop = 0;
-    
+
     jQuery(editorElement).scrollTop(scrollTop);
 };
 
@@ -206,18 +226,18 @@ atb.viewer.TextEditor.prototype.render = function(div) {
 
     this.editorDiv = this.domHelper.createDom('div', {'id': this.useID, 'class': 'ro-editor'});
     this.toolbarDiv = this.domHelper.createDom('div', {'class': 'text-editor-toolbar'} );
-    
+
     this.rootDiv.appendChild(this.toolbarDiv);
-        
+
     this.rootDiv.appendChild(this.editorDiv);
-    
+
     this._renderDocumentIcon();
-       
+
     goog.events.listen(
-        this.clientApp.getEventDispatcher(), 
-        atb.events.LinkingModeExited.EVENT_TYPE, 
+        this.clientApp.getEventDispatcher(),
+        atb.events.LinkingModeExited.EVENT_TYPE,
         this.handleLinkingModeExited, false, this);
-    
+
     goog.editor.Field.DELAYED_CHANGE_FREQUENCY = 1000;
     this.field = new goog.editor.Field(this.useID, this.domHelper.getDocument());
     this.field.registerPlugin(new goog.editor.plugins.BasicTextFormatter());
@@ -226,23 +246,23 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.field.registerPlugin(new atb.viewer.TextEditorAnnotate(this));
 
     this.field.makeEditable();
-    
+
     this._renderToolbar();
-    
+
     var editorHtmlElement = this.field.getEditableDomHelper().getDocument().getElementsByTagName('html')[0];
     this.databroker.namespaces.bindNamespacesToHtmlElement(editorHtmlElement);
-    
+
     this.editorIframeElement = this.domHelper.getElement(this.useID);
     this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
     this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
-    
+
     this.addGlobalEventListeners();
 
     if (this.container) {
         this.container.autoResize();
         this.container.setTitleEditable(true);
     }
-      
+
     // Start checking/displaying document status changes
     this.initStatusChecker();
     this.initPasteHandling();
@@ -329,7 +349,7 @@ function getSelectionRange(iframe) {
 
 atb.viewer.TextEditor.prototype.initStatusChecker = function() {
    var statusInterval = 1 * 1000;
-   var self = this;    
+   var self = this;
    this.autoOutputSaveStatusIntervalObject = window.setInterval(function() {
       var saveStatusElement = $("#save-status-" + self.useID);
       if (saveStatusElement.length === 0) {
@@ -353,13 +373,13 @@ atb.viewer.TextEditor.prototype.initStatusChecker = function() {
       }
 
       saveStatusElement.text(status);
-      
+
    }, statusInterval);
 };
 
 atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
     var createButtonGenerator = atb.widgets.MenuUtil.createDefaultDomGenerator;
-    
+
     if ( this.databroker.projectController.canUserEditProject() &&  this.isEditable() ) {
         var menuItems = [
             new atb.widgets.MenuItem(
@@ -405,9 +425,9 @@ atb.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
 atb.viewer.TextEditor.prototype._renderDocumentIcon = function() {
     this.documentIcon = this.domHelper.createDom('div', {'class': 'atb-viewer-documentIcon'});
     goog.events.listen(this.documentIcon, goog.events.EventType.CLICK, this.handleDocumentIconClick_, false, this);
-    
+
     this._addDocumentIconListeners();
-    
+
     this.rootDiv.appendChild(this.documentIcon);
 };
 
@@ -436,6 +456,7 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
          //goog.editor.Command.STRIKE_THROUGH
     ];
     $(this.toolbarDiv).empty();
+
     var myToolbar = goog.ui.editor.DefaultToolbar.makeToolbar(buttons, this.domHelper.getElement(this.toolbarDiv));
 
      // Create annotate button
@@ -448,10 +469,29 @@ atb.viewer.TextEditor.prototype._renderToolbar = function() {
      annotateButton.queryable = true;//Fixes wierd annotations bug
 
      myToolbar.addChildAt(annotateButton, 0, true);
-       
+
 
      var saveStatusDiv = $("<div id='save-status-"+this.useID+"' class='editor-status goog-toolbar goog-toolbar-horizontal'>Initializing</div>");
      $(this.toolbarDiv).append(saveStatusDiv);
+
+		 myToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
+
+		 var toggleMarkersButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
+         'toggle-markers',
+         'Toggle the visibility of highlights on the canvas',
+         '',
+         'icon-eye-close'
+     );
+		 goog.events.listen(
+				 toggleMarkersButton,
+				 'action',
+				 this.handleToggleMarkers,
+				 false,
+				 this
+		 );
+		 this.toggleMarkersButton = toggleMarkersButton;
+		 myToolbar.addChild(toggleMarkersButton, true);
+     toggleMarkersButton.setChecked(true);
 
      // Hook the toolbar into the field.
      this.toolbarController = new goog.ui.editor.ToolbarController(this.field, myToolbar);
@@ -467,11 +507,26 @@ atb.viewer.TextEditor.prototype.setPurpose = function (purpose) {
 
 atb.viewer.TextEditor.prototype.handleDocumentIconClick_ = function (e) {
     e.stopPropagation();
-    
+
     var eventDispatcher = this.clientApp.getEventDispatcher();
     var event = new atb.events.ResourceClick(this.resourceId, eventDispatcher, this);
     eventDispatcher.dispatchEvent(event);
 };
+
+atb.viewer.TextEditor.prototype.handleToggleMarkers = function(event) {
+		var button = this.toggleMarkersButton;
+		var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
+		if (button.isChecked()) {
+			jQuery(this.editorIframeElement).contents().find("span.atb-editor-annotationplaceholder").remove();
+			$annotations.show();
+		}
+		else {
+			$annotations.each(function() {
+				jQuery(this).after("<span class='atb-editor-annotationplaceholder'>" + jQuery(this).text() + "</span>");
+			});
+			$annotations.hide();
+		}
+}
 
 atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
    var eventDispatcher = this.clientApp.getEventDispatcher();
@@ -481,16 +536,16 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
    goog.events.listen(this.field.getElement(), goog.events.EventType.KEYPRESS, function() {
       self.unsavedChanges = true;
       $("#save-status-"+this.useID).text("Not Saved");
-   }); 
+   });
 
 
     goog.events.listen(this.editorIframe, 'mousemove', function(e) {
        var offset = jQuery(this.editorIframeElement).offset();
- 
+
        this.mousePosition.x = e.clientX + offset.left;
        this.mousePosition.y = e.screenY;
-    }, false, this);  
-   
+    }, false, this);
+
    goog.events.listen(this.editorIframe, 'mousedown', function(e) {
       var annotationPlugin = this.field.getPluginByClassId('Annotation');
       annotationPlugin.deselectAllHighlights();
@@ -500,7 +555,7 @@ atb.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
    goog.events.listen(this.container.closeButton, 'click', function(e) {
       clearInterval(this.autoOutputSaveStatusIntervalObject);
    }, false, this);
-}; 
+};
 
 
 atb.viewer.TextEditor.prototype.getTitle = function () {
@@ -557,10 +612,11 @@ atb.viewer.TextEditor.prototype.makeEditable = function() {
       textEditorAnnotate.addListenersToAllHighlights();
       this._addDocumentIconListeners();
       this.addGlobalEventListeners();
-      this.initPasteHandling(); 
+      this.initPasteHandling();
       var t = $("#save-status-" + this.useID).closest(".text-editor-toolbar");
       t.find(".goog-toolbar-button").show();
       t.find(".goog-toolbar-menu-button").show();
+			t.find(".goog-toolbar-separator").show();
    }
 };
 
@@ -575,15 +631,18 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
       var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
       textEditorAnnotate.addListenersToAllHighlights();
       this._addDocumentIconListeners();
-      
+
       var t = $("#save-status-" + this.useID).closest(".text-editor-toolbar");
-      t.find(".goog-toolbar-button").hide();
+      t.find(".goog-toolbar-button").not("#toggle-markers").hide();
       t.find(".goog-toolbar-menu-button").hide();
+			t.find(".goog-toolbar-separator").hide();
 
       if (this.field.getCleanContents().length == 0) {
          $(this.rootDiv).append("<div class='text-edit-load-status' id='load-status-"+this.useID+"'>Loading...</div>");
       }
-      
+
+			this.editorIframeElement = this.domHelper.getElement(this.useID);
+
       if ( this.readOnlyClone ) {
          $(this.documentIcon).hide();
          var title = $(this.container.titleEl).closest(".atb-ViewerContainer-titleWrapper");
@@ -597,7 +656,7 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
 
 atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
     var resource = this.databroker.getResource(uri);
-    
+
     this.loadingContent = true;
     if (resource.hasType('dctypes:Text')) {
         resource.defer().done(function() {
@@ -607,7 +666,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
 
             this.databroker.dataModel.textContents(resource, function(contents, error) {
                 if (contents || this.databroker.dataModel.getTitle(resource)) {
-                    
+
                   if (contents != null) {
                      contents = contents.replace(/a href=/g, "a target='_blank' href=");
                   }
@@ -615,22 +674,22 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
                     textEditorAnnotate.addListenersToAllHighlights();
                     $("#save-status-"+this.useID).text("Loaded");
-                    
+
                     var loadStatus =  $("#load-status-"+this.useID);
                     loadStatus.text("Loaded");
                     loadStatus.fadeOut(500, function() {
                        loadStatus.remove();
                     });
-                    
+
                     if (opt_doAfter) {
                        opt_doAfter();
                     }
 
                     if ( contents == null) {
                        this.loadingContent = false;
-                    } 
+                    }
                     this.field.clearDelayedChange();
-                    
+
                 }
                 else {
                    this.loadError = true;
@@ -695,18 +754,18 @@ atb.viewer.TextEditor.prototype.createNewTextBody = function() {
 
    var annoBodyEditor = new atb.viewer.TextEditor(this.clientApp);
    this.openRelatedViewer(body.uri, annoBodyEditor);
-   
+
    var email = $.trim($("#logged-in-email").text());
    annoBodyEditor.lockStatus(body.uri,true,true, email, null);
    annoBodyEditor.lockResource(body.uri,null,null);
-   
+
    annoBodyEditor.loadResourceByUri(body.uri);
 };
 
 /**
  * Start process of linking another resource to this document
  */
-atb.viewer.TextEditor.prototype.linkAnnotation = function () {   
+atb.viewer.TextEditor.prototype.linkAnnotation = function () {
    this.highlightDocumentIcon();
    this.hideHoverMenu();
 	this.clientApp.createAnnoLink("<"+this.resourceId+">");
@@ -722,5 +781,4 @@ atb.viewer.TextEditor.prototype.onChange = function (event) {
 atb.viewer.TextEditor.prototype.handleLinkingModeExited = function(event) {
 	$("#save-status-"+this.useID).text("Not Saved");
 	this.unHighlightDocumentIcon();
-}; 
-
+};

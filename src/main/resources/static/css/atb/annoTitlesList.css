@@ -1,16 +1,8 @@
-.atb-annoTitlesList {
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  padding-top: 33px;
-  box-sizing: border-box;
-}
-
 .atb-annoTitlesList-scroller {
     overflow-y: scroll;
-    height: 100%;
     background-color: #FFFFFF;
+    min-height: 175px;
+    min-width: 150px;
 }
 
 .atb-annoTitlesList-scoller ul {
