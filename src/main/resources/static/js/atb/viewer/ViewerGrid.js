@@ -120,18 +120,9 @@ atb.viewer.ViewerGrid.prototype.removeViewerContainer = function(container) {
 };
 
 atb.viewer.ViewerGrid.prototype.indexOf = function(container) {
-   var wrapper = null;
-   $.each(this.containers, function(key, value) {
-      if (value == container) {
-         wrapper = value._gridWrapper;
-      }
-   });
-   var matchIndex = 0;
-   $.each(this.wrappers, function(idx, value) {
-      if (value == wrapper) {
-         matchIndex = idx;
-      }
-   });
+   matchIndex = 0;
+   if (container && container.element)
+      matchIndex = $(this.getElement()).find("div.atb-ViewerContainer").index(container.element);
    return matchIndex;
 };
 

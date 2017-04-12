@@ -21,7 +21,7 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
     this.databroker = viewer.databroker;
 
     this.forReadOnly = opt_forReadOnly || false;
-    
+
     this.boundsByUri = new goog.structs.Map();
 
     this.controls = {
@@ -48,7 +48,7 @@ sc.canvas.CanvasToolbar = function(viewer, opt_forReadOnly) {
     this.googToolbar.render(this.baseDiv);
 
     this.setupDefaultButtons();
-    
+
     this.setButtonVisibility();
 
     this.viewer.mainViewport.addEventListener(
@@ -65,7 +65,7 @@ sc.canvas.CanvasToolbar.prototype.setButtonVisibility = function() {
       tbEle.find(".goog-toolbar.goog-toolbar-horizontal .goog-toolbar-button").css("display","inline-block");
       tbEle.find(".goog-toolbar-separator ").css("display","inline-block");
    }
- 
+
    tbEle.find("#toggle-markers").css("display","inline-block");
 
 
@@ -175,7 +175,7 @@ sc.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
      this.addButton(drawPolygonButton);
 
      this.googToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
-     
+
     var toggleMarkersButton = this.createButton(
         'toggle-markers',
         'Toggle the visibility of markers on the canvas',
@@ -230,16 +230,16 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
 
         if (currentIndex == 0) {
             leftButton.setEnabled(false);
-            
+
             leftButton.setTooltip('No prior canvases in this sequence');
         }
         else {
             leftButton.setEnabled(true);
-            
+
             var leftUri = urisInOrder[currentIndex - 1];
             var leftResource = this.databroker.getResource(leftUri);
             var leftTitle = this.databroker.dataModel.getTitle(leftResource);
-            
+
             if (leftTitle) {
                 leftButton.setTooltip('Go to ' + leftTitle);
             }
@@ -251,16 +251,16 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
 
         if (currentIndex == urisInOrder.length - 1) {
             rightButton.setEnabled(false);
-            
+
             rightButton.setTooltip('No more canvases in this sequence');
         }
         else {
             rightButton.setEnabled(true);
-            
+
             var rightUri = urisInOrder[currentIndex + 1];
             var rightResource = this.databroker.getResource(rightUri);
             var rightTitle = this.databroker.dataModel.getTitle(rightResource);
-            
+
             if (rightTitle) {
                 rightButton.setTooltip('Go to ' + rightTitle);
             }
@@ -273,9 +273,9 @@ sc.canvas.CanvasToolbar.prototype.autoEnableNavButtons = function() {
     else {
         leftButton.setEnabled(false);
         rightButton.setEnabled(false);
-        
+
         var tooltip = 'This canvas was not opened as part of a sequence';
-        
+
         leftButton.setTooltip(tooltip);
         rightButton.setTooltip(tooltip);
     }

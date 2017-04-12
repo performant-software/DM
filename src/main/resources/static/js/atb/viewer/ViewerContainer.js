@@ -27,7 +27,7 @@ atb.viewer.ViewerContainer.prototype._setupDom = function() {
 
     this.titleWrapper.appendChild(this.closeButton);
     this.titleWrapper.appendChild(this.titleEl);
-    
+
     this.element.appendChild(this.titleWrapper);
     this.element.appendChild(this.viewerEl);
 };
@@ -101,8 +101,14 @@ atb.viewer.ViewerContainer.prototype._titleBlurHandler = function(event) {
 
     jQuery(this.titleEl).scrollLeft(0).scrollTop(0);
 
-    this.setTitle(jQuery(this.titleEl).text().replace('\n', ' '));
-    this._notifyViewerTitleChanged();
+    var titleText = jQuery(this.titleEl).text().replace('\n', ' ');
+    if (titleText.trim().length > 0) {
+      this.setTitle(titleText);
+      this._notifyViewerTitleChanged();
+    }
+    else {
+      jQuery(this.titleEl).text(this.getTitle());
+    }
 };
 
 atb.viewer.ViewerContainer.prototype._notifyViewerTitleChanged = function(title) {
@@ -129,7 +135,8 @@ atb.viewer.ViewerContainer.prototype.autoResize = function() {
 atb.viewer.ViewerContainer.prototype.close = function() {
    if (this.viewer) {
       if (this.viewer.isEditable()) {
-         this.viewer.unlockResource(this.viewer.uri);
+         var uri = this.viewer.uri || jQuery(this.viewer.getElement()).find(".lock-for-edit-icon").data("uri");
+         this.viewer.unlockResource(uri);
       }
    }
    if (this.grid) {
