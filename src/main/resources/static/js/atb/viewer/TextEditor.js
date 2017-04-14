@@ -89,9 +89,8 @@ atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
 		if (!this.toggleMarkersButton.isChecked()) {
 			this.toggleMarkersButton.setChecked(true);
 			var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
-			$annotationsToShow = $annotations.filter(":visible");
-		  jQuery(this.editorIframeElement).contents().find("span.atb-editor-annotationplaceholder").remove();
-			$annotations.show();
+			$annotationsToShow = $annotations.not(".no-highlight");
+			$annotations.removeClass("no-highlight");
 		}
 
 		var cleanContents = this.field.getCleanContents();
@@ -101,10 +100,7 @@ atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
 		if (!($annotationsToShow == null)) {
 			this.toggleMarkersButton.setChecked(false);
 			var $otherAnnotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").not($annotationsToShow);
-			$otherAnnotations.each(function() {
-				jQuery(this).after("<span class='atb-editor-annotationplaceholder'>" + jQuery(this).text() + "</span>");
-			});
-			$otherAnnotations.hide();
+			$otherAnnotations.addClass("no-highlight");
 		}
 
     return cleanContents;
@@ -164,7 +160,9 @@ atb.viewer.TextEditor.prototype.saveContents = function() {
  *           {Element} highlight span
  */
 atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
-    if (this.isEditable()) {
+	console.log("scrollIntoView");
+	console.log(element);
+		if (this.isEditable()) {
         var editorElement = this.editorIframe;
         var editorHeight = this.editorIframe.document.body.clientHeight;
         var elementVerticalOffset = jQuery(element).offset().top;
@@ -182,6 +180,9 @@ atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
     if (scrollTop < 0) scrollTop = 0;
 
     jQuery(editorElement).scrollTop(scrollTop);
+
+		var $otherAnnotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").not($(element));
+		$otherAnnotations.addClass("no-highlight");
 };
 
 atb.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (specificResource) {
@@ -266,6 +267,7 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     // Start checking/displaying document status changes
     this.initStatusChecker();
     this.initPasteHandling();
+
 };
 
 atb.viewer.TextEditor.prototype.initPasteHandling = function() {
@@ -517,14 +519,10 @@ atb.viewer.TextEditor.prototype.handleToggleMarkers = function(event) {
 		var button = this.toggleMarkersButton;
 		var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
 		if (button.isChecked()) {
-			jQuery(this.editorIframeElement).contents().find("span.atb-editor-annotationplaceholder").remove();
-			$annotations.show();
+			$annotations.removeClass("no-highlight");
 		}
 		else {
-			$annotations.each(function() {
-				jQuery(this).after("<span class='atb-editor-annotationplaceholder'>" + jQuery(this).text() + "</span>");
-			});
-			$annotations.hide();
+			$annotations.addClass("no-highlight");
 		}
 }
 
@@ -589,6 +587,9 @@ atb.viewer.TextEditor.prototype.isEditable = function() {
 
 atb.viewer.TextEditor.prototype.makeEditable = function() {
    if (!this.isEditable()) {
+			var $textBlock = $("#" + this.useID);
+		  var scrollTopPct = $textBlock.length > 0 ? $textBlock.scrollTop() / $textBlock[0].scrollHeight : 0;
+
       this.field.makeEditable();
       this.setTitleEditable(true);
       $("#save-status-" + this.useID).text("Saved");
@@ -617,11 +618,23 @@ atb.viewer.TextEditor.prototype.makeEditable = function() {
       t.find(".goog-toolbar-button").show();
       t.find(".goog-toolbar-menu-button").show();
 			t.find(".goog-toolbar-separator").show();
+			window.setTimeout(function() {
+				var $newTextBlock = $(this.editorIframeElement).contents().find("body");
+				if ($newTextBlock.length > 0) {
+					$newTextBlock.scrollTop(scrollTopPct * $newTextBlock[0].scrollHeight);
+				}
+			}.bind(this), 10);
    }
 };
 
 atb.viewer.TextEditor.prototype.makeUneditable = function() {
    if (this.isEditable()) {
+		  var scrollTopPct = 0;
+		 	if ($(this.editorIframe).length > 0) {
+			 	var $textBlock = $(this.editorIframeElement).contents().find("body");
+				var scrollTopPct = $textBlock.length > 0 ? $textBlock.scrollTop() / $textBlock[0].scrollHeight : 0;
+			}
+
       this.field.makeUneditable();
       this.setTitleEditable(false);
       $("#save-status-" + this.useID).hide();
@@ -651,6 +664,10 @@ atb.viewer.TextEditor.prototype.makeUneditable = function() {
             $(title).append("<div class='clone-header'>Read-Only Copy</div>");
          }
       }
+
+			var $newTextBlock = $("#" + this.useID);
+			if ($newTextBlock.length > 0)
+				$newTextBlock.scrollTop(scrollTopPct * $newTextBlock[0].scrollHeight);
    }
 };
 
