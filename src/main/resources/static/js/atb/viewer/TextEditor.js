@@ -160,8 +160,6 @@ atb.viewer.TextEditor.prototype.saveContents = function() {
  *           {Element} highlight span
  */
 atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
-	console.log("scrollIntoView");
-	console.log(element);
 		if (this.isEditable()) {
         var editorElement = this.editorIframe;
         var editorHeight = this.editorIframe.document.body.clientHeight;
@@ -181,8 +179,8 @@ atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
 
     jQuery(editorElement).scrollTop(scrollTop);
 
-		var $otherAnnotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").not($(element));
-		$otherAnnotations.addClass("no-highlight");
+		jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").addClass("no-highlight");
+		$(element).removeClass("no-highlight");
 };
 
 atb.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (specificResource) {
@@ -268,6 +266,8 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     this.initStatusChecker();
     this.initPasteHandling();
 
+		var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
+		$annotations.removeClass(".no-highlight");
 };
 
 atb.viewer.TextEditor.prototype.initPasteHandling = function() {
