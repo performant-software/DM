@@ -89,8 +89,8 @@ atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
 		if (!this.toggleMarkersButton.isChecked()) {
 			this.toggleMarkersButton.setChecked(true);
 			var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
-			$annotationsToShow = $annotations.not(".no-highlight");
-			$annotations.removeClass("no-highlight");
+			$annotationsToShow = $annotations.not(".atb-editor-textannotation-nohighlight");
+			$annotations.removeClass("atb-editor-textannotation-nohighlight");
 		}
 
 		var cleanContents = this.field.getCleanContents();
@@ -100,7 +100,7 @@ atb.viewer.TextEditor.prototype.getSanitizedHtml = function () {
 		if (!($annotationsToShow == null)) {
 			this.toggleMarkersButton.setChecked(false);
 			var $otherAnnotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").not($annotationsToShow);
-			$otherAnnotations.addClass("no-highlight");
+			$otherAnnotations.addClass("atb-editor-textannotation-nohighlight");
 		}
 
     return cleanContents;
@@ -179,8 +179,8 @@ atb.viewer.TextEditor.prototype.scrollIntoView = function (element) {
 
     jQuery(editorElement).scrollTop(scrollTop);
 
-		jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").addClass("no-highlight");
-		$(element).removeClass("no-highlight");
+		jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").addClass("atb-editor-textannotation-nohighlight");
+		$(element).removeClass("atb-editor-textannotation-nohighlight");
 };
 
 atb.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (specificResource) {
@@ -516,10 +516,10 @@ atb.viewer.TextEditor.prototype.handleToggleMarkers = function(event) {
 		var button = this.toggleMarkersButton;
 		var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
 		if (button.isChecked()) {
-			$annotations.removeClass("no-highlight");
+			$annotations.removeClass("atb-editor-textannotation-nohighlight");
 		}
 		else {
-			$annotations.addClass("no-highlight");
+			$annotations.addClass("atb-editor-textannotation-nohighlight");
 		}
 }
 
@@ -682,7 +682,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                 if (contents || this.databroker.dataModel.getTitle(resource)) {
 
                   if (contents != null) {
-                     contents = contents.replace(/a href=/g, "a target='_blank' href=").replace(/no-highlight|atb-editor-textannotation-selected/g, "");
+                     contents = contents.replace(/a href=/g, "a target='_blank' href=").replace(/atb-editor-textannotation-nohighlight|atb-editor-textannotation-selected/g, "");
                   }
                 	this.setHtml(contents);
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
