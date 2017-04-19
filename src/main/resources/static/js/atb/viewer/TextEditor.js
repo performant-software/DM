@@ -265,9 +265,6 @@ atb.viewer.TextEditor.prototype.render = function(div) {
     // Start checking/displaying document status changes
     this.initStatusChecker();
     this.initPasteHandling();
-
-		var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
-		$annotations.removeClass(".no-highlight");
 };
 
 atb.viewer.TextEditor.prototype.initPasteHandling = function() {
@@ -685,7 +682,7 @@ atb.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                 if (contents || this.databroker.dataModel.getTitle(resource)) {
 
                   if (contents != null) {
-                     contents = contents.replace(/a href=/g, "a target='_blank' href=");
+                     contents = contents.replace(/a href=/g, "a target='_blank' href=").replace(/no-highlight|atb-editor-textannotation-selected/g, "");
                   }
                 	this.setHtml(contents);
                     var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
