@@ -6,7 +6,7 @@
   padding: 0 2px;
   margin: 0 1px;
 }
-.atb-editor-textannotation.no-highlight {
+.atb-editor-textannotation.atb-editor-textannotation-nohighlight {
   outline: none;
   background: transparent;
   padding: initial;
