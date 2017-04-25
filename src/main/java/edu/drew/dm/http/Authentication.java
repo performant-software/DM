@@ -1,5 +1,6 @@
 package edu.drew.dm.http;
 
+import edu.drew.dm.Server;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.semantics.DigitalMappaemundi;
 import org.apache.jena.rdf.model.Literal;
@@ -21,6 +22,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Base64;
@@ -35,7 +37,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Priority(Priorities.AUTHENTICATION)
 public class Authentication implements ContainerRequestFilter {
 
-    private final String[] PUBLIC_PATHS = { "static", "media", "workspace" };
+    private final String[] PUBLIC_PATHS = { "static", "media", "workspace", "accounts/oauth" };
 
     private final String[] PRIVATE_PATHS = { "accounts", "debug" };
 
@@ -51,7 +53,8 @@ public class Authentication implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        final String path = requestContext.getUriInfo().getPath();
+        final UriInfo ui = requestContext.getUriInfo();
+        final String path = ui.getPath();
 
         final Request request = requestProvider.get();
 
@@ -69,62 +72,20 @@ public class Authentication implements ContainerRequestFilter {
             return;
         }
 
-        String auth = Optional.ofNullable(requestContext.getHeaderString(HttpHeaders.AUTHORIZATION)).orElse("");
-        if (auth.isEmpty() && Stream.of(PRIVATE_PATHS).noneMatch(path::startsWith)) {
+        if (Stream.of(PRIVATE_PATHS).noneMatch(path::startsWith)) {
             requestContext.setSecurityContext(User.GUEST);
             return;
         }
 
-        final String userPassword = new String(Base64.getDecoder().decode(auth.replaceFirst("[Bb]asic ", "").getBytes(UTF_8)), UTF_8);
-        final int colonIdx = userPassword.indexOf(":");
-
-        final String user = colonIdx > 0
-                ? userPassword.substring(0, colonIdx)
-                : "";
-
-        @SuppressWarnings("unused")
-        final String password = colonIdx >= 0 && colonIdx < userPassword.length()
-                ? userPassword.substring(colonIdx + 1)
-                : "";
-
-
-        if (user.isEmpty() || password.isEmpty()) {
-            throw unauthorized(REALM);
+        try {
+            throw new WebApplicationException(Response.temporaryRedirect(Server.baseUri(ui)
+                    .path(Accounts.class)
+                    .path(Accounts.class.getMethod("oauth", UriInfo.class))
+                    .build()
+            ).build());
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
-
-        final String passwordHash = User.passwordHash(password);
-        final User agent = store.read(ds -> {
-            final ExtendedIterator<User> users = ds.getDefaultModel().listSubjectsWithProperty(RDFS.label, user)
-                    .filterKeep(subject -> subject.hasProperty(RDF.type, FOAF.Agent))
-                    .filterKeep(subject -> subject.inModel(SemanticDatabase.passwords(ds)).hasProperty(DigitalMappaemundi.password, passwordHash))
-                    .mapWith(subject -> new User(
-                            user,
-                            Optional.ofNullable(subject.getProperty(FOAF.firstName))
-                                    .map(Statement::getObject)
-                                    .map(RDFNode::asLiteral)
-                                    .map(Literal::getString)
-                                    .orElse(user),
-                            Optional.ofNullable(subject.getProperty(FOAF.surname))
-                                    .map(Statement::getObject)
-                                    .map(RDFNode::asLiteral)
-                                    .map(Literal::getString)
-                                    .orElse(user),
-                            Optional.ofNullable(subject.getPropertyResourceValue(FOAF.mbox))
-                                    .map(Resource::getURI)
-                                    .map(uri -> URI.create(uri).getSchemeSpecificPart())
-                                    .orElseThrow(IllegalStateException::new),
-                            true,
-                            ""
-                    ));
-            return (users.hasNext() ? users.next() : null);
-        });
-
-        if (agent == null) {
-            throw unauthorized(REALM);
-        }
-
-        request.getSession(true).setAttribute(User.class.getName(), agent);
-        requestContext.setSecurityContext(agent);
     }
 
     static WebApplicationException unauthorized(String realm) {
