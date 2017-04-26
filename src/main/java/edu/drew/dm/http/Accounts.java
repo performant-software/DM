@@ -12,6 +12,8 @@ import edu.drew.dm.Server;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Session;
 
+import java.io.InputStream;
+import java.net.URI;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.DefaultValue;
@@ -19,14 +21,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.RedirectionException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Optional;
 
 import static java.lang.System.getenv;
 import static java.util.Objects.requireNonNull;
@@ -87,12 +85,11 @@ public class Accounts {
             final JsonNode name = profile.path("names").path(0);
 
             final Session session = requestProvider.get().getSession();
-
             session.setAttribute(User.class.getName(), new User(
                     profile.path("nicknames").path(0).path("value").asText(),
                     name.path("givenName").asText(),
                     name.path("familyName").asText(),
-                    "user@google.com",
+                    profile.path("emailAddresses").path(0).path("value").asText(),
                     false,
                     accessToken.getAccessToken()
             ));
@@ -105,7 +102,7 @@ public class Accounts {
         return new ServiceBuilder()
                 .apiKey(requireNonNull(getenv("OAUTH_API_KEY")))
                 .apiSecret(requireNonNull(getenv("OAUTH_API_SECRET")))
-                .scope("profile")
+                .scope("profile email")
                 .callback(Server.baseUri(ui)
                         .path(getClass())
                         .path(getClass().getMethod("oauthCallback", String.class, UriInfo.class))
