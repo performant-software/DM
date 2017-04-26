@@ -5,6 +5,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -43,4 +44,6 @@ public class IO {
             // no-op
         }
     }
+
+    public static final Pattern LINE_ENDING = Pattern.compile("[\n\r]+");
 }

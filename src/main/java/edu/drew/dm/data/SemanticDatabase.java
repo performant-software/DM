@@ -4,6 +4,7 @@ import edu.drew.dm.semantics.DigitalMappaemundi;
 import edu.drew.dm.semantics.Models;
 import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
+import edu.drew.dm.util.IO;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
@@ -30,6 +31,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static edu.drew.dm.semantics.Models.n3;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -109,7 +114,7 @@ public class SemanticDatabase implements AutoCloseable {
 
     public Model remove(Model removed) {
         return write(ds -> {
-            ds.getDefaultModel().remove(removed);
+            ds.getDefaultModel().remove(logged("-", removed));
             return removed;
         });
     }
@@ -119,6 +124,8 @@ public class SemanticDatabase implements AutoCloseable {
     }
 
     public static Model merge(Model target, Model update) {
+        logged("+", update);
+
         final Map<StatementHead, LinkedList<Statement>> statementsByHead = new LinkedHashMap<>();
         update.listStatements().forEachRemaining(stmt -> statementsByHead
                 .computeIfAbsent(new StatementHead(stmt), k -> new LinkedList<>())
@@ -162,6 +169,16 @@ public class SemanticDatabase implements AutoCloseable {
             RDFDataMgr.write(to, ds.getDefaultModel(), Lang.NQUADS);
             return this;
         });
+    }
+
+    public static Model logged(String action, Model logged) {
+        LOG.finest(() -> Stream.concat(
+                Stream.of("RDF I/O"),
+                IO.LINE_ENDING.splitAsStream(n3(logged))
+                        .filter(l -> !l.startsWith("@prefix "))
+                        .map(l -> String.join(" ", action, "|", l))
+        ).collect(Collectors.joining("\n")).trim());
+        return logged;
     }
 
     @Override

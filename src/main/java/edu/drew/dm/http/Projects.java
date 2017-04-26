@@ -119,6 +119,7 @@ public class Projects {
                             .filterDrop(stmt -> project.equals(stmt.getObject()))
                             .forEachRemaining(toRemove::remove));
 
+            SemanticDatabase.logged("-", toRemove);
             model.remove(toRemove);
             return toRemove;
         });
