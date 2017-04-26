@@ -25,6 +25,7 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -197,22 +198,15 @@ public class Index implements AutoCloseable {
 
     public Search search(String projectUri, String query, int limit) {
         try {
-            final boolean singleWordQuery = query.matches("[A-Za-z0-9]+");
-            if (singleWordQuery) {
-                query = String.format("title:%s^10 OR text:%s", query, query);
-            }
-
-            final QueryParser queryParser = new QueryParser("text", analyzer);
-            queryParser.setAllowLeadingWildcard(true);
+            final String escaped = escapeQuery(query);
+            final String luceneQuery = String.format("title:\"%s\"^10 OR text:\"%s\"", escaped, escaped);
 
             final Query indexQuery = new BooleanQuery.Builder()
-                    .add(queryParser.parse(query), BooleanClause.Occur.MUST)
-                    .add(new TermQuery(new Term("project", projectUri)), BooleanClause.Occur.MUST)
+                    .add(new QueryParser("text", analyzer).parse(luceneQuery), Occur.MUST)
+                    .add(new TermQuery(new Term("project", projectUri)), Occur.MUST)
                     .build();
 
-            if (LOG.isLoggable(Level.FINER)) {
-                LOG.finer(String.format("? %s [%s @ %s]", indexQuery, query, projectUri));
-            }
+            LOG.finer(() -> String.format("? %s [%s @ %s]", indexQuery, query, projectUri));
 
             final Highlighter highlighter = new Highlighter(
                     new SimpleHTMLFormatter(
@@ -247,7 +241,7 @@ public class Index implements AutoCloseable {
             }
 
             String suggestion = null;
-            if (hits.size() == 0 && singleWordQuery) {
+            if (hits.size() == 0 && !WHITESPACE.matcher(query).find()) {
                 suggestion = Stream.of(suggest(projectUri, query, 10)).findFirst().orElse(null);
             }
             return new Search(hits.toArray(new Hit[hits.size()]), suggestion);
