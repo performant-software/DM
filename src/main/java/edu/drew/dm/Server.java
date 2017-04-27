@@ -141,7 +141,7 @@ public class Server {
 
         final Scheduler scheduler = scheduler();
         scheduler.schedule("0 * * * *", new SemanticDatabaseBackup(fs, db));
-        scheduler.schedule("*/5 * * * *", new Indexing(db, index));
+        scheduler.schedule("* * * * *", new Indexing(db, index));
 
         httpServer(optionSet, images, new AbstractBinder() {
             @Override

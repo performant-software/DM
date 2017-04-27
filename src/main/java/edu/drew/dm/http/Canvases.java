@@ -151,7 +151,7 @@ public class Canvases {
                 .build().toString();
     }
 
-    private static String canvasResource(UriInfo ui, String projectUri, String uri) {
+    public static String canvasResource(UriInfo ui, String projectUri, String uri) {
         return Server.baseUri(ui)
                 .path(Canvases.class)
                 .path(Canvases.class, "read")

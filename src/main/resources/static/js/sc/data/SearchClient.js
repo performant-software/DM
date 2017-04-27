@@ -47,8 +47,12 @@ sc.data.SearchClient.prototype.buildRdfForResult = function(result) {
     var wrappedUri = sc.data.Term.wrapUri(result.uri);
     var projectUri = this.databroker.projectController.currentProject.bracketedUri;
 
+    var rdfType = result.image
+            ? ns.expand("oa", "Canvas")
+            : ns.expand('dctypes', 'Text');
+
     this.databroker.quadStore.addQuads([
-        new sc.data.Quad(wrappedUri, ns.expand('rdf', 'type'), ns.expand('dctypes', 'Text'), projectUri),
+        new sc.data.Quad(wrappedUri, ns.expand('rdf', 'type'), rdfType, projectUri),
         new sc.data.Quad(wrappedUri, ns.expand('dc', 'title'), sc.data.Literal(result.title).n3(), projectUri),
         new sc.data.Quad(wrappedUri, ns.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(result.url))
     ]);
