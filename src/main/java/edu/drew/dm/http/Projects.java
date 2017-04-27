@@ -23,6 +23,17 @@ import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -40,17 +51,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -181,14 +181,26 @@ public class Projects {
         final ObjectNode response = objectMapper.createObjectNode();
 
         Stream.of(search.results)
-                .map(hit -> objectMapper.createObjectNode()
-                        .put("uri", hit.uri)
-                        .put("url", Texts.textResource(ui, uri, hit.uri))
-                        .put("title", hit.title)
-                        .put("highlighted_title", hit.titleHighlighted.isEmpty() ? hit.title : hit.titleHighlighted)
-                        .put("text", hit.text)
-                        .put("highlighted_text", hit.textHighlighted)
-                )
+                .map(hit -> {
+                    final String image = hit.image == null
+                            ? null
+                            : Images.imageResource(ui, hit.image);
+
+                    final String url = image == null
+                            ? Texts.textResource(ui, uri, hit.uri)
+                            : Canvases.canvasResource(ui, uri, hit.uri);
+
+                    return objectMapper.createObjectNode()
+                            .put("uri", hit.uri)
+                            .put("url", url)
+                            .put("title", hit.title)
+                            .put("highlighted_title", hit.titleHighlighted.isEmpty() ? hit.title : hit.titleHighlighted)
+                            .put("text", hit.text)
+                            .put("image", image)
+                            .put("imageWidth", hit.imageWidth)
+                            .put("imageHeight", hit.imageHeight )
+                            .put("highlighted_text", hit.textHighlighted.isEmpty() ? hit.text : hit.textHighlighted);
+                })
                 .collect(() -> response.putArray("results"), ArrayNode::add, ArrayNode::addAll);
 
         // FIXME: spell checking is not project-scoped

@@ -209,23 +209,25 @@ public class Images extends StaticHttpHandler {
         }
     }
 
+    public static String imageResource(UriInfo ui, String uri) {
+        final URI parsed = URI.create(uri);
+        if (!"image".equals(parsed.getScheme())) {
+            return uri;
+        }
+        return Server.baseUri(ui)
+                .path("/images")
+                .path(parsed.getSchemeSpecificPart())
+                .build().toString();
+
+    }
     public static void externalize(Model model, UriInfo ui) {
-        Models.renameResources(model, (r -> {
-            final String uri = r.getURI();
-            final URI parsed = URI.create(uri);
-            if (!"image".equals(parsed.getScheme())) {
-                return uri;
-            }
-            return Server.baseUri(ui)
-                    .path("/images")
-                    .path(parsed.getSchemeSpecificPart())
-                    .build().toString();
-        }));
+        Models.renameResources(model, r -> imageResource(ui, r.getURI()));
     }
 
     public File imageFile(String name) {
         return new File(baseDirectory, name);
     }
+
     public File imageFile(Resource resource) {
         return imageFile(URI.create(resource.getURI()).getSchemeSpecificPart());
     }

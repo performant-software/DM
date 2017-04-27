@@ -2,7 +2,12 @@ package edu.drew.dm.data;
 
 import edu.drew.dm.http.Projects;
 import edu.drew.dm.semantics.Content;
+import edu.drew.dm.semantics.Exif;
+import edu.drew.dm.semantics.OpenAnnotation;
+import edu.drew.dm.semantics.SharedCanvas;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -12,6 +17,7 @@ import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexOptions;
@@ -53,10 +59,12 @@ import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,15 +93,23 @@ public class Index implements AutoCloseable {
 
         public final String uri;
         public final String title;
+
         public final String text;
+
+        public final String image;
+        public final Integer imageWidth;
+        public final Integer imageHeight;
 
         public final String titleHighlighted;
         public final String textHighlighted;
 
-        public Hit(String uri, String title, String text, String titleHighlighted, String textHighlighted) {
+        public Hit(String uri, String title, String text, String image, Integer imageWidth, Integer imageHeight, String titleHighlighted, String textHighlighted) {
             this.uri = uri;
             this.title = title;
             this.text = text;
+            this.image = image;
+            this.imageWidth = imageWidth;
+            this.imageHeight = imageHeight;
             this.titleHighlighted = titleHighlighted;
             this.textHighlighted = textHighlighted;
         }
@@ -168,8 +184,10 @@ public class Index implements AutoCloseable {
                     for (Resource project : projects) {
 
                         Projects.SCOPE.visit(project, resource -> {
-                            if (resource.hasProperty(RDF.type, DCTypes.Text) && resource.hasProperty(RDFS.label) && resource.hasProperty(Content.chars)) {
-                                index(indexWriter, project, resource);
+                            if (resource.hasProperty(RDF.type, DCTypes.Text) && resource.hasProperty(DC.title) && resource.hasProperty(Content.chars)) {
+                                indexText(indexWriter, project, resource);
+                            } else if (resource.hasProperty(RDF.type, SharedCanvas.Canvas) && resource.hasProperty(DC.title)) {
+                                indexCanvas(indexWriter, project, resource);
                             }
                         });
                     }
@@ -231,6 +249,9 @@ public class Index implements AutoCloseable {
                             indexEntry.get("uri"),
                             title,
                             text,
+                            indexEntry.get("image"),
+                            Optional.ofNullable(indexEntry.getField("imageWidth")).map(f -> f.numericValue().intValue()).orElse(null),
+                            Optional.ofNullable(indexEntry.getField("imageHeight")).map(f -> f.numericValue().intValue()).orElse(null),
                             highlighted(highlighter, termVectors, "title", title),
                             highlighted(highlighter, termVectors, "text", text)
 
@@ -244,6 +265,9 @@ public class Index implements AutoCloseable {
             if (hits.size() == 0 && !WHITESPACE.matcher(query).find()) {
                 suggestion = Stream.of(suggest(projectUri, query, 10)).findFirst().orElse(null);
             }
+
+            Collections.sort(hits, Comparator.comparing((Hit hit) -> hit.image == null ? 1 : 0));
+
             return new Search(hits.toArray(new Hit[hits.size()]), suggestion);
         } catch (ParseException e) {
             return Search.EMPTY;
@@ -275,11 +299,9 @@ public class Index implements AutoCloseable {
                 .collect(Collectors.joining(" [...] "));
     }
 
-    public void index(IndexWriter indexWriter, Resource project, Resource text) {
+    public void indexText(IndexWriter indexWriter, Resource project, Resource text) {
         try {
-            final String title = text.getRequiredProperty(RDFS.label).getObject()
-                    .asLiteral().getString()
-                    .replaceAll("\\s+", " ").trim();
+            final String title = title(text);
 
             final String htmlText = text.getRequiredProperty(Content.chars).getObject()
                     .asLiteral().getString();
@@ -299,6 +321,44 @@ public class Index implements AutoCloseable {
             LOG.log(Level.WARNING, t, t::getMessage);
         }
     }
+
+    public void indexCanvas(IndexWriter indexWriter, Resource project, Resource canvas) {
+        try {
+            final String title = title(canvas);
+
+            final ExtendedIterator<Resource> images = canvas.getModel()
+                    .listResourcesWithProperty(OpenAnnotation.hasTarget, canvas)
+                    .mapWith(r -> r.getPropertyResourceValue(OpenAnnotation.hasBody))
+                    .filterKeep(r -> r.hasProperty(RDF.type, DCTypes.Image));
+
+            if (!images.hasNext()) {
+                return;
+            }
+
+            final String image = images.next().getURI();
+
+            final Document indexEntry = new Document();
+            indexEntry.add(new StringField("uri", canvas.getURI(), Field.Store.YES));
+            indexEntry.add(new StringField("project", project.getURI(), Field.Store.YES));
+            indexEntry.add(new Field("title", title, TEXT_FIELD_TYPE));
+            indexEntry.add(new StringField("image", image, Field.Store.YES));
+            indexEntry.add(new StoredField("imageWidth", canvas.getRequiredProperty(Exif.width).getInt()));
+            indexEntry.add(new StoredField("imageHeight", canvas.getRequiredProperty(Exif.height).getInt()));
+            indexEntry.add(new Field("all", title, TEXT_FIELD_TYPE));
+
+            indexWriter.addDocument(indexEntry);
+
+        } catch (Throwable t) {
+            LOG.log(Level.WARNING, t, t::getMessage);
+        }
+
+    }
+
+    private static String title(Resource labelled) {
+        return labelled.getRequiredProperty(DC.title).getString()
+                .replaceAll("\\s+", " ").trim();
+    }
+
 
     @Override
     public void close() {

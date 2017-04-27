@@ -12,7 +12,7 @@ atb.widgets.SearchResultItem.prototype.setupLayout_ = function() {
 
     this.thumbnailDiv = this.domHelper.createDom('div', {
         'class': 'atb-WorkingResourcesItem-thumb'
-    }, 'T');
+    }, this.domHelper.createDom('div', null, 'T'));
     this.titleDiv = this.domHelper.createDom('div', {
         'class': 'atb-WorkingResourcesItem-title'
     });
@@ -41,6 +41,20 @@ atb.widgets.SearchResultItem.prototype.setupLayout_ = function() {
     // this.div.appendChild(this.removeButton);
 
     this.div.appendChild(this.clearDiv);
+};
+
+atb.widgets.SearchResultItem.prototype.setImage = function(image, imageWidth, imageHeight) {
+    if (image) {
+        var size = new goog.math.Size(imageWidth, imageHeight).scaleToFit(atb.widgets.WorkingResources.THUMB_SIZE),
+            width = Math.round(size.width),
+            height = Math.round(size.height);
+
+        jQuery("<img>").appendTo(jQuery(this.thumbnailDiv).empty()).attr({
+            src: image + '?w=' + width + '&h=' + height,
+            width: width,
+            height: height
+        });
+    }
 };
 
 atb.widgets.SearchResultItem.prototype.setText = function(text) {

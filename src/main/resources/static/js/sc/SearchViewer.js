@@ -135,7 +135,7 @@ sc.SearchViewer.prototype._handleWorkingResourcesOpenRequest = function(event) {
 sc.SearchViewer.prototype.openViewerForResource = function(resource) {
     var resource = this.databroker.getResource(resource);
     var clone = this.viewerGrid.isOpen(resource.uri);
-    
+
 
     var container = new atb.viewer.ViewerContainer(this.domHelper);
     this.viewerGrid.addViewerContainer(resource.uri, container);
@@ -156,7 +156,7 @@ sc.SearchViewer.prototype.openViewerForResource = function(resource) {
        viewer.lockStatus(resource.uri,false,false,"","");
        viewer.loadResourceByUri(resource.uri);
        container.autoResize();
-       
+
     }
 };
 
@@ -225,6 +225,7 @@ sc.SearchViewer.prototype.createSearchResultItem = function(result) {
     var item = new atb.widgets.SearchResultItem(this.databroker, uri, this.domHelper);
     item.setHighlightedTitle(result.highlighted_title);
     item.setText(result.highlighted_text);
+    item.setImage(result.image, result.imageWidth, result.imageHeight);
 
     return item;
 };
@@ -249,19 +250,19 @@ sc.SearchViewer.prototype.clearResults = function() {
 
 sc.SearchViewer.prototype.showMessage = function(message) {
     jQuery(this.messageDiv).text(message);
-    
+
     // Calculate the height of the div without actually showing it
     jQuery(this.messageDiv).css({'visibility': 'hidden', 'display': 'block'});
     var textHeight = jQuery(this.messageDiv).height();
     jQuery(this.messageDiv).css({'display': 'none', 'visibility': 'visible'});
-    
+
     var div = this.modalBody;
-    
+
     var top = (jQuery(div).height()) / 2 - (textHeight / 2);
     var left = 0;
     var width = jQuery(div).width();
     jQuery(this.messageDiv).css({'top': top, 'left': left, 'width': width});
-    
+
     jQuery(this.messageDiv).fadeIn(400);
 };
 

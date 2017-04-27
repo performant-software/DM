@@ -17,13 +17,11 @@ public class Indexing extends Task {
     private final SemanticDatabase db;
     private final Index index;
 
-    private long databaseWrites;
+    private long databaseWrites = -1;
 
     public Indexing(SemanticDatabase db, Index index) {
         this.db = db;
         this.index = index;
-
-        databaseWrites = db.writes();
     }
 
     @Override
