@@ -6,6 +6,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import edu.drew.dm.data.FileSystem;
 import edu.drew.dm.data.Index;
+import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.http.Accounts;
 import edu.drew.dm.http.Authentication;
@@ -20,7 +21,6 @@ import edu.drew.dm.http.Workspace;
 import edu.drew.dm.task.FlattenImageDirectory;
 import edu.drew.dm.task.Indexing;
 import edu.drew.dm.task.SemanticDatabaseBackup;
-import edu.drew.dm.task.SemanticDatabaseInitialization;
 import edu.drew.dm.task.UserbaseInitialization;
 import it.sauronsoftware.cron4j.Scheduler;
 import org.glassfish.grizzly.http.CompressionConfig;
@@ -45,9 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.logging.Logger;
 import javax.ws.rs.GET;
 import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.core.Context;
@@ -63,30 +61,37 @@ public class Server {
 
     public static void main(String[] args) throws Exception {
         Logging.configure();
+        final Logger log = Logging.inClass(Server.class);
 
         final Config config = ConfigFactory.load();
-        Logging.inClass(Server.class).fine(() -> String.format(
+        log.fine(() -> String.format(
                 "Configuration: %s",
                 config.root().render()
         ));
         
         final File storeDir = new File(config.getString("data.dir"));
-
-        final List<String> initialData = Stream.of(args)
-                .map(Paths::get).map(Path::toUri)
-                .map(URI::toString).collect(Collectors.toList());
-
         final FileSystem fs = new FileSystem(storeDir);
-        SemanticDatabase db = new SemanticDatabase(fs);
+
+        final SemanticDatabase db = new SemanticDatabase(fs);
         shutdownHook(db::close);
 
-        SemanticDatabaseInitialization.execute(db, initialData);
-        UserbaseInitialization.initGuestAccess(db);
+        final Images images = new Images(fs);
+        FlattenImageDirectory.execute(images, db);
 
+        if (db.isEmpty()) {
+            for (String arg : args) {
+                final Path file = Paths.get(arg);
+                try (ProjectBundle bundle = ProjectBundle.create(file)) {
+                    log.info(() -> String.format("Import project from %s", file));
+                    bundle.writeTo(db, images);
+                }
+            }
+        }
+
+        UserbaseInitialization.initGuestAccess(db);
         try (CSVReader usersCsv = new CSVReader(new InputStreamReader(Server.class.getResourceAsStream("/users.csv"), StandardCharsets.UTF_8))) {
             UserbaseInitialization.execute(db, usersCsv);
         }
-
         if (config.hasPath("auth.users")) {
             final Path users = Paths.get(config.getString("auth.users"));
             if (users != null) {
@@ -96,12 +101,8 @@ public class Server {
             }
         }
 
-        final Images images = new Images(fs);
-        FlattenImageDirectory.execute(images, db);
-
-        final SemanticDatabase finalDb = db;
         final Index index = new Index(fs, db).initialized();
-
+        
         final Scheduler scheduler = scheduler();
         scheduler.schedule("0 * * * *", new SemanticDatabaseBackup(fs, db));
         scheduler.schedule("* * * * *", new Indexing(db, index));
@@ -109,7 +110,7 @@ public class Server {
         httpServer(config, images, new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(finalDb).to(SemanticDatabase.class);
+                bind(db).to(SemanticDatabase.class);
                 bind(index).to(Index.class);
                 bind(images).to(Images.class);
             }

@@ -90,6 +90,8 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
     }
 
     public static Model internalize(Model model) {
+        model.removeAll(null, OpenArchivesTerms.isDescribedBy, null);
+
         return Models.renameResources(model,
                 Users::internalize,
                 Images::internalize

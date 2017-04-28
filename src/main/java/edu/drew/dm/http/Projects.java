@@ -14,10 +14,12 @@ import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
 import edu.drew.dm.semantics.SharedCanvas;
 import edu.drew.dm.semantics.Traversal;
-import edu.drew.dm.task.ProjectBundle;
+import edu.drew.dm.data.ProjectBundle;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -51,6 +54,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static java.time.temporal.ChronoUnit.MINUTES;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -223,28 +229,30 @@ public class Projects {
     @Path("/{uri}/download")
     @GET
     public Response download(@PathParam("uri") String uri) {
-        final Model project = db.read((source, target) -> SCOPE.copy(source.createResource(uri), target));
-
-        final String title = Optional.ofNullable(project.createResource(uri).getProperty(DC_11.title))
-                .map(label -> label.getLiteral().getString())
-                .orElse(uri);
-
-        project.listSubjectsWithProperty(RDF.type, FOAF.Agent)
-                .forEachRemaining(agent -> project.remove(agent.listProperties()));
-
-        final String escapedTitle = Pattern.compile("[^A-Za-z0-9]").matcher(title).replaceAll("_");
-
         return Response.ok()
                 .type(new MediaType("application", "zip"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, String.format(
                         "attachment; filename=\"%s_%s.zip\"",
-                        escapedTitle,
-                        DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES))
+                        SAFE_CHARS.matcher(title(uri)).replaceAll("_"),
+                        ISO_LOCAL_DATE_TIME.format(LocalDateTime.now().truncatedTo(MINUTES))
                 ))
-                .entity((StreamingOutput) output -> ProjectBundle.write(images, project, output))
+                .entity((StreamingOutput) output -> {
+                    try (ProjectBundle bundle = ProjectBundle.create(uri, db, images)) {
+                        bundle.asZip(output);
+                    } catch (Throwable t) {
+                        Logging.inClass(Projects.class).log(Level.WARNING, t, t::getMessage);
+                    }
+                })
                 .build();
     }
 
+    private String title(String uri) {
+        return db.read(ds -> Optional.ofNullable(ds.getDefaultModel().createResource(uri).getProperty(DC_11.title))
+                .map(Statement::getString).orElse(uri));
+    }
+
+    private static final Pattern SAFE_CHARS = Pattern.compile("[^A-Za-z0-9]");
+    
     @Path("/{uri}/removed")
     @POST
     public Model cleanupLinks(@FormParam("uuids") String uuids) {

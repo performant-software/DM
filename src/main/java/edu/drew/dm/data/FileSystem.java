@@ -1,5 +1,7 @@
 package edu.drew.dm.data;
 
+import edu.drew.dm.util.IO;
+
 import java.io.File;
 
 /**
@@ -26,11 +28,6 @@ public class FileSystem {
     }
 
     public File directory(String name) {
-        final File dir = new File(baseDirectory, name);
-        if (!dir.isDirectory() && !dir.mkdirs()) {
-            throw new IllegalArgumentException(dir.toString());
-        }
-        return dir;
+        return IO.directory(new File(baseDirectory, name));
     }
-
 }
