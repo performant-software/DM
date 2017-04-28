@@ -37,7 +37,7 @@ public class Authentication implements ContainerRequestFilter {
 
     private final String[] PUBLIC_PATHS = { "static", "media", "workspace" };
 
-    private final String[] PRIVATE_PATHS = { "accounts" };
+    private final String[] PRIVATE_PATHS = { "accounts", "debug" };
 
     private final SemanticDatabase store;
     private final Provider<Request> requestProvider;

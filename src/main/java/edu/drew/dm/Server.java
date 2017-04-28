@@ -18,11 +18,22 @@ import edu.drew.dm.http.Projects;
 import edu.drew.dm.http.Texts;
 import edu.drew.dm.http.Users;
 import edu.drew.dm.http.Workspace;
+import edu.drew.dm.semantics.Models;
+import edu.drew.dm.semantics.OpenAnnotation;
+import edu.drew.dm.semantics.SharedCanvas;
 import edu.drew.dm.task.FlattenImageDirectory;
 import edu.drew.dm.task.Indexing;
 import edu.drew.dm.task.SemanticDatabaseBackup;
 import edu.drew.dm.task.UserbaseInitialization;
 import it.sauronsoftware.cron4j.Scheduler;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.vocabulary.DCTypes;
+import org.apache.jena.vocabulary.RDF;
 import org.glassfish.grizzly.http.CompressionConfig;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandlerRegistration;
@@ -45,7 +56,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.logging.Logger;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.core.Context;
@@ -53,6 +66,13 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ContextResolver;
+
+import static edu.drew.dm.semantics.OpenAnnotation.SpecificResource;
+import static edu.drew.dm.semantics.OpenAnnotation.hasBody;
+import static edu.drew.dm.semantics.OpenAnnotation.hasSource;
+import static edu.drew.dm.semantics.OpenAnnotation.hasTarget;
+import static edu.drew.dm.semantics.SharedCanvas.Canvas;
+import static org.apache.jena.vocabulary.DCTypes.Text;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -161,7 +181,8 @@ public class Server {
                 .register(Users.class)
                 .register(Projects.class)
                 .register(Canvases.class)
-                .register(Texts.class);
+                .register(Texts.class)
+                .register(Debug.class);
 
         final String contextPath = config.getString("http.context-path").replaceAll("/+$", "");
 
@@ -227,5 +248,31 @@ public class Server {
         }
 
     }
+
+    @javax.ws.rs.Path("/debug")
+    public static class Debug {
+
+        private final SemanticDatabase db;
+
+        @Inject
+        public Debug(SemanticDatabase db) {
+            this.db = db;
+        }
+
+        @javax.ws.rs.Path("/orphans")
+        @GET
+        public Model orphanedTexts() {
+            return db.read((source, target) -> {
+                for (Resource type : Arrays.asList(Text, SpecificResource, Canvas)) {
+                    ExtendedIterator<Resource> it = source.listResourcesWithProperty(RDF.type, type);
+                    for (Property annotationRelation : Arrays.asList(hasSource, hasBody, hasTarget)) {
+                        it = it.filterDrop(r -> source.listResourcesWithProperty(annotationRelation, r).hasNext());
+                    }
+                    it.forEachRemaining(r -> target.add(r.listProperties()));
+                }
+            });
+        }
+    }
+
 
 }
