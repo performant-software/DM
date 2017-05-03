@@ -81,14 +81,14 @@ atb.resource.ResourceSummary.prototype.renderPanelCtrls = function () {
             'class' : 'atb-resourcesummary-panel-ctrls'
         }
     );
-    
+
 // Note(tandres): Use jQuery's fadeTo rather than fadeIn and fadeOut, because
 // fadeIn and fadeOut set display to none, which collapses the div and changes
 // the layout
-    
+
     var $div = jQuery(this.div);
     var $panelCtrls = jQuery(this.panelCtrls);
-    
+
     var self = this;
     $panelCtrls.fadeTo(0, 0);
     $div.hover(function () {
@@ -97,7 +97,7 @@ atb.resource.ResourceSummary.prototype.renderPanelCtrls = function () {
         $panelCtrls.fadeTo(200, 0);
     });
 
-    $div.prepend(this.panelCtrls); 
+    $div.prepend(this.panelCtrls);
 };
 
 /**
@@ -145,7 +145,7 @@ atb.resource.ResourceSummary.prototype.getElement = function() {
  */
 atb.resource.ResourceSummary.prototype.handleClick = function (e) {
     e.stopPropagation();
-    
+
     // When a new viewer opens, the unhover events will not fire, so the layout must be cleaned up here
     jQuery(this.div).removeClass('atb-resourcesummary-hover');
     jQuery(this.panelCtrls).fadeTo(200, 0);
@@ -162,7 +162,7 @@ atb.resource.ResourceSummary.prototype.deleteClickHandler = function(event) {
 	    var customEvent = new goog.events.BrowserEvent(event, this);
 	    customEvent.resource = this.resource;
 	    customEvent.type = 'delete-click';
-	
+
 	    this.dispatchEvent(customEvent);
     }
 };
@@ -173,7 +173,7 @@ atb.resource.ResourceSummary.prototype.deleteClickHandler = function(event) {
 atb.resource.ResourceSummary.prototype.enableDelete = function () {
     goog.events.listen(this.deleteButton, goog.events.EventType.CLICK, this.deleteClickHandler, false, this);
     jQuery(this.panelCtrls).append(this.deleteButton);
-    
+
     jQuery(this.deleteButton).show();
 };
 
@@ -182,12 +182,12 @@ atb.resource.ResourceSummary.prototype.enableDelete = function () {
  */
 atb.resource.ResourceSummary.prototype.disableDelete = function () {
     goog.events.unlisten(this.deleteButton, goog.events.EventType.CLICK, this.deleteClickHandler, false, this);
-    
+
     var self = this;
     jQuery(this.deleteButton).fadeOut(300, function() {
         jQuery(self.deleteButton).hide();
-        
-        
+
+
     });
 };
 
@@ -198,7 +198,7 @@ atb.resource.ResourceSummary.prototype.disableDelete = function () {
 atb.resource.ResourceSummary.prototype.equals = function (other) {
     if (!other)
         return false;
-    
+
     return other.uri == this.uri;
 };
 
@@ -225,7 +225,7 @@ atb.resource.ResourceSummary.prototype.setSelected = function (selected) {
     if (selected) {
         jQuery(this.div).addClass('atb-resourcesummary-selected');
         this.selected = true;
-        
+
         if (this.parent && this.parent.onChildSelected) {
             this.parent.onChildSelected(this);
         }
@@ -233,7 +233,7 @@ atb.resource.ResourceSummary.prototype.setSelected = function (selected) {
     else {
         jQuery(this.div).removeClass('atb-resourcesummary-selected');
         this.selected = false;
-        
+
         if (this.parent && this.parent.setSelected) {
             this.parent.setSelected(false);
         }
@@ -272,7 +272,7 @@ atb.resource.ResourceSummary.prototype.getSortTitle = function() {
 atb.resource.ResourceSummary.sortByTitle = function (summaryA, summaryB) {
     var aTitle = summaryA.getSortTitle();
     var bTitle = summaryB.getSortTitle();
-    
+
     if (aTitle > bTitle)
         return 1;
     else if (aTitle < bTitle)
