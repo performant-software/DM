@@ -574,7 +574,10 @@ function(menuButtons, resourceId, opt_position) {
 
     this.hoverMenuPopup.setVisible(true);
 
-    $scrollerDiv.resizable();
+    $scrollerDiv.resizable({
+      start: function(){ this.hoverMenuIsResizing = true; }.bind(this),
+      stop: function(){ this.hoverMenuIsResizing = false; }.bind(this)
+    });
 };
 
 /**
@@ -602,7 +605,7 @@ atb.viewer.Viewer.prototype.hideHoverMenu = function () {
  * parent element
  */
 atb.viewer.Viewer.prototype.maybeHideHoverMenu = function () {
-    if (this.maybeHideHoverMenuTimeoutId != null) {
+    if (this.maybeHideHoverMenuTimeoutId != null || this.hoverMenuIsResizing) {
         return;
     }
 
