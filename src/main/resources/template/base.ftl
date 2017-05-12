@@ -34,7 +34,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </a>
-        <span class="brand" >DM</span>
+        <span class="brand" >${title?html}</span>
         <div class="nav-collapse collapse top-level-nav-collapse">
             <ul class="nav pull-right">
                 <li id="projectViewerButtons"></li>

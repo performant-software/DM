@@ -10,7 +10,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,6 +40,9 @@ public class Workspace {
     @Path("upload_image/")
     public Response uploadImage() {
         throw Server.NOT_IMPLEMENTED;
+    }
 
+    public static Response redirectToHomepage(UriInfo ui) {
+        return Response.temporaryRedirect(Server.baseUri(ui).path(Workspace.class).build()).build();
     }
 }

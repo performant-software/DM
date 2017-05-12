@@ -37,7 +37,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Priority(Priorities.AUTHENTICATION)
 public class Authentication implements ContainerRequestFilter {
 
-    private final String[] PUBLIC_PATHS = { "static", "media", "workspace", "accounts/oauth" };
+    private final String[] PUBLIC_PATHS = { "static", "media", "workspace", "accounts/login", "accounts/oauth-callback" };
 
     private final String[] PRIVATE_PATHS = { "accounts", "debug" };
 
@@ -77,15 +77,7 @@ public class Authentication implements ContainerRequestFilter {
             return;
         }
 
-        try {
-            throw new WebApplicationException(Response.temporaryRedirect(Server.baseUri(ui)
-                    .path(Accounts.class)
-                    .path(Accounts.class.getMethod("oauth", UriInfo.class))
-                    .build()
-            ).build());
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
+        throw new WebApplicationException(Response.Status.FORBIDDEN);
     }
 
     static WebApplicationException unauthorized(String realm) {

@@ -1,6 +1,6 @@
 [#ftl]
 [#import "base.ftl" as base]
-[@base.page title="DM Workspace"]
+[@base.page]
 <div>
     <div id="grid">
 

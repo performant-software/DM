@@ -130,6 +130,7 @@ public class Server {
         httpServer(config, images, new AbstractBinder() {
             @Override
             protected void configure() {
+                bind(config).to(Config.class);
                 bind(db).to(SemanticDatabase.class);
                 bind(index).to(Index.class);
                 bind(images).to(Images.class);
