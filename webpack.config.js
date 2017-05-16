@@ -9,8 +9,7 @@ const js_dir = path.join(__dirname, "src", "main", "resources", "static", "js");
 module.exports = {
     context: js_dir,
     entry: {
-        "dm": ["babel-polyfill", "./main"],
-        "dm-styles": [ "./styles" ]
+        "dm": ["babel-polyfill", "./main", "./styles"]
     },
     output: {
         path: js_dir,

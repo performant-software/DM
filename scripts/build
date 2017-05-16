@@ -56,7 +56,6 @@ closure_build("all-js-code.js", [
 
 info("JS Frontend Build (Webpack)")
 call(["npm", "run", "build"])
-unlink(join(js_dir, "dm-styles.js"))
 
 info("Java Backend Build (Maven)")
 call(["mvn", "clean", "package"])
