@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Online Multimedia Annotation and Linking",
   "scripts": {
-    "build": "webpack -p",
+    "build": "webpack -p --progress",
     "dev": "node scripts/frontend-dev.js"
   },
   "repository": {
@@ -17,6 +17,10 @@
   },
   "homepage": "https://github.com/performant-software/DM#readme",
   "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
     "browser-sync": "^2.14.0",
     "bs-fullscreen-message": "^1.1.0",
     "css-loader": "^0.28.1",
@@ -30,5 +34,16 @@
     "webpack-dev-middleware": "^1.10.1",
     "webpack-dev-server": "^2.4.5"
   },
-  "dependencies": {}
+  "dependencies": {
+    "babel-polyfill": "^6.23.0",
+    "redux": "^3.6.0",
+    "redux-actions": "^2.0.3",
+    "redux-logger": "^3.0.1"
+  },
+  "babel": {
+    "presets": [
+      "es2015",
+      "stage-2"
+    ]
+  }
 }

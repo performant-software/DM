@@ -9,7 +9,8 @@ const js_dir = path.join(__dirname, "src", "main", "resources", "static", "js");
 module.exports = {
     context: js_dir,
     entry: {
-        "styles-bundle": [ "./styles" ]
+        "dm": ["babel-polyfill", "./main"],
+        "dm-styles": [ "./styles" ]
     },
     output: {
         path: js_dir,
@@ -19,6 +20,11 @@ module.exports = {
     module: {
         rules: [
             {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: "babel-loader"
+            },
+            {
                 test: /\.css$/,
                 use: ExtractTextPlugin.extract({
                     use: "css-loader"
@@ -26,15 +32,15 @@ module.exports = {
             },
             {
                 test:/\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-                loader: "url-loader"
+                use: "url-loader"
             },
             {
                 test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-                loader: "url-loader"
+                use: "url-loader"
             },
             {
                 test: /\.(jpe?g|png|gif)$/,
-                loader: "url-loader"
+                use: "url-loader"
             }
         ]
     },

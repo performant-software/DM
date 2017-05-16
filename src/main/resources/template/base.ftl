@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="${cp}/static/css/dm.css" type="text/css" />
 
     <script type="text/javascript">STATIC_URL = '${cp}/static/';</script>
+    <script src="${cp}/static/js/dm.js" type="text/javascript"></script>
     <script src="${cp}/static/js/closure-library/closure/goog/base.js" type="text/javascript"></script>
     <script src="${cp}/static/js/atb-deps.js" type="text/javascript"></script>
     <script src="${cp}/static/js/jquery/jquery-1.10.1.js" type="text/javascript"></script>

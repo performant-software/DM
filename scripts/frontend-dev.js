@@ -24,11 +24,11 @@ browserSync.init({
         baseDir: "src/main/resources",
         directory: true,
         middleware: [
+            proxy(["**", '!/static/**'], {target: "http://localhost:8080"}),
             webpackDevMiddleware(bundler, {
-                publicPath: webpackConfig.output.publicPath,
+                publicPath: "/static/js",
                 stats: { colors: true }
-            }),
-            proxy(["**", '!/static/**'], {target: "http://localhost:8080"})
+            })
         ]
     },
     files: ["src/main/resources/static"],
