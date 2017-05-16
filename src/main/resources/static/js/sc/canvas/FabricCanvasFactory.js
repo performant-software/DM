@@ -204,8 +204,6 @@ sc.canvas.FabricCanvasFactory.findAndAddComments = function(canvas) {
 
         var content = bodyResource.getOneProperty(sc.canvas.FabricCanvas.RDF_ENUM.
                                                   cntChars);
-
-        console.log(title, ':', content);
     }
 };
 
@@ -281,18 +279,12 @@ sc.canvas.FabricCanvasFactory.findAndAddSegments = function(canvas) {
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.imageAnno)) {
                     // canvas.addImageAnnoSegment(annoResource, constraintAttrs);
-                    console.log('found image segment with anno uri', annoResource.getUri());
                 }
                 else if (annoResource.hasAnyType(
                                         sc.canvas.FabricCanvas.RDF_ENUM.audioAnno)) {
                     sc.canvas.FabricCanvasFactory.addAudioAnno(canvas, annoResource, constraintAttrs);
                 }
                 else {
-                    console.log(
-                        'found segment', partUri,
-                        'with anno types', annoResource.getTypes(),
-                        annoResource
-                    );
                 }
             }
         }

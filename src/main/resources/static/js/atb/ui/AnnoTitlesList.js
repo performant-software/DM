@@ -260,7 +260,7 @@ atb.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
 
     if (uri instanceof sc.data.Resource) uri = uri.uri;
 
-    console.log('uri of hovered resource', uri);
+    DM.resourceSelected(uri);
     this.uri = uri;
 
     jQuery(this.noAnnosDiv).hide();

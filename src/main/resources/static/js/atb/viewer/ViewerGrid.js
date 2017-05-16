@@ -58,7 +58,7 @@ atb.viewer.ViewerGrid.prototype.addViewerContainer = function(uri, container) {
 atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, index) {
    var cleanUri = uri.replace("<", "").replace(">","");
 
-   // Override location of new windows.
+    // Override location of new windows.
   //  var index = this.wrappers.length;
 
    if (this.containers[cleanUri] == null) {
@@ -83,6 +83,8 @@ atb.viewer.ViewerGrid.prototype.addViewerContainerAt = function(uri, container, 
    this._setAllContainerDimensions();
 
    container.autoResize();
+
+   DM.resourcesChanged({containers: this.containers, clones: this.clones });
 };
 
 atb.viewer.ViewerGrid.prototype.isOpen = function(uri) {
@@ -117,6 +119,8 @@ atb.viewer.ViewerGrid.prototype.removeViewerContainer = function(container) {
    jQuery(wrapper).detach();
    this._setAllContainerDimensions();
    container.grid = null;
+
+   DM.resourcesChanged({containers: this.containers, clones: this.clones });
 };
 
 atb.viewer.ViewerGrid.prototype.indexOf = function(container) {

@@ -214,6 +214,7 @@ sc.data.ProjectController.prototype.fireProjectSelected = function() {
     var event = new goog.events.Event('projectSelected', this);
     event.project = this.currentProject;
     this.dispatchEvent(event);
+    DM.projectSelected(this.currentProject);
 };
 
 sc.data.ProjectController.prototype.addResourceToProject = function(resource, project) {

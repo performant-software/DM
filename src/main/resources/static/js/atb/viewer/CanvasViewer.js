@@ -383,7 +383,7 @@ atb.viewer.CanvasViewer.prototype.onResourceClick = function(event) {
     var feature = event.getFeature();
     var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(uri);
 
-    console.log('resource click', event, uri, feature);
+    DM.resourceSelected(uri);
 
     if (!specificResourceUri) return;
     if (! feature) return;

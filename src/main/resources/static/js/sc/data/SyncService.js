@@ -33,10 +33,10 @@ sc.data.SyncService.DEFAULT_OPTIONS = {
 };
 
 sc.data.SyncService.RESTYPE = {
-    'text': 0, 
-    'project': 1, 
-    'annotation': 2, 
-    'user': 3, 
+    'text': 0,
+    'project': 1,
+    'annotation': 2,
+    'user': 3,
     'resource': 4,
     'search': 5,
     'search_autocomplete': 6,
@@ -49,12 +49,9 @@ sc.data.SyncService.prototype.annotsDeleted = function(deleted) {
    $.ajax({
       url : url,
       method : "POST",
-      data: {uuids: deleted.join()},
-      complete : function(jqXHR, textStatus) {
-         console.log(jqXHR);
-      }
+      data: {uuids: deleted.join()}
    });
-}; 
+};
 
 sc.data.SyncService.prototype.requestSync = function() {
    this.postNewResources();
@@ -114,7 +111,7 @@ sc.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
 
     if (resUri != null) {
         url += resUri;
-    } 
+    }
     if (params != null) {
         url += "?" + jQuery.param(params);
     }
@@ -145,7 +142,7 @@ sc.data.SyncService.prototype.getModifiedResourceUris = function() {
 
    return subjectsOfNewQuads.difference(this.databroker.newResourceUris).difference(this.databroker.deletedResourceUris);
 };
-  
+
 sc.data.SyncService.prototype.getModifiedResourceUriCount = function() {
    quads = this.getModifiedResourceUris();
    // HACK. on load, there is always a lingereing quad with the owner in it.
@@ -157,7 +154,7 @@ sc.data.SyncService.prototype.getModifiedResourceUriCount = function() {
       }
    }
    return quads.getCount();
-}; 
+};
 
 
 sc.data.SyncService.prototype.postNewResources = function() {
@@ -219,17 +216,11 @@ sc.data.SyncService.prototype.putModifiedResources = function() {
 
 sc.data.SyncService.prototype.deleteDeletedResources = function() {
     var quadsToRemove = [];
-       
-       // var qs = this.databroker.quadStore;
-    // var o = qs.query(null,"<http://www.w3.org/ns/oa#hasTarget>","<urn:uuid:ehrphvu93ep5wynj0t3rocdqufx3wxd33cmp>", null);
-    // for (var c = 0; c < o.length; c++) {
-        // console.log(o[c]);
-    // }
-    
+
     goog.structs.forEach(this.databroker.deletedResourceUris, function(uri) {
         quadsToRemove = quadsToRemove.concat(this.databroker.deletedQuadsStore.query(sc.data.Term.wrapUri(uri), null, null, null));
     });
-    
+
     // return;
     // var srUri = "";
     // for (var i = 0; i < quadsToRemove.length; i++) {
@@ -259,11 +250,11 @@ sc.data.SyncService.prototype.deleteDeletedResources = function() {
             // Error
         });
     }
-    
-    
+
+
     // this.databroker.quadStore;
     // var o = qs.query(null,"<http://www.w3.org/ns/oa#hasTarget>","<urn:uuid:3bq0ai3jw2fz8oa2bgpxa1t2b1crzmm53kx>",null);
-//     
+//
     this.deletedLinkUri = "";
     for (var i = 0; i < quadsToRemove.length; i++) {
         if ( quadsToRemove[i].object == "<http://www.w3.org/ns/oa#SpecificResource>") {
@@ -272,7 +263,7 @@ sc.data.SyncService.prototype.deleteDeletedResources = function() {
             break;
         }
     }
-    
+
     return (this.deletedLinkUri.length > 0);
 };
 
@@ -309,10 +300,10 @@ sc.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     else if (conjunctiveResource.hasAnyType(VOCABULARY.canvasTypes)) {
        // THIS DOESN't WORK
         // resType = sc.data.SyncService.RESTYPE.project;
-// 
+//
         // quadsToPost = newQuadStore.query(resource.bracketedUri, null, null, null);
         // quadsToRemove = deletedQuadsStore(resource.bracketedUri, null, null, null);
-// 
+//
         // url = this.restUrl(currentProject.uri, resType, null, null);
         // if (method == 'POST') {
             // method = 'PUT';
@@ -441,9 +432,9 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
           var out = "\"" + stripped + "\"";
           quad.object = out;
         }
-       
+
         if(quad.object.match(/"".*""/)) {
-            quad.object = quad.object.split('""').join('"');    
+            quad.object = quad.object.split('""').join('"');
         }
     });
 
@@ -488,8 +479,8 @@ sc.data.SyncService.prototype.getCsrfToken = function() {
 
 sc.data.SyncService.prototype.hasUnsavedChanges = function() {
     // The syncService isn't immediately seeing the changes in the text editor. Why?
-    return  this.databroker.newResourceUris.getCount() !== 0 || 
-            this.databroker.deletedResourceUris.getCount() !== 0 || 
+    return  this.databroker.newResourceUris.getCount() !== 0 ||
+            this.databroker.deletedResourceUris.getCount() !== 0 ||
             this.getModifiedResourceUriCount() !== 0;
 };
 

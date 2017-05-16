@@ -16,10 +16,10 @@ goog.require('sc.canvas.Control');
  */
 sc.canvas.FeatureControl = function(viewport, databroker) {
     sc.canvas.Control.call(this, viewport);
-    
+
     /** @type {sc.data.Databroker} */
     this.databroker = databroker;
-    
+
     this.resetFeature();
 };
 goog.inherits(sc.canvas.FeatureControl, sc.canvas.Control);
@@ -30,7 +30,7 @@ sc.canvas.FeatureControl.prototype.resetFeature = function() {
      * @type {(Raphael.Element|null)}
      */
     this.feature = null;
-    
+
     /**
      * The uri for the feature being drawn
      * @type {string}
@@ -115,7 +115,7 @@ sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
     var canvas = this.viewport.canvas;
 
     var featureClone = canvas.getCanvasSizedFeatureClone(this.feature);
-    
+
     var svgString = featureClone.toSVG();
     svgString = svgString.replace(/\"/g, "'");
 
@@ -126,10 +126,9 @@ sc.canvas.FeatureControl.prototype.exportFeatureToSvg = function() {
  * Sends the finished drawn feature data to the databroker as new triples
  */
 sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
-    
+
     var svgString = this.exportFeatureToSvg();
-    console.log("svgString: ", svgString);
-    
+
     var contentUri = this.viewport.canvas.getFabricObjectUri(this.feature);
     var canvasUri = this.viewport.canvas.getUri();
 
@@ -138,14 +137,14 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
     selector.addType('cnt:ContentAsText');
     selector.addProperty('cnt:chars', '"' + svgString + '"');
     selector.addProperty('cnt:characterEncoding', '"UTF-8"');
-    
+
     var specificResource = this.databroker.createResource(
         this.databroker.createUuid(), 'oa:SpecificResource');
     specificResource.addProperty('oa:hasSource', '<' + canvasUri + '>');
     specificResource.addProperty('oa:hasSelector', selector.bracketedUri);
 
     this.resetFeature();
-    
+
     // Sync data with server after each anno is added
     this.databroker.sync();
 };
@@ -157,7 +156,7 @@ sc.canvas.FeatureControl.prototype.sendFeatureToDatabroker = function() {
  */
 sc.canvas.FeatureControl.prototype.getFeatureCoordinates = function() {
     var feature = this.feature;
-    
+
     return this.viewport.canvas.getFeatureCoords(feature);
 };
 
@@ -170,6 +169,6 @@ sc.canvas.FeatureControl.prototype.getFeatureCoordinates = function() {
  */
 sc.canvas.FeatureControl.prototype.setFeatureCoordinates = function(x, y) {
     var feature = this.feature;
-    
+
     this.viewport.canvas.setFeatureCoords(feature, x, y);
 };

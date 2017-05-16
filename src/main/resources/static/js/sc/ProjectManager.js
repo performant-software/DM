@@ -291,13 +291,13 @@ sc.ProjectManager.prototype.createNewProjectModal = function() {
    var header = goog.dom.createDom("div", {
       'class' : 'modal-header'
    });
-   
+
    // Close "button" on top right of modal
    header.appendChild(goog.dom.createDom('a', {
       'class' : 'close',
       'data-dismiss' : 'modal'
    }, "x"));
-   
+
    // Header Text
    header.appendChild(goog.dom.createDom('h3', {}, 'New Project Creation'));
 
@@ -345,7 +345,7 @@ sc.ProjectManager.prototype.createNewProjectModal = function() {
    this.newHelp = goog.dom.createDom("span", {
       'class' : 'help-block'
    });
-   
+
    // Add all user area parts to body
    body.appendChild(goog.dom.createDom("p", {
       "class" : "help-block"
@@ -360,14 +360,14 @@ sc.ProjectManager.prototype.createNewProjectModal = function() {
    var footer = goog.dom.createDom("div", {
       'class' : 'modal-footer'
    });
-   
+
    // Cancel -- does not remove data from modal
    footer.appendChild(goog.dom.createDom("a", {
       href : '#newProjectModal',
       'class' : 'btn',
       'data-toggle' : 'modal'
    }, "Cancel"));
-   
+
    // Create -- default button -- creates new project
    var saveButton = goog.dom.createDom('a', {
       href : '#newProjectModal',
@@ -596,7 +596,7 @@ sc.ProjectManager.prototype.createEditProjectModal = function() {
    var header = goog.dom.createDom("div", {
       'class' : 'modal-header'
    });
-   
+
    // Close button
    header.appendChild(goog.dom.createDom("a", {
       'class' : 'close',
@@ -642,7 +642,7 @@ sc.ProjectManager.prototype.createEditProjectModal = function() {
    this.editHelp = goog.dom.createDom("span", {
       'class' : 'help-block'
    });
-   
+
    // Add all user area parts to body
    body.appendChild(goog.dom.createDom("p", {
       "class" : "help-block"
@@ -657,7 +657,7 @@ sc.ProjectManager.prototype.createEditProjectModal = function() {
    var footer = goog.dom.createDom("div", {
       'class' : 'modal-footer'
    });
-   
+
    // Cancel -- does not remove data from modal
    var cancelButton = goog.dom.createDom("a", {
       'href' : '#editProjectModal',
@@ -668,7 +668,7 @@ sc.ProjectManager.prototype.createEditProjectModal = function() {
       this.prepareForEdit();
    }.bind(this));
    footer.appendChild(cancelButton);
-   
+
    // Create -- default button -- creates new project
    var saveButton = goog.dom.createDom('a', {
       'href' : '#editProjectModal',
@@ -726,7 +726,6 @@ sc.ProjectManager.prototype.prepareForEdit = function() {
             for (var i = 0; i < users.length; i++) {
                var url = strip(users[i]);
                var username = url.split("/").pop();
-               // console.log(element.get(0))
 
                this.editAddedUsersList.push(username);
 
@@ -846,4 +845,4 @@ sc.ProjectManager.prototype.isValidUser = function(username, handler) {
          handler(false);
       }
    });
-}; 
+};
