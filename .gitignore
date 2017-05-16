@@ -6,7 +6,6 @@
 \#*#
 \.#
 *\.\#*
-*.lock
 *.DS_Store
 *.swp
 *.out
@@ -20,4 +19,5 @@ target/
 # NPM/ Node
 node_modules/
 
+local.conf
 dm.sh

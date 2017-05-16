@@ -2,11 +2,8 @@
   "name": "dm",
   "version": "1.0.0",
   "description": "Online Multimedia Annotation and Linking",
-  "main": "index.js",
   "scripts": {
-    "clean": "gulp clean",
-    "build": "gulp build",
-    "dev": "gulp dev"
+    "dev": "node scripts/frontend-dev.js"
   },
   "repository": {
     "type": "git",
@@ -20,13 +17,16 @@
   "homepage": "https://github.com/performant-software/DM#readme",
   "devDependencies": {
     "browser-sync": "^2.14.0",
+    "bs-fullscreen-message": "^1.1.0",
     "css-loader": "^0.23.1",
     "extract-text-webpack-plugin": "^1.0.1",
     "file-loader": "^0.8.5",
-    "gulp": "^3.9.1",
-    "gulp-util": "^3.0.7",
+    "http-proxy-middleware": "^0.17.4",
+    "strip-ansi": "^3.0.1",
     "style-loader": "^0.13.1",
     "url-loader": "^0.5.7",
-    "webpack": "^1.12.14"
+    "webpack": "^1.12.14",
+    "webpack-dev-middleware": "^1.10.1",
+    "webpack-dev-server": "^1.14.1"
   }
 }
