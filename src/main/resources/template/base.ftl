@@ -18,7 +18,7 @@
     <script src="${cp}/static/js/jquery/jquery-1.10.1.js" type="text/javascript"></script>
     <script src="${cp}/static/js/jquery/jquery-ui-1.10.3.custom.js" type="text/javascript"></script>
     <script src="${cp}/static/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
-    <script src="${cp}/static/fineuploader/js/fineuploader-3.1.1.js"></script>
+    <script src="${cp}/static/js/fineuploader-3.1.1.js"></script>
     [#if local]
         <script src="${cp}/static/js/workspace.js" type="text/javascript"></script>
     [#else]
