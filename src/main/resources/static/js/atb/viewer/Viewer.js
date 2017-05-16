@@ -357,31 +357,12 @@ atb.viewer.Viewer.prototype.flashDocumentIconHighlight = function () {
     atb.Util.timeoutSequence(250, timeoutFns, this);
 };
 
-function getCookie(name) {
-   var cookieValue = null;
-   if (document.cookie && document.cookie != '') {
-       var cookies = document.cookie.split(';');
-       for (var i = 0; i < cookies.length; i++) {
-           var cookie = jQuery.trim(cookies[i]);
-           // Does this cookie string begin with the name we want?
-           if (cookie.substring(0, name.length + 1) == (name + '=')) {
-               cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-               break;
-           }
-       }
-   }
-   return cookieValue;
-}
-
 atb.viewer.Viewer.prototype.unlockResource = function(uri, lockIcon, lockMessage) {
    var cleanUri = uri.replace("<", "").replace(">","");
    var self = this;
    $.ajax({
       url: [ this.clientApp.getBasePath(), "store", "lock", cleanUri ].join("/"),
       method: "DELETE",
-      beforeSend: function(xhr) {
-          xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
-      },
       complete: function(jqXHR, textStatus) {
          if ( textStatus == "success" ) {
             if ( lockIcon ) {
@@ -402,9 +383,6 @@ atb.viewer.Viewer.prototype.lockResource = function(uri, lockIcon, lockMessage) 
    $.ajax({
       url: [ this.clientApp.getBasePath(), "store", "lock", cleanUri ].join("/"),
       method: "POST",
-      beforeSend: function(xhr) {
-          xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
-      },
       complete: function(jqXHR, textStatus) {
          if (lockIcon==null || lockMessage==null) {
             return;

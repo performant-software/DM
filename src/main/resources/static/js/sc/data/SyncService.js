@@ -1,6 +1,5 @@
 goog.provide('sc.data.SyncService');
 
-goog.require('goog.net.Cookies');
 goog.require('sc.data.ConjunctiveQuadStore');
 
 /**
@@ -13,8 +12,6 @@ sc.data.SyncService = function(options) {
 
     this.options = {};
     goog.object.extend(this.options, sc.data.SyncService.DEFAULT_OPTIONS, options || {});
-
-    this.cookies = new goog.net.Cookies(window.document);
 };
 
 sc.data.SyncService.DEFAULT_OPTIONS = {
@@ -460,9 +457,6 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
                 },
                 data: data,
                 processData: !jQuery.isXMLDoc(data),
-                headers: {
-                    'X-CSRFToken': this.getCsrfToken()
-                },
                 contentType: format + '; charset=UTF-8'
             });
         }
@@ -471,10 +465,6 @@ sc.data.SyncService.prototype.sendQuads = function(quads, url, method, format, s
             errorHandler(error);
         }
     }.bind(this));
-};
-
-sc.data.SyncService.prototype.getCsrfToken = function() {
-    return this.cookies.get('csrftoken');
 };
 
 sc.data.SyncService.prototype.hasUnsavedChanges = function() {

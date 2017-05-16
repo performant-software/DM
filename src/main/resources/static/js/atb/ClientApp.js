@@ -19,28 +19,28 @@ goog.require('sc.data.Databroker');
 
 atb.ClientApp = function (basePath, username, databroker) {
     this.domHelper = new goog.dom.DomHelper();
-    
+
     this.databroker = databroker;
-    
+
     this.eventDispatcher = new goog.events.EventTarget();
-    
+
     this.username = username;
 
     this.basePath = basePath;
 	this.styleRoot = basePath + "/static/css/";
-    
+
 	atb.util.StyleUtil.DEFAULT_CSS_ROOT = this.styleRoot; // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
 
     this.annotationBody = null;
 	this.activeAnnotation = null;
     this.createdAnnoLinkIds = [];
-    
+
     this.popupsByName = {};
-    
+
     goog.events.listen(window, 'beforeunload', this.onBeforeUnload, false, this);
-    
+
     this.linkingInProgress = false;
-    
+
     this.keyboardShortcutHandler = new goog.ui.KeyboardShortcutHandler(window);
 };
 
@@ -101,7 +101,7 @@ atb.ClientApp.prototype.getPopupByName = function (name) {
 atb.ClientApp.prototype.forEachPopup = function (fn, opt_scope) {
     for (var name in this.popupsByName) {
         var popup = this.popupsByName[name];
-        
+
         if (popup)
             fn.call(opt_scope || window, popup);
     }
@@ -109,11 +109,11 @@ atb.ClientApp.prototype.forEachPopup = function (fn, opt_scope) {
 
 atb.ClientApp.prototype.numOpenPopups = function () {
     var num = 0;
-    
+
     this.forEachPopup(function (popup) {
         num ++;
     }, this);
-    
+
     return num;
 };
 
@@ -127,15 +127,15 @@ atb.ClientApp.prototype.getUsername = function () {
  */
 atb.ClientApp.prototype.createAnnoLink = function (bodyId, opt_annoId) {
     this.linkingInProgress = true;
-    
+
     this.annoLinkCreationBodyId = bodyId;
     this.annoLinkCreationAnnoId = opt_annoId || this.databroker.createUuid();
-    
+
     var modeEnteredEvent = new atb.events.LinkingModeEntered(this.annoLinkCreationAnnoId, this.eventDispatcher);
     this.eventDispatcher.dispatchEvent(modeEnteredEvent);
-    
+
     this.createAnnoLinkAddListeners_();
-    
+
     this.showLinkCreationUI();
 };
 
@@ -145,15 +145,15 @@ atb.ClientApp.prototype.createAnnoLink = function (bodyId, opt_annoId) {
  */
 atb.ClientApp.prototype.cancelAnnoLinking = function () {
     this.linkingInProgress = false;
-    
+
     var exitedEvent = new atb.events.LinkingModeExited(this.annoLinkCreationAnnoId);
     this.eventDispatcher.dispatchEvent(exitedEvent);
-    
+
     this.annoLinkCreationBodyId = null;
     this.annoLinkCreationAnnoId = null;
-    
+
     this.createAnnoLinkRemoveListeners_();
-    
+
     this.hideLinkCreationUI();
 };
 
@@ -187,27 +187,27 @@ atb.ClientApp.prototype.createAnnoLinkRemoveListeners_ = function () {
 atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
     e.stopPropagation();
     e.preventDefault();
-    
+
     this.createAnnoLinkRemoveListeners_();
     this.linkingInProgress = false;
-    
+
     var targetUri = e.uri;
     e.viewer.cancelHover();
-    
+
     // see if this viewer is locked for edit
     if ( e.viewer.isEditable() == false ) {
        alert("Target resource is not locked for edit.\n\nLock it and try again.");
     } else {
-       
+
        if (this.annoLinkCreationBodyId && targetUri) {
            var bodyId = this.annoLinkCreationBodyId;
            this.annoLinkCreationBodyId = null;
-   
+
            var anno = this.databroker.dataModel.createAnno(bodyId, targetUri);
-           
+
            var bezel = new atb.ui.Bezel('atb-bezel-linked');
            bezel.show();
-                      
+
            this.databroker.sync();
        } else {
           alert("Link creation failed; one of the highlights was missing an ID. Remove and re-add the highlights and try again.");
@@ -222,7 +222,7 @@ atb.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
 
 atb.ClientApp.prototype.annoLinkCreationKeyHandler_ = function (e) {
     var keyCode = e.keyCode;
-    
+
     if (keyCode == goog.events.KeyCodes.ESC) {
         this.cancelAnnoLinking();
     }
@@ -234,16 +234,16 @@ atb.ClientApp.prototype.isAnnoLinkingInProgress = function () {
 
 atb.ClientApp.prototype.undoLastAnnoLinkCreation = function () {
     var lastAnnoLinkId = this.createdAnnoLinkIds.pop();
-    
+
     if (lastAnnoLinkId != null) {
         this.webService.withDeletedResource(lastAnnoLinkId, function () {
-            
+
         }, this, null);
-        
+
         var bezel = new atb.ui.Bezel('atb-bezel-unlinked');
         bezel.show();
     }
-    
+
     this.hideUndoLinkCreationUI();
 };
 
@@ -251,10 +251,7 @@ atb.ClientApp.prototype.onBeforeUnload = function (event) {
     $.ajax({
         url: this.basePath + "/store/lock",
         method: "DELETE",
-        async: false,
-        beforeSend: function(xhr) {
-            xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
-        }
+        async: false
     });
 };
 
@@ -265,7 +262,7 @@ $(function() {
       $(".sc-ProjectViewer-createProjectButton").hide();
       $(".sc-ProjectViewer-modal .nav-pills").hide();
    }
-   
+
    $(window).on('beforeunload', function(){
       if ( $("#logged-in-user").text() === "Guest" ) {
           $.ajax({

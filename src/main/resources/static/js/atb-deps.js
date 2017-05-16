@@ -122,7 +122,7 @@ goog.addDependency('../../../sc/data/RDFQuerySerializer.js', ['sc.data.RDFQueryS
 goog.addDependency('../../../sc/data/Resource.js', ['sc.data.Resource'], ['goog.array', 'goog.structs.Set', 'sc.data.Quad', 'sc.data.Term', 'sc.data.TurtleSerializer', 'sc.util.DefaultDict'], false);
 goog.addDependency('../../../sc/data/SearchClient.js', ['sc.data.SearchClient'], ['sc.data.Quad', 'sc.data.Term'], false);
 goog.addDependency('../../../sc/data/Serializer.js', ['sc.data.Serializer'], [], false);
-goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], ['goog.net.Cookies', 'sc.data.ConjunctiveQuadStore'], false);
+goog.addDependency('../../../sc/data/SyncService.js', ['sc.data.SyncService'], ['sc.data.ConjunctiveQuadStore'], false);
 goog.addDependency('../../../sc/data/Term.js', ['sc.data.BNode', 'sc.data.DateTimeLiteral', 'sc.data.Literal', 'sc.data.Term', 'sc.data.Uri'], ['goog.string'], false);
 goog.addDependency('../../../sc/data/Triple.js', ['sc.data.Triple'], ['sc.data.Quad'], false);
 goog.addDependency('../../../sc/data/TurtleSerializer.js', ['sc.data.TurtleSerializer'], ['sc.data.QuadStore', 'sc.data.Serializer'], false);

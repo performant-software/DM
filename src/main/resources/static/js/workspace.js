@@ -1,4 +1,4 @@
-goog.provide("dm.FluidWorkspace");
+goog.provide("dm.Workspace");
 
 goog.require("atb.ClientApp");
 
@@ -8,7 +8,6 @@ goog.require('atb.viewer.AudioViewer');
 goog.require('goog.events');
 goog.require('goog.dom');
 goog.require('goog.Uri');
-goog.require('goog.net.Cookies');
 goog.require('goog.Uri');
 goog.require('atb.viewer.RepoBrowser');
 goog.require('atb.widgets.WorkingResources');
@@ -29,8 +28,6 @@ var glasspane = null;
 var workingResourcesViewer = null;
 var repoBrowser = null;
 var viewerGrid = null;
-var cookies = null;
-
 
 var scrollIntoView = function(element) {
     var offsetTop = $(element).offset().top;
@@ -161,29 +158,6 @@ var setupUser = function(databroker, username) {
 };
 
 function initWorkspace(basePath, username) {
-   cookies = new goog.net.Cookies(window.document);
-   /* The following method is copied from Django documentation
-    * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-    * Necessary to avoid 403 error when posting data
-    */
-   var csrfSafeMethod = function(method) {
-      // these HTTP methods do not require CSRF protection
-      return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-   };
-
-   /* Part of csrf-token setup
-    * Copied from Django documentation
-    * Source: https://docs.djangoproject.com/en/1.4/ref/contrib/csrf/
-    */
-   jQuery.ajaxSetup({
-      crossDomain : false,
-      beforeSend : function(xhr, settings) {
-         if (!csrfSafeMethod(settings.type) && goog.Uri.haveSameDomain(window.location.href, settings.url)) {
-            xhr.setRequestHeader("X-CSRFToken", cookies.get("csrftoken"));
-         }
-      }
-   });
-
    goog.global.baseUri = [ window.location.protocol, "//", window.location.host, basePath ].join("");
    goog.global.databroker = new sc.data.Databroker({
        'syncService': new sc.data.SyncService({

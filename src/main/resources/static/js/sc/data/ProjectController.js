@@ -269,10 +269,6 @@ sc.data.ProjectController.prototype.uploadCanvas = function(title, file, opt_suc
 
     xhr.open('POST', url);
 
-    if (goog.isFunction(this.databroker.syncService.getCsrfToken)) {
-        xhr.setRequestHeader('X-CSRFToken', this.databroker.syncService.getCsrfToken());
-    }
-
     xhr.send(data);
     return xhr;
 };
