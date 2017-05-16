@@ -48,7 +48,7 @@ info("Google Closure Compiler")
 closure_build("all-js-code.js", [
     "closure-library/closure/bin/build/closurebuilder.py",
     "--root=.",
-    "--input=dm/fluid_workspace.js",
+    "--input=workspace.js",
     "--output_mode=compiled",
     "--compiler_jar=closure-library/closure/bin/build/compiler.jar",
     "--compiler_flags=--language_in=ECMASCRIPT5"

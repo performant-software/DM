@@ -21,7 +21,7 @@
     <script src="${cp}/static/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="${cp}/static/fineuploader/js/fineuploader-3.1.1.js"></script>
     [#if local]
-        <script src="${cp}/static/js/dm/fluid_workspace.js" type="text/javascript"></script>
+        <script src="${cp}/static/js/workspace.js" type="text/javascript"></script>
     [#else]
         <script src="${cp}/static/js/all-js-code.js" type="text/javascript"></script>
     [/#if]

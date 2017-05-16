@@ -216,7 +216,7 @@ sc.ProjectManager.prototype.addAndSwitchToProject = function(uri) {
 
 /* Gathers all projects over which the current user has permissions and adds them to the
  *  dropdown listing project titles
- * Called on initial page load (in fluid_workspace.js), but can be called at any time to
+ * Called on initial page load (in workspace.js), but can be called at any time to
  *  completely update the list of projects in the dropdown
  */
 sc.ProjectManager.prototype.addAllUserProjects = function(user, useDeferredResource) {
