@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Online Multimedia Annotation and Linking",
   "scripts": {
+    "build": "webpack -p",
     "dev": "node scripts/frontend-dev.js"
   },
   "repository": {
@@ -18,15 +19,16 @@
   "devDependencies": {
     "browser-sync": "^2.14.0",
     "bs-fullscreen-message": "^1.1.0",
-    "css-loader": "^0.23.1",
-    "extract-text-webpack-plugin": "^1.0.1",
-    "file-loader": "^0.8.5",
+    "css-loader": "^0.28.1",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "file-loader": "^0.11.1",
     "http-proxy-middleware": "^0.17.4",
     "strip-ansi": "^3.0.1",
-    "style-loader": "^0.13.1",
+    "style-loader": "^0.17.0",
     "url-loader": "^0.5.7",
-    "webpack": "^1.12.14",
+    "webpack": "^2.5.1",
     "webpack-dev-middleware": "^1.10.1",
-    "webpack-dev-server": "^1.14.1"
-  }
+    "webpack-dev-server": "^2.4.5"
+  },
+  "dependencies": {}
 }

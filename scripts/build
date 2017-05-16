@@ -18,9 +18,7 @@ basicConfig(
 )
 
 base_dir = dirname(dirname(realpath(__file__)))
-
-static_dir = join(base_dir, "src", "main", "resources", "static")
-js_dir = join(static_dir, "js")
+js_dir = join(base_dir, "src", "main", "resources", "static", "js")
 
 def closure_build(dest, cmd):
     print repr(cmd)
@@ -57,8 +55,8 @@ closure_build("all-js-code.js", [
 ])
 
 info("JS Frontend Build (Webpack)")
-call([join("node_modules", ".bin", "webpack")])
-unlink(join(static_dir, "styles.js"))
+call(["npm", "run", "build"])
+unlink(join(js_dir, "styles-bundle.js"))
 
 info("Java Backend Build (Maven)")
 call(["mvn", "clean", "package"])
