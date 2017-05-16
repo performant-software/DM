@@ -50,7 +50,7 @@ closure_build("all-js-code.js", [
     "--root=.",
     "--input=dm/fluid_workspace.js",
     "--output_mode=compiled",
-    "--compiler_jar=compiler.jar",
+    "--compiler_jar=closure-library/closure/bin/build/compiler.jar",
     "--compiler_flags=--language_in=ECMASCRIPT5"
 ])
 
