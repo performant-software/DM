@@ -40,7 +40,7 @@ public class Annotations {
             .configureType(
                     OpenAnnotation.SpecificResource,
                     Collections.singleton(OpenAnnotation.hasTarget),
-                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasSelector)
+                    Arrays.asList(OpenAnnotation.hasSelector)
             )
             .configureType(
                     OpenAnnotation.Annotation,
