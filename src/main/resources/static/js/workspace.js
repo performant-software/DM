@@ -17,12 +17,6 @@ goog.require("dm.ClientApp");
 goog.require('dm.ProjectViewer');
 goog.require('dm.SearchViewer');
 
-
-var clientApp = null;
-var glasspane = null;
-var workingResourcesViewer = null;
-var viewerGrid = null;
-
 var scrollIntoView = function(element) {
     var offsetTop = $(element).offset().top;
     offsetTop -= $("#main-nav").outerHeight();
@@ -69,29 +63,17 @@ function initWorkspace(basePath, username) {
    });
 
    goog.global.clientApp = new dm.ClientApp(basePath, username, goog.global.databroker);
-   goog.global.clientApp.renderLinkCreationUI();
 
    setupUser(databroker, username);
 
    goog.global.viewerGrid = new dm.viewer.ViewerGrid();
-   clientApp.viewerGrid = goog.global.viewerGrid;
+   goog.global.clientApp.viewerGrid = goog.global.viewerGrid;
 
-   glasspane = goog.dom.createDom('div', {
-      'class' : 'frosted-glasspane'
-   });
-   jQuery(glasspane).hide();
-   jQuery(document.body).prepend(glasspane);
-
-   var wrContainerParent = goog.dom.createDom('div', {
-      'class' : 'working-resources-container-parent'
-   });
-   jQuery('#atb-footer-controls').prepend(wrContainerParent);
-
-   goog.global.projectViewer = new dm.ProjectViewer(clientApp);
+   goog.global.projectViewer = new dm.ProjectViewer(goog.global.clientApp);
    goog.global.projectViewer.renderButtons('#projectViewerButtons');
    goog.global.projectViewer.renderModals('body');
 
-   goog.global.searchViewer = new dm.SearchViewer(clientApp);
+   goog.global.searchViewer = new dm.SearchViewer(goog.global.clientApp);
    goog.global.searchViewer.render('body');
    goog.global.searchViewer.addListenersToButton('#searchButton');
 }

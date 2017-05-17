@@ -48,6 +48,8 @@ dm.ClientApp = function (basePath, username, databroker) {
     this.linkingInProgress = false;
 
     this.keyboardShortcutHandler = new goog.ui.KeyboardShortcutHandler(window);
+
+    this.renderLinkCreationUI();
 };
 
 dm.ClientApp.prototype.getEventDispatcher = function () {
