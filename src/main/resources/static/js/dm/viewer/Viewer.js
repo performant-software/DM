@@ -1,19 +1,20 @@
 goog.provide('dm.viewer.Viewer');
 
-goog.require('dm.util.StyleUtil');
-goog.require('dm.Util');
-goog.require('goog.ui.Popup');
 //goog.require('goog.fx.dom.FadeIn');
 //goog.require('goog.fx.dom.FadeOut');
-goog.require('dm.widgets.Toolbar');
-goog.require('dm.ui.AnnoTitlesList');
-
 goog.require('goog.math.Coordinate');
 goog.require('goog.math.Size');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
 goog.require('goog.events.KeyCodes');
+goog.require('goog.ui.Popup');
+
+goog.require('dm.ui.AnnoTitlesList');
+goog.require('dm.util.StyleUtil');
+goog.require('dm.Util');
+goog.require('dm.widgets.Toolbar');
+
 
 /**
  * Defines a generic Viewer which can be loaded into a ViewerContainer

@@ -6,6 +6,12 @@ goog.require('goog.events');
 goog.require('goog.structs');
 goog.require('goog.array');
 
+goog.require('dm.data.Literal');
+goog.require('dm.data.ProjectController');
+
+goog.require('dm.viewer.ViewerContainer');
+goog.require('dm.widgets.WorkingResources');
+
 dm.ProjectViewer = function(clientApp, opt_domHelper) {
     this.clientApp = clientApp;
     this.databroker = clientApp.databroker;
@@ -869,7 +875,7 @@ dm.ProjectViewer.prototype.openViewerForResource = function(resource) {
 
     if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
 
-    var viewer = dm.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
+    var viewer = this.clientApp.createViewerForUri(resource.uri);
     viewer.readOnlyClone = clone;
     container.setViewer(viewer);
 

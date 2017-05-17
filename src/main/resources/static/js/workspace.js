@@ -1,32 +1,26 @@
 goog.provide("dm.Workspace");
 
-goog.require("dm.ClientApp");
-
-goog.require('dm.viewer.Finder');
-goog.require('dm.viewer.TextEditor');
-goog.require('dm.viewer.AudioViewer');
 goog.require('goog.events');
 goog.require('goog.dom');
 goog.require('goog.Uri');
-goog.require('goog.Uri');
-goog.require('dm.viewer.RepoBrowser');
-goog.require('dm.widgets.WorkingResources');
 goog.require('goog.ui.Dialog');
 
+goog.require('dm.data.Databroker');
+goog.require('dm.data.SyncService');
+
+goog.require('dm.data.Quad');
+goog.require('dm.data.Term');
+
 goog.require('dm.viewer.ViewerGrid');
-goog.require('dm.viewer.ViewerContainer');
 
-goog.require("dm.ProjectManager");
+goog.require("dm.ClientApp");
 goog.require('dm.ProjectViewer');
-
 goog.require('dm.SearchViewer');
-goog.require('dm.SyncManager');
 
 
 var clientApp = null;
 var glasspane = null;
 var workingResourcesViewer = null;
-var repoBrowser = null;
 var viewerGrid = null;
 
 var scrollIntoView = function(element) {
@@ -37,77 +31,6 @@ var scrollIntoView = function(element) {
     $(window).scrollTop(offsetTop);
 };
 
-
-var setupProjectViewer = function(clientApp, viewerGrid) {
-    goog.global.projectViewer = new dm.ProjectViewer(clientApp);
-    projectViewer.renderButtons('#projectViewerButtons');
-    projectViewer.renderModals('body');
-};
-
-var setupSearchViewer = function(clientApp) {
-    goog.global.searchViewer = new dm.SearchViewer(clientApp);
-    searchViewer.render('body');
-    searchViewer.addListenersToButton('#searchButton');
-};
-
-var setupSyncManager = function(clientApp) {
-    goog.global.syncManager = new dm.SyncManager(clientApp);
-    syncManager.renderSaveButton('#js_save_button');
-};
-
-var setupRepoBrowser = function(clientApp, wrContainerParent) {
-    repoBrowser = new dm.RepoBrowser({
-        repositories: [
-            {
-                title: 'Stanford University',
-                url: '/store/resources/http://dms-data.stanford.edu/Repository',
-                uri: 'http://dms-data.stanford.edu/Repository'
-            },
-            {
-                title: 'Yale University',
-                url: '/store/resources/http://manifests.ydc2.yale.edu/Repository',
-                uri: 'http://manifests.ydc2.yale.edu/Repository'
-            },
-            {
-                title: 'Shared-canvas.org Demos',
-                url: '/store/resources/http://shared-canvas.org/Repository',
-                uri: 'http://shared-canvas.org/Repository'
-            }
-        ],
-        databroker: clientApp.getDatabroker(),
-        showErrors: false
-    });
-
-    repoBrowser.addEventListener('click', function(event) {
-        var uri = event.uri;
-        var resource = event.resource;
-
-        if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
-            var manifestUri = event.manifestUri;
-            var urisInOrder = event.urisInOrder;
-            var index = event.currentIndex;
-            openCanvas(uri, urisInOrder, index);
-
-            event.preventDefault();
-        }
-    });
-
-    repoBrowser.addEventListener('add_request', function(event) {
-        var resource = event.resource;
-        var manuscriptResource = databroker.getResource(event.manifestUri); // If the added resource was a manuscript, then
-        // this will be the same as resource
-
-        var manuscriptUri = manuscriptResource.getUri();
-
-        databroker.projectController.addResourceToProject(resource);
-        // if (workingResourcesViewer) {
-        //     workingResourcesViewer.loadManifest(databroker.currentProject);
-        // }
-    });
-
-    var repoBrowserContainer = jQuery('#repoBrowserModal .modal-body').get(0);
-    repoBrowser.render(repoBrowserContainer);
-};
 
 var GRID_BOTTOM_MARGIN = 20;
 var GRID_LEFT_MARGIN = 20;
@@ -191,15 +114,11 @@ function initWorkspace(basePath, username) {
    });
    jQuery('#atb-footer-controls').prepend(wrContainerParent);
 
-   //setupRepoBrowser(clientApp, wrContainerParent);
-   setupProjectViewer(clientApp, viewerGrid);
-   setupSearchViewer(clientApp);
-   // setupSyncManager(clientApp);
+   goog.global.projectViewer = new dm.ProjectViewer(clientApp);
+   goog.global.projectViewer.renderButtons('#projectViewerButtons');
+   goog.global.projectViewer.renderModals('body');
+
+   goog.global.searchViewer = new dm.SearchViewer(clientApp);
+   goog.global.searchViewer.render('body');
+   goog.global.searchViewer.addListenersToButton('#searchButton');
 }
-
-
-var createCanvasViewer = function(uri) {
-    var viewer = new dm.viewer.CanvasViewer(clientApp);
-    viewer.setCanvasByUri(uri, null, null, null, null);
-    return viewer;
-};

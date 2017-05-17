@@ -36,24 +36,12 @@
         </a>
         <span class="brand" >DM</span>
         <div class="nav-collapse collapse top-level-nav-collapse">
-            <!-- <form class="navbar-search pull-left">
-              <input type="text" class="search-query" placeholder="Search">
-            </form> -->
-            <ul class="nav pull-left">
-                <li id="js_save_button"></li>
-            </ul>
             <ul class="nav pull-right">
                 <li id="projectViewerButtons"></li>
                 <li id="searchButton" title="Search text documents in the current project">
                     <a href="#" role="button">
                         <span class="icon-search"></span>
                         Search
-                    </a>
-                </li>
-                <li id="repositories_button" title="Show resources available on the internet">
-                    <a href="#repoBrowserModal" role="button" data-toggle="modal">
-                        <span class="icon-globe"></span>
-                        External Repositories
                     </a>
                 </li>
                 <li class="dropdown" title="Change how many viewers are shown at a time">

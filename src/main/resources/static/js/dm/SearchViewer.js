@@ -142,7 +142,7 @@ dm.SearchViewer.prototype.openViewerForResource = function(resource) {
 
     if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
 
-    var viewer = dm.viewer.ViewerFactory.createViewerForUri(resource.uri, this.clientApp);
+    var viewer = this.clientApp.createViewerForUri(resource.uri);
     viewer.readOnlyClone = clone;
     container.setViewer(viewer);
 

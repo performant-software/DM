@@ -1,7 +1,6 @@
 goog.provide('dm.ui.AnnoTitlesList');
 
 goog.require('dm.resource.ResourceSummaryFactory');
-goog.require('dm.viewer.ViewerFactory');
 
 goog.require('goog.dom.DomHelper');
 goog.require('goog.structs.Map');
@@ -127,7 +126,7 @@ dm.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
         if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
 
         deferredResource.done(function() {
-            var viewer = dm.viewer.ViewerFactory.createViewerForUri(uri, this.clientApp);
+            var viewer = this.clientApp.createViewerForUri(uri);
             viewer.readOnlyClone = clone;
             container.setViewer(viewer);
 

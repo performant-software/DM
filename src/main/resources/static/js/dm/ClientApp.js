@@ -1,21 +1,27 @@
 goog.provide("dm.ClientApp");
 
-goog.require("dm.util.StyleUtil"); //used for a giant hack
-goog.require("dm.util.ReferenceUtil");
-
 goog.require('goog.events.EventTarget');
 goog.require('goog.events');
 goog.require('goog.ui.Popup');
-goog.require('dm.ui.Bezel');
 goog.require('goog.fx.dom.FadeIn');
 goog.require('goog.fx.dom.FadeOut');
 goog.require('goog.ui.CustomButton');
 goog.require('goog.ui.KeyboardShortcutHandler');
 
+goog.require('dm.data.Databroker');
+goog.require('dm.data.DataModel');
+
 goog.require('dm.events.LinkingModeEntered');
 goog.require('dm.events.LinkingModeExited');
 
-goog.require('dm.data.Databroker');
+goog.require('dm.viewer.TextEditor');
+goog.require('dm.viewer.CanvasViewer');
+goog.require('dm.viewer.AudioViewer');
+
+goog.require('dm.ui.Bezel');
+
+goog.require("dm.util.StyleUtil"); //used for a giant hack
+goog.require("dm.util.ReferenceUtil");
 
 dm.ClientApp = function (basePath, username, databroker) {
     this.domHelper = new goog.dom.DomHelper();
@@ -253,6 +259,35 @@ dm.ClientApp.prototype.onBeforeUnload = function (event) {
         method: "DELETE",
         async: false
     });
+};
+
+dm.ClientApp.prototype.createViewerForUri = function(uri) {
+    var databroker = this.databroker;
+    var resource = databroker.getResource(uri);
+
+    var viewer = null;
+
+    if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.textTypes)) {
+        viewer = new dm.viewer.TextEditor(clientApp);
+    }
+    else if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
+        viewer = new dm.viewer.CanvasViewer(clientApp);
+    }
+    else if (resource.hasAnyType(['dctypes:Audio', 'dms:AudioSegment'])) {
+        viewer = new dm.viewer.AudioViewer(clientApp);
+    }
+    else if (resource.hasAnyType('oa:SpecificResource')) {
+        var selector = resource.getOneResourceByProperty('oa:hasSelector');
+
+        if (selector.hasType('oa:TextQuoteSelector')) {
+            viewer = viewer = new dm.viewer.TextEditor(clientApp);
+        }
+        else if (selector.hasType('oa:SvgSelector')) {
+            viewer = new dm.viewer.CanvasViewer(clientApp);
+        }
+    }
+
+    return viewer;
 };
 
 $(function() {

@@ -1,44 +1,42 @@
 goog.provide('dm.viewer.ResourceListViewer');
 
-goog.require('dm.viewer.Viewer');
-
+goog.require('goog.array');
 goog.require('goog.dom');
 goog.require('goog.events');
-goog.require("dm.util.StyleUtil");
-
-goog.require("dm.util.ReferenceUtil");
-goog.require("dm.ClientApp");
-
 goog.require('goog.ui.ToolbarButton');
-goog.require('goog.array');
+
+goog.require("dm.util.StyleUtil");
+goog.require("dm.util.ReferenceUtil");
+goog.require('dm.viewer.Viewer');
+
 
 /**
  * dm.viewer.ResourceListViewer
  *
  * Displays a list of dm.resource.ResourceSummaryView objects
- * 
+ *
  * {dm.viewer.Finder} should now be used to display a list of resources
  *
  * @author tandres@drew.edu (Tim Andres)
  * @constructor
  * @extends {dm.viewer.Viewer}
- * 
+ *
  * @abstract
- * 
+ *
  * @param set_clientApp {dm.ClientApp}
  */
 dm.viewer.ResourceListViewer = function(set_clientApp) {
 	dm.viewer.Viewer.call(this, set_clientApp);
     this.currentPanel = null;
-    
+
     this.summaries = [];
-	
+
     this.title = " ";
     this.loading = false;
-    
+
     this.summariesById = {};
     this.renderedById = {};
-    
+
     this.summariesByGroup = {
         canvas: [],
         text: [],
@@ -54,9 +52,9 @@ dm.viewer.ResourceListViewer.prototype.addResourceSummary = function (resourceSu
     if (! (resourceSummary.resourceId in this.renderedById)) {
         this.summaries.push(resourceSummary);
         this.renderedById[resourceSummary.resourceId] = resourceSummary;
-        
+
         this.renderSummaryInProperGroup(resourceSummary);
-    } 
+    }
 };
 
 dm.viewer.ResourceListViewer.prototype.renderSummaryInProperGroup = function (resourceSummary) {
@@ -71,24 +69,24 @@ dm.viewer.ResourceListViewer.prototype.renderSummaryInProperGroup = function (re
             return index;
         }
     };
-    
+
     var domHelper = this.getDomHelper();
     var render = function (list, div) {
         var index = insert(list);
-        
+
         if (index <= 0) {
             var newDiv = resourceSummary.render();
-            
+
             jQuery(div).prepend(newDiv);
         }
         else {
             var previousSummaryDiv = list[index - 1].outerDiv;
             var newDiv = resourceSummary.render();
-            
+
             jQuery(previousSummaryDiv).after(newDiv);
         }
     };
-    
+
     if (resourceSummary.getResourceType() == 'Canvas') {
         render(this.summariesByGroup.canvas, this.typeSpecificDivs.canvases);
     }
@@ -140,12 +138,12 @@ dm.viewer.ResourceListViewer.prototype.addResourceSummaryById = function (resour
         [resourceId],
         function (resources) {
             var resource = resources[resourceId];
-            
+
             if (resource.getType() == 'user') {
                 this.addSummariesFromUserId(resourceId);
                 return;
             }
-                                 
+
             var summaries = this.createSummariesFromResource(resource);
 
             this.addResourceSummaries(summaries);
@@ -172,7 +170,7 @@ dm.viewer.ResourceListViewer.prototype.addResourceSummariesByIds = function (res
 
 dm.viewer.ResourceListViewer.prototype.addSummaryFromJSONData = function (jsonDataObj) {
     var resource = dm.resource.ResourceFactory.createFromJSON(jsonDataObj);
-    
+
     this.addResourceSummaries(this.createSummariesFromResource(resource))
 };
 
@@ -195,18 +193,18 @@ dm.viewer.ResourceListViewer.prototype.addSummariesFromJSONData = function (json
 dm.viewer.ResourceListViewer.prototype.addSummariesFromUserId = function (userId) {
     if (this.setLoading)
         this.setLoading(true);
-    
+
     this.webService.withResource(
         userId,
         function (resource) {
             if(resource.getType() != 'user') {
                 throw "userId does not refer to a user"
             }
-            
+
             var ids = resource.getChildIds();
 
             this.addResourceSummariesByIds(ids);
-            
+
             if (this.setLoading)
                 this.setLoading(false);
         },
@@ -229,7 +227,7 @@ dm.viewer.ResourceListViewer.prototype.render = function () {
     }
 
     dm.viewer.Viewer.prototype.render.call(this);
-    
+
     jQuery(this.rootDiv).addClass('atb-resourceviewer-wrapper');
 
     this.field = this.domHelper.createElement('div');
@@ -261,7 +259,7 @@ dm.viewer.ResourceListViewer.prototype.render = function () {
         markers: this.domHelper.createElement('div'),
         other: this.domHelper.createElement('div')
     };
-    
+
     this.field.appendChild(this.typeSpecificDivs.markerCollections);
     this.field.appendChild(this.typeSpecificDivs.canvases);
     this.field.appendChild(this.typeSpecificDivs.texts);
@@ -271,12 +269,12 @@ dm.viewer.ResourceListViewer.prototype.render = function () {
 };
 
 dm.viewer.ResourceListViewer.prototype.finishRender = function () {
-    
+
 };
 
 dm.viewer.ResourceListViewer.prototype.onPaneLoaded = function() {
 	this.syncTitle();
-	
+
 	if (this.scrollPosition) {
 		this.field.scrollTop = this.scrollPosition;
 	}
@@ -323,7 +321,7 @@ dm.viewer.ResourceListViewer.prototype.getTitle = function()
 dm.viewer.ResourceListViewer.prototype.refresh = function (e) {
     var newViewer = new this(this.clientApp, this.annoBodyId);
     this.getPanelContainer().setViewer_impl(newViewer);
-    
+
     e.stopPropagation();
 };
 
@@ -335,7 +333,7 @@ dm.viewer.ResourceListViewer.prototype.refresh = function (e) {
  */
 dm.viewer.ResourceListViewer.prototype.addToSummariesById_ = function (resourceSummary) {
     var id = resourceSummary.resourceId;
-    
+
     if (this.summariesById[id]) {
         this.summariesById[id].push(resourceSummary);
     }
@@ -353,11 +351,11 @@ dm.viewer.ResourceListViewer.prototype.addToSummariesById_ = function (resourceS
  */
 dm.viewer.ResourceListViewer.prototype.withAllSummariesMatchingId = function (id, f, opt_fScope) {
     var matchingSummaries = this.summariesById[id];
-    
+
     if (! matchingSummaries) {
         return;
     }
-    
+
     for (var i=0; i<matchingSummaries.length; i++) {
         f.call(opt_fScope || this, matchingSummaries[i]);
     }
@@ -373,7 +371,7 @@ dm.viewer.ResourceListViewer.prototype.forEachSummary = function (f, opt_fScope)
     for (var id in this.summariesById) {
         for (var i=0; i<this.summariesById[id].length; i++) {
             var summary = this.summariesById[id][i];
-            
+
             f.call(opt_fScope || this, summary);
         }
     }
@@ -381,15 +379,15 @@ dm.viewer.ResourceListViewer.prototype.forEachSummary = function (f, opt_fScope)
 
 dm.viewer.ResourceListViewer.prototype.visualDeleteSummaryInternal_ = function (summary) {
     goog.array.remove(this.summariesById[summary.resourceId], summary);
-    
+
     jQuery(summary.outerDiv).slideUp(400, function () {
                                      jQuery(summary.outerDiv).detach();
                                      });
-    
+
     if (summary.parent && summary.parent.getChildSummaries) {
         var parentCollection = summary.parent;
         parentCollection.deleteChildSummary(summary);
-        
+
         if (parentCollection.getNumChildSummaries() < 1 || summary.getView() == dm.resource.BODY_VIEW) {
             jQuery(parentCollection.outerDiv).slideUp(400, function () {
                                                       jQuery(parentCollection.outerDiv).detach();

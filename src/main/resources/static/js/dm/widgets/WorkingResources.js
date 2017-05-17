@@ -1,10 +1,6 @@
 goog.provide('dm.widgets.WorkingResources');
 
-goog.require('dm.util.StyleUtil');
-goog.require('dm.widgets.WorkingResourcesFolio');
-goog.require('dm.widgets.WorkingResourcesItem');
-goog.require('dm.widgets.WorkingResourcesManuscript');
-goog.require('dm.widgets.WorkingResourcesText');
+goog.require('goog.dom.classes');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.math.Coordinate');
 goog.require('goog.math.Size');
@@ -14,6 +10,13 @@ goog.require('goog.style');
 goog.require('goog.ui.Popup');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.Event');
+
+goog.require('dm.util.StyleUtil');
+
+goog.require('dm.widgets.WorkingResourcesFolio');
+goog.require('dm.widgets.WorkingResourcesItem');
+goog.require('dm.widgets.WorkingResourcesManuscript');
+goog.require('dm.widgets.WorkingResourcesText');
 
 /**
  * @constructor
