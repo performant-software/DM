@@ -1,26 +1,26 @@
 goog.provide("dm.Workspace");
 
-goog.require("atb.ClientApp");
+goog.require("dm.ClientApp");
 
-goog.require('atb.viewer.Finder');
-goog.require('atb.viewer.TextEditor');
-goog.require('atb.viewer.AudioViewer');
+goog.require('dm.viewer.Finder');
+goog.require('dm.viewer.TextEditor');
+goog.require('dm.viewer.AudioViewer');
 goog.require('goog.events');
 goog.require('goog.dom');
 goog.require('goog.Uri');
 goog.require('goog.Uri');
-goog.require('atb.viewer.RepoBrowser');
-goog.require('atb.widgets.WorkingResources');
+goog.require('dm.viewer.RepoBrowser');
+goog.require('dm.widgets.WorkingResources');
 goog.require('goog.ui.Dialog');
 
-goog.require('atb.viewer.ViewerGrid');
-goog.require('atb.viewer.ViewerContainer');
+goog.require('dm.viewer.ViewerGrid');
+goog.require('dm.viewer.ViewerContainer');
 
-goog.require("sc.ProjectManager");
-goog.require('sc.ProjectViewer');
+goog.require("dm.ProjectManager");
+goog.require('dm.ProjectViewer');
 
-goog.require('sc.SearchViewer');
-goog.require('sc.SyncManager');
+goog.require('dm.SearchViewer');
+goog.require('dm.SyncManager');
 
 
 var clientApp = null;
@@ -39,24 +39,24 @@ var scrollIntoView = function(element) {
 
 
 var setupProjectViewer = function(clientApp, viewerGrid) {
-    goog.global.projectViewer = new sc.ProjectViewer(clientApp);
+    goog.global.projectViewer = new dm.ProjectViewer(clientApp);
     projectViewer.renderButtons('#projectViewerButtons');
     projectViewer.renderModals('body');
 };
 
 var setupSearchViewer = function(clientApp) {
-    goog.global.searchViewer = new sc.SearchViewer(clientApp);
+    goog.global.searchViewer = new dm.SearchViewer(clientApp);
     searchViewer.render('body');
     searchViewer.addListenersToButton('#searchButton');
 };
 
 var setupSyncManager = function(clientApp) {
-    goog.global.syncManager = new sc.SyncManager(clientApp);
+    goog.global.syncManager = new dm.SyncManager(clientApp);
     syncManager.renderSaveButton('#js_save_button');
 };
 
 var setupRepoBrowser = function(clientApp, wrContainerParent) {
-    repoBrowser = new sc.RepoBrowser({
+    repoBrowser = new dm.RepoBrowser({
         repositories: [
             {
                 title: 'Stanford University',
@@ -82,7 +82,7 @@ var setupRepoBrowser = function(clientApp, wrContainerParent) {
         var uri = event.uri;
         var resource = event.resource;
 
-        if (resource.hasAnyType(sc.data.DataModel.VOCABULARY.canvasTypes)) {
+        if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
             var manifestUri = event.manifestUri;
             var urisInOrder = event.urisInOrder;
             var index = event.currentIndex;
@@ -130,9 +130,9 @@ var resizeViewerGrid = function() {
 };
 
 var setupUser = function(databroker, username) {
-    databroker.user = databroker.getResource(databroker.syncService.restUri(null, sc.data.SyncService.RESTYPE.user, username, null));
-    var userUrl = databroker.syncService.restUrl(null, sc.data.SyncService.RESTYPE.user, username, null);
-    databroker.quadStore.addQuad(new sc.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), sc.data.Term.wrapUri(userUrl)));
+    databroker.user = databroker.getResource(databroker.syncService.restUri(null, dm.data.SyncService.RESTYPE.user, username, null));
+    var userUrl = databroker.syncService.restUrl(null, dm.data.SyncService.RESTYPE.user, username, null);
+    databroker.quadStore.addQuad(new dm.data.Quad(databroker.user.bracketedUri, databroker.namespaces.expand('ore', 'isDescribedBy'), dm.data.Term.wrapUri(userUrl)));
 
     var selectProject = function() {
         if (goog.global.projectViewer) {
@@ -159,19 +159,19 @@ var setupUser = function(databroker, username) {
 
 function initWorkspace(basePath, username) {
    goog.global.baseUri = [ window.location.protocol, "//", window.location.host, basePath ].join("");
-   goog.global.databroker = new sc.data.Databroker({
-       'syncService': new sc.data.SyncService({
+   goog.global.databroker = new dm.data.Databroker({
+       'syncService': new dm.data.SyncService({
            'dmBaseUri': [goog.global.baseUri, "store"].join("/"),
            'restBasePath' : [basePath, "store"].join("/")
        })
    });
 
-   goog.global.clientApp = new atb.ClientApp(basePath, username, goog.global.databroker);
+   goog.global.clientApp = new dm.ClientApp(basePath, username, goog.global.databroker);
    goog.global.clientApp.renderLinkCreationUI();
 
    setupUser(databroker, username);
 
-   goog.global.viewerGrid = new atb.viewer.ViewerGrid();
+   goog.global.viewerGrid = new dm.viewer.ViewerGrid();
    viewerGrid.setDimensions(1, 2);
    viewerGrid.render(goog.dom.getElement('grid'));
 
@@ -199,7 +199,7 @@ function initWorkspace(basePath, username) {
 
 
 var createCanvasViewer = function(uri) {
-    var viewer = new atb.viewer.CanvasViewer(clientApp);
+    var viewer = new dm.viewer.CanvasViewer(clientApp);
     viewer.setCanvasByUri(uri, null, null, null, null);
     return viewer;
 };

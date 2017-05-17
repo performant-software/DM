@@ -35,17 +35,16 @@ info("JS Dependencies (yarn)")
 call(["yarn"])
 
 info("Google Closure Dependencies")
-closure_build("atb-deps.js", [
+closure_build("dm-goog-deps.js", [
     "closure-library/closure/bin/build/depswriter.py",
-    "--root_with_prefix=atb ../../../atb/",
     "--root_with_prefix=jquery ../../../jquery",
-    "--root_with_prefix=sc ../../../sc",
     "--root_with_prefix=fabric ../../../fabric",
-    "--root_with_prefix=n3 ../../../n3"
+    "--root_with_prefix=n3 ../../../n3",
+    "--root_with_prefix=dm ../../../dm"
 ])
 
 info("Google Closure Compiler")
-closure_build("all-js-code.js", [
+closure_build("dm-goog.js", [
     "closure-library/closure/bin/build/closurebuilder.py",
     "--root=.",
     "--input=workspace.js",
