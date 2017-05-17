@@ -17,16 +17,15 @@ goog.require('dm.data.DataModel');
 goog.require('dm.data.SyncService');
 goog.require('dm.data.RDFQueryParser');
 goog.require('dm.data.N3Parser');
+goog.require('dm.data.NamespaceManager');
+goog.require('dm.data.ProjectController');
 goog.require('dm.data.RDFQuerySerializer');
+goog.require('dm.data.SearchClient');
+goog.require('dm.data.Term');
 goog.require('dm.data.TurtleSerializer');
 
 goog.require('dm.util.DefaultDict');
 goog.require('dm.util.DeferredCollection');
-goog.require('dm.data.NamespaceManager');
-goog.require('dm.data.Term');
-goog.require('dm.data.ProjectController');
-goog.require('dm.data.SearchClient');
-
 
 /**
  * @class
@@ -35,17 +34,17 @@ goog.require('dm.data.SearchClient');
  *
  * @author tandres@drew.edu (Tim Andres)
  */
-dm.data.Databroker = function(options) {
+dm.data.Databroker = function(basePath) {
     goog.events.EventTarget.call(this);
 
-    this.options = {};
-    goog.object.extend(this.options, dm.data.Databroker.DEFAULT_OPTIONS, options || {});
+    this.namespaces = new dm.data.NamespaceManager();
+    this.quadStore = new dm.data.QuadStore();
 
-    this.corsEnabledDomains = new goog.structs.Set(this.options.corsEnabledDomains);
-
-    this.namespaces = this.options.namespaces || new dm.data.NamespaceManager();
-    this.quadStore = this.options.quadStore || new dm.data.QuadStore();
-    this.syncService = this.options.syncService || new dm.data.SyncService();
+    this.baseUri = [window.location.protocol, "//", window.location.host, basePath ].join("");
+    this.syncService = new dm.data.SyncService({
+        'dmBaseUri': [ this.baseUri, "store"].join("/"),
+        'restBasePath' : [basePath, "store"].join("/")
+    });
     this.syncService.databroker = this;
 
     this.parsers = [dm.data.N3Parser, dm.data.RDFQueryParser];
@@ -69,7 +68,7 @@ dm.data.Databroker = function(options) {
     this.newQuadStore = new dm.data.QuadStore();
     this.deletedQuadsStore = new dm.data.QuadStore();
 
-    this.user = this.options.user;
+    this.user = null;
 
     this.newResourceUris = new goog.structs.Set();
     this.deletedResourceUris = new goog.structs.Set();
@@ -84,93 +83,6 @@ dm.data.Databroker = function(options) {
 goog.inherits(dm.data.Databroker, goog.events.EventTarget);
 
 dm.data.Databroker.SYNC_INTERVAL = 60 * 1000;
-
-dm.data.Databroker.DEFAULT_OPTIONS = {
-    proxiedUrlGenerator: function(url) {
-        return url;
-    },
-    imageSourceGenerator: function(url, opt_width, opt_height) {
-        if (url.indexOf('https://stacks-test.stanford.edu') != -1) {
-            url = url.replace('https://stacks-test.stanford.edu', 'https://stacks.stanford.edu');
-        }
-
-        if (url.indexOf('stacks.stanford.edu') != -1) {
-            url = url.replace('http://', 'https://');
-
-            if (url.indexOf('/image/app/') == -1)
-                url = url.replace('/image/', '/image/app/');
-        }
-
-        if (opt_width && opt_height) {
-            if (window.devicePixelRatio) {
-                opt_width *= window.devicePixelRatio;
-                opt_height *= window.devicePixelRatio;
-            }
-
-            if (url.indexOf('/full/full/0/') == -1) {
-                url += '?';
-                if (opt_width)
-                    url += 'w=' + String(Math.round(opt_width)) + '&';
-                if (opt_height)
-                    url += 'h=' + String(Math.round(opt_height)) + '&';
-            }
-            else {
-                url = url.replace('/full/full/0/', '/full/!' + Math.round(opt_width) + ',' + Math.round(opt_height) + '/0/');
-            }
-        }
-
-        return url;
-    },
-    corsEnabledDomains: [],
-    user: null
-};
-
-/**
- * Returns a proxied url without checking if proxying is necessary.
- * @private
- * @param  {string} url The url to proxy.
- * @return {string} The proxied url.
- */
-dm.data.Databroker.prototype._proxyUrl = function(url) {
-    return this.options.proxiedUrlGenerator(url);
-};
-
-/**
- * Checks to see if the url requires a proxy for ajax access, and
- * returns a proxied url if necessary, or the same url if not.
- * @param  {string} url The url to proxy.
- * @return {[type]} The proxied (or original) url.
- */
-dm.data.Databroker.prototype.proxyUrl = function(url) {
-    if (this.shouldProxy(url)) {
-        return this._proxyUrl(url);
-    }
-    else {
-        return url;
-    }
-};
-
-/**
- * Determines whether a proxy is required to access the given url with
- * ajax. Returns true iff the host of the url does not match the window's
- * location, or the domain of the url was specified as sending the appropriate
- * CORS headers in the databroker's {corsEnabledDomains} option.
- * @param  {string} url The url to check.
- * @return {boolean} Whether proxying is required.
- */
-dm.data.Databroker.prototype.shouldProxy = function(url) {
-    var uri = new goog.Uri(url);
-
-    if (this.corsEnabledDomains.contains(uri.getDomain())) {
-        return false;
-    }
-    else {
-        var hostname = window.location.hostname;
-        var port = window.location.port;
-
-        return !(uri.getDomain() == hostname && uri.getPort() == port);
-    }
-};
 
 /**
  * @return {dm.data.NamespaceManager} The namespace utility object associated with the data store.
@@ -196,7 +108,7 @@ dm.data.Databroker.prototype.fetchRdf = function(url, handler) {
 
     jQuery.ajax({
         type: 'GET',
-        url: this.proxyUrl(url),
+        url: url,
         headers: {
             'Accept': [
                 'text/turtle',
@@ -768,7 +680,20 @@ dm.data.Databroker.prototype.getListUrisInOrder = function(listUri) {
 };
 
 dm.data.Databroker.prototype.getImageSrc = function(uri, opt_width, opt_height) {
-    return this.options.imageSourceGenerator(uri, opt_width, opt_height);
+    if (opt_width && opt_height) {
+        if (window.devicePixelRatio) {
+            opt_width *= window.devicePixelRatio;
+            opt_height *= window.devicePixelRatio;
+        }
+
+        uri += '?';
+        if (opt_width)
+            uri += 'w=' + String(Math.round(opt_width)) + '&';
+        if (opt_height)
+            uri += 'h=' + String(Math.round(opt_height)) + '&';
+    }
+
+    return uri;
 };
 
 dm.data.Databroker.prototype.createUuid = function() {

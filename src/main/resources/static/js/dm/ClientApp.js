@@ -17,6 +17,7 @@ goog.require('dm.events.LinkingModeExited');
 goog.require('dm.viewer.TextEditor');
 goog.require('dm.viewer.CanvasViewer');
 goog.require('dm.viewer.AudioViewer');
+goog.require('dm.viewer.ViewerGrid');
 
 goog.require('dm.ui.Bezel');
 
@@ -27,18 +28,19 @@ dm.ClientApp = function (basePath, username, databroker) {
     this.domHelper = new goog.dom.DomHelper();
 
     this.databroker = databroker;
+    this.viewerGrid = new dm.viewer.ViewerGrid();
 
     this.eventDispatcher = new goog.events.EventTarget();
 
     this.username = username;
 
     this.basePath = basePath;
-	this.styleRoot = basePath + "/static/css/";
+    this.styleRoot = basePath + "/static/css/";
 
-	dm.util.StyleUtil.DEFAULT_CSS_ROOT = this.styleRoot; // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
+    dm.util.StyleUtil.DEFAULT_CSS_ROOT = this.styleRoot; // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
 
     this.annotationBody = null;
-	this.activeAnnotation = null;
+    this.activeAnnotation = null;
     this.createdAnnoLinkIds = [];
 
     this.popupsByName = {};

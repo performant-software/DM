@@ -39,7 +39,40 @@ dm.viewer.ViewerGrid = function(opt_domHelper) {
          this._onDragStart);
    goog.events.listen(this.dlg, goog.fx.DragListGroup.EventType.DRAGEND,
          this._onWrapperDragEnd.bind(this));
+
+    $("#1x1_layout_button").click(function(){
+        this.setDimensions(1,1);
+    }.bind(this));
+
+    $("#1x2_layout_button").click(function(){
+        this.setDimensions(1,2);
+    }.bind(this));
+
+    $("#1x3_layout_button").click(function(){
+        this.setDimensions(1,3);
+    }.bind(this));
+
+    $("#2x2_layout_button").click(function(){
+        this.setDimensions(2,2);
+    }.bind(this));
+
+    $("#2x3_layout_button").click(function(){
+        this.setDimensions(2,3);
+    }.bind(this));
+
+    $("#3x3_layout_button").click(function(){
+        this.setDimensions(3,3);
+    }.bind(this));
+
+    $("#3x4_layout_button").click(function(){
+        this.setDimensions(3,4);
+    }.bind(this));
+
+    $("#4x4_layout_button").click(function(){
+        this.setDimensions(4,4);
+    }.bind(this));
 };
+
 goog.inherits(dm.viewer.ViewerGrid, goog.events.EventTarget);
 
 dm.viewer.ViewerGrid.prototype.getElement = function() {

@@ -11,8 +11,6 @@ goog.require('dm.data.SyncService');
 goog.require('dm.data.Quad');
 goog.require('dm.data.Term');
 
-goog.require('dm.viewer.ViewerGrid');
-
 goog.require("dm.ClientApp");
 goog.require('dm.ProjectViewer');
 goog.require('dm.SearchViewer');
@@ -54,26 +52,12 @@ var setupUser = function(databroker, username) {
 };
 
 function initWorkspace(basePath, username) {
-   goog.global.baseUri = [ window.location.protocol, "//", window.location.host, basePath ].join("");
-   goog.global.databroker = new dm.data.Databroker({
-       'syncService': new dm.data.SyncService({
-           'dmBaseUri': [goog.global.baseUri, "store"].join("/"),
-           'restBasePath' : [basePath, "store"].join("/")
-       })
-   });
+   goog.global.databroker = new dm.data.Databroker(basePath);
 
    goog.global.clientApp = new dm.ClientApp(basePath, username, goog.global.databroker);
 
-   setupUser(databroker, username);
-
-   goog.global.viewerGrid = new dm.viewer.ViewerGrid();
-   goog.global.clientApp.viewerGrid = goog.global.viewerGrid;
+   setupUser(goog.global.databroker, username);
 
    goog.global.projectViewer = new dm.ProjectViewer(goog.global.clientApp);
-   goog.global.projectViewer.renderButtons('#projectViewerButtons');
-   goog.global.projectViewer.renderModals('body');
-
    goog.global.searchViewer = new dm.SearchViewer(goog.global.clientApp);
-   goog.global.searchViewer.render('body');
-   goog.global.searchViewer.addListenersToButton('#searchButton');
 }

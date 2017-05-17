@@ -94,13 +94,15 @@ dm.ProjectViewer = function(clientApp, opt_domHelper) {
       });
    }, 10);
 
-
     goog.events.listen(this.projectController, 'projectSelected', this._onProjectSelected, false, this);
+
+    this.renderButtons('#projectViewerButtons');
+    this.renderModals('body');
 };
 
 dm.ProjectViewer.prototype.currentProjectPublicUrl = function() {
     return [
-        goog.global.baseUri,
+        this.databroker.baseUri,
         "workspace",
         "#" + (this.projectController.currentProjectShortcut() || "")
     ].join("/");
@@ -844,9 +846,9 @@ dm.ProjectViewer.prototype.switchToProject = function(project) {
         }.bind(this));
     }.bind(this);
 
-    if (!viewerGrid.isEmpty()) {
+    if (!this.viewerGrid.isEmpty()) {
         if (confirm('Are you sure you want to switch projects? All your open resources from the current project will be closed.')) {
-            viewerGrid.closeAllContainers();
+            this.viewerGrid.closeAllContainers();
             performSwitch();
             return true;
         }

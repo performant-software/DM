@@ -29,6 +29,8 @@ dm.SearchViewer = function(clientApp, opt_domHelper) {
 
     this.element = this.domHelper.createDom('div', {'class': 'modal hide fade sc-SearchViewer-modal'});
     this._buildModal();
+    this.render('body');
+    this.addListenersToButton('#searchButton');
 };
 
 dm.SearchViewer.prototype.getElement = function() {
