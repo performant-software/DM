@@ -31,27 +31,6 @@ var scrollIntoView = function(element) {
     $(window).scrollTop(offsetTop);
 };
 
-
-var GRID_BOTTOM_MARGIN = 20;
-var GRID_LEFT_MARGIN = 20;
-var GRID_RIGHT_MARGIN = 20;
-
-var resizeViewerGrid = function() {
-    var height = jQuery(window).height() - jQuery(viewerGrid.getElement()).offset().top - GRID_BOTTOM_MARGIN;
-    var width = jQuery(window).width() - GRID_LEFT_MARGIN - GRID_RIGHT_MARGIN;
-
-    viewerGrid.resize(width, height);
-
-    if ($(window).width() > 1275 && $(window).height() > 825) {
-        $('#3x4_layout_button').show();
-        $('#4x4_layout_button').show();
-    }
-    else {
-        $('#3x4_layout_button').hide();
-        $('#4x4_layout_button').hide();
-    }
-};
-
 var setupUser = function(databroker, username) {
     databroker.user = databroker.getResource(databroker.syncService.restUri(null, dm.data.SyncService.RESTYPE.user, username, null));
     var userUrl = databroker.syncService.restUrl(null, dm.data.SyncService.RESTYPE.user, username, null);
@@ -95,13 +74,7 @@ function initWorkspace(basePath, username) {
    setupUser(databroker, username);
 
    goog.global.viewerGrid = new dm.viewer.ViewerGrid();
-   viewerGrid.setDimensions(1, 2);
-   viewerGrid.render(goog.dom.getElement('grid'));
-
    clientApp.viewerGrid = goog.global.viewerGrid;
-
-   resizeViewerGrid();
-   jQuery(window).bind('resize', resizeViewerGrid);
 
    glasspane = goog.dom.createDom('div', {
       'class' : 'frosted-glasspane'

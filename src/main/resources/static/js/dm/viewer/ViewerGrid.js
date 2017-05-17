@@ -4,6 +4,7 @@ goog.require('goog.structs.Set');
 goog.require('goog.structs.Map');
 goog.require('goog.array');
 goog.require('goog.math.Size');
+goog.require('goog.dom');
 goog.require('goog.dom.DomHelper');
 goog.require('goog.events');
 goog.require('goog.events.EventTarget');
@@ -21,8 +22,10 @@ dm.viewer.ViewerGrid = function(opt_domHelper) {
       'class' : 'atb-ViewerGrid row-fluid'
    });
 
-   this.setDimensions(1, 1);
+   this.setDimensions(1, 2);
+   this.render(goog.dom.getElement('grid'));
 
+   this._onWindowResize();
    goog.events.listen(this.domHelper.getWindow(), 'resize',
          this._onWindowResize, false, this);
 
@@ -183,8 +186,27 @@ dm.viewer.ViewerGrid.prototype.resizeAllContainers = function() {
 };
 
 dm.viewer.ViewerGrid.prototype._onWindowResize = function(event) {
-   this.resizeAllContainers();
-   window.setTimeout(this.resizeAllContainers.bind(this), 20);
+    var GRID_BOTTOM_MARGIN = 20;
+    var GRID_LEFT_MARGIN = 20;
+    var GRID_RIGHT_MARGIN = 20;
+
+    var windowHeight = jQuery(window).height();
+    var windowWidth = jQuery(window).width();
+
+    var height = windowHeight - jQuery(this.getElement()).offset().top - GRID_BOTTOM_MARGIN;
+    var width =  windowWidth - GRID_LEFT_MARGIN - GRID_RIGHT_MARGIN;
+
+    this.resize(width, height);
+    this._setAllContainerDimensions();
+
+    if (windowWidth > 1275 && windowHeight > 825) {
+        $('#3x4_layout_button').show();
+        $('#4x4_layout_button').show();
+    }
+    else {
+        $('#3x4_layout_button').hide();
+        $('#4x4_layout_button').hide();
+    }
 };
 
 dm.viewer.ViewerGrid.prototype._onBeforeDragStart = function(event) {
