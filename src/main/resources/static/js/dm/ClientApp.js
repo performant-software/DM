@@ -293,21 +293,3 @@ dm.ClientApp.prototype.createViewerForUri = function(uri) {
 
     return viewer;
 };
-
-$(function() {
-   var username = $("#logged-in-user").text();
-   if (username.indexOf("guest_") == 0 ) {
-      $("#logged-in-user").text("Guest");
-      $(".sc-ProjectViewer-createProjectButton").hide();
-      $(".sc-ProjectViewer-modal .nav-pills").hide();
-   }
-
-   $(window).on('beforeunload', function(){
-      if ( $("#logged-in-user").text() === "Guest" ) {
-          $.ajax({
-              url: '/accounts/logout/',
-              async:false
-          });
-       }
-   });
-});
