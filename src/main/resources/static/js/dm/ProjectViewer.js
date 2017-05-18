@@ -17,6 +17,7 @@ dm.ProjectViewer = function(clientApp, opt_domHelper) {
     this.databroker = clientApp.databroker;
     this.projectController = this.databroker.projectController;
     this.viewerGrid = clientApp.viewerGrid;
+
     var user = this.databroker.user;
     this.isGuest = (user.uri.split("/").pop() === "guest");
 
@@ -30,6 +31,8 @@ dm.ProjectViewer = function(clientApp, opt_domHelper) {
 
     this.modalElement = this.domHelper.createDom('div', {'class': 'modal hide fade sc-ProjectViewer-modal'});
     this._buildModalElement();
+
+    this.setupUser();
 
     var ss = this.databroker.syncService;
     var pc = this.projectController;
@@ -1063,4 +1066,25 @@ dm.ProjectViewer.prototype.createNewText = function() {
 
     this.openViewerForResource(textResource);
     this.hideModal();
+};
+
+dm.ProjectViewer.prototype.setupUser = function() {
+    var projectController = this.databroker.projectController;
+    var selectProject = function() {
+        this.updateButtonUI();
+        projectController.autoSelectProject();
+        if (projectController.currentProject) {
+            var deferredProject = projectController.currentProject.defer();
+
+            var updateUI = function() {
+                this.updateButtonUI();
+                this.updateModalUI();
+                this.showModal();
+            }.bind(this);
+
+            deferredProject.progress(updateUI).done(updateUI);
+        }
+    }.bind(this);
+
+    this.databroker.user.defer().done(selectProject);
 };

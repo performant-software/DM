@@ -34,16 +34,19 @@ goog.require('dm.util.DeferredCollection');
  *
  * @author tandres@drew.edu (Tim Andres)
  */
-dm.data.Databroker = function(basePath) {
+dm.data.Databroker = function(clientApp) {
     goog.events.EventTarget.call(this);
+
+    this.clientApp = clientApp;
 
     this.namespaces = new dm.data.NamespaceManager();
     this.quadStore = new dm.data.QuadStore();
 
-    this.baseUri = [window.location.protocol, "//", window.location.host, basePath ].join("");
+    this.basePath = this.clientApp.basePath;
+    this.baseUri = [window.location.protocol, "//", window.location.host, this.basePath ].join("");
     this.syncService = new dm.data.SyncService({
         'dmBaseUri': [ this.baseUri, "store"].join("/"),
-        'restBasePath' : [basePath, "store"].join("/")
+        'restBasePath' : [this.basePath, "store"].join("/")
     });
     this.syncService.databroker = this;
 
@@ -68,8 +71,6 @@ dm.data.Databroker = function(basePath) {
     this.newQuadStore = new dm.data.QuadStore();
     this.deletedQuadsStore = new dm.data.QuadStore();
 
-    this.user = null;
-
     this.newResourceUris = new goog.structs.Set();
     this.deletedResourceUris = new goog.structs.Set();
 
@@ -78,6 +79,15 @@ dm.data.Databroker = function(basePath) {
     this.dataModel = new dm.data.DataModel(this);
     this.projectController = new dm.data.ProjectController(this);
     this.searchClient = new dm.data.SearchClient(this);
+
+    this.user = this.getResource(this.syncService.restUri(null, dm.data.SyncService.RESTYPE.user, clientApp.username, null));
+    var userUrl = this.syncService.restUrl(null, dm.data.SyncService.RESTYPE.user, clientApp.username, null);
+
+    this.quadStore.addQuad(new dm.data.Quad(
+        this.user.bracketedUri,
+        this.namespaces.expand('ore', 'isDescribedBy'),
+        dm.data.Term.wrapUri(userUrl)
+    ));
 };
 
 goog.inherits(dm.data.Databroker, goog.events.EventTarget);

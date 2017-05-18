@@ -35,7 +35,8 @@
     </div>
 </div>
 <script type="text/javascript" >
-    initWorkspace("${cp}", [#if user?has_content]"${user.name}"[#else]null[/#if]);
+   goog.require("dm.ClientApp");
+   goog.global.clientApp = new dm.ClientApp("${cp}", [#if user?has_content]"${user.name}"[#else]null[/#if]);
 </script>
 
 [/@base.page]

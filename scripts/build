@@ -47,7 +47,7 @@ info("Google Closure Compiler")
 closure_build("dm-goog.js", [
     "closure-library/closure/bin/build/closurebuilder.py",
     "--root=.",
-    "--input=workspace.js",
+    "--input=dm/ClientApp.js",
     "--output_mode=compiled",
     "--compiler_jar=closure-library/closure/bin/build/compiler.jar",
     "--compiler_flags=--language_in=ECMASCRIPT5"

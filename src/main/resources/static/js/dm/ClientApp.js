@@ -1,15 +1,24 @@
 goog.provide("dm.ClientApp");
 
+goog.require('goog.dom');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events');
-goog.require('goog.ui.Popup');
 goog.require('goog.fx.dom.FadeIn');
 goog.require('goog.fx.dom.FadeOut');
 goog.require('goog.ui.CustomButton');
+goog.require('goog.ui.Dialog');
 goog.require('goog.ui.KeyboardShortcutHandler');
+goog.require('goog.ui.Popup');
+goog.require('goog.Uri');
+
+goog.require('dm.ProjectViewer');
+goog.require('dm.SearchViewer');
 
 goog.require('dm.data.Databroker');
 goog.require('dm.data.DataModel');
+goog.require('dm.data.Quad');
+goog.require('dm.data.SyncService');
+goog.require('dm.data.Term');
 
 goog.require('dm.events.LinkingModeEntered');
 goog.require('dm.events.LinkingModeExited');
@@ -24,17 +33,19 @@ goog.require('dm.ui.Bezel');
 goog.require("dm.util.StyleUtil"); //used for a giant hack
 goog.require("dm.util.ReferenceUtil");
 
-dm.ClientApp = function (basePath, username, databroker) {
-    this.domHelper = new goog.dom.DomHelper();
+dm.ClientApp = function (basePath, username) {
+    this.basePath = basePath;
+    this.username = username;
 
-    this.databroker = databroker;
+    this.domHelper = new goog.dom.DomHelper();
     this.viewerGrid = new dm.viewer.ViewerGrid();
+
+    this.databroker = goog.global.databroker = new dm.data.Databroker(this);
+    this.projectViewer = goog.global.projectViewer = new dm.ProjectViewer(this);
+    this.searchViewer = goog.global.searchViewer = new dm.SearchViewer(this);
 
     this.eventDispatcher = new goog.events.EventTarget();
 
-    this.username = username;
-
-    this.basePath = basePath;
     this.styleRoot = basePath + "/static/css/";
 
     dm.util.StyleUtil.DEFAULT_CSS_ROOT = this.styleRoot; // HACK -- moved over from panel manager!!, also, was a giant hack there, too!
