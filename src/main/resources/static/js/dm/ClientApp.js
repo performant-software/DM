@@ -293,3 +293,11 @@ dm.ClientApp.prototype.createViewerForUri = function(uri) {
 
     return viewer;
 };
+
+dm.ClientApp.prototype.scrollIntoView = function(element) {
+    var offsetTop = $(element).offset().top;
+    offsetTop -= $("#main-nav").outerHeight();
+    if (offsetTop < 0) offsetTop = 0;
+
+    $(window).scrollTop(offsetTop);
+};

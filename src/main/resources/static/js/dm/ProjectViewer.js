@@ -875,7 +875,7 @@ dm.ProjectViewer.prototype.openViewerForResource = function(resource) {
     var container = new dm.viewer.ViewerContainer(this.domHelper);
     this.viewerGrid.addViewerContainer(resource.uri, container);
 
-    if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+    this.clientApp.scrollIntoView(container.getElement());
 
     var viewer = this.clientApp.createViewerForUri(resource.uri);
     viewer.readOnlyClone = clone;

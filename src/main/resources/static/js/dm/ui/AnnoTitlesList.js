@@ -123,7 +123,7 @@ dm.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
         var container = new dm.viewer.ViewerContainer(this.domHelper);
         viewerGrid.addViewerContainerAt(viewerUri, container, viewerGrid.indexOf(this.viewer.container) + 1);
 
-        if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+        this.clientApp.scrollIntoView(container.getElement());
 
         deferredResource.done(function() {
             var viewer = this.clientApp.createViewerForUri(uri);

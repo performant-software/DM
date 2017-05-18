@@ -201,7 +201,7 @@ dm.viewer.Viewer.prototype.getContainer = function() {
 dm.viewer.Viewer.prototype.openRelatedViewer = function(uri, viewer) {
    if ( this.getContainer().grid.isOpen(uri)) {
       var container = this.getContainer().grid.getContainer(uri);
-      if (goog.isFunction(scrollIntoView)) scrollIntoView(container.getElement());
+      this.clientApp.scrollIntoView(container.getElement());
    } else {
       var container = new dm.viewer.ViewerContainer(this.getDomHelper());
       var idx = this.container.getIndex() + 1;

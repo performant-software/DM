@@ -15,14 +15,6 @@ goog.require("dm.ClientApp");
 goog.require('dm.ProjectViewer');
 goog.require('dm.SearchViewer');
 
-var scrollIntoView = function(element) {
-    var offsetTop = $(element).offset().top;
-    offsetTop -= $("#main-nav").outerHeight();
-    if (offsetTop < 0) offsetTop = 0;
-
-    $(window).scrollTop(offsetTop);
-};
-
 var setupUser = function(databroker, username) {
     databroker.user = databroker.getResource(databroker.syncService.restUri(null, dm.data.SyncService.RESTYPE.user, username, null));
     var userUrl = databroker.syncService.restUrl(null, dm.data.SyncService.RESTYPE.user, username, null);
