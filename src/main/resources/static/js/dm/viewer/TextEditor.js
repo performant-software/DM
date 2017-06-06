@@ -647,7 +647,7 @@ dm.viewer.TextEditor.prototype.makeUneditable = function() {
       t.find(".goog-toolbar-menu-button").hide();
 			t.find(".goog-toolbar-separator").hide();
 
-      if (this.field.getCleanContents().length == 0) {
+      if (this.field.getCleanContents().length == 0 && $("#load-status-" + this.useID).length == 0) {
          $(this.rootDiv).append("<div class='text-edit-load-status' id='load-status-"+this.useID+"'>Loading...</div>");
       }
 
@@ -669,6 +669,7 @@ dm.viewer.TextEditor.prototype.makeUneditable = function() {
 };
 
 dm.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
+	  console.log("loadResourceByUri");
     var resource = this.databroker.getResource(uri);
 
     this.loadingContent = true;
@@ -689,9 +690,9 @@ dm.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                     textEditorAnnotate.addListenersToAllHighlights();
                     $("#save-status-"+this.useID).text("Loaded");
 
-                    var loadStatus =  $("#load-status-"+this.useID);
-                    loadStatus.text("Loaded");
-                    loadStatus.fadeOut(500, function() {
+										var loadStatus =  $("#load-status-" + this.useID);
+										loadStatus.text("Loaded");
+										loadStatus.fadeOut(500, function() {
                        loadStatus.remove();
                     });
 

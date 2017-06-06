@@ -5,7 +5,7 @@ goog.require('goog.structs.Map');
 
 /**
  * @author  tandres@drew.edu (Tim Andres)
- * 
+ *
  * @fileOverview
  * Utility functions for querying rdf using the Shared Canvas data model.
  */
@@ -98,7 +98,7 @@ dm.data.DataModel.prototype.findAnnosReferencingResource = function(resourceUri,
  */
 dm.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(resourceUri, opt_annoType) {
     resourceUri = dm.data.Term.wrapUri(resourceUri);
-    
+
     var annoIds = this.databroker.getUrisSetWithProperty(dm.data.DataModel.VOCABULARY.hasTarget, resourceUri);
 
     if (! opt_annoType) {
@@ -127,7 +127,7 @@ dm.data.DataModel.prototype.findAnnosReferencingResourceAsTarget = function(reso
  */
 dm.data.DataModel.prototype.findAnnosReferencingResourceAsBody = function(resourceUri, opt_annoType) {
     resourceUri = dm.data.Term.wrapUri(resourceUri);
-    
+
     var annoIds = this.databroker.getUrisSetWithProperty(dm.data.DataModel.VOCABULARY.hasBody, resourceUri);
 
     if (! opt_annoType) {
@@ -182,7 +182,7 @@ dm.data.DataModel.prototype.findCanvasImageUris = function(canvasUri) {
 
 dm.data.DataModel.prototype.getResourcePartUris = function(uri) {
     uri = dm.data.Term.wrapUri(uri);
-    
+
     return dm.data.Term.unwrapUri(
         this.databroker.getUrisWithProperty(dm.data.DataModel.VOCABULARY.isPartOf, uri)
     );
@@ -479,7 +479,7 @@ dm.data.DataModel.prototype.findQuadsToSyncForAnno = function(uri, opt_quadStore
    for (var i=0, len=targetUris.length; i<len; i++) {
       var target = this.databroker.getResource(targetUris[i]);
       quadsToPost.addAll(quadStore.queryReturningSet(target.bracketedUri, null, null, null));
-       
+
       if (target.hasType('oa:SpecificResource')) {
          goog.structs.forEach(target.getProperties('oa:hasSelector'), function(selectorUri) {
             quadsToPost.addAll(quadStore.queryReturningSet(dm.data.Term.wrapUri(selectorUri), null, null, null));
@@ -564,7 +564,7 @@ dm.data.DataModel.prototype.findQuadsToSyncForSvgSelector = function(selector, o
     var specificResourceUri = quadStore.subjectsMatchingQuery(null, this.databroker.namespaces.expand('oa', 'hasSelector'), selector.bracketedUri, null)[0];
 
     var quads = quadStore.query(selector.bracketedUri, null, null, null);
-    
+
     if (specificResourceUri) {
         quads = quads.concat(quadStore.query(specificResourceUri, null, null, null));
     }

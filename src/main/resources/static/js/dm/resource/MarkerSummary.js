@@ -43,12 +43,12 @@ dm.resource.MarkerSummary.prototype.decorate = function() {
    this.viewport.render(this.imageDiv[0]);
 
    var showFeature = function(canvas) {
-      
+
       var txt = this.databroker.dataModel.getTitle(canvas.uri);
-      $("#img-title").text(txt);
-  
+      $(this.div).find(".img-title").text(txt);
+
       $(".atb-markersummary-loadingSpinner").removeClass("atb-markersummary-loadingSpinner");
-      
+
       var featureUri = this.resource.getOneProperty('oa:hasSelector');
       var feature = canvas.getFabricObjectByUri(featureUri);
 
@@ -62,6 +62,6 @@ dm.resource.MarkerSummary.prototype.decorate = function() {
    deferredCanvas.progress(showFeature);
 
    $(this.div).append(this.imageDiv);
-   var title = $("<div id='img-title'></div>");
+   var title = $("<div class='img-title'></div>");
    $(this.div).append(title);
 };
