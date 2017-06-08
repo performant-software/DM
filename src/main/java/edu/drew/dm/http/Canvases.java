@@ -114,18 +114,6 @@ public class Canvases {
         return store.merge(model);
     }
 
-    @Path("/{uri}/rename")
-    @POST
-    public Model rename(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @FormParam("title") @DefaultValue("") String title) {
-        if (!title.isEmpty()) {
-            return store.merge(Models.create().createResource(uri)
-                    .addProperty(RDFS.label, title)
-                    .addProperty(DC_11.title, title)
-                    .getModel());
-        }
-        return Models.create();
-    }
-
     public static Model externalize(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, SharedCanvas.Canvas).forEachRemaining(canvas -> {
             model.listSubjectsWithProperty(OpenArchivesTerms.aggregates, canvas).forEachRemaining(project -> {
