@@ -226,36 +226,11 @@ dm.viewer.CanvasViewer.prototype.onCanvasAdded = function(event) {
 };
 
 dm.viewer.CanvasViewer.prototype.setTitle = function(title) {
-   var canvas = this.viewer.mainViewport.canvas;
-   var canvasResource = this.databroker.getResource(canvas.getUri());
-   var orig = this.databroker.dataModel.getTitle(canvasResource);
-   if (orig != title) {
-      this.setDisplayTitle(title);
-
-      var resource = this.databroker.getResource(canvas.getUri());
-
-this.databroker.dataModel.setTitle(resource, title);
-
-      var projUri = this.databroker.projectController.currentProject.uri;
-      var canvasUri = canvasResource.getUri();
-      var url = this.databroker.syncService.restUrl(projUri, dm.data.SyncService.RESTYPE.canvas) + '/'+ canvasUri+'/rename';
-      $.ajax({
-         url: url,
-         method: "POST",
-         data: {title: title},
-         complete:  function( jqXHR, textStatus ) {
-           $(".atb-WorkingResourcesItem-title").each( function(idx) {
-              var ele = $(this);
-              if ( $(this).text() == orig ) {
-                 $(this).text(title);
-              }
-           });
-        }
-      });
-
-   } else {
-      this.setDisplayTitle(title);
-   }
+    var canvas = this.viewer.mainViewport.canvas;
+    var canvasResource = this.databroker.getResource(canvas.getUri());
+    this.databroker.dataModel.setTitle(canvasResource, title);
+    this.setDisplayTitle(title);
+    this.databroker.sync();
 };
 
 dm.viewer.CanvasViewer.prototype.setDisplayTitle = function(title) {

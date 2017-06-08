@@ -83,6 +83,9 @@ dm.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
     if (resType == dm.data.SyncService.RESTYPE.text) {
         url += this.options.restTextPath.replace(/^\/+|\/+$/g, "");
         url += "/";
+    } else if (resType == dm.data.SyncService.RESTYPE.canvas) {
+        url += this.options.restCanvasPath.replace(/^\/+|\/+$/g, "");
+        url += "/";
     } else if (resType == dm.data.SyncService.RESTYPE.resource) {
         url += this.options.restResourcePath.replace(/^\/+|\/+$/g, "");
         url += "/";
@@ -101,9 +104,6 @@ dm.data.SyncService.prototype._restUri = function(baseUri, projectUri, resType, 
     }
     else if (resType == dm.data.SyncService.RESTYPE.search_autocomplete) {
         url += this.options.restAutocompletePath.replace(/^\/+|\/+$/g, "");
-    }
-    else if (resType == dm.data.SyncService.RESTYPE.canvas) {
-        url += this.options.restCanvasPath.replace(/^\/+|\/+$/g, "");
     }
 
     if (resUri != null) {
@@ -295,16 +295,14 @@ dm.data.SyncService.prototype.sendResource = function(uri, method, successHandle
         url = this.restUrl(currentProject.uri, resType, dm.data.Term.unwrapUri(uri), null);
     }
     else if (conjunctiveResource.hasAnyType(VOCABULARY.canvasTypes)) {
-       // THIS DOESN't WORK
-        // resType = dm.data.SyncService.RESTYPE.project;
-//
-        // quadsToPost = newQuadStore.query(resource.bracketedUri, null, null, null);
-        // quadsToRemove = deletedQuadsStore(resource.bracketedUri, null, null, null);
-//
-        // url = this.restUrl(currentProject.uri, resType, null, null);
-        // if (method == 'POST') {
-            // method = 'PUT';
-        // }
+        resType = dm.data.SyncService.RESTYPE.canvas;
+
+        quadsToPost = newQuadStore.query(resource.bracketedUri, null, null, null);
+        // The back end just overwrites with new data for canvases, so we can just ignore quad deletion
+        newQuadStore.removeQuads(quadsToPost);
+        deletedQuadsStore.removeQuads(deletedQuadsStore.query(resource.bracketedUri, null, null, null));
+
+        url = this.restUrl(currentProject.uri, resType, dm.data.Term.unwrapUri(uri), null);
     }
     else if (conjunctiveResource.hasType('oa:Annotation')) {
         resType = dm.data.SyncService.RESTYPE.project;

@@ -55,6 +55,18 @@ public class Canvases {
         return store.read((source, target) -> Annotations.SCOPE.copy(source.createResource(uri), target));
     }
 
+    @Path("/{uri}")
+    @POST
+    public Model create(@PathParam("projectUri") String project, @PathParam("uri") String canvas, Model model) {
+        return store.merge(model);
+    }
+
+    @Path("/{uri}")
+    @PUT
+    public Model update(@PathParam("projectUri") String project, @PathParam("uri") String canvas, Model model) {
+        return store.merge(model);
+    }
+
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String projectUri, @PathParam("uri") String canvasUri, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
@@ -112,12 +124,6 @@ public class Canvases {
                     .getModel());
         }
         return Models.create();
-    }
-
-    @Path("/{projectUri}")
-    @PUT
-    public Model update() {
-        throw Server.NOT_IMPLEMENTED;
     }
 
     public static Model externalize(Model model, UriInfo ui) {
