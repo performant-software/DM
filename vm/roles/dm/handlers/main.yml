@@ -1,6 +1,0 @@
----
-- name: restart nginx
-  service: name=nginx state=restarted enabled=yes
-
-- name: restart dm
-  service: name=dm state=restarted enabled=yes

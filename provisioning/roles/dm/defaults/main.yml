@@ -1,0 +1,4 @@
+---
+dm_version: "1.0-SNAPSHOT"
+dm_jar_path: "../target"
+dm_jar: "dm-{{ dm_version }}.jar"

@@ -1,0 +1,19 @@
+---
+- name: create loris user
+  user:
+    name: loris
+    comment: "Loris Image Server"
+
+- name: checkout sources from GitHub
+  git:
+    repo: "{{ loris_repo }}"
+    dest: "{{ loris_src }}"
+    version: "{{ loris_version }}"
+    accept_hostkey: True
+
+- name: setup loris
+  shell: |
+    python setup.py install
+  args:
+    chdir: "{{ loris_src }}"
+    creates: "{{ loris_wsgi }}"

@@ -1,0 +1,12 @@
+[Unit]
+Description=DM
+After=network.target
+
+[Service]
+User=dm
+Group=www-data
+WorkingDirectory=/home/dm
+ExecStart=/usr/bin/java -jar /home/dm/{{ dm_jar }}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+---
+nginx_upstreams:
+  - name: dm
+    servers: [ "localhost:8080" ]
+  - name: loris
+    servers: [ "unix:///var/run/uwsgi/loris.socket" ]
+nginx_remove_default_vhost: True
+nginx_vhosts:
+  - listen: "80 default_server"
+    server_name: "{{ nginx_server_name }}"
+    root: "/var/www"
+    extra_parameters: |
+      charset UTF-8;
+
+      client_max_body_size 50M;
+
+      location /iiif {
+        include uwsgi_params;
+        uwsgi_pass loris;
+        uwsgi_param SCRIPT_NAME /iiif;
+        uwsgi_modifier1 30;
+      }
+
+      location / {
+        proxy_read_timeout 400;
+        proxy_connect_timeout 400;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_pass http://dm;
+      }

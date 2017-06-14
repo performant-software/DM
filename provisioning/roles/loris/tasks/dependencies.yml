@@ -1,0 +1,45 @@
+---
+- name: install Python tools
+  apt:
+    pkg: "{{ item }}"
+  with_items:
+    - python-pip
+    - python-setuptools
+
+- name: purge Python imaging packages
+  apt:
+    pkg: "{{ item }}"
+    state: absent
+  with_items:
+    - PIL
+    - Pillow
+    - python-imaging
+
+- name: install build dependencies
+  apt:
+    pkg: "{{ item }}"
+  with_items:
+    - icc-profiles
+    - liblcms2-dev
+    - liblcms2-utils
+    - libfreetype6-dev
+    - libjpeg-turbo8-dev
+    - libopenjp2-7-dev
+    - libopenjp2-tools
+    - libtiff5-dev
+    - libwebp-dev
+    - python-dev
+    - zlib1g-dev
+
+- name: install Python Pillow
+  pip:
+    name: Pillow
+
+- name: install Python build dependencies
+  pip:
+    name: "{{ item }}"
+  with_items:
+    - configobj
+    - requests
+    - mock
+    - responses

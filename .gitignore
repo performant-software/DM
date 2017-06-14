@@ -10,8 +10,11 @@
 *.swp
 *.out
 
+# Provisioning
+provisioning/roles/*.*
 # Vagrant
 .vagrant/
+ubuntu-xenial-16.04-cloudimg-console.log
 
 # Maven builds
 target/

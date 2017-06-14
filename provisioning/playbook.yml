@@ -1,0 +1,15 @@
+---
+- include: python-setup.yml
+
+- hosts: dm
+  roles:
+    - williamyeh.reset-locale
+    - tersmitten.apt
+    - geerlingguy.firewall
+    - geerlingguy.security
+    - tersmitten.postfix
+    - geerlingguy.java
+    - loris
+    - williamyeh.uwsgi
+    - dm
+    - geerlingguy.nginx

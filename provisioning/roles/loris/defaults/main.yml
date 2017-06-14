@@ -1,0 +1,11 @@
+---
+loris_repo: "https://github.com/loris-imageserver/loris.git"
+loris_version: "v2.1.0-final"
+loris_src: "/usr/local/src/loris-{{ loris_version }}"
+loris_conf: "/etc/loris2/loris2.conf"
+loris_wsgi: "/var/www/loris2/loris2.wsgi"
+loris_proxy_path: ""
+loris_resolver_conf: |
+  [resolver]
+  impl = 'loris.resolver.SimpleFSResolver'
+  src_img_root = '/usr/local/share/images' # r--

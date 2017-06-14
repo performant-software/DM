@@ -1,0 +1,14 @@
+{
+  "builders": [{
+    "type": "digitalocean",
+    "image": "ubuntu-16-04-x64",
+    "region": "nyc3",
+    "size": "512mb",
+    "ssh_username": "root"
+  }],
+  "provisioners": [{
+      "type": "ansible",
+      "playbook_file": "./provisioning/playbook.yml",
+      "groups": ["dm", "digitalocean"]
+    }]
+}

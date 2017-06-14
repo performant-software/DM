@@ -1,0 +1,17 @@
+[Unit]
+Description=Loris Image Server
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/uwsgi --ini /etc/loris2/loris2.ini
+User=loris
+Group=loris
+Restart=on-failure
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+RuntimeDirectory=uwsgi
+
+[Install]
+WantedBy=multi-user.target

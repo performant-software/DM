@@ -1,7 +1,0 @@
----
-- name: install nginx
-  apt: pkg=nginx
-
-- name: disable nginx default site
-  file: path=/etc/nginx/sites-enabled/default state=absent
-  notify: restart nginx
