@@ -3,4 +3,4 @@ loris_proxy_path: "/iiif/"
 loris_resolver_conf: |
   [resolver]
   impl = 'loris.resolver.SimpleFSResolver'
-  src_img_root = '/home/dm/data/images'
+  src_img_root = '/home/dm/dm/images'
