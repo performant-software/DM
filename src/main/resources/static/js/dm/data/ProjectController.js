@@ -237,7 +237,7 @@ dm.data.ProjectController.prototype.createProject = function(uri) {
 };
 
 dm.data.ProjectController.prototype.getCanvasUploadUrl = function() {
-    return this.databroker.syncService.restUrl(this.currentProject.uri, dm.data.SyncService.RESTYPE.canvas) + '/create';
+    return this.databroker.syncService.restUrl(this.currentProject.uri, dm.data.SyncService.RESTYPE.canvas) + 'create';
 };
 
 dm.data.ProjectController.prototype.uploadCanvas = function(title, file, opt_successHandler, opt_errorHandler, opt_progressHandler) {
