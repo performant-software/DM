@@ -63,7 +63,18 @@
                 </li>
                 <li class="divider-vertical"></li>
                 [#if user.guest]
-                    <li><a href="${cp}/accounts/login">login</a></li>
+                    <li class="dropdown" title="Log into DM">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <span class="icon-user"></span>
+                            Login
+                            <b class="caret"></b>
+                        </a>
+                        <ul class="dropdown-menu">
+                            [#list authenticationProviders?values as ap]
+                                   <li><a href="${cp}/accounts/login?provider=${ap.key?url}" title="${ap.description?html}">via ${ap.description?html}</a></li>
+                            [/#list]
+                        </ul>
+                    </li>
                 [#else]
                     <li id="user-dropdown" class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -73,7 +84,7 @@
                             <b class="caret"></b>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a href="${cp}/accounts/logout" onclick="document.execCommand && document.execCommand('ClearAuthenticationCache')">Logout</a></li>
+                            <li><a href="${cp}/accounts/logout">Logout</a></li>
                         </ul>
                     </li>
                 [/#if]

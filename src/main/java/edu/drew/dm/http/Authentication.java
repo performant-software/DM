@@ -1,18 +1,11 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.Server;
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.semantics.DigitalMappaemundi;
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.sparql.vocabulary.FOAF;
-import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
 import org.glassfish.grizzly.http.server.Request;
 
+import java.io.IOException;
+import java.util.Optional;
+import java.util.stream.Stream;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -23,13 +16,6 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Base64;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>

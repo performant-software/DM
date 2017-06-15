@@ -4,6 +4,7 @@ import edu.drew.dm.Server;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.mvc.Template;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -17,12 +18,19 @@ import java.util.Map;
  */
 @Path("/workspace/")
 public class Workspace {
+    
+    private final Templates templates;
+
+    @Inject
+    public Workspace(Templates templates) {
+        this.templates = templates;
+    }
 
     @GET
     @Produces("text/html")
     @Template(name = "/workspace.ftl")
-    public Map<String, Object> workspace(@Context ContainerRequest cr) {
-        return Templates.model(cr);
+    public Map<String, Object> workspace() {
+        return templates.model();
     }
 
     @Path("project_forward/")

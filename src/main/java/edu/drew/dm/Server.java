@@ -4,6 +4,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import edu.drew.dm.auth.AuthenticationProviderRegistry;
 import edu.drew.dm.data.FileSystem;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.ProjectBundle;
@@ -15,6 +16,7 @@ import edu.drew.dm.http.Images;
 import edu.drew.dm.http.Locks;
 import edu.drew.dm.http.ModelReaderWriter;
 import edu.drew.dm.http.Projects;
+import edu.drew.dm.http.Templates;
 import edu.drew.dm.http.Texts;
 import edu.drew.dm.http.Users;
 import edu.drew.dm.http.Workspace;
@@ -45,6 +47,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.process.internal.RequestScoped;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.mvc.freemarker.FreemarkerMvcFeature;
 
@@ -127,13 +130,22 @@ public class Server {
         scheduler.schedule("0 * * * *", new SemanticDatabaseBackup(fs, db));
         scheduler.schedule("* * * * *", new Indexing(db, index));
 
-        httpServer(config, images, new AbstractBinder() {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final AuthenticationProviderRegistry authProviders = new AuthenticationProviderRegistry(
+                config,
+                objectMapper
+        );
+
+        httpServer(config, objectMapper, images, new AbstractBinder() {
             @Override
             protected void configure() {
                 bind(config).to(Config.class);
+                bind(objectMapper).to(ObjectMapper.class);
                 bind(db).to(SemanticDatabase.class);
                 bind(index).to(Index.class);
                 bind(images).to(Images.class);
+                bind(authProviders).to(AuthenticationProviderRegistry.class);
+                bind(Templates.class).to(Templates.class).in(RequestScoped.class);
             }
         });
 
@@ -158,21 +170,15 @@ public class Server {
         return scheduler;
     }
 
-    private static HttpServer httpServer(Config config, Images images, Binder dependencyBinder) throws IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
+    private static HttpServer httpServer(Config config, ObjectMapper objectMapper, Images images, Binder dependencyBinder) throws IOException {
         final ResourceConfig webAppConfig = new ResourceConfig()
                 .register(FreemarkerMvcFeature.class)
                 .property(FreemarkerMvcFeature.TEMPLATE_BASE_PATH, "/template/")
+                .property(FreemarkerMvcFeature.TEMPLATE_OBJECT_FACTORY, Templates.ConfigurationFactory.class)
                 .register(JacksonFeature.class)
+                .register((ContextResolver<ObjectMapper>) type -> objectMapper)
                 .register(MultiPartFeature.class)
                 .register(dependencyBinder)
-                .register(new AbstractBinder() {
-                    @Override
-                    protected void configure() {
-                        bind(objectMapper).to(ObjectMapper.class);
-                    }
-                })
-                .register((ContextResolver<ObjectMapper>) type -> objectMapper)
                 .register(ModelReaderWriter.class)
                 .register(Authentication.class)
                 .register(Accounts.class)
