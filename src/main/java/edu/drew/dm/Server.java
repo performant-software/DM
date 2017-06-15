@@ -112,17 +112,6 @@ public class Server {
         }
 
         UserbaseInitialization.initGuestAccess(db);
-        try (CSVReader usersCsv = new CSVReader(new InputStreamReader(Server.class.getResourceAsStream("/users.csv"), StandardCharsets.UTF_8))) {
-            UserbaseInitialization.execute(db, usersCsv);
-        }
-        if (config.hasPath("auth.users")) {
-            final Path users = Paths.get(config.getString("auth.users"));
-            if (users != null) {
-                try (CSVReader usersCsv = new CSVReader(Files.newBufferedReader(users))) {
-                    UserbaseInitialization.execute(db, usersCsv);
-                }
-            }
-        }
 
         final Index index = new Index(fs, db).initialized();
         

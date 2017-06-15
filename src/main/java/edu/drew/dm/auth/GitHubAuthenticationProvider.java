@@ -50,12 +50,9 @@ public class GitHubAuthenticationProvider implements AuthenticationProvider {
     @Override
     public User parseProfile(JsonNode profile) {
         return new User(
-                profile.path("login").asText(),
-                "",
+                User.uri(getKey(), profile.path("login").asText()),
                 profile.path("name").asText(),
-                profile.path("email").asText(),
-                false,
-                ""
+                profile.path("email").asText()
         );
     }
 

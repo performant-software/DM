@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.drew.dm.Logging;
 import edu.drew.dm.Server;
 import edu.drew.dm.data.Index;
+import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.semantics.Models;
 import edu.drew.dm.semantics.OpenAnnotation;
@@ -14,8 +15,6 @@ import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
 import edu.drew.dm.semantics.SharedCanvas;
 import edu.drew.dm.semantics.Traversal;
-import edu.drew.dm.data.ProjectBundle;
-import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -27,8 +26,6 @@ import org.apache.jena.vocabulary.RDF;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
@@ -172,7 +169,7 @@ public class Projects {
         final Model model = Models.create();
         final Resource projectResource = model.createResource(uri);
 
-        model.createResource(User.GUEST.uri())
+        model.createResource(User.GUEST.uri.toString())
                 .addProperty(Perm.hasPermissionOver, projectResource)
                 .addProperty(Perm.mayRead, projectResource);
 

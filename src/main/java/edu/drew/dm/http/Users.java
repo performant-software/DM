@@ -1,8 +1,8 @@
 package edu.drew.dm.http;
 
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.Server;
+import edu.drew.dm.data.SemanticDatabase;
+import edu.drew.dm.semantics.Models;
 import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
 import org.apache.jena.rdf.model.Model;
@@ -14,6 +14,9 @@ import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 
+import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -21,9 +24,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -74,29 +74,31 @@ public class Users {
             model.add(
                     agent,
                     OpenArchivesTerms.isDescribedBy,
-                    model.createResource(userResource(ui, agent.getRequiredProperty(RDFS.label).getString()))
+                    model.createResource(userResource(ui, URI.create(agent.getURI())))
             );
         });
         return Models.renameResources(model, (r -> {
             final String uri = r.getURI();
             final URI parsed = URI.create(uri);
-            return "user".equals(parsed.getScheme()) ? userResource(ui, parsed.getSchemeSpecificPart()) : uri;
+            return "user".equals(parsed.getScheme()) ? userResource(ui, parsed) : uri;
         }));
     }
 
     public static String internalize(Resource resource) {
         final String uri = resource.getURI();
         final Matcher userMatcher = USER_URI.matcher(uri);
-        return userMatcher.find() ? User.uri(userMatcher.group(1)): uri;
+        return userMatcher.find()
+                ? User.uri(userMatcher.group(1), userMatcher.group(2)).toString()
+                : uri;
     }
 
-    private static final Pattern USER_URI = Pattern.compile("/store/users/(.+)$");
+    private static final Pattern USER_URI = Pattern.compile("/store/users/([^:]+):(.+)$");
 
-    private static String userResource(UriInfo ui, String user) {
+    private static String userResource(UriInfo ui, URI user) {
         return Server.baseUri(ui)
                 .path(Users.class)
                 .path(Users.class, "read")
-                .resolveTemplate("user", user)
+                .resolveTemplate("user", user.getSchemeSpecificPart())
                 .build().toString();
     }
 

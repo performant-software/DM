@@ -8,6 +8,9 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.typesafe.config.Config;
 import edu.drew.dm.http.User;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import javax.ws.rs.core.UriInfo;
 
 public class GoogleAuthenticationProvider implements AuthenticationProvider {
@@ -61,15 +64,13 @@ public class GoogleAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public User parseProfile(JsonNode profile) {
-        final JsonNode name = profile.path("names").path(0);
+        final List<String> emailAddresses = new ArrayList<>();
+        profile.path("emailAddresses").forEach(email -> emailAddresses.add(email.path("value").asText()));
 
         return new User(
-                profile.path("nicknames").path(0).path("value").asText(),
-                name.path("givenName").asText(),
-                name.path("familyName").asText(),
-                profile.path("emailAddresses").path(0).path("value").asText(),
-                false,
-                ""
+                User.uri(getKey(), profile.path("resourceName").asText().replaceAll("/+", ":")),
+                profile.path("names").path(0).path("displayName").asText(),
+                emailAddresses
         );
     }
 }

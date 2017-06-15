@@ -13,6 +13,8 @@ import edu.drew.dm.http.User;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.core.UriInfo;
 

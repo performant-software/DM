@@ -8,6 +8,8 @@ import com.github.scribejava.core.oauth.OAuth20Service;
 import com.typesafe.config.Config;
 import edu.drew.dm.http.User;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -77,15 +79,15 @@ public class PerformantAuthenticationProvider implements AuthenticationProvider 
     @Override
     public User parseProfile(JsonNode profile) {
         final JsonNode user = profile.path("user");
-        final String email = user.path("email").asText();
 
+        final String email = user.path("email").asText();
         return new User(
-                email,
-                user.path("first_name").asText(),
-                user.path("last_name").asText(),
-                email,
-                false,
-                ""
+                User.uri(getKey(), email),
+                Stream.of(
+                        user.path("first_name").asText(),
+                        user.path("last_name").asText()
+                ).filter(s -> s != null && !s.isEmpty()).collect(Collectors.joining(" ")),
+                email
         );
     }
 }

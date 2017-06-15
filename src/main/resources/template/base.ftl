@@ -79,8 +79,8 @@
                     <li id="user-dropdown" class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                             <span class="icon-user"></span>
-                            <span id="logged-in-user" title="${user.firstName?html} ${user.lastName?html}, ${user.email?html}">${user.account?html}</span>
-                            <span id="logged-in-email" style="display:none">${user.email?html}</span>
+                            <span id="logged-in-user" title="${user.name?html}">${user.displayName!user.name?html}</span>
+                            <span id="logged-in-email" style="display:none">${user.emailAddress!''?html}</span>
                             <b class="caret"></b>
                         </a>
                         <ul class="dropdown-menu">
@@ -98,4 +98,3 @@
 </body>
 </html>
 [/#macro]
-
