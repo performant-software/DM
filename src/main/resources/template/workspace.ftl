@@ -34,9 +34,11 @@
         <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Done</button>
     </div>
 </div>
+[#if user?has_content]
 <script type="text/javascript" >
    goog.require("dm.ClientApp");
-   goog.global.clientApp = new dm.ClientApp("${cp}", [#if user?has_content]"${user.name}"[#else]null[/#if]);
+   goog.global.clientApp = new dm.ClientApp("${cp}", "${user.name}");
 </script>
+[/#if]
 
 [/@base.page]

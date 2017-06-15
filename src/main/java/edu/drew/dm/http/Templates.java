@@ -1,7 +1,6 @@
 package edu.drew.dm.http;
 
 import edu.drew.dm.auth.AuthenticationProviderRegistry;
-import freemarker.template.Configuration;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.mvc.freemarker.FreemarkerDefaultConfigurationFactory;
 import org.jvnet.hk2.annotations.Optional;

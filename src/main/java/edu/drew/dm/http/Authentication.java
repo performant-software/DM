@@ -65,16 +65,5 @@ public class Authentication implements ContainerRequestFilter {
 
         throw new WebApplicationException(Response.Status.FORBIDDEN);
     }
-
-    static WebApplicationException unauthorized(String realm) {
-        return new WebApplicationException(
-                Response.status(Response.Status.UNAUTHORIZED)
-                        .header(HttpHeaders.WWW_AUTHENTICATE, String.format("Basic realm=\"%s\"", realm))
-                        .build()
-        );
-    }
-
-    static final String REALM = "DM";
-
 }
 
