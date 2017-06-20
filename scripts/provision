@@ -1,0 +1,31 @@
+#! /usr/bin/env python
+# -*- mode: python -*-
+
+import sys
+
+from os import chdir, unlink
+from os.path import dirname, isdir, join, realpath
+
+from subprocess import call
+
+from logging import basicConfig, info, INFO
+
+banner = (79 * '-')
+basicConfig(
+    format="\n".join([banner, '%(asctime)s - %(message)s', banner]),
+    level=INFO,
+    stream=sys.stdout
+)
+
+base_dir = dirname(dirname(realpath(__file__)))
+chdir(base_dir)
+
+info("Ansible Galaxy")
+call([
+    "ansible-galaxy", "install",
+    "--role-file=provisioning/requirements.yml",
+    "--roles-path=provisioning/roles"
+])
+
+info("Packer")
+call(["packer", "build", "machine-images/digitalocean.json"])
