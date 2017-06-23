@@ -18,48 +18,30 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.core.UriInfo;
 
-public interface AuthenticationProvider {
+public abstract class AuthenticationProvider {
 
-    String getKey();
+    protected final Config config;
+    protected final ObjectMapper objectMapper;
 
-    String getDescription();
-
-    Config config();
-
-    ObjectMapper objectMapper();
-
-    OAuth20Service oauthService(UriInfo ui);
-
-    String profileUrl();
-
-    User parseProfile(JsonNode profile);
-
-    default User user(UriInfo ui, String authCode) {
-        try {
-            final OAuth20Service authService = oauthService(ui);
-            final OAuth2AccessToken accessToken = authService.getAccessToken(authCode);
-
-            final OAuthRequest profileRequest = new OAuthRequest(Verb.GET, profileUrl());
-            authService.signRequest(accessToken, profileRequest);
-
-            try (InputStream profileStream = authService.execute(profileRequest).getStream()) {
-                return parseProfile(objectMapper().readTree(profileStream));
-            }
-        } catch (IOException | InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-
+    protected AuthenticationProvider(Config config, ObjectMapper objectMapper) {
+        this.config = config;
+        this.objectMapper = objectMapper;
     }
 
-    default boolean isConfigured() {
-        final Config config = config();
+    public abstract String getKey();
+
+    public abstract String getDescription();
+
+    public abstract OAuth20Service oauthService(UriInfo ui);
+
+    public boolean isConfigured() {
         final String configPathPrefix = String.join(".", "auth", "oauth", getKey());
         return config.hasPath(String.join(".", configPathPrefix, "key")) &&
                 config.hasPath(String.join(".", configPathPrefix, "secret"));
     }
 
 
-    default String oauthCallbackUri(UriInfo ui) {
+    public String oauthCallbackUri(UriInfo ui) {
         try {
             return Server.baseUri(ui)
                     .path(Accounts.class)
@@ -70,4 +52,24 @@ public interface AuthenticationProvider {
         }
     }
 
+    public User user(UriInfo ui, String authCode) {
+        try {
+            final OAuth20Service authService = oauthService(ui);
+            final OAuth2AccessToken accessToken = authService.getAccessToken(authCode);
+
+            final OAuthRequest profileRequest = new OAuthRequest(Verb.GET, profileUrl());
+            authService.signRequest(accessToken, profileRequest);
+
+            try (InputStream profileStream = authService.execute(profileRequest).getStream()) {
+                return parseProfile(objectMapper.readTree(profileStream));
+            }
+        } catch (IOException | InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    protected abstract String profileUrl();
+
+    protected abstract User parseProfile(JsonNode profile);
 }

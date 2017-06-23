@@ -13,20 +13,17 @@ import java.util.stream.Stream;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-public class PerformantAuthenticationProvider implements AuthenticationProvider {
+public class PerformantAuthenticationProvider extends AuthenticationProvider {
 
-    private final Config config;
     private final String baseUri;
-    private final ObjectMapper objectMapper;
 
     private OAuth20Service service;
 
     public PerformantAuthenticationProvider(Config config, ObjectMapper objectMapper) {
-        this.config = config;
+        super(config, objectMapper);
         this.baseUri = config.hasPath("auth.oauth.performant.uri")
                 ? config.getString("auth.oauth.performant.uri")
                 : "";
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -37,11 +34,6 @@ public class PerformantAuthenticationProvider implements AuthenticationProvider 
     @Override
     public String getDescription() {
         return "Performant Software";
-    }
-
-    @Override
-    public Config config() {
-        return config;
     }
 
     @Override
@@ -67,17 +59,12 @@ public class PerformantAuthenticationProvider implements AuthenticationProvider 
     }
 
     @Override
-    public ObjectMapper objectMapper() {
-        return objectMapper;
-    }
-
-    @Override
-    public String profileUrl() {
+    protected String profileUrl() {
         return UriBuilder.fromUri(this.baseUri).path("api/me.json").build().toString();
     }
 
     @Override
-    public User parseProfile(JsonNode profile) {
+    protected User parseProfile(JsonNode profile) {
         final JsonNode user = profile.path("user");
 
         final String email = user.path("email").asText();

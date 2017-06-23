@@ -13,15 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.core.UriInfo;
 
-public class GoogleAuthenticationProvider implements AuthenticationProvider {
+public class GoogleAuthenticationProvider extends AuthenticationProvider {
 
-    private final Config config;
-    private final ObjectMapper objectMapper;
     private OAuth20Service service;
 
     public GoogleAuthenticationProvider(Config config, ObjectMapper objectMapper) {
-        this.config = config;
-        this.objectMapper = objectMapper;
+        super(config, objectMapper);
     }
 
     @Override
@@ -32,11 +29,6 @@ public class GoogleAuthenticationProvider implements AuthenticationProvider {
     @Override
     public String getDescription() {
         return "Google";
-    }
-
-    @Override
-    public Config config() {
-        return config;
     }
 
     @Override
@@ -53,17 +45,12 @@ public class GoogleAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
-    public ObjectMapper objectMapper() {
-        return objectMapper;
-    }
-
-    @Override
-    public String profileUrl() {
+    protected String profileUrl() {
         return "https://people.googleapis.com/v1/people/me";
     }
 
     @Override
-    public User parseProfile(JsonNode profile) {
+    protected User parseProfile(JsonNode profile) {
         final List<String> emailAddresses = new ArrayList<>();
         profile.path("emailAddresses").forEach(email -> emailAddresses.add(email.path("value").asText()));
 
