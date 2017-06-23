@@ -31,7 +31,7 @@
    margin-left: 3px;
    overflow: hidden;
    text-overflow: ellipsis;
-   max-width: 100px;
+   max-width: 350px;
    vertical-align: bottom
 }
 
@@ -75,5 +75,3 @@ div.panel.panel-default.pub-access {
 div.pub-access .hidden {
    display: none;
 }
-   
-

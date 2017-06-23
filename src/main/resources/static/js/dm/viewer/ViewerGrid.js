@@ -254,6 +254,11 @@ dm.viewer.ViewerGrid.prototype._onBeforeDragStart = function(event) {
             this.containers[uri]._makeEditableOnDragEnd = true;
          this.containers[uri].viewer.makeUneditable();
       }
+      var $textBlock = $(event.currDragItem).find(".ro-editor");
+      if ($textBlock.length > 0) {
+        var scrollTopPct = $textBlock.length > 0 ? $textBlock.scrollTop() / $textBlock[0].scrollHeight : 0;
+        this._dragItemScrollTopPct = scrollTopPct;
+      }
    }
 }
 
@@ -264,6 +269,13 @@ dm.viewer.ViewerGrid.prototype._onDragStart = function(event) {
 dm.viewer.ViewerGrid.prototype._onWrapperDragEnd = function(event) {
    this.wrappers = goog.array.toArray(this.domHelper.getChildren(this.element));
    this._setAllContainerDimensions();
+   if (this.hasOwnProperty("_dragItemScrollTopPct")) {
+      var $newTextBlock = $(event.currDragItem).find(".ro-editor");
+      if ($newTextBlock.length > 0) {
+         $newTextBlock.scrollTop(this._dragItemScrollTopPct * $newTextBlock[0].scrollHeight);
+      }
+      delete this._dragItemScrollTopPct;
+   }
    var uri = jQuery(event.currDragItem).find(".lock-for-edit-icon").data("uri");
    if (uri && this.containers[uri] && this.containers[uri]._makeEditableOnDragEnd && this.containers[uri].viewer && goog.isFunction(this.containers[uri].viewer.makeEditable)) {
       this.containers[uri].viewer.makeEditable();

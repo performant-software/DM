@@ -84,14 +84,14 @@ dm.data.Term.unwrapUri = function (str) {
             return str;
         }
     };
-    
+
     if (goog.isArray(str)) {
         var ret = [];
-        
+
         for (var i=0, len=str.length; i<len; i++) {
             ret.push(remover(str[i]));
         }
-        
+
         return ret;
     }
     else {
@@ -120,12 +120,13 @@ dm.data.Term._escapeLiteral = function(str) {
         return ''
     }
     else {
-        return str.replace(/("|\\|\^)/g, '\\$1').replace(/(\t)/g, '\\t');
+        return str.replace(/("|\\)/g, '\\$1').replace(/(\t)/g, '\\t');
     }
 };
 
 dm.data.Term._unescapeLiteral = function(str) {
-    return str.replace(/(?:\\(")|\\(\\)|\\(>)|\\(\^))/g, '$1').replace(/(\\t)/g, '\t')
+    // return str.replace(/(?:\\(")|\\(\\)|\\(>)|\\(\^))/g, '$1').replace(/(\\t)/g, '\t')
+    return str.replace(/(?:\\(")|\\(>)|\\(\^))/g, '$1').replace(/(\\t)/g, '\t').replace(/\\\\/g, '\\');
 };
 
 dm.data.Term.wrapLiteral = function(str) {
@@ -170,14 +171,14 @@ dm.data.Term._stripWrappingQuotes = function(str) {
             return str;
         }
     };
-    
+
     if (goog.isArray(str)) {
         var ret = [];
-        
+
         for (var i=0, len=str.length; i<len; i++) {
             ret.push(remover(str[i]));
         }
-        
+
         return ret;
     }
     else {
@@ -192,7 +193,7 @@ dm.data.Term.unwrapLiteral = function(str) {
         }
         else {
             var match = dm.data.Term.quotesAndDatatypeRegex.exec(str);
-            
+
             if (match) {
                 return dm.data.Term._unescapeLiteral(match[1]);
             }
@@ -201,14 +202,14 @@ dm.data.Term.unwrapLiteral = function(str) {
             }
         }
     };
-    
+
     if (goog.isArray(str)) {
         var ret = [];
-        
+
         for (var i=0, len=str.length; i<len; i++) {
             ret.push(remover(str[i]));
         }
-        
+
         return ret;
     }
     else {
@@ -228,7 +229,7 @@ dm.data.Term.isUri = function(str) {
     }
     else {
         var match = dm.data.Term.fullUriRegex.exec(str);
-        
+
         if (match) {
             return true;
         }

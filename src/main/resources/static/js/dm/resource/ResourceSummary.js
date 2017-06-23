@@ -92,8 +92,9 @@ dm.resource.ResourceSummary.prototype.renderPanelCtrls = function () {
     var self = this;
     $panelCtrls.fadeTo(0, 0);
     $div.hover(function () {
-        $panelCtrls.fadeTo(200, 1);
-    }, function () {
+        if (this.viewer && this.viewer.viewer && !this.viewer.viewer.hoverMenuIsResizing)
+          $panelCtrls.fadeTo(200, 1);
+    }.bind(this), function () {
         $panelCtrls.fadeTo(200, 0);
     });
 
@@ -121,7 +122,7 @@ dm.resource.ResourceSummary.prototype.render = function (opt_div) {
 
     jQuery(this.div).hover(function () {
         jQuery(this).addClass('atb-resourcesummary-hover');
-    }, function () {
+    }.bind(this), function () {
         jQuery(this).removeClass('atb-resourcesummary-hover');
     });
 
