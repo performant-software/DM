@@ -15,6 +15,7 @@ import edu.drew.dm.semantics.OpenArchivesTerms;
 import edu.drew.dm.semantics.Perm;
 import edu.drew.dm.semantics.SharedCanvas;
 import edu.drew.dm.semantics.Traversal;
+import edu.drew.dm.user.User;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;

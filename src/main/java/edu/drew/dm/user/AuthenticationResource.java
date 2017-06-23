@@ -1,11 +1,12 @@
-package edu.drew.dm.http;
+package edu.drew.dm.user;
 
 import edu.drew.dm.auth.AuthenticationProvider;
 import edu.drew.dm.auth.AuthenticationProviderRegistry;
+import edu.drew.dm.http.Workspace;
+import edu.drew.dm.user.User;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Session;
 import org.glassfish.jersey.server.ContainerRequest;
-import org.glassfish.jersey.server.mvc.Template;
 
 import java.net.URI;
 import javax.inject.Inject;
@@ -13,9 +14,7 @@ import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -26,14 +25,14 @@ import javax.ws.rs.core.UriInfo;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/accounts")
-public class Accounts {
+public class AuthenticationResource {
 
     private final Provider<Request> requestProvider;
     private final AuthenticationProviderRegistry authenticationProviders;
 
     @Inject
-    public Accounts(Provider<Request> requestProvider,
-                    AuthenticationProviderRegistry authenticationProviders) {
+    public AuthenticationResource(Provider<Request> requestProvider,
+                                  AuthenticationProviderRegistry authenticationProviders) {
         this.requestProvider = requestProvider;
         this.authenticationProviders = authenticationProviders;
     }
@@ -56,7 +55,8 @@ public class Accounts {
     @Path("/logout")
     @GET
     public Response logout(@Context UriInfo ui) {
-        requestProvider.get().getSession().setValid(false);
+        User.remove(requestProvider.get());
+
         return Workspace.redirectToHomepage(ui);
     }
 
@@ -65,8 +65,11 @@ public class Accounts {
     public Response oauthCallback(@PathParam("provider") String provider,
                                   @QueryParam("code") String code,
                                   @Context UriInfo ui) {
-        final Session session = requestProvider.get().getSession();
-        session.setAttribute(User.class.getName(), authenticationProviders.lookup(provider).user(ui, code));
+        User.set(
+                requestProvider.get(),
+                authenticationProviders.lookup(provider).user(ui, code)
+        );
+
         return Workspace.redirectToHomepage(ui);
     }
 }

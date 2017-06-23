@@ -1,7 +1,7 @@
 package edu.drew.dm.task;
 
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.http.User;
+import edu.drew.dm.user.User;
 import edu.drew.dm.semantics.Models;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.vocabulary.FOAF;

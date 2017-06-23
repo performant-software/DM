@@ -1,6 +1,5 @@
 package edu.drew.dm;
 
-import au.com.bytecode.opencsv.CSVReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -9,8 +8,8 @@ import edu.drew.dm.data.FileSystem;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.http.Accounts;
-import edu.drew.dm.http.Authentication;
+import edu.drew.dm.user.AuthenticationResource;
+import edu.drew.dm.user.SecurityContextFilter;
 import edu.drew.dm.http.Canvases;
 import edu.drew.dm.http.Images;
 import edu.drew.dm.http.Locks;
@@ -18,11 +17,8 @@ import edu.drew.dm.http.ModelReaderWriter;
 import edu.drew.dm.http.Projects;
 import edu.drew.dm.http.Templates;
 import edu.drew.dm.http.Texts;
-import edu.drew.dm.http.Users;
+import edu.drew.dm.user.Users;
 import edu.drew.dm.http.Workspace;
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.semantics.OpenAnnotation;
-import edu.drew.dm.semantics.SharedCanvas;
 import edu.drew.dm.task.FlattenImageDirectory;
 import edu.drew.dm.task.Indexing;
 import edu.drew.dm.task.SemanticDatabaseBackup;
@@ -30,11 +26,8 @@ import edu.drew.dm.task.UserbaseInitialization;
 import it.sauronsoftware.cron4j.Scheduler;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
 import org.glassfish.grizzly.http.CompressionConfig;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
@@ -53,10 +46,7 @@ import org.glassfish.jersey.server.mvc.freemarker.FreemarkerMvcFeature;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -169,8 +159,8 @@ public class Server {
                 .register(MultiPartFeature.class)
                 .register(dependencyBinder)
                 .register(ModelReaderWriter.class)
-                .register(Authentication.class)
-                .register(Accounts.class)
+                .register(SecurityContextFilter.class)
+                .register(AuthenticationResource.class)
                 .register(Root.class)
                 .register(Workspace.class)
                 .register(Locks.class)

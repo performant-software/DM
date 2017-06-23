@@ -1,4 +1,4 @@
-package edu.drew.dm.http;
+package edu.drew.dm.user;
 
 import edu.drew.dm.Server;
 import edu.drew.dm.data.SemanticDatabase;

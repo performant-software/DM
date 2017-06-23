@@ -1,4 +1,7 @@
-package edu.drew.dm.http;
+package edu.drew.dm.user;
+
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Session;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -6,6 +9,7 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.core.SecurityContext;
 
 /**
@@ -81,5 +85,20 @@ public class User implements SecurityContext, Principal {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static User get(Request request) {
+        return Optional.ofNullable(request.getSession(false))
+                .map(session -> (User) session.getAttribute(User.class.getName()))
+                .orElse(null);
+    }
+
+    public static void set(Request request, User user) {
+        request.getSession().setAttribute(User.class.getName(), user);
+    }
+
+    public static void remove(Request request) {
+        Optional.ofNullable(request.getSession(false))
+                .ifPresent(session -> session.removeAttribute(User.class.getName()));
     }
 }

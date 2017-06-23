@@ -2,6 +2,7 @@ package edu.drew.dm.http;
 
 import edu.drew.dm.semantics.Models;
 import edu.drew.dm.semantics.OpenArchivesTerms;
+import edu.drew.dm.user.Users;
 import edu.drew.dm.util.IO;
 import org.apache.jena.rdf.model.Model;
 

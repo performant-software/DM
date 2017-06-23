@@ -6,7 +6,7 @@ import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.typesafe.config.Config;
-import edu.drew.dm.http.User;
+import edu.drew.dm.user.User;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

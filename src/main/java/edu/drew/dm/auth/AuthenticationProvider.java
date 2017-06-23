@@ -8,13 +8,11 @@ import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.typesafe.config.Config;
 import edu.drew.dm.Server;
-import edu.drew.dm.http.Accounts;
-import edu.drew.dm.http.User;
+import edu.drew.dm.user.AuthenticationResource;
+import edu.drew.dm.user.User;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.core.UriInfo;
 
@@ -44,8 +42,8 @@ public abstract class AuthenticationProvider {
     public String oauthCallbackUri(UriInfo ui) {
         try {
             return Server.baseUri(ui)
-                    .path(Accounts.class)
-                    .path(Accounts.class.getMethod("oauthCallback", String.class, String.class, UriInfo.class))
+                    .path(AuthenticationResource.class)
+                    .path(AuthenticationResource.class.getMethod("oauthCallback", String.class, String.class, UriInfo.class))
                     .build(getKey()).toString();
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
