@@ -1,4 +1,4 @@
-package edu.drew.dm.http;
+package edu.drew.dm;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/lock")
-public class Locks {
+public class LocksResource {
 
 
     @Path("/{uri}")

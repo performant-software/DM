@@ -1,11 +1,9 @@
 package edu.drew.dm.user;
 
-import edu.drew.dm.auth.AuthenticationProvider;
-import edu.drew.dm.auth.AuthenticationProviderRegistry;
-import edu.drew.dm.http.Workspace;
-import edu.drew.dm.user.User;
+import edu.drew.dm.user.auth.AuthenticationProvider;
+import edu.drew.dm.user.auth.AuthenticationProviderRegistry;
+import edu.drew.dm.WorkspaceResource;
 import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Session;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import java.net.URI;
@@ -57,7 +55,7 @@ public class AuthenticationResource {
     public Response logout(@Context UriInfo ui) {
         User.remove(requestProvider.get());
 
-        return Workspace.redirectToHomepage(ui);
+        return WorkspaceResource.redirectTo(ui);
     }
 
     @Path("/oauth-callback/{provider}")
@@ -70,6 +68,6 @@ public class AuthenticationResource {
                 authenticationProviders.lookup(provider).user(ui, code)
         );
 
-        return Workspace.redirectToHomepage(ui);
+        return WorkspaceResource.redirectTo(ui);
     }
 }

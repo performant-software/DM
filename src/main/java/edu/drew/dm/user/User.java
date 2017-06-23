@@ -1,16 +1,19 @@
 package edu.drew.dm.user;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.glassfish.grizzly.http.server.Request;
-import org.glassfish.grizzly.http.server.Session;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.core.SecurityContext;
+
+import static edu.drew.dm.user.EmailAddress.mbox;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -23,16 +26,20 @@ public class User implements SecurityContext, Principal {
 
     public final URI uri;
     public final String displayName;
-    public final List<String> emailAddresses;
+    public final String[] emailAddresses;
 
 
-    public User(URI uri, String displayName, List<String> emailAddresses) {
+    public User(URI uri, String displayName, String[] emailAddresses) {
         this.uri = uri;
         this.displayName = displayName;
-        this.emailAddresses = emailAddresses;
+        this.emailAddresses = new String[emailAddresses.length];
+        for (int ec = 0, el = emailAddresses.length; ec < el; ec++) {
+            this.emailAddresses[ec] = EmailAddress.normalize(emailAddresses[ec]);
+        }
     }
+    
     public User(URI uri, String displayName, String emailAddress) {
-        this(uri, displayName, Collections.singletonList(emailAddress));
+        this(uri, displayName, new String[]{ emailAddress });
     }
 
     public boolean isGuest() { return GUEST_URI.equals(uri); }
@@ -67,8 +74,7 @@ public class User implements SecurityContext, Principal {
     }
 
     public String getEmailAddress() {
-        final Iterator<String> it = emailAddresses.iterator();
-        return (it.hasNext() ? it.next() : null);
+        return emailAddresses.length == 0 ? null : emailAddresses[0];
     }
 
     public static URI uri(String realm, String id) {
@@ -79,12 +85,17 @@ public class User implements SecurityContext, Principal {
         }
     }
 
-    public static String mbox(String email) {
-        try {
-            return new URI("mailto", email, null).toString();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+    public Model addTo(Model model) {
+        final Resource resource = model.createResource(uri.toString())
+                .addProperty(RDF.type, FOAF.Agent)
+                .addProperty(RDFS.label, getName())
+                .addProperty(FOAF.name, getDisplayName());
+
+        for (String emailAddress : emailAddresses) {
+            resource.addProperty(FOAF.mbox, model.createResource(mbox(emailAddress)));
         }
+        
+        return model;
     }
 
     public static User get(Request request) {

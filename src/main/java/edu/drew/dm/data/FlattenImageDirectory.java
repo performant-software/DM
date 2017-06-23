@@ -1,9 +1,7 @@
-package edu.drew.dm.task;
+package edu.drew.dm.data;
 
 import edu.drew.dm.Logging;
-import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.http.Images;
-import edu.drew.dm.semantics.Models;
+import edu.drew.dm.rdf.Models;
 
 import java.io.File;
 import java.io.IOException;

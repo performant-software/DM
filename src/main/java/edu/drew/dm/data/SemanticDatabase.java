@@ -1,9 +1,9 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.semantics.DigitalMappaemundi;
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.semantics.OpenArchivesTerms;
-import edu.drew.dm.semantics.Perm;
+import edu.drew.dm.rdf.DigitalMappaemundi;
+import edu.drew.dm.rdf.Models;
+import edu.drew.dm.rdf.OpenArchivesTerms;
+import edu.drew.dm.rdf.Perm;
 import edu.drew.dm.util.IO;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static edu.drew.dm.semantics.Models.n3;
+import static edu.drew.dm.rdf.Models.n3;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>

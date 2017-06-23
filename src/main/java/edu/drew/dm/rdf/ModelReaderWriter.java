@@ -1,11 +1,18 @@
-package edu.drew.dm.http;
+package edu.drew.dm.rdf;
 
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.semantics.OpenArchivesTerms;
-import edu.drew.dm.user.Users;
+import edu.drew.dm.CanvasResource;
+import edu.drew.dm.data.Images;
+import edu.drew.dm.ProjectResource;
+import edu.drew.dm.TextResource;
+import edu.drew.dm.user.UserResource;
 import edu.drew.dm.util.IO;
 import org.apache.jena.rdf.model.Model;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
@@ -14,17 +21,13 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.MessageBodyWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyWriter<Model> {
 
+    @SuppressWarnings("unused")
     @Context
     private UriInfo ui;
 
@@ -94,7 +97,7 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
         model.removeAll(null, OpenArchivesTerms.isDescribedBy, null);
 
         return Models.renameResources(model,
-                Users::internalize,
+                UserResource::internalize,
                 Images::internalize
         );
     }
@@ -102,10 +105,10 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
     public static Model externalize(Model model, UriInfo ui) {
         model.removeAll(null, OpenArchivesTerms.isDescribedBy, null);
 
-        Users.externalize(model, ui);
-        Projects.externalize(model, ui);
-        Canvases.externalize(model, ui);
-        Texts.externalize(model, ui);
+        UserResource.externalize(model, ui);
+        ProjectResource.externalize(model, ui);
+        CanvasResource.externalize(model, ui);
+        TextResource.externalize(model, ui);
         Images.externalize(model, ui);
 
         return model;

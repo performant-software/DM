@@ -1,14 +1,11 @@
-package edu.drew.dm.http;
+package edu.drew.dm;
 
-import edu.drew.dm.Server;
-import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.mvc.Template;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Map;
@@ -17,12 +14,12 @@ import java.util.Map;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/workspace/")
-public class Workspace {
+public class WorkspaceResource {
     
     private final Templates templates;
 
     @Inject
-    public Workspace(Templates templates) {
+    public WorkspaceResource(Templates templates) {
         this.templates = templates;
     }
 
@@ -50,7 +47,7 @@ public class Workspace {
         throw Server.NOT_IMPLEMENTED;
     }
 
-    public static Response redirectToHomepage(UriInfo ui) {
-        return Response.temporaryRedirect(Server.baseUri(ui).path(Workspace.class).build()).build();
+    public static Response redirectTo(UriInfo ui) {
+        return Response.temporaryRedirect(Server.baseUri(ui).path(WorkspaceResource.class).build()).build();
     }
 }

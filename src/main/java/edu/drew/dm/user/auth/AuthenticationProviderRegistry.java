@@ -1,4 +1,4 @@
-package edu.drew.dm.auth;
+package edu.drew.dm.user.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;

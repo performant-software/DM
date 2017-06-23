@@ -1,4 +1,4 @@
-package edu.drew.dm.semantics;
+package edu.drew.dm.rdf;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;

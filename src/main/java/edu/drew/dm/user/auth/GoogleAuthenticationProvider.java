@@ -1,4 +1,4 @@
-package edu.drew.dm.auth;
+package edu.drew.dm.user.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,7 +56,7 @@ public class GoogleAuthenticationProvider extends AuthenticationProvider {
         return new User(
                 User.uri(getKey(), profile.path("resourceName").asText().replaceAll("/+", ":")),
                 profile.path("names").path(0).path("displayName").asText(),
-                emailAddresses
+                emailAddresses.toArray(new String[emailAddresses.size()])
         );
     }
 }

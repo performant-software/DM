@@ -1,12 +1,13 @@
-package edu.drew.dm.http;
+package edu.drew.dm;
 
-import edu.drew.dm.Server;
+import edu.drew.dm.data.Images;
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.semantics.Exif;
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.semantics.OpenAnnotation;
-import edu.drew.dm.semantics.OpenArchivesTerms;
-import edu.drew.dm.semantics.SharedCanvas;
+import edu.drew.dm.rdf.Annotations;
+import edu.drew.dm.rdf.Exif;
+import edu.drew.dm.rdf.Models;
+import edu.drew.dm.rdf.OpenAnnotation;
+import edu.drew.dm.rdf.OpenArchivesTerms;
+import edu.drew.dm.rdf.SharedCanvas;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -24,7 +25,6 @@ import java.io.InputStream;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -38,13 +38,13 @@ import javax.ws.rs.core.UriInfo;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/projects/{projectUri}/canvases")
-public class Canvases {
+public class CanvasResource {
 
     private final SemanticDatabase store;
     private final Images images;
 
     @Inject
-    public Canvases(SemanticDatabase store, Images images) {
+    public CanvasResource(SemanticDatabase store, Images images) {
         this.store = store;
         this.images = images;
     }
@@ -137,8 +137,8 @@ public class Canvases {
 
     private static String specificResource(UriInfo ui, String projectUri, String canvasUri, String resourceUri) {
         return Server.baseUri(ui)
-                .path(Canvases.class)
-                .path(Canvases.class, "readSpecificResource")
+                .path(CanvasResource.class)
+                .path(CanvasResource.class, "readSpecificResource")
                 .resolveTemplate("projectUri", projectUri)
                 .resolveTemplate("uri", canvasUri)
                 .resolveTemplate("resourceUri", resourceUri)
@@ -147,8 +147,8 @@ public class Canvases {
 
     public static String canvasResource(UriInfo ui, String projectUri, String uri) {
         return Server.baseUri(ui)
-                .path(Canvases.class)
-                .path(Canvases.class, "read")
+                .path(CanvasResource.class)
+                .path(CanvasResource.class, "read")
                 .resolveTemplate("projectUri", projectUri)
                 .resolveTemplate("uri", uri)
                 .build().toString();

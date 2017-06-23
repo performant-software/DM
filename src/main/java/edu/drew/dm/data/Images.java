@@ -1,9 +1,8 @@
-package edu.drew.dm.http;
+package edu.drew.dm.data;
 
 import edu.drew.dm.Logging;
 import edu.drew.dm.Server;
-import edu.drew.dm.data.FileSystem;
-import edu.drew.dm.semantics.Models;
+import edu.drew.dm.rdf.Models;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.glassfish.grizzly.http.server.Request;

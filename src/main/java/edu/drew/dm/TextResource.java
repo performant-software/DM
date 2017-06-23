@@ -1,9 +1,9 @@
-package edu.drew.dm.http;
+package edu.drew.dm;
 
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.Server;
-import edu.drew.dm.semantics.OpenAnnotation;
-import edu.drew.dm.semantics.OpenArchivesTerms;
+import edu.drew.dm.rdf.Annotations;
+import edu.drew.dm.rdf.OpenAnnotation;
+import edu.drew.dm.rdf.OpenArchivesTerms;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
@@ -22,13 +22,13 @@ import javax.ws.rs.core.UriInfo;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/projects/{projectUri}/texts")
-public class Texts {
+public class TextResource {
 
 
     private final SemanticDatabase db;
 
     @Inject
-    public Texts(SemanticDatabase db) {
+    public TextResource(SemanticDatabase db) {
         this.db = db;
     }
 
@@ -78,8 +78,8 @@ public class Texts {
 
     public static String textResource(UriInfo ui, String projectUri, String uri) {
         return Server.baseUri(ui)
-                .path(Texts.class)
-                .path(Texts.class, "read")
+                .path(TextResource.class)
+                .path(TextResource.class, "read")
                 .resolveTemplate("projectUri", projectUri)
                 .resolveTemplate("uri", uri)
                 .build().toString();
@@ -87,8 +87,8 @@ public class Texts {
 
     private static String specificResource(UriInfo ui, String projectUri, String textUri, String resourceUri) {
         return Server.baseUri(ui)
-                .path(Texts.class)
-                .path(Texts.class, "readSpecificResource")
+                .path(TextResource.class)
+                .path(TextResource.class, "readSpecificResource")
                 .resolveTemplate("projectUri", projectUri)
                 .resolveTemplate("uri", textUri)
                 .resolveTemplate("resourceUri", resourceUri)

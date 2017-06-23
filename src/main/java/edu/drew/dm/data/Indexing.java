@@ -1,8 +1,6 @@
-package edu.drew.dm.task;
+package edu.drew.dm.data;
 
 import edu.drew.dm.Logging;
-import edu.drew.dm.data.Index;
-import edu.drew.dm.data.SemanticDatabase;
 import it.sauronsoftware.cron4j.Task;
 import it.sauronsoftware.cron4j.TaskExecutionContext;
 

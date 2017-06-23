@@ -1,9 +1,8 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.http.Images;
-import edu.drew.dm.http.ModelReaderWriter;
-import edu.drew.dm.http.Projects;
-import edu.drew.dm.semantics.Models;
+import edu.drew.dm.rdf.ModelReaderWriter;
+import edu.drew.dm.ProjectResource;
+import edu.drew.dm.rdf.Models;
 import edu.drew.dm.util.IO;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -156,7 +155,7 @@ public class ProjectBundle implements Closeable {
     }
 
     public static ProjectBundle create(String projectUri, SemanticDatabase db, Images images) throws IOException {
-        final Model project = db.read((source, target) -> Projects.SCOPE.copy(
+        final Model project = db.read((source, target) -> ProjectResource.SCOPE.copy(
                 source.createResource(projectUri), target
         ));
         project.listSubjectsWithProperty(RDF.type, FOAF.Agent)

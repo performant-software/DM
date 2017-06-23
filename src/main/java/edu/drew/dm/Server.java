@@ -3,26 +3,21 @@ package edu.drew.dm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import edu.drew.dm.auth.AuthenticationProviderRegistry;
+import edu.drew.dm.data.Images;
+import edu.drew.dm.user.auth.AuthenticationProviderRegistry;
 import edu.drew.dm.data.FileSystem;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.SemanticDatabase;
+import edu.drew.dm.rdf.Models;
 import edu.drew.dm.user.AuthenticationResource;
 import edu.drew.dm.user.SecurityContextFilter;
-import edu.drew.dm.http.Canvases;
-import edu.drew.dm.http.Images;
-import edu.drew.dm.http.Locks;
-import edu.drew.dm.http.ModelReaderWriter;
-import edu.drew.dm.http.Projects;
-import edu.drew.dm.http.Templates;
-import edu.drew.dm.http.Texts;
-import edu.drew.dm.user.Users;
-import edu.drew.dm.http.Workspace;
-import edu.drew.dm.task.FlattenImageDirectory;
-import edu.drew.dm.task.Indexing;
-import edu.drew.dm.task.SemanticDatabaseBackup;
-import edu.drew.dm.task.UserbaseInitialization;
+import edu.drew.dm.rdf.ModelReaderWriter;
+import edu.drew.dm.user.User;
+import edu.drew.dm.user.UserResource;
+import edu.drew.dm.data.FlattenImageDirectory;
+import edu.drew.dm.data.Indexing;
+import edu.drew.dm.data.SemanticDatabaseBackup;
 import it.sauronsoftware.cron4j.Scheduler;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -60,11 +55,11 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ContextResolver;
 
-import static edu.drew.dm.semantics.OpenAnnotation.SpecificResource;
-import static edu.drew.dm.semantics.OpenAnnotation.hasBody;
-import static edu.drew.dm.semantics.OpenAnnotation.hasSource;
-import static edu.drew.dm.semantics.OpenAnnotation.hasTarget;
-import static edu.drew.dm.semantics.SharedCanvas.Canvas;
+import static edu.drew.dm.rdf.OpenAnnotation.SpecificResource;
+import static edu.drew.dm.rdf.OpenAnnotation.hasBody;
+import static edu.drew.dm.rdf.OpenAnnotation.hasSource;
+import static edu.drew.dm.rdf.OpenAnnotation.hasTarget;
+import static edu.drew.dm.rdf.SharedCanvas.Canvas;
 import static org.apache.jena.vocabulary.DCTypes.Text;
 
 /**
@@ -101,7 +96,7 @@ public class Server {
             }
         }
 
-        UserbaseInitialization.initGuestAccess(db);
+        db.merge(User.GUEST.addTo(Models.create()));
 
         final Index index = new Index(fs, db).initialized();
         
@@ -162,12 +157,12 @@ public class Server {
                 .register(SecurityContextFilter.class)
                 .register(AuthenticationResource.class)
                 .register(Root.class)
-                .register(Workspace.class)
-                .register(Locks.class)
-                .register(Users.class)
-                .register(Projects.class)
-                .register(Canvases.class)
-                .register(Texts.class)
+                .register(WorkspaceResource.class)
+                .register(LocksResource.class)
+                .register(UserResource.class)
+                .register(ProjectResource.class)
+                .register(CanvasResource.class)
+                .register(TextResource.class)
                 .register(Debug.class);
 
         final String contextPath = config.getString("http.context-path").replaceAll("/+$", "");
@@ -229,7 +224,7 @@ public class Server {
         @GET
         public Response redirect(@Context UriInfo ui) {
             return Response.status(Response.Status.TEMPORARY_REDIRECT)
-                    .location(ui.getBaseUriBuilder().path(Workspace.class).build())
+                    .location(ui.getBaseUriBuilder().path(WorkspaceResource.class).build())
                     .build();
         }
 

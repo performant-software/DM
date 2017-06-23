@@ -1,20 +1,19 @@
-package edu.drew.dm.http;
+package edu.drew.dm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import edu.drew.dm.Logging;
-import edu.drew.dm.Server;
+import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.semantics.OpenAnnotation;
-import edu.drew.dm.semantics.OpenArchivesTerms;
-import edu.drew.dm.semantics.Perm;
-import edu.drew.dm.semantics.SharedCanvas;
-import edu.drew.dm.semantics.Traversal;
+import edu.drew.dm.rdf.Models;
+import edu.drew.dm.rdf.OpenAnnotation;
+import edu.drew.dm.rdf.OpenArchivesTerms;
+import edu.drew.dm.rdf.Perm;
+import edu.drew.dm.rdf.SharedCanvas;
+import edu.drew.dm.rdf.Traversal;
 import edu.drew.dm.user.User;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -60,7 +59,7 @@ import static java.time.temporal.ChronoUnit.MINUTES;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/projects")
-public class Projects {
+public class ProjectResource {
 
     private final SemanticDatabase db;
     private final Index index;
@@ -68,7 +67,7 @@ public class Projects {
     private final ObjectMapper objectMapper;
 
     @Inject
-    public Projects(SemanticDatabase db, Index index, Images images, ObjectMapper objectMapper) {
+    public ProjectResource(SemanticDatabase db, Index index, Images images, ObjectMapper objectMapper) {
         this.db = db;
         this.index = index;
         this.images = images;
@@ -92,7 +91,7 @@ public class Projects {
                     .forEachRemaining(part -> {
                         target.add(part.listProperties());
                         if (part.hasProperty(RDF.type, SharedCanvas.Canvas)) {
-                            Canvases.imageAnnotations(part, target);
+                            CanvasResource.imageAnnotations(part, target);
                         }
                     });
         });
@@ -191,8 +190,8 @@ public class Projects {
                             : Images.imageResource(ui, hit.image);
 
                     final String url = image == null
-                            ? Texts.textResource(ui, uri, hit.uri)
-                            : Canvases.canvasResource(ui, uri, hit.uri);
+                            ? TextResource.textResource(ui, uri, hit.uri)
+                            : CanvasResource.canvasResource(ui, uri, hit.uri);
 
                     return objectMapper.createObjectNode()
                             .put("uri", hit.uri)
@@ -238,7 +237,7 @@ public class Projects {
                     try (ProjectBundle bundle = ProjectBundle.create(uri, db, images)) {
                         bundle.asZip(output);
                     } catch (Throwable t) {
-                        Logging.inClass(Projects.class).log(Level.WARNING, t, t::getMessage);
+                        Logging.inClass(ProjectResource.class).log(Level.WARNING, t, t::getMessage);
                     }
                 })
                 .build();
@@ -254,7 +253,7 @@ public class Projects {
     @Path("/{uri}/removed")
     @POST
     public Model cleanupLinks(@FormParam("uuids") String uuids) {
-        Logger.getLogger(Projects.class.getName()).fine(() -> uuids);
+        Logger.getLogger(ProjectResource.class.getName()).fine(() -> uuids);
         throw Server.NOT_IMPLEMENTED;
     }
 
@@ -277,8 +276,8 @@ public class Projects {
 
     private static String projectResource(UriInfo ui, String uri) {
         return Server.baseUri(ui)
-                .path(Projects.class)
-                .path(Projects.class, "read")
+                .path(ProjectResource.class)
+                .path(ProjectResource.class, "read")
                 .resolveTemplate("uri", uri)
                 .build().toString();
     }

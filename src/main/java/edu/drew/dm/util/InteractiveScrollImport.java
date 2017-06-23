@@ -1,9 +1,9 @@
 package edu.drew.dm.util;
 
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.semantics.Content;
-import edu.drew.dm.semantics.OpenArchivesTerms;
-import edu.drew.dm.semantics.Perm;
+import edu.drew.dm.rdf.Models;
+import edu.drew.dm.rdf.Content;
+import edu.drew.dm.rdf.OpenArchivesTerms;
+import edu.drew.dm.rdf.Perm;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.vocabulary.FOAF;

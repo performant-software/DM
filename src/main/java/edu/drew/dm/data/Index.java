@@ -1,16 +1,15 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.http.Projects;
-import edu.drew.dm.semantics.Content;
-import edu.drew.dm.semantics.Exif;
-import edu.drew.dm.semantics.OpenAnnotation;
-import edu.drew.dm.semantics.SharedCanvas;
+import edu.drew.dm.ProjectResource;
+import edu.drew.dm.rdf.Content;
+import edu.drew.dm.rdf.Exif;
+import edu.drew.dm.rdf.OpenAnnotation;
+import edu.drew.dm.rdf.SharedCanvas;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
@@ -30,7 +29,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -183,7 +181,7 @@ public class Index implements AutoCloseable {
                     final Set<Resource> projects = source.listSubjectsWithProperty(RDF.type, DCTypes.Collection).toSet();
                     for (Resource project : projects) {
 
-                        Projects.SCOPE.visit(project, resource -> {
+                        ProjectResource.SCOPE.visit(project, resource -> {
                             if (resource.hasProperty(RDF.type, DCTypes.Text) && resource.hasProperty(DC.title) && resource.hasProperty(Content.chars)) {
                                 indexText(indexWriter, project, resource);
                             } else if (resource.hasProperty(RDF.type, SharedCanvas.Canvas) && resource.hasProperty(DC.title)) {

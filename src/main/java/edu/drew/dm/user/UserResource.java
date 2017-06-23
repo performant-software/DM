@@ -2,9 +2,9 @@ package edu.drew.dm.user;
 
 import edu.drew.dm.Server;
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.semantics.Models;
-import edu.drew.dm.semantics.OpenArchivesTerms;
-import edu.drew.dm.semantics.Perm;
+import edu.drew.dm.rdf.Models;
+import edu.drew.dm.rdf.OpenArchivesTerms;
+import edu.drew.dm.rdf.Perm;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -29,12 +29,12 @@ import javax.ws.rs.core.UriInfo;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/users")
-public class Users {
+public class UserResource {
 
     private final SemanticDatabase store;
 
     @Inject
-    public Users(SemanticDatabase store) {
+    public UserResource(SemanticDatabase store) {
         this.store = store;
     }
 
@@ -96,8 +96,8 @@ public class Users {
 
     private static String userResource(UriInfo ui, URI user) {
         return Server.baseUri(ui)
-                .path(Users.class)
-                .path(Users.class, "read")
+                .path(UserResource.class)
+                .path(UserResource.class, "read")
                 .resolveTemplate("user", user.getSchemeSpecificPart())
                 .build().toString();
     }

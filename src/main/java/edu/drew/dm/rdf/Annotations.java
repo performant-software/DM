@@ -1,9 +1,9 @@
-package edu.drew.dm.http;
+package edu.drew.dm.rdf;
 
-import edu.drew.dm.semantics.OpenAnnotation;
-import edu.drew.dm.semantics.OpenArchivesTerms;
-import edu.drew.dm.semantics.SharedCanvas;
-import edu.drew.dm.semantics.Traversal;
+import edu.drew.dm.rdf.OpenAnnotation;
+import edu.drew.dm.rdf.OpenArchivesTerms;
+import edu.drew.dm.rdf.SharedCanvas;
+import edu.drew.dm.rdf.Traversal;
 import org.apache.jena.vocabulary.DCTypes;
 
 import java.util.Arrays;
