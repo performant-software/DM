@@ -1,5 +1,6 @@
 package edu.drew.dm.data;
 
+import com.typesafe.config.Config;
 import edu.drew.dm.util.IO;
 
 import java.io.File;
@@ -11,6 +12,10 @@ public class FileSystem {
 
     private final File baseDirectory;
 
+    public FileSystem(Config config) {
+        this(new File(config.getString("data.dir")));
+    }
+    
     public FileSystem(File baseDirectory) {
         this.baseDirectory = baseDirectory;
     }

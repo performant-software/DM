@@ -5,8 +5,10 @@ import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.Perm;
 import edu.drew.dm.util.IO;
+import org.apache.jena.graph.GraphListener;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
+import org.apache.jena.rdf.listeners.StatementListener;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -18,10 +20,12 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
@@ -91,14 +95,22 @@ public class SemanticDatabase implements AutoCloseable {
 
     public <T> T transaction(ReadWrite rw, Transaction<T> tx) {
         dataset.begin(rw);
+        final Model model = dataset.getDefaultModel();
+        System.out.println(model);
+
+        final TransactionLog transactionLog = new TransactionLog();
+        model.register(transactionLog);
+
         try {
             final T result = tx.execute(dataset);
             dataset.commit();
             if (rw == ReadWrite.WRITE) {
                 writes.incrementAndGet();
+                LOG.info(transactionLog::toString);
             }
             return result;
         } finally {
+            model.unregister(transactionLog);
             dataset.end();
         }
     }
@@ -220,6 +232,27 @@ public class SemanticDatabase implements AutoCloseable {
         @Override
         public int hashCode() {
             return Objects.hash(subject, predicate);
+        }
+    }
+
+    private static class TransactionLog extends StatementListener {
+
+        private final List<Statement> added = new ArrayList<>();
+        private final List<Statement> removed = new ArrayList<>();
+
+        @Override
+        public void addedStatement(Statement s) {
+            added.add(s);
+        }
+
+        @Override
+        public void removedStatement(Statement s) {
+            removed.add(s);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("<+ %d, - %d>", added.size(), removed.size());
         }
     }
 }

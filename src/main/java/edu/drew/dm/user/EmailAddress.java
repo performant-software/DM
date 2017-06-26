@@ -17,4 +17,11 @@ public class EmailAddress {
         }
     }
 
+    public static String parse(String mbox) {
+        final URI uri = URI.create(mbox);
+        if (!"mailto".equals(uri.getScheme())) {
+            throw new IllegalArgumentException(mbox);
+        }
+        return uri.getSchemeSpecificPart();
+    }
 }

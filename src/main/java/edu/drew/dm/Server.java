@@ -77,7 +77,7 @@ public class Server {
                 config.root().render()
         ));
 
-        final FileSystem fs = new FileSystem(new File(config.getString("data.dir")));
+        final FileSystem fs = new FileSystem(config);
 
         final SemanticDatabase db = new SemanticDatabase(fs);
         shutdownHook(db::close);

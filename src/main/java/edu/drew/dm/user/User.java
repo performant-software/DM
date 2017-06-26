@@ -1,8 +1,11 @@
 package edu.drew.dm.user;
 
+import edu.drew.dm.Logging;
 import edu.drew.dm.data.SemanticDatabase;
+import org.apache.jena.rdf.listeners.StatementListener;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -30,7 +33,7 @@ public class User implements SecurityContext, Principal {
     public final String[] emailAddresses;
 
 
-    public User(URI uri, String displayName, String[] emailAddresses) {
+    public User(URI uri, String displayName, String... emailAddresses) {
         this.uri = uri;
         this.displayName = displayName;
         this.emailAddresses = new String[emailAddresses.length];
@@ -39,10 +42,6 @@ public class User implements SecurityContext, Principal {
         }
     }
     
-    public User(URI uri, String displayName, String emailAddress) {
-        this(uri, displayName, new String[]{ emailAddress });
-    }
-
     public boolean isGuest() { return GUEST_URI.equals(uri); }
 
     @Override
@@ -107,8 +106,8 @@ public class User implements SecurityContext, Principal {
         for (String emailAddress : emailAddresses) {
             resource.addProperty(FOAF.mbox, model.createResource(mbox(emailAddress)));
         }
-        
-        return model;
+
+        return new UserDataMigration(this).execute(model);
     }
 
     public static User get(Request request) {
