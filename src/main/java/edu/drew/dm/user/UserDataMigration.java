@@ -77,9 +77,9 @@ public class UserDataMigration {
         return model;
     }
 
-    public static void ensureRealm(SemanticDatabase db) {
-        db.write((SemanticDatabase.Transaction<Void>) ds -> {
-            Models.renameResources(ds.getDefaultModel(), r -> {
+    public static SemanticDatabase ensureRealm(SemanticDatabase db) {
+        return db.write(model -> {
+            Models.renameResources(model, r -> {
                 final String uriStr = r.getURI();
                 final URI uri = URI.create(uriStr);
                 if (!"user".equals(uri.getScheme())) {
@@ -92,20 +92,20 @@ public class UserDataMigration {
 
                 return User.uri("dm", name).toString();
             });
-            return null;
+            return db;
         });
 
     }
 
-    public static void migrateNamingSchema(SemanticDatabase db) {
-        db.write((SemanticDatabase.Transaction<Void>) ds -> {
-            ds.getDefaultModel().listSubjectsWithProperty(RDF.type, FOAF.Agent)
+    public static SemanticDatabase migrateNamingSchema(SemanticDatabase db) {
+        return db.write(model -> {
+            model.listSubjectsWithProperty(RDF.type, FOAF.Agent)
                     .filterKeep(user -> !user.hasProperty(FOAF.name))
                     .forEachRemaining(user -> {
                         final Property[] nameProperties = new Property[] {
                                 FOAF.firstName,
                                 FOAF.surname,
-                                ds.getDefaultModel().createProperty(FOAF.NS, "lastName")
+                                model.createProperty(FOAF.NS, "lastName")
                         };
 
                         final String name = Stream.of(nameProperties)
@@ -127,14 +127,12 @@ public class UserDataMigration {
                             user.removeAll(nameProperty);
                         }
                     });
-            return null;
+            return db;
         });
     }
 
-    public static void normalizeEmailAddresses(SemanticDatabase db) {
-        db.write((SemanticDatabase.Transaction<Void>) ds -> {
-            final Model model = ds.getDefaultModel();
-
+    public static SemanticDatabase normalizeEmailAddresses(SemanticDatabase db) {
+        return db.write(model -> {
             final List<Statement> mboxStatements = model
                     .listStatements(null, FOAF.mbox, (RDFNode) null)
                     .toList();
@@ -145,7 +143,7 @@ public class UserDataMigration {
                 )))));
             }
 
-            return null;
+            return db;
         });
     }
 

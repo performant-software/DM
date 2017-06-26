@@ -2,22 +2,23 @@ package edu.drew.dm;
 
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.user.User;
-import edu.drew.dm.user.UserDataMigration;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.Test;
 
-import java.net.URI;
+import static edu.drew.dm.user.UserDataMigration.ensureRealm;
+import static edu.drew.dm.user.UserDataMigration.migrateNamingSchema;
+import static edu.drew.dm.user.UserDataMigration.normalizeEmailAddresses;
 
 public class UserIT extends BaseIT {
 
     @Test
     public void readUsers() {
-        UserDataMigration.ensureRealm(db);
-        UserDataMigration.migrateNamingSchema(db);
-        UserDataMigration.normalizeEmailAddresses(db);
+        ensureRealm(db);
+        migrateNamingSchema(db);
+        normalizeEmailAddresses(db);
 
         final User gremid = new User(
                 User.uri("performant", "gregor.middell@pagina.gmbh"),

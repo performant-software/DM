@@ -112,8 +112,7 @@ public class ProjectResource {
     @Path("/{uri}")
     @DELETE
     public Model delete(@PathParam("uri") String uri) {
-        final Model removed = db.write(ds -> {
-            final Model model = ds.getDefaultModel();
+        final Model removed = db.write(model -> {
             final Resource project = model.createResource(uri);
             final Model toRemove = SCOPE.copy(project, Models.create());
 
@@ -122,12 +121,14 @@ public class ProjectResource {
                             .filterDrop(stmt -> project.equals(stmt.getObject()))
                             .forEachRemaining(toRemove::remove));
 
-            SemanticDatabase.logged("-", toRemove);
             model.remove(toRemove);
             return toRemove;
         });
 
-        final Set<Resource> orphanedImages = db.read(ds -> removed.listSubjectsWithProperty(RDF.type, DCTypes.Image).filterDrop(image -> ds.getDefaultModel().containsResource(image)).toSet());
+        final Set<Resource> orphanedImages = db.read(source -> removed
+                .listSubjectsWithProperty(RDF.type, DCTypes.Image)
+                .filterDrop(image -> source.containsResource(image))
+                .toSet());
         orphanedImages.forEach(images::delete);
 
         return removed;
@@ -144,8 +145,8 @@ public class ProjectResource {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode isShared(@PathParam("uri") String uri) {
-        return objectMapper.createObjectNode().put("public", (boolean) db.read(ds ->
-                ds.getDefaultModel().containsAll(publishedProject(uri))
+        return objectMapper.createObjectNode().put("public", (boolean) db.read(source ->
+                source.containsAll(publishedProject(uri))
         ));
     }
 
@@ -244,7 +245,7 @@ public class ProjectResource {
     }
 
     private String title(String uri) {
-        return db.read(ds -> Optional.ofNullable(ds.getDefaultModel().createResource(uri).getProperty(DC_11.title))
+        return db.read(source -> Optional.ofNullable(source.createResource(uri).getProperty(DC_11.title))
                 .map(Statement::getString).orElse(uri));
     }
 

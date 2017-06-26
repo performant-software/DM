@@ -71,5 +71,4 @@ public class IO {
         }
     }
 
-    public static final Pattern LINE_ENDING = Pattern.compile("[\n\r]+");
 }

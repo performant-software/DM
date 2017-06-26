@@ -1,11 +1,9 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.rdf.DigitalMappaemundi;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.Perm;
 import edu.drew.dm.util.IO;
-import org.apache.jena.graph.GraphListener;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.listeners.StatementListener;
@@ -20,6 +18,7 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 
 import java.io.OutputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,7 +47,7 @@ public class SemanticDatabase implements AutoCloseable {
 
     public interface Transaction<T> {
 
-        T execute(Dataset dataset);
+        T execute(Model model);
 
     }
 
@@ -65,12 +65,21 @@ public class SemanticDatabase implements AutoCloseable {
 
     private final AtomicLong writes = new AtomicLong();
 
+    private final List<TransactionLogListener> transactionLogListeners = new ArrayList<>();
+
     public SemanticDatabase(FileSystem fs) {
         this.dataset = TDBFactory.createDataset(fs.triples().getPath());
-    }
-
-    public static Model passwords(Dataset ds) {
-        return ds.getNamedModel(DigitalMappaemundi.password.getURI());
+        if (LOG.isLoggable(Level.FINEST)) {
+            addTransactionLogListener(txLog -> LOG.finest(String.join("\n",
+                    String.join(" - ", "RDF/IO", txLog.duration().toString()),
+                    Stream.concat(
+                            Models.n3Data(Models.n3(Models.create().add(txLog.removed)))
+                                    .map(l -> String.join(" ", "-", "|", l)),
+                            Models.n3Data(Models.n3(Models.create().add(txLog.added)))
+                                    .map(l -> String.join(" ", "+", "|", l))
+                    ).collect(Collectors.joining("\n")).trim())
+            ));
+        }
     }
 
     public boolean isEmpty() {
@@ -85,6 +94,10 @@ public class SemanticDatabase implements AutoCloseable {
         return writes.longValue();
     }
 
+    public void addTransactionLogListener(TransactionLogListener listener) {
+        transactionLogListeners.add(listener);
+    }
+
     public <T> T read(Transaction<T> tx) {
         return transaction(ReadWrite.READ, tx);
     }
@@ -96,17 +109,19 @@ public class SemanticDatabase implements AutoCloseable {
     public <T> T transaction(ReadWrite rw, Transaction<T> tx) {
         dataset.begin(rw);
         final Model model = dataset.getDefaultModel();
-        System.out.println(model);
 
         final TransactionLog transactionLog = new TransactionLog();
         model.register(transactionLog);
 
         try {
-            final T result = tx.execute(dataset);
+            final T result = tx.execute(model);
             dataset.commit();
             if (rw == ReadWrite.WRITE) {
                 writes.incrementAndGet();
-                LOG.info(transactionLog::toString);
+                if (!transactionLog.isEmpty()) {
+                    transactionLog.ended();
+                    transactionLogListeners.forEach(l -> l.transactionLogged(transactionLog));
+                }
             }
             return result;
         } finally {
@@ -116,8 +131,7 @@ public class SemanticDatabase implements AutoCloseable {
     }
 
     public Model read(BiConsumer<Model, Model> reader) {
-        return read(ds -> {
-            final Model source = ds.getDefaultModel();
+        return read(source -> {
             final Model target = Models.create();
             reader.accept(source, target);
             return target;
@@ -125,19 +139,17 @@ public class SemanticDatabase implements AutoCloseable {
     }
 
     public Model remove(Model removed) {
-        return write(ds -> {
-            ds.getDefaultModel().remove(logged("-", removed));
+        return write(model -> {
+            model.remove(removed);
             return removed;
         });
     }
 
     public Model merge(Model update) {
-        return write(ds -> merge(ds.getDefaultModel(), update));
+        return write(model -> merge(model, update));
     }
 
     public static Model merge(Model target, Model update) {
-        logged("+", update);
-
         final Map<StatementHead, LinkedList<Statement>> statementsByHead = new LinkedHashMap<>();
         update.listStatements().forEachRemaining(stmt -> statementsByHead
                 .computeIfAbsent(new StatementHead(stmt), k -> new LinkedList<>())
@@ -177,20 +189,10 @@ public class SemanticDatabase implements AutoCloseable {
     }
 
     public SemanticDatabase writeTo(OutputStream to) {
-        return read(ds -> {
-            RDFDataMgr.write(to, ds.getDefaultModel(), Lang.NQUADS);
+        return read(source -> {
+            RDFDataMgr.write(to, source, Lang.NQUADS);
             return this;
         });
-    }
-
-    public static Model logged(String action, Model logged) {
-        LOG.finest(() -> Stream.concat(
-                Stream.of("RDF I/O"),
-                IO.LINE_ENDING.splitAsStream(n3(logged))
-                        .filter(l -> !l.startsWith("@prefix "))
-                        .map(l -> String.join(" ", action, "|", l))
-        ).collect(Collectors.joining("\n")).trim());
-        return logged;
     }
 
     @Override
@@ -235,10 +237,13 @@ public class SemanticDatabase implements AutoCloseable {
         }
     }
 
-    private static class TransactionLog extends StatementListener {
+    public static class TransactionLog extends StatementListener {
 
-        private final List<Statement> added = new ArrayList<>();
-        private final List<Statement> removed = new ArrayList<>();
+        public final long started = System.currentTimeMillis();
+        public long ended;
+
+        public final List<Statement> added = new ArrayList<>();
+        public final List<Statement> removed = new ArrayList<>();
 
         @Override
         public void addedStatement(Statement s) {
@@ -250,9 +255,27 @@ public class SemanticDatabase implements AutoCloseable {
             removed.add(s);
         }
 
+        public void ended() {
+            this.ended = System.currentTimeMillis();
+        }
+
+        public Duration duration() {
+            return Duration.ofMillis(ended - started);
+        }
+
+        public boolean isEmpty() {
+            return added.isEmpty() && removed.isEmpty();
+        }
+
         @Override
         public String toString() {
             return String.format("<+ %d, - %d>", added.size(), removed.size());
         }
+    }
+
+    public interface TransactionLogListener {
+
+        void transactionLogged(TransactionLog txLog);
+
     }
 }

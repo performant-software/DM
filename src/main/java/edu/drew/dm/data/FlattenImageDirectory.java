@@ -39,7 +39,7 @@ public class FlattenImageDirectory {
         }
 
         moved.forEach((from, to) -> LOG.info(() -> String.format("%s --> %s", from, to)));
-        db.write(ds -> Models.renameResources(ds.getDefaultModel(), r -> {
+        db.write(model -> Models.renameResources(model, r -> {
             final String resourceUri = r.getURI();
             final URI uri = URI.create(resourceUri);
             if (!"image".equals(uri.getScheme())) {

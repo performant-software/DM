@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
@@ -117,4 +119,11 @@ public class Models {
             throw new RuntimeException(e);
         }
     }
+
+    public static Stream<String> n3Data(String n3) {
+        return LINE_ENDING.splitAsStream(n3)
+                .filter(l -> !l.startsWith("@prefix "));
+    }
+
+    private static final Pattern LINE_ENDING = Pattern.compile("\n");
 }

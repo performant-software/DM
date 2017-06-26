@@ -86,8 +86,8 @@ public class User implements SecurityContext, Principal {
     }
 
     public SemanticDatabase updateIn(SemanticDatabase db) {
-        return db.write(ds -> {
-            updateIn(ds.getDefaultModel());
+        return db.write(model -> {
+            updateIn(model);
             return db;
         });
     }
