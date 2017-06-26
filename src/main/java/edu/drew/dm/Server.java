@@ -3,21 +3,21 @@ package edu.drew.dm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import edu.drew.dm.data.Images;
-import edu.drew.dm.user.auth.AuthenticationProviderRegistry;
 import edu.drew.dm.data.FileSystem;
+import edu.drew.dm.data.FlattenImageDirectory;
+import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
+import edu.drew.dm.data.Indexing;
 import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.rdf.Models;
+import edu.drew.dm.data.SemanticDatabaseBackup;
+import edu.drew.dm.rdf.ModelReaderWriter;
 import edu.drew.dm.user.AuthenticationResource;
 import edu.drew.dm.user.SecurityContextFilter;
-import edu.drew.dm.rdf.ModelReaderWriter;
 import edu.drew.dm.user.User;
+import edu.drew.dm.user.UserDataMigration;
 import edu.drew.dm.user.UserResource;
-import edu.drew.dm.data.FlattenImageDirectory;
-import edu.drew.dm.data.Indexing;
-import edu.drew.dm.data.SemanticDatabaseBackup;
+import edu.drew.dm.user.auth.AuthenticationProviderRegistry;
 import it.sauronsoftware.cron4j.Scheduler;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -76,9 +76,8 @@ public class Server {
                 "Configuration: %s",
                 config.root().render()
         ));
-        
-        final File storeDir = new File(config.getString("data.dir"));
-        final FileSystem fs = new FileSystem(storeDir);
+
+        final FileSystem fs = new FileSystem(new File(config.getString("data.dir")));
 
         final SemanticDatabase db = new SemanticDatabase(fs);
         shutdownHook(db::close);
@@ -96,7 +95,8 @@ public class Server {
             }
         }
 
-        db.merge(User.GUEST.addTo(Models.create()));
+        UserDataMigration.ensureRealm(db);
+        User.GUEST.updateIn(db);
 
         final Index index = new Index(fs, db).initialized();
         

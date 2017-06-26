@@ -1,5 +1,6 @@
 package edu.drew.dm.user;
 
+import edu.drew.dm.data.SemanticDatabase;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.vocabulary.FOAF;
@@ -85,9 +86,21 @@ public class User implements SecurityContext, Principal {
         }
     }
 
-    public Model addTo(Model model) {
-        final Resource resource = model.createResource(uri.toString())
-                .addProperty(RDF.type, FOAF.Agent)
+    public SemanticDatabase updateIn(SemanticDatabase db) {
+        return db.write(ds -> {
+            updateIn(ds.getDefaultModel());
+            return db;
+        });
+    }
+
+    public Model updateIn(Model model) {
+        final Resource resource = model.createResource(uri.toString());
+
+        resource.removeAll(RDFS.label);
+        resource.removeAll(FOAF.name);
+        resource.removeAll(FOAF.mbox);
+
+        resource.addProperty(RDF.type, FOAF.Agent)
                 .addProperty(RDFS.label, getName())
                 .addProperty(FOAF.name, getDisplayName());
 

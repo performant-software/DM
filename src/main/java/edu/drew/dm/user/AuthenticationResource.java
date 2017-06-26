@@ -1,5 +1,6 @@
 package edu.drew.dm.user;
 
+import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.user.auth.AuthenticationProvider;
 import edu.drew.dm.user.auth.AuthenticationProviderRegistry;
 import edu.drew.dm.WorkspaceResource;
@@ -25,12 +26,15 @@ import javax.ws.rs.core.UriInfo;
 @Path("/accounts")
 public class AuthenticationResource {
 
+    private final SemanticDatabase db;
     private final Provider<Request> requestProvider;
     private final AuthenticationProviderRegistry authenticationProviders;
 
     @Inject
-    public AuthenticationResource(Provider<Request> requestProvider,
+    public AuthenticationResource(SemanticDatabase db,
+                                  Provider<Request> requestProvider,
                                   AuthenticationProviderRegistry authenticationProviders) {
+        this.db = db;
         this.requestProvider = requestProvider;
         this.authenticationProviders = authenticationProviders;
     }
@@ -63,10 +67,10 @@ public class AuthenticationResource {
     public Response oauthCallback(@PathParam("provider") String provider,
                                   @QueryParam("code") String code,
                                   @Context UriInfo ui) {
-        User.set(
-                requestProvider.get(),
-                authenticationProviders.lookup(provider).user(ui, code)
-        );
+        final User user = authenticationProviders.lookup(provider).user(ui, code);
+
+        user.updateIn(db);
+        User.set(requestProvider.get(), user);
 
         return WorkspaceResource.redirectTo(ui);
     }
