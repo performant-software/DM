@@ -7,7 +7,6 @@ import edu.drew.dm.data.FileSystem;
 import edu.drew.dm.data.FlattenImageDirectory;
 import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
-import edu.drew.dm.data.Indexing;
 import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.data.SemanticDatabaseBackup;
@@ -39,7 +38,6 @@ import org.glassfish.jersey.process.internal.RequestScoped;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.mvc.freemarker.FreemarkerMvcFeature;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -96,13 +94,16 @@ public class Server {
         }
 
         UserDataMigration.ensureRealm(db);
+        UserDataMigration.migrateNamingSchema(db);
+        UserDataMigration.normalizeEmailAddresses(db);
+
         User.GUEST.updateIn(db);
 
-        final Index index = new Index(fs, db).initialized();
+        final Index index = new Index(fs, db);
         
         final Scheduler scheduler = scheduler();
         scheduler.schedule("0 * * * *", new SemanticDatabaseBackup(fs, db));
-        scheduler.schedule("* * * * *", new Indexing(db, index));
+        scheduler.schedule("* * * * *", index::rebuild);
 
         final ObjectMapper objectMapper = new ObjectMapper();
         final AuthenticationProviderRegistry authProviders = new AuthenticationProviderRegistry(

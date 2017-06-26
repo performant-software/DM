@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.ProjectBundle;
+import edu.drew.dm.data.TextIndexSuggestion;
+import edu.drew.dm.data.TextSearch;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenAnnotation;
@@ -180,8 +182,8 @@ public class ProjectResource {
     @Path("/{uri}/search")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public JsonNode search(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String query, @QueryParam("limit") @DefaultValue("2000") int limit, @Context UriInfo ui) throws Exception {
-        final Index.Search search = index.search(uri, query, limit);
+    public JsonNode search(@PathParam("uri") String project, @QueryParam("q") @DefaultValue("") String query, @QueryParam("limit") @DefaultValue("2000") int limit, @Context UriInfo ui) throws Exception {
+        final TextSearch search = TextSearch.execute(index, project, query, limit);
         final ObjectNode response = objectMapper.createObjectNode();
 
         Stream.of(search.results)
@@ -191,8 +193,8 @@ public class ProjectResource {
                             : Images.imageResource(ui, hit.image);
 
                     final String url = image == null
-                            ? TextResource.textResource(ui, uri, hit.uri)
-                            : CanvasResource.canvasResource(ui, uri, hit.uri);
+                            ? TextResource.textResource(ui, project, hit.uri)
+                            : CanvasResource.canvasResource(ui, project, hit.uri);
 
                     return objectMapper.createObjectNode()
                             .put("uri", hit.uri)
@@ -220,7 +222,7 @@ public class ProjectResource {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode autocomplete(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String prefix) throws IOException {
-        return Stream.of(index.suggest(uri, prefix, 10))
+        return TextIndexSuggestion.lookup(index, uri, prefix, 10).stream()
                 .collect(objectMapper::createArrayNode, ArrayNode::add, ArrayNode::addAll);
     }
 

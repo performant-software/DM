@@ -1,11 +1,8 @@
 package edu.drew.dm.user;
 
-import edu.drew.dm.Logging;
 import edu.drew.dm.data.SemanticDatabase;
-import org.apache.jena.rdf.listeners.StatementListener;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
@@ -40,6 +37,17 @@ public class User implements SecurityContext, Principal {
         for (int ec = 0, el = emailAddresses.length; ec < el; ec++) {
             this.emailAddresses[ec] = EmailAddress.normalize(emailAddresses[ec]);
         }
+    }
+
+    public User(Resource resource) {
+        this(
+                URI.create(resource.getURI()),
+                resource.getRequiredProperty(FOAF.name).getString(),
+                resource.listProperties(FOAF.mbox)
+                        .mapWith(mailbox -> EmailAddress.parse(mailbox.getResource().getURI()))
+                        .toList()
+                        .toArray(new String[0])
+        );
     }
     
     public boolean isGuest() { return GUEST_URI.equals(uri); }
