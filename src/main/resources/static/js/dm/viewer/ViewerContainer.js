@@ -136,6 +136,7 @@ dm.viewer.ViewerContainer.prototype.close = function() {
    if (this.viewer) {
       if (this.viewer.isEditable()) {
          var uri = this.viewer.uri || jQuery(this.viewer.getElement()).find(".lock-for-edit-icon").data("uri");
+         this.viewer.makeUneditable();
          this.viewer.unlockResource(uri);
       }
    }

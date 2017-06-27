@@ -171,9 +171,6 @@ dm.viewer.TextEditor.prototype.scrollIntoView = function (element) {
     if (scrollTop < 0) scrollTop = 0;
 
     jQuery(editorElement).scrollTop(scrollTop);
-
-    jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").addClass("atb-editor-textannotation-nohighlight");
-    $(element).removeClass("atb-editor-textannotation-nohighlight");
 };
 
 dm.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (specificResource) {
@@ -185,7 +182,13 @@ dm.viewer.TextEditor.prototype.selectAndMoveToSpecificResource = function (speci
     var element = annotationPlugin.getHighlightElementByUri(selectorUri);
     if (element) {
         this.scrollIntoView(element);
+        jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation").addClass("atb-editor-textannotation-nohighlight");
+        $(element).removeClass("atb-editor-textannotation-nohighlight");
         annotationPlugin.selectAnnotationSpan(element);
+        if (this.annotateButton) {
+            this.annotateButton.setEnabled(false);
+            this.annotateButton.setTooltip("Annotating disabled due to hidden highlights; toggle highlight visibility off then on to enable");
+        }
     }
     else {
         console.error(specificResource + " could not be found in text " + this.uri);
@@ -464,6 +467,7 @@ dm.viewer.TextEditor.prototype._renderToolbar = function() {
 
     myToolbar.addChildAt(annotateButton, 0, true);
 
+    this.annotateButton = annotateButton;
 
     var saveStatusDiv = $("<div id='save-status-"+this.useID+"' class='editor-status goog-toolbar goog-toolbar-horizontal'>Initializing</div>");
     $(this.toolbarDiv).append(saveStatusDiv);
@@ -512,9 +516,16 @@ dm.viewer.TextEditor.prototype.handleToggleMarkers = function(event) {
     var $annotations = jQuery(this.editorIframeElement).contents().find("span.atb-editor-textannotation");
     if (button.isChecked()) {
         $annotations.removeClass("atb-editor-textannotation-nohighlight");
-    }
-    else {
+        if (this.annotateButton) {
+            this.annotateButton.setEnabled(true);
+            this.annotateButton.setTooltip("Annotate selected text");
+        }
+    } else {
         $annotations.addClass("atb-editor-textannotation-nohighlight");
+        if (this.annotateButton) {
+            this.annotateButton.setEnabled(false);
+            this.annotateButton.setTooltip("Annotating disabled due to hidden highlights; toggle highlight visibility off then on to enable");
+        }
     }
 }
 

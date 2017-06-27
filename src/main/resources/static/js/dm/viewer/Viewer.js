@@ -370,7 +370,8 @@ dm.viewer.Viewer.prototype.unlockResource = function(uri, lockIcon, lockMessage)
                lockMessage.text("Click to enable editing on resource");
                lockIcon.removeClass("checked");
             }
-            self.makeUneditable();
+            if (self.isEditable())
+              self.makeUneditable();
          } else {
             alert("Unlock failed. Please try again later.\n\nReason: "+jqXHR.responseText);
          }
