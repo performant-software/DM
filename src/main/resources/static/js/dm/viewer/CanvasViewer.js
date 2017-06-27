@@ -211,7 +211,7 @@ dm.viewer.CanvasViewer.prototype.makeUneditable = function() {
         this._addDocumentIconListeners();
 
         if ( this.readOnlyClone ) {
-           $(this.documentIcon).hide();
+          //  $(this.documentIcon).hide();
            var title = $(this.container.titleEl).closest(".atb-ViewerContainer-titleWrapper");
            title.addClass("read-only-clone");
            if ( this.databroker.projectController.canUserEditProject() ) {

@@ -654,7 +654,7 @@ dm.viewer.TextEditor.prototype.makeUneditable = function() {
 			this.editorIframeElement = this.domHelper.getElement(this.useID);
 
       if ( this.readOnlyClone ) {
-         $(this.documentIcon).hide();
+        //  $(this.documentIcon).hide();
          var title = $(this.container.titleEl).closest(".atb-ViewerContainer-titleWrapper");
          title.addClass("read-only-clone");
          if ( this.databroker.projectController.canUserEditProject() ) {
@@ -669,7 +669,6 @@ dm.viewer.TextEditor.prototype.makeUneditable = function() {
 };
 
 dm.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
-	  console.log("loadResourceByUri");
     var resource = this.databroker.getResource(uri);
 
     this.loadingContent = true;
