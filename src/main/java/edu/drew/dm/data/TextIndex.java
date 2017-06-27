@@ -230,7 +230,7 @@ public class TextIndex implements AutoCloseable {
     }
 
     public void indexCanvas(IndexWriter indexWriter, Resource project, Resource canvas) {
-        if (!canvas.hasProperty(RDF.type, SharedCanvas.Canvas) && !canvas.hasProperty(DC.title)) {
+        if (!canvas.hasProperty(RDF.type, SharedCanvas.Canvas) || !canvas.hasProperty(DC.title)) {
             return;
         }
         try {
