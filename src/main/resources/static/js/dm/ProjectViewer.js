@@ -1,3 +1,4 @@
+/* global $ */
 goog.provide('dm.ProjectViewer');
 
 goog.require('goog.dom.DomHelper');
@@ -5,6 +6,7 @@ goog.require('goog.string');
 goog.require('goog.events');
 goog.require('goog.structs');
 goog.require('goog.array');
+goog.require('goog.object');
 
 goog.require('dm.data.Literal');
 goog.require('dm.data.ProjectController');
@@ -12,484 +14,256 @@ goog.require('dm.data.ProjectController');
 goog.require('dm.viewer.ViewerContainer');
 goog.require('dm.widgets.WorkingResources');
 
+var STATES = {
+    project : 1,
+    edit: 2,
+    create: 3,
+    imageUpload: 4
+};
+
 dm.ProjectViewer = function(clientApp, opt_domHelper) {
     this.clientApp = clientApp;
     this.databroker = clientApp.databroker;
     this.projectController = this.databroker.projectController;
     this.viewerGrid = clientApp.viewerGrid;
 
-    var user = this.databroker.user;
-    this.isGuest = (user.uri.split("/").pop() === "guest");
+    this.state = STATES.project;
+    this.isGuest = (this.databroker.user.uri.split("/").pop() === "dm:guest");
 
     this.domHelper = opt_domHelper || new goog.dom.DomHelper();
 
-    this.workingResources = new dm.widgets.WorkingResources(this.databroker, this.domHelper);
-    goog.events.listen(this.workingResources, 'openRequested', this._handleWorkingResourcesOpenRequest, false, this);
+    this.workingResources = new dm.widgets.WorkingResources(
+        this.databroker,
+        this.domHelper
+    );
+    this.workingResources.render($(".sc-ProjectViewer-modal .modal-body").get(0));
 
-    this.buttonGroupElement = this.domHelper.createDom('div', {'class': 'btn-group sc-ProjectViewer-button'});
-    this._buildButtonGroup();
-
-    this.modalElement = this.domHelper.createDom('div', {'class': 'modal hide fade sc-ProjectViewer-modal'});
-    this._buildModalElement();
-
-    this.setupUser();
-
-    var ss = this.databroker.syncService;
-    var pc = this.projectController;
-    var self = this;
-    setTimeout(function() {
-
-      // Toggle public access
-      $("#public-access").on("click", function(e) {
-         if ( $("#public-access").is(':checked') ) {
-            self.generatePublicUrl();
-         } else {
-            resp = confirm("Remove all public access to this project?");
-            if ( resp ) {
-               self.revokePublicUrl();
-            } else {
-               $('#public-access').attr('checked', true);
-            }
-         }
-      });
-
-      // Clean orphans from project
-      $("#clean-project").on("click", function() {
-        if ( $("#clean-project").hasClass("disabled") ) {
-            return;
-         }
-        var currentProject = pc.currentProject;
-        var url = ss.restUrl(currentProject.uri) + 'cleanup';
-        $("#clean-project").addClass("disabled");
-        $.ajax({
-           url: url,
-           method: "POST",
-           complete:  function( jqXHR, textStatus ) {
-                alert(jqXHR.responseText);
-                $("#clean-project").removeClass("disabled");
-           }
-        });
-      });
-
-      // Delete entire project
-      $("#del-project").on("click", function() {
-         if ( $("#del-project").hasClass("disabled") ) {
-            return;
-         }
-         res = confirm("All data for this project will be deleted. Are you sure?");
-         if (res) {
-            $("#del-project").addClass("disabled");
-            var curr = pc.getCurrentProject();
-            var url = ss.restUrl(curr.uri);
-            $.ajax({
-               url: url,
-               method: "DELETE",
-               complete: function(jqXHR, textStatus) {
-                  if ( textStatus=="success" ) {
-                     window.location.reload();
-                  } else {
-                     $("#del-project").removeClass("disabled");
-                     alert("Unable to delete project: "+ jqXHR.responseText);
-                  }
-               },
-            });
-         }
-      });
-   }, 10);
-
-    goog.events.listen(this.projectController, 'projectSelected', this._onProjectSelected, false, this);
-
-    this.renderButtons('#projectViewerButtons');
-    this.renderModals('body');
-};
-
-dm.ProjectViewer.prototype.currentProjectPublicUrl = function() {
-    return [
-        this.databroker.baseUri,
-        "workspace",
-        "#" + (this.projectController.currentProjectShortcut() || "")
-    ].join("/");
-};
-
-dm.ProjectViewer.prototype.generatePublicUrl = function() {
-    var projectUri = this.projectController.getCurrentProject().uri,
-        projectPublicUrl = this.currentProjectPublicUrl();
-
-    $.ajax({
-      url: this.databroker.syncService.restUrl(projectUri) + 'share',
-      method: "POST",
-      complete: function(jqXHR, textStatus) {
-         if (textStatus === "success" ) {
-            $("#public-url").text(projectPublicUrl);
-            $(".pub-url-group").removeClass("hidden");
-         } else {
-            alert("Unable generate public URL for this project: "+jqXHR.responseText);
-            $('#public-access').attr('checked', false);
-         }
-      }
-   });
-};
-
-dm.ProjectViewer.prototype.revokePublicUrl = function() {
-   var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
-   $.ajax({
-      url: url,
-      method: "DELETE",
-      complete: function(jqXHR, textStatus) {
-         if (textStatus === "success" ) {
-            $("#public-url").text("");
-            $(".pub-url-group").addClass("hidden");
-         } else {
-            alert("Unable revoke public URL for this project: "+jqXHR.responseText);
-            $('#public-access').attr('checked', true);
-         }
-      }
-   });
-};
-
-dm.ProjectViewer.prototype._buildButtonGroup = function() {
-    this.projectTitleButton = this.domHelper.createDom('div', {'class': 'btn btn-inverse sc-ProjectViewer-titleButton'});
-    $(this.projectTitleButton).attr({
-        'title': 'View and edit this project'
-    });
-    goog.events.listen(this.projectTitleButton, 'click', this._handleProjectButtonClick, false, this);
-    var projectLabel = this.domHelper.createDom('div', {'class': 'sc-ProjectViewer-projectLabel'},
-        this.domHelper.createDom('span', {'class': 'icon-book'}), 'Project:');
-    this.projectButtonTitleElement = this.domHelper.createDom('div', {'class': 'sc-ProjectViewer-projectButtonTitle'});
-    this.projectTitleButton.appendChild(projectLabel);
-    this.projectTitleButton.appendChild(this.projectButtonTitleElement);
-
-    this.buttonGroupElement.appendChild(this.projectTitleButton);
-
-    this.dropdownButton = this.domHelper.createDom('button', {'class': 'btn dropdown-toggle btn-inverse'},
-        this.domHelper.createDom('span', {'class': 'caret'}));
-    $(this.dropdownButton).attr({
-        'data-toggle': 'dropdown',
-        'title': 'Switch projects or create a new one'
-    });
-    this.buttonDropdownList = $("<ul class='dropdown-menu'></ul>");
-
-    if ( this.isGuest === false ) {
-       var createNewProjectButton = this.domHelper.createDom('li', {'class': 'sc-ProjectViewer-createProjectButton'},
-           this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'title': 'Start a new project'},
-           this.domHelper.createDom('span', {'class': 'icon-plus'}), 'New project'));
-       goog.events.listen(createNewProjectButton, 'click', this._handleNewProjectButtonClick, false, this);
-       this.buttonDropdownList.append("<li class='divider'></li>");
-       this.buttonDropdownList.append(createNewProjectButton);
-    }
-
-    this.projectChoiceElements = [];
-
-    this.buttonGroupElement.appendChild(this.dropdownButton);
-    this.buttonGroupElement.appendChild(this.buttonDropdownList[0]);
-
-    this.updateButtonUI();
-};
-
-dm.ProjectViewer.prototype._buildModalElement = function() {
-    // Header
-    this._buildHeader();
-
-    // Body
-    this.modalBody = this.domHelper.createDom('div', {'class': 'modal-body'});
-
-    this.editElement = $("<div class='hidden form-horizontal sc-ProjectViewer-projectEdit'></div>");
-    this._buildEditSection();
-    $(this.modalBody).append( this.editElement );
-
-    this.uploadCanvasElement = $("<div class='hidden form-horizontal sc-ProjectViewer-uploadCanvas'></div>");
-    this._buildUploadCanvasSection();
-    $(this.modalBody).append(this.uploadCanvasElement);
-
-    this.workingResources.render(this.modalBody);
-    this.workingResourcesElement = $(this.workingResources.getElement());
-
-    this.modalElement.appendChild(this.modalBody);
-
-    // Footer
-    this.modalFooter = this.domHelper.createDom('div', {'class': 'modal-footer', 'id':'main-footer'});
-    var footerCloseButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Done');
-    $(footerCloseButton).attr({
-        'data-dismiss': 'modal',
-        'aria-hidden': 'true'
-    });
-    var delProjBtn = this.domHelper.createDom('button', {'class': 'btn btn-primary', 'id': 'del-project'}, 'Delete Project');
-    this.modalFooter.appendChild(delProjBtn);
-
-    this.modalFooter.appendChild(footerCloseButton);
-    this.modalElement.appendChild(this.modalFooter);
-
-    // Footer 2 - create new project
-    var f2 = $("<div class='modal-footer' id='create-footer'></div");
-    var cancel = $("<button class='btn btn-primary' id='cancel-proj'>Cancel</button>");
-    $(cancel).attr({
-       'data-dismiss': 'modal',
-       'aria-hidden': 'true'
-    });
-    var create = $("<button class='btn btn-primary' id='create-proj'>Create</button>");
-    var self = this;
-    create.on("click", function() {
-       self.createProjectClicked();
-    });
-    f2.append(cancel);
-    f2.append(create);
-    $( this.modalElement).append(f2);
-};
-
-dm.ProjectViewer.prototype.createProjectClicked = function() {
-   var title = $(this.titleInput).val();
-   var description = $(this.descriptionInput).val();
-   var userUri = this.databroker.user.uri;
-   if ( title.length == 0 ) {
-      alert("A title is required!");
-      return;
-   }
-
-   var newProject = this.projectController.createProject();
-   this.databroker.dataModel.setTitle(newProject, title);
-   newProject.setProperty('dcterms:description', dm.data.Literal(description));
-   this.viewerGrid.closeAllContainers();
-   this.projectController.selectProject(newProject);
-   this.projectController.grantPermissionsToUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.administer]);
-   this.projectController.grantPermissionsToUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.update]);
-   this.projectController.grantPermissionsToUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.read]);
-
-   this.databroker.sync();
-   this.hideModal();
-}
-
-
-dm.ProjectViewer.prototype._buildHeader = function() {
-    this.modalHeader = this.domHelper.createDom('div', {'class': 'modal-header'});
-    var closeButton = this.domHelper.createDom('button', {'class': 'close'}, '×');
-    $(closeButton).attr({
-        'data-dismiss': 'modal',
-        'aria-hidden': 'true'
-    });
-    this.modalTitle = this.domHelper.createDom('h3');
-    this.modalHeader.appendChild(closeButton);
-    this.modalHeader.appendChild(this.modalTitle);
-    var nav = this.domHelper.createDom('ul', {'class': 'nav nav-pills'});
-
-    if ( this.isGuest === false ) {
-       var addButtonLi = this.domHelper.createDom('li', {'class': 'dropdown'},
-           this.domHelper.createDom('a', {'href': 'javascript:void(0)', 'data-toggle': 'dropdown'},
-               this.domHelper.createDom('span', {'class': 'icon-plus'}), 'Add Resources',
-                   this.domHelper.createDom('span', {'class': 'caret'})));
-       var addSubmenuUl =this.domHelper.createDom('ul', {'class': 'dropdown-menu', 'role': 'menu'});
-       addButtonLi.appendChild(addSubmenuUl);
-       var newTextButtonLi = this.domHelper.createDom('li', {},
-           this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-               this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'New Text'));
-       goog.events.listen(newTextButtonLi, 'click', this._handleNewTextButtonClick, false, this);
-       var uploadCanvasButtonLi = this.domHelper.createDom('li', {},
-           this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-               this.domHelper.createDom('span', {'class': 'icon-picture'}), 'Upload Image'));
-       goog.events.listen(uploadCanvasButtonLi, 'click', this._handleUploadCanvasButtonClick, false, this);
-       addSubmenuUl.appendChild(newTextButtonLi);
-       addSubmenuUl.appendChild(uploadCanvasButtonLi);
-       nav.appendChild(addButtonLi);
-
-       var editButtonLi = this.domHelper.createDom('li', {},
-           this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-               this.domHelper.createDom('span', {'class': 'icon-cog'}), 'Project Info and Sharing'));
-       goog.events.listen(editButtonLi, 'click', this._handleEditButtonClick, false, this);
-       nav.appendChild(editButtonLi);
-    }
-
-    var downloadButtonLi = this.domHelper.createDom('li', {},
-        this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-download'}), 'Download'));
-    goog.events.listen(downloadButtonLi, 'click', this._handleDownloadButtonClick, false, this);
-    nav.appendChild(downloadButtonLi);
-    this.modalHeader.appendChild(nav);
-    this.modalElement.appendChild(this.modalHeader);
-};
-
-dm.ProjectViewer.prototype._buildEditSection = function() {
-    // Title
-    var titleGroup = this.domHelper.createDom('div', {'class': 'control-group'});
-    var titleLabel = this.domHelper.createDom('label', {'class': 'control-label', 'for': 'projectTitleInput'}, 'Title');
-    var titleControls = this.domHelper.createDom('div', {'class': 'controls'});
-    this.titleInput = this.domHelper.createDom('input', {'type': 'text', 'id': 'projectTitleInput'});
-    titleGroup.appendChild(titleLabel);
-    titleControls.appendChild(this.titleInput);
-    titleGroup.appendChild(titleControls);
-    this.editElement.append( $(titleGroup)) ;
-
-    // Description
-    var descriptionGroup = this.domHelper.createDom('div', {'class': 'control-group'});
-    var descriptionLabel = this.domHelper.createDom('label', {'class': 'control-label', 'for': 'projectDescriptionInput'}, 'Description');
-    var descriptionControls = this.domHelper.createDom('div', {'class': 'controls'});
-    this.descriptionInput = this.domHelper.createDom('textarea', {'id': 'projectDescriptionInput', 'rows': 2});
-    descriptionGroup.appendChild(descriptionLabel);
-    descriptionControls.appendChild(this.descriptionInput);
-    descriptionGroup.appendChild(descriptionControls);
-    this.editElement.append( $(descriptionGroup) );
-
-    // public access
-    var publicPanel = this.domHelper.createDom('div', {'class': 'panel panel-default pub-access'});
-    var publicBody = this.domHelper.createDom('div', {'class': 'panel-body'});
-    publicPanel.appendChild(publicBody);
-
-    var cbDiv = this.domHelper.createDom('div', {'class': 'checkbox'});
-    publicBody.appendChild(cbDiv);
-    var cbLbl = this.domHelper.createDom('label','', "Publicly Accessible?");
-    cbDiv.appendChild(cbLbl);
-    var cb = this.domHelper.createDom('input', {'type': 'checkbox', 'id': 'public-access'});
-    cbLbl.appendChild(cb);
-
-    var urlDiv = this.domHelper.createDom('div', {'class': 'hidden control-group pub-url-group'});
-    publicBody.appendChild(urlDiv);
-    var urlLbl = this.domHelper.createDom('label','', "URL:");
-    urlDiv.appendChild(urlLbl);
-    var url = this.domHelper.createDom('p',{'id': 'public-url'});
-    urlDiv.appendChild(url);
-
-    this.editElement.append( $(publicPanel) );
-
-
-    // Users and permissions.....
-    this.permissionsTable = this.domHelper.createDom('table', {'class': 'table table-striped table-bordered sc-ProjectViewer-permissions-table'},
-        this.domHelper.createDom('thead', {},
-            this.domHelper.createDom('tr', {},
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-user'}), 'User'),
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-eye-open'}), 'Can See'),
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-pencil'}), 'Can Modify'),
-                this.domHelper.createDom('th', {}, this.domHelper.createDom('span', {'class': 'icon-lock'}), 'Admin'))),
-        this.domHelper.createDom('tbody'));
-    this.editElement.append( $(this.permissionsTable) );
-
-    this.permissionsRows = [];
-
-    // Save and cancel buttons
-    var saveControls = this.domHelper.createDom('div', {'class': 'form-actions'});
-    var cancelButton = this.domHelper.createDom('button', {'class': 'btn'}, 'Cancel');
-    goog.events.listen(cancelButton, 'click', this._handleEditCancelButtonClick, false, this);
-    saveControls.appendChild(cancelButton);
-    saveControls.appendChild(this.domHelper.createDom('span', {}, ' '));
-    var saveButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Save');
-    goog.events.listen(saveButton, 'click', this._handleSaveButtonClick, false, this);
-    saveControls.appendChild(saveButton);
-    this.editElement.append( $(saveControls) );
-};
-
-dm.ProjectViewer.filenameToTitle = function(filename) {
-    var i = filename.lastIndexOf('.');
-    if (i !== -1) {
-        filename = filename.substring(0, i);
-    }
-
-    filename = filename.replace(/_/g, ' ');
-
-    return goog.string.toTitleCase(filename);
-};
-
-dm.ProjectViewer.prototype._buildUploadCanvasSection = function() {
-    this.uploadCanvasElement.append($(this.domHelper.createDom('h4', {}, 'Upload an Image')) );
-
-    // File
-    var fileGroup = this.domHelper.createDom('div', {'class': 'control-group'});
-    var fileLabel = this.domHelper.createDom('label', {'class': 'control-label', 'for': 'canvasFileInput'}, 'Image File');
-    var fileControls = this.domHelper.createDom('div', {'class': 'controls'});
-    var fileInput = this.domHelper.createDom('input', {'type': 'file', 'id': 'canvasFileInput'});
-    fileGroup.appendChild(fileLabel);
-    fileControls.appendChild(fileInput);
-    fileGroup.appendChild(fileControls);
-    this.uploadCanvasElement.append( $(fileGroup));
-
-    // Title
-    var titleGroup = this.domHelper.createDom('div', {'class': 'control-group'});
-    var titleLabel = this.domHelper.createDom('label', {'class': 'control-label', 'for': 'canvasTitleInput'}, 'Title');
-    var titleControls = this.domHelper.createDom('div', {'class': 'controls'});
-    var titleInput = this.domHelper.createDom('input', {'type': 'text', 'id': 'canvasTitleInput', 'placeholder': 'Untitled Canvas'});
-    titleGroup.appendChild(titleLabel);
-    titleControls.appendChild(titleInput);
-    titleGroup.appendChild(titleControls);
-    this.uploadCanvasElement.append( $(titleGroup));
-
-    goog.events.listen(fileInput, 'change', function(event) {
-        var file = fileInput.files[0];
-
-        if (!goog.string.startsWith(file.type, 'image/')) {
-            alert('"' + file.name + '" is not an image file.');
-            fileInput.value = null;
-            return;
-        }
-
-        if (!(goog.string.endsWith(file.type, '/jpeg') || goog.string.endsWith(file.type, '/png'))) {
-            alert('"' + file.name + '" is not a jpeg or png formatted image file.');
-            fileInput.value = null;
-            return;
-        }
-
-        if (titleInput.value == '' || titleInput.value == null) {
-            titleInput.value = dm.ProjectViewer.filenameToTitle(file.name);
-        }
-    }, false, this);
-
-    this.canvasUploadFormInputs = {
-        'title': titleInput,
-        'file': fileInput
+    var eventHandler = function(handler) {
+        return function(e) {
+            e && e.preventDefault();
+            handler(e);
+        };
     };
 
-    // Progress bar
-    this.canvasUploadProgressBar = this.domHelper.createDom('div', {'class': 'progress progress-striped active'},
-        this.domHelper.createDom('div', {'class': 'bar', 'style': 'width: 0%;'}));
-    jQuery(this.canvasUploadProgressBar).hide();
-    this.uploadCanvasElement.append( $(this.canvasUploadProgressBar) );
+    $(".project-new-text").on("click", eventHandler(this.newText.bind(this)));
+    $(".project-new-image").on("click", eventHandler(this.newImage.bind(this)));
+    $(".project-edit").on("click", eventHandler(this.projectEdit.bind(this)));
+    $(".project-download").on("click", eventHandler(this.projectDownload.bind(this)));
 
-    // Save and cancel buttons
-    var uploadControls = this.domHelper.createDom('div', {'class': 'form-actions'});
-    var cancelButton = this.domHelper.createDom('button', {'class': 'btn'}, 'Cancel');
-    goog.events.listen(cancelButton, 'click', function(event) {
-        this.hideCanvasUploadForm();
-        this.clearCanvasUploadForm();
-    }, false, this);
-    uploadControls.appendChild(cancelButton);
-    uploadControls.appendChild(this.domHelper.createDom('span', {}, ' '));
-    var uploadButton = this.domHelper.createDom('button', {'class': 'btn btn-primary'}, 'Upload');
-    goog.events.listen(uploadButton, 'click', this._handleUploadCanvasSubmit, false, this);
-    uploadControls.appendChild(uploadButton);
-    this.uploadCanvasElement.append( $(uploadControls) );
+    $(".sc-ProjectViewer-button .sc-ProjectViewer-titleButton").on(
+        "click",
+        eventHandler(this.projectView.bind(this))
+    );
+
+    $(".sc-ProjectViewer-button .dropdown-menu").on(
+        "click", ".sc-ProjectViewer-projectChoice",
+        eventHandler(this.projectChosen.bind(this))
+    );
+
+    $(".sc-ProjectViewer-createProjectButton a").on(
+        "click",
+        eventHandler(this.newProject.bind(this))
+    );
+
+    $("#public-access").on(
+        "click",
+        eventHandler(this.togglePublicAccess.bind(this))
+    );
+
+    $(".sc-ProjectViewer-permissions-table tbody").on(
+        "change",
+        "input",
+        this.updatePermissions.bind(this)
+    );
+
+    $(".sc-ProjectViewer-permissions-table .add").typeahead({
+        source: this.usersTypeaheadSource.bind(this)
+    });
+
+    $(".sc-ProjectViewer-projectEdit .save").on(
+        "click",
+        eventHandler(this.saveEditedProject.bind(this))
+    );
+
+    $(".sc-ProjectViewer-projectEdit .cancel").on(
+        "click",
+        eventHandler(this.cancelEditedProject.bind(this))
+    );
+
+    $(".sc-ProjectViewer-uploadCanvas .save").on(
+        "click",
+        eventHandler(this.uploadCanvas.bind(this))
+    );
+
+    $(".sc-ProjectViewer-uploadCanvas .cancel").on(
+        "click",
+        eventHandler(this.cancelCanvasUpload.bind(this))
+    );
+
+    $(".sc-ProjectViewer-uploadCanvas #canvasFileInput").on(
+        "change",
+        this.updateCanvasTitle.bind(this)
+    );
+
+    $("#clean-project").on("click", eventHandler(this.cleanProject.bind(this)));
+    $("#del-project").on("click", eventHandler(this.deleteProject.bind(this)));
+    $("#create-proj").on("click", eventHandler(this.createProject.bind(this)));
+
+    goog.events.listen(
+        this.workingResources, 'openRequested',
+        function(e) { this.openViewerForResource(e.resource); }, false, this
+    );
+
+    goog.events.listen(
+        this.projectController, 'projectSelected',
+        this.projectSelected, false, this
+    );
+
+    $.when($.getJSON("/store/users"), this.databroker.user.defer()).done(
+        function(users) {
+            this.users = users.shift();
+            this.projectController.autoSelectProject();
+        }.bind(this)
+    );
 };
 
-dm.ProjectViewer.prototype.clearCanvasUploadForm = function() {
-    this.canvasUploadFormInputs.title.value = '';
-    this.canvasUploadFormInputs.file.value = null;
-
-    jQuery(this.canvasUploadProgressBar).hide();
-    jQuery(this.canvasUploadProgressBar).children().first().css('width', '0%');
-};
-
-dm.ProjectViewer.prototype.hideCanvasUploadForm = function() {
-    this.uploadCanvasElement.removeClass("hidden").addClass("hidden");
-    this.workingResourcesElement.removeClass("hidden");
-    $("#main-footer").show();
-};
-
-dm.ProjectViewer.prototype.renderButtons = function(element) {
-    $(element).append(this.buttonGroupElement);
-};
-
-dm.ProjectViewer.prototype.renderModals = function(element) {
-    $(element).append(this.modalElement);
-};
-
-dm.ProjectViewer.prototype.setProjectButtonTitle = function(title) {
-    $(this.projectButtonTitleElement).text(title);
-};
-
-dm.ProjectViewer.prototype.updateButtonUI = function() {
-    if (this.projectController.currentProject) {
-        var project = this.projectController.currentProject;
-        this.setProjectButtonTitle(this.databroker.dataModel.getTitle(project) || 'Untitled project');
+dm.ProjectViewer.prototype.updateCurrentProjectStatus = function(action, method) {
+    var project = this.projectController.currentProject;
+    if (project) {
+        $.ajax({
+            url: this.databroker.syncService.restUrl(project.uri) + 'share',
+            method: method,
+            complete: (function(xhr, textStatus) {
+                if (textStatus !== "success") {
+                    alert("Unable to " + action + ": " + xhr.responseText);
+                }
+                this.showModal(STATES.edit);
+            }).bind(this)
+        });
     }
-    else {
-        this.setProjectButtonTitle('none');
+}
+
+dm.ProjectViewer.prototype.togglePublicAccess = function(e) {
+    if ($("#public-access").is(':checked') ) {
+        this.updateCurrentProjectStatus("share current project", "POST");
+    } else if (confirm("Remove all public access to this project?")) {
+        this.updateCurrentProjectStatus("withdraw current project", "DELETE");
+    }
+};
+
+dm.ProjectViewer.prototype.cleanProject = function() {
+    var project = this.projectController.currentProject;
+    if (!project || $("#clean-project").hasClass("disabled") ) {
+        return;
+    }
+    $("#clean-project").addClass("disabled");
+    $.ajax({
+        url: this.databroker.syncService.restUrl(project.uri) + 'cleanup',
+        method: "POST",
+        complete:  function(xhr, textStatus) {
+            alert(xhr.responseText);
+            $("#clean-project").removeClass("disabled");
+        }
+    });
+};
+
+dm.ProjectViewer.prototype.deleteProject = function() {
+    var project = this.projectController.currentProject;
+    if (!project || $("#del-project").hasClass("disabled")) {
+        return;
+    }
+    if (!confirm("All data for this project will be deleted. Are you sure?")) {
+        return;
     }
 
-    this.updateProjectChoices();
+    $("#del-project").addClass("disabled");
+    $.ajax({
+        url: this.databroker.syncService.restUrl(project.uri),
+        method: "DELETE",
+        complete: function(xhr, textStatus) {
+            $("#del-project").removeClass("disabled");
+            if (textStatus !="success") {
+                alert("Unable to delete project: "+ xhr.responseText);
+            } else {
+                window.location.reload();
+            }
+        }
+    });
+};
+
+dm.ProjectViewer.prototype.createProject = function() {
+    var title = $("#projectTitleInput").val();
+    var description = $("#projectDescriptionInput").val();
+    if (title == "") {
+        alert("A title is required!");
+        return;
+    }
+
+    var newProject = this.projectController.createProject();
+    this.databroker.dataModel.setTitle(newProject, title);
+    newProject.setProperty('dcterms:description', dm.data.Literal(description));
+
+    this.projectController.grantPermissionsToUser(null, newProject, [
+        dm.data.ProjectController.PERMISSIONS.read,
+        dm.data.ProjectController.PERMISSIONS.update,
+        dm.data.ProjectController.PERMISSIONS.administer
+    ]);
+    this.databroker.sync();
+    this.switchToProject(newProject);
+};
+
+
+dm.ProjectViewer.prototype.updateProjects = function() {
+    var project = this.projectController.currentProject;
+    $(".sc-ProjectViewer-projectButtonTitle").text(
+        project
+            ? this.databroker.dataModel.getTitle(project) || 'Untitled project'
+            : "none"
+    );
+
+    var projectUris = this.projectController.findProjects();
+    if (project) {
+        goog.array.remove(projectUris, project.uri);
+    }
+
+    var projectTitles = {};
+    goog.structs.forEach(projectUris, function(uri) {
+        projectTitles[uri] = this.databroker.dataModel.getTitle(uri)
+            || 'Untitled project';
+    });
+
+    projectUris.sort(function(a, b) {
+        return projectTitles[a].localeCompare(projectTitles[b]);
+    });
+
+    var projectMenu = $(".sc-ProjectViewer-button .dropdown-menu");
+    var projectMenuDivider = projectMenu.find(".divider");
+    var newProject = projectMenu.find(".sc-ProjectViewer-createProjectButton");
+
+    projectMenuDivider.toggleClass("hide", this.isGuest);
+    newProject.toggleClass("hide", this.isGuest);
+
+    projectMenu.find(".sc-ProjectViewer-projectChoice").remove();
+
+    goog.structs.forEach(projectUris, function(uri) {
+        var title = projectTitles[uri];
+
+        var li = $("<li class='sc-ProjectViewer-projectChoice'></li>")
+            .attr({
+                'about': uri,
+                'rel': this.databroker.namespaces.expand('dc', 'title'),
+                'title': 'Switch projects to "' + title + '"'
+            })
+            .insertBefore(projectMenuDivider);
+
+        $("<a href='#'><span class='icon-book'></span></a>")
+            .append(document.createTextNode(title))
+            .appendTo(li);
+    }, this);
+
+    if (this.isGuest && projectUris.length === 1) {
+        this.switchToProject(projectUris[0]);
+    }
 };
 
 dm.ProjectViewer.prototype._sanityCheckPermissionsUI = function(readCheck, modifyCheck, adminCheck) {
@@ -666,7 +440,40 @@ dm.ProjectViewer.prototype.updatePermissionsUI = function() {
     tbody.append(fragment);
 };
 
-dm.ProjectViewer.prototype.updateEditUI = function() {
+dm.ProjectViewer.prototype.updateModalUI = function() {
+   $("#del-project").hide();
+   $("#clean-project").hide();
+   $("#create-footer").hide();
+   $("#main-footer").show();
+   $(".sc-ProjectViewer-modal .nav-pills").hide();
+
+   $(".sc-ProjectViewer-permissions-table").show();
+   $(".pub-access").show();
+   $(".form-actions").show();
+
+   if (this.projectController.currentProject) {
+      var uri = this.projectController.currentProject.uri;
+      this.workingResources.loadManifest(uri);
+
+      var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
+      $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
+
+      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user, uri,
+          dm.data.ProjectController.PERMISSIONS.administer)) {
+         $("#del-project").show();
+         $("#clean-project").show();
+         $(".sc-ProjectViewer-modal .nav-pills").show();
+      }
+
+      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user,
+          uri, dm.data.ProjectController.PERMISSIONS.update)) {
+         $(".sc-ProjectViewer-modal .nav-pills").show();
+      }
+   } else {
+      $(this.modalTitle).text('No project selected');
+      $("#public-url").text("");
+   }
+
     if (this.projectController.currentProject) {
         var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
         $(this.titleInput).val(projectTitle);
@@ -695,179 +502,276 @@ dm.ProjectViewer.prototype.updateEditUI = function() {
 };
 
 
-dm.ProjectViewer.prototype.updateModalUI = function() {
-   $("#del-project").hide();
-   $("#clean-project").hide();
-   $("#create-footer").hide();
-   $("#main-footer").show();
-   $(".sc-ProjectViewer-modal .nav-pills").hide();
+dm.ProjectViewer.prototype.showModal = function(state) {
+    this.state = state || this.state;
 
-   $(".sc-ProjectViewer-permissions-table").show();
-   $(".pub-access").show();
-   $(".form-actions").show();
+    var project = this.projectController.currentProject;
+    var projectTitle = project
+            ? (this.databroker.dataModel.getTitle(project) || 'Untitled project')
+            : "No project selected";
 
-   if (this.projectController.currentProject) {
-      var uri = this.projectController.currentProject.uri;
-      this.workingResources.loadManifest(uri);
+    this.readPermissions();
+    var permissions = this.permissions[0].permissions;
 
-      var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
-      $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
-      $("#public-url").text(this.currentProjectPublicUrl());
+    var title = $(".modal-header h3")
+            .text('\u201c' + (projectTitle) + '\u201d');
 
-      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user, uri,
-          dm.data.ProjectController.PERMISSIONS.administer)) {
-         $("#del-project").show();
-         $("#clean-project").show();
-         $(".sc-ProjectViewer-modal .nav-pills").show();
-      }
+    var workingResources = $(".atb-WorkingResources")
+            .toggleClass("hidden", this.state != STATES.project);
 
-      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user,
-          uri, dm.data.ProjectController.PERMISSIONS.update)) {
-         $(".sc-ProjectViewer-modal .nav-pills").show();
-      }
-   } else {
-      $(this.modalTitle).text('No project selected');
-      $("#public-url").text("");
-   }
+    $(".nav.nav-pills").toggle(
+        permissions.update && this.state != STATES.create
+    );
 
-   this.updateEditUI();
-};
+    $("#main-footer").toggle(
+        this.state == STATES.project
+    );
+    $("#create-footer").toggle(
+        this.state == STATES.create
+    );
 
+    $("#del-project").toggleClass(
+        "hidden disabled",
+        !permissions.administer
+    );
+    $("#clean-project").toggleClass(
+        "hidden disabled",
+        !permissions.administer
+    );
 
-dm.ProjectViewer.prototype.showModal = function() {
-    this.updateModalUI();
-    this.editElement.removeClass("hidden").addClass("hidden");
-    this.uploadCanvasElement.removeClass("hidden").addClass("hidden");
-    this.workingResourcesElement.removeClass("hidden");
-    $(this.modalElement).modal('show');
-};
+    var edit = $(".sc-ProjectViewer-projectEdit").toggleClass(
+        "hidden",
+        [STATES.edit, STATES.create].indexOf(this.state) < 0
+    );
 
-dm.ProjectViewer.prototype.hideModal = function() {
-    $(this.modalElement).modal('hide');
-};
+    edit.find(".sc-ProjectViewer-permissions-table").toggle(
+        this.state == STATES.edit
+    );
+    edit.find(".pub-access").toggle(
+        this.state == STATES.edit
+    );
+    edit.find(".form-actions").toggle(
+        this.state == STATES.edit
+    );
 
-dm.ProjectViewer.prototype._handleNewProjectButtonClick = function(event) {
-    event.stopPropagation();
+    var canvas = $(".sc-ProjectViewer-uploadCanvas").toggleClass(
+        "hidden",
+        this.state != STATES.imageUpload
+    );
+    canvas.find(".form-actions").toggle(
+        this.state == STATES.imageUpload
+    );
 
-    $(this.dropdownButton).dropdown('toggle');
+    switch (this.state) {
+    case STATES.project:
+        if (project) {
+            this.workingResources.loadManifest(project.uri);
+        }
+        break;
+    case STATES.edit:
+        $("#projectTitleInput")
+            .val(this.databroker.dataModel.getTitle(project))
+            .toggleClass("disabled", !permissions.administer);
 
-    this.showModal();
-    this.editElement.removeClass("hidden");
-    this.workingResourcesElement.removeClass("hidden").addClass("hidden");
-    $("#create-footer").show();
-    $("#main-footer").hide();
-    $(".nav.nav-pills").hide();
-    $(".sc-ProjectViewer-permissions-table").hide();
-    $(".pub-access").hide();
-    $(".form-actions").hide();
-    $(".modal-header h3").text("Create New Project");
-    $(this.titleInput).val("");
-    this.titleInput.disabled = false;
-    $(this.descriptionInput).val("");
-    this.descriptionInput.disabled = false;
-};
+        $("#projectDescriptionInput")
+            .val(project.getOneProperty('dcterms:description') || "")
+            .toggleClass("disabled", !permissions.administer);
 
-dm.ProjectViewer.prototype._handleProjectButtonClick = function(event) {
-    event.stopPropagation();
+        $("#public-access").prop("checked", false);
 
-    this.showModal();
-};
+        $(".pub-url-group").toggleClass("hidden", true);
+        $("#public-url").text("");
 
-dm.ProjectViewer.prototype._handleProjectChoiceClick = function(event, projectUri) {
-    event.stopPropagation();
+        edit.children().addClass("disabled");
+        $.getJSON(
+            this.databroker.syncService.restUrl(project.uri) + 'share',
+            (function(data, status) {
+                edit.children().removeClass("disabled");
+                $("#public-access").toggleClass(
+                    "disabled",
+                    !permissions.administer
+                );
+                if  (status == "success" && data.public) {
+                    $("#public-url").text([
+                        this.databroker.baseUri,
+                        "workspace",
+                        "#" + (this.projectController.currentProjectShortcut() || "")
+                    ].join("/"));
+                    $("#public-access").prop("checked", true);
+                    $(".pub-url-group").toggleClass("hidden", false);
+                }
+            }).bind(this)
+        );
 
-    $(this.dropdownButton).dropdown('toggle');
+        this.renderPermissions(true);
 
-    var switched = this.switchToProject(projectUri);
-    if (switched) {
-        this.showModal();
-    }
-};
+        break;
+    case STATES.create:
+        title.text("Create New Project");
+        $("#projectTitleInput").val("");
+        $("#projectDescriptionInput").val("");
+        break;
+    case STATES.imageUpload:
+        canvas.find(".progress").hide();
+        progress.find(".bar").css("width", "0%");
 
-dm.ProjectViewer.prototype.setProjectChoicesByUris = function(uris) {
-    $(this.projectChoiceElements).detach();
-
-    var fragment = this.domHelper.getDocument().createDocumentFragment();
-
-    goog.structs.forEach(uris, function(uri) {
-        var title = this.databroker.dataModel.getTitle(uri) || 'Untitled project';
-
-        var li = this.domHelper.createDom('li', {'class': 'sc-ProjectViewer-projectChoice'},
-            this.domHelper.createDom('a', {'href': 'javascript:void(0)'},
-            this.domHelper.createDom('span', {'class': 'icon-book'}), title));
-        $(li).attr({
-            'about': uri,
-            'rel': this.databroker.namespaces.expand('dc', 'title'),
-            'title': 'Switch projects to "' + title + '"'
-        });
-
-        goog.events.listen(li, 'click', function(event) {
-            this._handleProjectChoiceClick(event, uri);
-        }, false, this);
-
-        fragment.appendChild(li);
-        this.projectChoiceElements.push(li);
-    }, this);
-
-    this.buttonDropdownList.prepend(fragment);
-};
-
-dm.ProjectViewer.prototype.updateProjectChoices = function() {
-    var projectUris = this.projectController.findProjects();
-
-    if (this.projectController.currentProject) {
-        goog.array.remove(projectUris, this.projectController.currentProject.uri);
+        canvas.find("#canvasTitleInput").val("");
+        canvas.find("#canvasFileInput").val("");
+        break;
     }
 
-    this.setProjectChoicesByUris(projectUris);
-
-    if ( projectUris.length === 1) {
-       var username = $("#logged-in-user").text();
-       if (username === "Guest")  {
-         this.switchToProject(projectUris[0] );
-         setTimeout( function() {
-            var b = $(".sc-ProjectViewer-titleButton");
-            b.trigger("click");
-         }, 500);
-       }
-    }
+    $(".sc-ProjectViewer-modal").modal('show');
 };
 
-dm.ProjectViewer.prototype.switchToProject = function(project) {
+dm.ProjectViewer.prototype.newProject = function(e) {
+    $(".sc-ProjectViewer-button .dropdown-toggle").dropdown("toggle");
+    this.isGuest || this.showModal(STATES.create);
+};
+
+dm.ProjectViewer.prototype.projectView = function(e) {
+    this.showModal(STATES.project);
+};
+
+dm.ProjectViewer.prototype.projectChosen = function(e) {
+    $(".sc-ProjectViewer-button .dropdown-toggle").dropdown("toggle");
+    this.switchToProject($(e.target).closest("li").attr("about"));
+};
+
+dm.ProjectViewer.prototype.switchToProject = function(project, force) {
     project = this.databroker.getResource(project);
-
-    if (project.equals(this.projectController.currentProject)) {
+    if (!force && project.equals(this.projectController.currentProject)) {
         return false;
     }
 
-    var deferredProject = project.defer();
-
-    var performSwitch = function() {
-        deferredProject.done(function() {
-            this.projectController.selectProject(project);
-            this.workingResources.loadManifest(project.uri);
-        }.bind(this));
-    }.bind(this);
-
     if (!this.viewerGrid.isEmpty()) {
-        if (confirm('Are you sure you want to switch projects? All your open resources from the current project will be closed.')) {
-            this.viewerGrid.closeAllContainers();
-            performSwitch();
-            return true;
-        }
-        else {
+        if (!confirm('Are you sure you want to switch projects? ' +
+                     'All your current open resources will be closed.')) {
             return false;
         }
+        this.viewerGrid.closeAllContainers();
     }
-    else {
-        performSwitch();
-        return true;
-    }
+
+    project.defer().done(function() {
+        this.projectController.selectProject(project);
+        this.updateProjects();
+        this.projectView();
+    }.bind(this));
+
+    return true;
 };
 
-dm.ProjectViewer.prototype._onProjectSelected = function(event) {
-    this.updateButtonUI();
-    this.updateModalUI();
+dm.ProjectViewer.prototype.usersTypeaheadSource = function(query, results) {
+    return goog.structs.map(this.users, function(user) {
+        return [user.name, user.email, user.uri].join(" - ");
+    });
+};
+
+dm.ProjectViewer.prototype.readPermissions = function() {
+    this.permissions = [];
+
+    var user = this.databroker.user;
+    var project = this.projectController.currentProject;
+    if (!user || !project) {
+        return;
+    }
+
+    var users = goog.structs.map(
+        this.projectController.findUsersInProject(),
+        function(uri) { return this.databroker.getResource(uri); },
+        this
+    );
+
+    goog.structs.forEach(users, function(user) {
+        var userPermissions = {};
+        goog.structs.forEach(
+            goog.object.getKeys(dm.data.ProjectController.PERMISSIONS),
+            function(perm) {
+                userPermissions[perm] = this.projectController
+                    .userHasPermissionOverProject(
+                        user,
+                        project,
+                        dm.data.ProjectController.PERMISSIONS[perm]
+                    );
+            },
+            this
+        );
+        var label = user.getOneProperty("rdfs:label") || user.uri;
+        this.permissions.push({
+            uri: user.uri,
+            label: label,
+            name: user.getOneProperty("foaf:name") || label,
+            user: user,
+            permissions: userPermissions
+        });
+    }, this);
+
+    this.permissions.sort(function(a, b) {
+        if (a.uri == user.uri) {
+            return -1;
+        }
+        if (b.uri == user.uri) {
+            return 1;
+        }
+
+        return a.name.localeCompare(b.name);
+    });
+};
+dm.ProjectViewer.prototype.updatePermissions = function(e) {
+    console.log(e);
+    var target = $(e.target);
+    var uri = target.closest("tr").attr("about");
+
+    goog.structs.forEach(this.permissions, function(record) {
+        if (record.uri != uri) {
+            return;
+        }
+        goog.structs.forEach(["read", "update", "administer"], function(perm) {
+            if (target.hasClass(perm)) {
+                record.permissions[perm] = target.prop("checked");
+            }
+        });
+    });
+
+    this.renderPermissions();
+};
+
+dm.ProjectViewer.prototype.renderPermissions = function(reset) {
+    var permissionsTable = $(".sc-ProjectViewer-permissions-table tbody");
+    var add = permissionsTable.find(".add").closest("tr");
+
+    if (reset) {
+        permissionsTable.find("tr[about]").remove();
+    }
+    goog.structs.forEach(this.permissions, function(record, i) {
+        if (record.label == "dm:guest") {
+            return;
+        }
+
+        var tr = permissionsTable.find("tr[about='" + record.uri + "']");
+        if (tr.length == 0) {
+            tr = $("<tr></tr>").insertBefore(add)
+                .attr("about", record.uri)
+                .toggleClass("info", i == 0);
+
+            $("<td></td>").appendTo(tr).text(record.name);
+
+            goog.structs.forEach(["read", "update", "administer"], function(perm) {
+                $("<input type='checkbox'>")
+                    .addClass(perm)
+                    .prop("disabled", i == 0)
+                    .appendTo($("<td></td>").appendTo(tr));
+            });
+        }
+
+        goog.structs.forEach(["read", "update", "administer"], function(perm) {
+            tr.find("." + perm).prop("checked", record.permissions[perm]);
+        });
+    }, this);
+};
+
+dm.ProjectViewer.prototype.projectSelected = function(e) {
+    this.readPermissions();
+    this.switchToProject(e.project.uri, true);
 };
 
 dm.ProjectViewer.prototype.openViewerForResource = function(resource) {
@@ -889,7 +793,6 @@ dm.ProjectViewer.prototype.openViewerForResource = function(resource) {
         viewer.loadResourceByUri(resource.uri);
         container.autoResize();
     } else {
-
        // resources are ALWAYS locked when first opened
        viewer.makeUneditable();
        viewer.lockStatus(resource.uri,false,false,"","");
@@ -898,109 +801,12 @@ dm.ProjectViewer.prototype.openViewerForResource = function(resource) {
     }
 };
 
-dm.ProjectViewer.prototype._handleWorkingResourcesOpenRequest = function(event) {
-    this.openViewerForResource(event.resource);
+
+dm.ProjectViewer.prototype.cancelEditedProject = function(e) {
+    this.showModal(STATES.project);
 };
 
-dm.ProjectViewer.prototype._handleEditCancelButtonClick = function(event) {
-    event.stopPropagation();
-
-    this.updateModalUI();
-    this.editElement.removeClass("hidden").addClass("hidden");
-    this.workingResourcesElement.removeClass("hidden");
-};
-
-dm.ProjectViewer.prototype._handleSaveButtonClick = function(event) {
-    event.stopPropagation();
-
-
-    this.saveEdits();
-    this.editElement.removeClass("hidden").addClass("hidden");
-    this.workingResourcesElement.removeClass("hidden");
-    $("#main-footer").show();
-    this.databroker.sync();
-};
-
-dm.ProjectViewer.prototype._handleEditButtonClick = function(event) {
-    event.stopPropagation();
-
-    $(".sc-ProjectViewer-projectEdit").children().addClass("disabled");
-    $("#public-access").prop('checked', false);
-    $(".pub-url-group").removeClass("hidden").addClass("hidden");
-    $("#main-footer").hide();
-
-    this.editElement.removeClass("hidden");
-    this.workingResourcesElement.removeClass("hidden").addClass("hidden");
-    this.uploadCanvasElement.removeClass("hidden").addClass("hidden");
-
-    var url = this.databroker.syncService.restUrl(this.projectController.currentProject.uri) + 'share';
-    $.getJSON(url,function( data,status, xhr ) {
-        $(".sc-ProjectViewer-projectEdit").children().removeClass("disabled");
-        if  (  status == "success" ) {
-           if ( data.public ) {
-             $("#public-access").prop('checked', true);
-             $("#public-url").text( data.url );
-             $(".pub-url-group").removeClass("hidden");
-           }
-        }
-    });
-};
-
-dm.ProjectViewer.prototype._handleDownloadButtonClick = function(event) {
-    event.stopPropagation();
-    var downloadUrl = this.databroker.syncService.getProjectDownloadUrl(this.projectController.currentProject.uri);
-    var w = window.open(downloadUrl);
-};
-
-dm.ProjectViewer.prototype._handleNewTextButtonClick = function(event) {
-    this.createNewText();
-};
-
-dm.ProjectViewer.prototype._handleUploadCanvasButtonClick = function(event) {
-    this.uploadCanvasElement.removeClass("hidden");
-    this.workingResourcesElement.removeClass("hidden").addClass("hidden");
-    this.editElement.removeClass("hidden").addClass("hidden");
-    $("#main-footer").hide();
-};
-
-dm.ProjectViewer.prototype._handleUploadCanvasSubmit = function(event) {
-    var title = this.canvasUploadFormInputs.title.value;
-    var file = this.canvasUploadFormInputs.file.files[0];
-
-    jQuery(this.canvasUploadProgressBar).slideDown(200).addClass('active');
-    jQuery(this.canvasUploadProgressBar).children().first().css('width', '5%');
-
-    this.projectController.uploadCanvas(title, file, function(raw_data) {
-        // Success
-        jQuery(this.canvasUploadProgressBar).children().first().css('width', '100%').removeClass('active');
-
-        this.updateModalUI();
-
-        window.setTimeout(function() {
-            this.hideCanvasUploadForm();
-            this.clearCanvasUploadForm();
-        }.bind(this), 400);
-    }.bind(this),
-    function(event) {
-        // Failure
-        alert('Image upload failed. The server returned a status code of ' + event.target.status + '.');
-    }.bind(this),
-    function(event) {
-        // Progress
-        if (event.lengthComputable) {
-            var percentLoaded = event.loaded / event.total;
-
-            if (percentLoaded > 0.05) {
-                jQuery(this.canvasUploadProgressBar).children().first().css('width', (percentLoaded * 100) + '%');
-            }
-        }
-        else {
-
-        }
-    }.bind(this));
-};
-
-dm.ProjectViewer.prototype.saveEdits = function() {
+dm.ProjectViewer.prototype.saveEditedProject = function(event) {
     var title = $(this.titleInput).val();
     var description = $(this.descriptionInput).val();
 
@@ -1055,36 +861,111 @@ dm.ProjectViewer.prototype.saveEdits = function() {
         }
     }, this);
 
-    this.updateButtonUI();
-    this.updateModalUI();
+    this.databroker.sync();
+
+    this.updateProjects();
+    this.showModal(STATES.project);
 };
 
-dm.ProjectViewer.prototype.createNewText = function() {
-    var textResource = this.databroker.dataModel.createText('Untitled text document', '');
+dm.ProjectViewer.prototype.newText = function(e) {
+    if (this.isGuest) {
+        return;
+    }
+
+    var textResource = this.databroker.dataModel.createText(
+        'Untitled text document', ''
+    );
 
     this.projectController.addResourceToProject(textResource);
-
     this.openViewerForResource(textResource);
-    this.hideModal();
+
+    $(".sc-ProjectViewer-modal").modal('hide');
 };
 
-dm.ProjectViewer.prototype.setupUser = function() {
-    var projectController = this.databroker.projectController;
-    var selectProject = function() {
-        this.updateButtonUI();
-        projectController.autoSelectProject();
-        if (projectController.currentProject) {
-            var deferredProject = projectController.currentProject.defer();
+dm.ProjectViewer.prototype.newImage = function(e) {
+    this.isGuest || this.showModal(STATES.imageUpload);
+};
 
-            var updateUI = function() {
-                this.updateButtonUI();
-                this.updateModalUI();
-                this.showModal();
-            }.bind(this);
+dm.ProjectViewer.prototype.projectEdit = function(event) {
+    this.isGuest || this.showModal(STATES.edit);
+};
 
-            deferredProject.progress(updateUI).done(updateUI);
+dm.ProjectViewer.prototype.projectDownload = function(e) {
+    var project = this.projectController.currentProject;
+    var url = this.databroker.syncService.getProjectDownloadUrl(project.uri);
+    window.open(url);
+};
+
+dm.ProjectViewer.prototype.cancelCanvasUpload = function(event) {
+    this.showModal(STATES.project);
+};
+
+dm.ProjectViewer.prototype.updateCanvasTitle = function(event) {
+    var form = $(".sc-ProjectViewer-uploadCanvas");
+    var titleInput = form.find("#canvasTitleInput");
+    var fileInput = form.find("#canvasFileInput");
+    var file = fileInput.prop("files")[0];
+
+    if (!goog.string.startsWith(file.type, 'image/')) {
+        alert('"' + file.name + '" is not an image file.');
+        fileInput.val("");
+        return;
+    }
+
+    if (!(goog.string.endsWith(file.type, '/jpeg') ||
+          goog.string.endsWith(file.type, '/png'))) {
+        alert('"' + file.name + '" is not a jpeg or png formatted image file.');
+        fileInput.val("");
+        return;
+    }
+
+    if ((titleInput.val() || "") == "") {
+        var filename = file.name;
+        var ext = filename.lastIndexOf('.');
+        if (ext > 0) {
+            filename = filename.substring(0, ext);
         }
-    }.bind(this);
+        filename = filename.replace(/_/g, ' ');
+        titleInput.val(goog.string.toTitleCase(filename));
+    }
+};
 
-    this.databroker.user.defer().done(selectProject);
+
+dm.ProjectViewer.prototype.uploadCanvas = function(event) {
+    var form = $(".sc-ProjectViewer-uploadCanvas");
+
+    var progress = form.find(".progress");
+    var progressBar = progress.find(".bar");
+
+    var title = form.find("#canvasTitleInput").val();
+    var file = form.find("#canvasFileInput").prop("files")[0];
+
+    progress.slideDown(200).addClass('active');
+    progressBar.css('width', '5%');
+
+    this.projectController.uploadCanvas(title, file,
+
+        (function() {
+            // Success
+            progress.removeClass("active");
+            progressBar.css('width', '100%');
+            this.showModal(STATES.project);
+        }).bind(this),
+
+        function(event) {
+            // Failure
+            alert('Image upload failed. The server returned a status code of ' +
+                  event.target.status + '.');
+        },
+
+        function(event) {
+            // Progress
+            if (event.lengthComputable) {
+                progressBar.css(
+                    'width',
+                    Math.max(5, event.loaded / event.total * 100) + '%'
+                );
+            }
+        }
+    );
 };

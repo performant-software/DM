@@ -1,6 +1,15 @@
 [#ftl]
-[#import "base.ftl" as base]
-[@base.page]
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="${cp}/static/img/favicon.png">
+    <link rel="stylesheet" href="${cp}/static/css/dm.css" type="text/css">
+    [#include "scripts.ftl"]
+</head>
+<body>
+[#include "nav.ftl"]
 <div>
     <div id="grid">
 
@@ -34,11 +43,13 @@
         <button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Done</button>
     </div>
 </div>
-[#if user?has_content]
+
+[#include "project-viewer.ftl"]
+
 <script type="text/javascript" >
    goog.require("dm.ClientApp");
    goog.global.clientApp = new dm.ClientApp("${cp}", "${user.name}");
 </script>
-[/#if]
 
-[/@base.page]
+</body>
+</html>

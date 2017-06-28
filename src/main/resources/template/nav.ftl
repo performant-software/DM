@@ -1,31 +1,4 @@
 [#ftl]
-[#-- @ftlvariable name="cp" type="java.lang.String" --]
-[#-- @ftlvariable name="local" type="java.lang.Boolean" --]
-[#macro page title="DM"]
-<!DOCTYPE html>
-<html>
-<head>
-    <title>${title}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="${cp}/static/img/favicon.png">
-
-    <link rel="stylesheet" href="${cp}/static/css/dm.css" type="text/css" />
-
-    <script type="text/javascript">STATIC_URL = '${cp}/static/';</script>
-    <script src="${cp}/static/js/dm.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/closure-library/closure/goog/base.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/dm-goog-deps.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/jquery/jquery-1.10.1.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/jquery/jquery-ui-1.10.3.custom.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/bootstrap.min.js" type="text/javascript"></script>
-    <script src="${cp}/static/js/fineuploader-3.1.1.js"></script>
-    [#if local]
-        <script src="${cp}/static/js/dm/ClientApp.js" type="text/javascript"></script>
-    [#else]
-        <script src="${cp}/static/js/dm-goog.js" type="text/javascript"></script>
-    [/#if]
-</head>
-<body>
 <div id="main-nav" class="navbar navbar-inverse navbar-fixed-top">
     <div class="navbar-inner top-level-nav">
         <a class="btn btn-navbar" data-toggle="collapse"
@@ -34,10 +7,36 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </a>
-        <span class="brand" >${title?html}</span>
+        <span class="brand">DM</span>
         <div class="nav-collapse collapse top-level-nav-collapse">
             <ul class="nav pull-right">
-                <li id="projectViewerButtons"></li>
+                <li id="projectViewerButtons">
+                    <div class="btn-group sc-ProjectViewer-button">
+                        <div class="btn btn-inverse sc-ProjectViewer-titleButton"
+                             title="View and edit this project">
+                            <div class="sc-ProjectViewer-projectLabel">
+                                <span class="icon-book"></span>Project:
+                            </div>
+                            <div class="sc-ProjectViewer-projectButtonTitle">
+                                none
+                            </div>
+                        </div>
+                        <button class="btn dropdown-toggle btn-inverse"
+                                data-toggle="dropdown"
+                                title="Switch projects or create a new one">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li class="divider hide"></li>
+                            <li class="sc-ProjectViewer-createProjectButton hide">
+                                <a href="#" title="Start a new project">
+                                    <span class="icon-plus"></span>
+                                    New project
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
                 <li id="searchButton" title="Search text documents in the current project">
                     <a href="#" role="button">
                         <span class="icon-search"></span>
@@ -71,7 +70,7 @@
                         </a>
                         <ul class="dropdown-menu">
                             [#list authenticationProviders?values as ap]
-                                   <li><a href="${cp}/accounts/login?provider=${ap.key?url}" title="${ap.description?html}">via ${ap.description?html}</a></li>
+                                <li><a href="${cp}/accounts/login?provider=${ap.key?url}" title="${ap.description?html}">via ${ap.description?html}</a></li>
                             [/#list]
                         </ul>
                     </li>
@@ -92,9 +91,3 @@
         </div>
     </div>
 </div>
-
-[#nested]
-
-</body>
-</html>
-[/#macro]

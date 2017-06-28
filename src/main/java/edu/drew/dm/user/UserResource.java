@@ -67,7 +67,7 @@ public class UserResource implements SemanticDatabase.TransactionLogListener {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public synchronized JsonNode list() {
+    public synchronized JsonNode list(@Context UriInfo ui) {
         if (users == null) {
             users = store.read(model -> {
                 final ArrayNode users = objectMapper.createArrayNode();
@@ -77,6 +77,7 @@ public class UserResource implements SemanticDatabase.TransactionLogListener {
                             for (String emailAddress : user.emailAddresses) {
                                 users.addObject()
                                         .put("id", user.getName())
+                                        .put("uri", userResource(ui, user.uri))
                                         .put("name", user.getDisplayName())
                                         .put("email", emailAddress);
                             }
