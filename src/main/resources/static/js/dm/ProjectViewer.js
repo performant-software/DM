@@ -478,7 +478,7 @@ dm.ProjectViewer.prototype.readPermissions = function() {
         }, this);
         var hasPermissions = goog.array.some(PERMISSIONS, function(perm) {
             return userPermissions[perm];
-        })
+        });
         if (hasPermissions) {
             this.addPermissions(user, userPermissions);
         }
