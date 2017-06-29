@@ -476,7 +476,12 @@ dm.ProjectViewer.prototype.readPermissions = function() {
                     dm.data.ProjectController.PERMISSIONS[perm]
                 );
         }, this);
-        this.addPermissions(user, userPermissions);
+        var hasPermissions = goog.array.some(PERMISSIONS, function(perm) {
+            return userPermissions[perm];
+        })
+        if (hasPermissions) {
+            this.addPermissions(user, userPermissions);
+        }
     }, this);
 
     this.sortPermissions();
@@ -676,8 +681,8 @@ dm.ProjectViewer.prototype.saveEditedProject = function(event) {
                 );
             }
         }, this);
-
     }, this);
+
 
     this.databroker.sync();
 
