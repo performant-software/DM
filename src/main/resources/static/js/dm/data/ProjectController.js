@@ -77,11 +77,11 @@ dm.data.ProjectController.prototype.revokePermissionsFromUser = function(user, p
     }, this);
 
     if (!(
-        user.hasProperty(dm.data.ProjectController.PERMISSIONS.update, project) &&
-        user.hasProperty(dm.data.ProjectController.PERMISSIONS.read, project) &&
-        user.hasProperty(dm.data.ProjectController.PERMISSIONS.delete, project) &&
-        user.hasProperty(dm.data.ProjectController.PERMISSIONS.augment, project) &&
-        user.hasProperty(dm.data.ProjectController.PERMISSIONS.administer, project) &&
+        user.hasProperty(dm.data.ProjectController.PERMISSIONS.update, project) ||
+        user.hasProperty(dm.data.ProjectController.PERMISSIONS.read, project) ||
+        user.hasProperty(dm.data.ProjectController.PERMISSIONS.delete, project) ||
+        user.hasProperty(dm.data.ProjectController.PERMISSIONS.augment, project) ||
+        user.hasProperty(dm.data.ProjectController.PERMISSIONS.administer, project) ||
         user.hasProperty(dm.data.ProjectController.PERMISSIONS.createChildren, project)
     )) {
         user.deleteProperty(dm.data.ProjectController.PERMISSIONS.permission, project);

@@ -21,6 +21,8 @@ var STATES = {
     imageUpload: 4
 };
 
+var PERMISSIONS = ["read", "update", "administer"];
+
 dm.ProjectViewer = function(clientApp, opt_domHelper) {
     this.clientApp = clientApp;
     this.databroker = clientApp.databroker;
@@ -125,6 +127,7 @@ dm.ProjectViewer = function(clientApp, opt_domHelper) {
         function(users) {
             this.users = users.shift();
             this.projectController.autoSelectProject();
+            this.updateProjects();
         }.bind(this)
     );
 };
@@ -268,242 +271,6 @@ dm.ProjectViewer.prototype.updateProjects = function() {
     }
 };
 
-dm.ProjectViewer.prototype._sanityCheckPermissionsUI = function(readCheck, modifyCheck, adminCheck) {
-    // Ensure the permission levels are sane (e.g., no modify permissions without read permissions)
-    goog.events.listen(readCheck, 'click', function(event) {
-        modifyCheck.checked = false;
-        adminCheck.checked = false;
-    }, false, this);
-    goog.events.listen(modifyCheck, 'click', function(event) {
-        adminCheck.checked = false;
-    }, false, this);
-
-    var changeHandler = function(event) {
-        if (modifyCheck.checked) {
-            readCheck.checked = true;
-        }
-        if (adminCheck.checked) {
-            readCheck.checked = true;
-            modifyCheck.checked = true;
-        }
-    };
-    goog.events.listen(readCheck, 'change', changeHandler, false, this);
-    goog.events.listen(modifyCheck, 'change', changeHandler, false, this);
-    goog.events.listen(adminCheck, 'change', changeHandler, false, this);
-};
-
-dm.ProjectViewer.prototype._buildAddUser = function(fragment) {
-    var checked = function() {
-        var check = this.domHelper.createDom('input', {'type': 'checkbox'});
-        check.checked = true;
-        return check;
-    }.bind(this);
-    var unchecked = function() {
-        var check = this.domHelper.createDom('input', {'type': 'checkbox'});
-        check.checked = false;
-        return check;
-    }.bind(this);
-
-    var editTr = this.domHelper.createDom('tr', {'class': 'sc-ProjectViewer-sharingEditRow'});
-    var usernameInput = this.domHelper.createDom('input', {'type': 'text', 'placeholder': 'Add a user', 'class': 'sc-ProjectViewer-usernameInput'});
-    var addButton = this.domHelper.createDom('button', {'class': 'btn'}, '+');
-    var usernameTd = this.domHelper.createDom('td', {'class': 'input-append'}, usernameInput, addButton);
-    editTr.appendChild(usernameTd);
-    var readCheck = checked();
-    var readTd = this.domHelper.createDom('td', {}, readCheck);
-    editTr.appendChild(readTd);
-    var modifyCheck = unchecked();
-    var modifyTd = this.domHelper.createDom('td', {}, modifyCheck);
-    editTr.appendChild(modifyTd);
-    var adminCheck = unchecked();
-    var adminTd = this.domHelper.createDom('td', {}, adminCheck);
-
-    // Ensure the permission levels are sane (e.g., no modify permissions without read permissions)
-    this._sanityCheckPermissionsUI(readCheck, modifyCheck, adminCheck);
-
-    goog.events.listen(addButton, 'click', function(event) {
-        event.stopPropagation();
-
-        var username = goog.string.trim($(usernameInput).val() || "");
-        if (username.length == 0) return;
-
-        var userUri = this.databroker.syncService.restUri(null, dm.data.SyncService.RESTYPE.user, username, null);
-        var user = this.databroker.getResource(userUri);
-
-        var permissionsToGrant = [];
-        if (readCheck.checked)
-            permissionsToGrant.push(dm.data.ProjectController.PERMISSIONS.read);
-        if (modifyCheck.checked)
-            permissionsToGrant.push(dm.data.ProjectController.PERMISSIONS.update);
-        if (adminCheck.checked)
-            permissionsToGrant.push(dm.data.ProjectController.PERMISSIONS.administer);
-
-        if (permissionsToGrant.length > 0) {
-            if (!user.hasType('foaf:Agent')) {
-                this.databroker.quadStore.addQuad(
-                    new dm.data.Quad(user.bracketedUri, this.databroker.namespaces.expand('rdf', 'type'), this.databroker.namespaces.expand('foaf', 'Agent'), null)
-                );
-            }
-
-            this.projectController.grantPermissionsToUser(user, null, permissionsToGrant);
-
-            this.updatePermissionsUI();
-        }
-        else {
-            alert('You need to specify permissions for  \u201c' + username + '\u201d to have over this project');
-        }
-    }, false, this);
-
-    editTr.appendChild(adminTd);
-    fragment.appendChild(editTr);
-};
-
-dm.ProjectViewer.prototype.updatePermissionsUI = function() {
-    var checked = function() {
-        var check = this.domHelper.createDom('input', {'type': 'checkbox'});
-        check.checked = true;
-        return check;
-    }.bind(this);
-    var unchecked = function() {
-        var check = this.domHelper.createDom('input', {'type': 'checkbox'});
-        check.checked = false;
-        return check;
-    }.bind(this);
-
-    var fragment = this.domHelper.getDocument().createDocumentFragment();
-
-    var userUris = this.projectController.findUsersInProject();
-    var indexOfThisUser = userUris.indexOf(this.databroker.user.uri);
-    if (indexOfThisUser != -1) {
-        goog.array.removeAt(userUris, indexOfThisUser);
-        goog.array.insertAt(userUris, this.databroker.user.uri, 0);
-    }
-
-    goog.structs.forEach(userUris, function(user) {
-        var userResource = this.databroker.getResource(user);
-        var unwrappedUserUri = dm.data.Term.unwrapUri(user);
-        var username = userResource.getOneProperty('rdfs:label') || unwrappedUserUri.substring(unwrappedUserUri.lastIndexOf('/') + 1, unwrappedUserUri.length);
-        if ( username.indexOf("guest_") != 0 ) {
-	        var canRead = this.projectController.userHasPermissionOverProject(user, null, dm.data.ProjectController.PERMISSIONS.read);
-	        var canModify = this.projectController.userHasPermissionOverProject(user, null, dm.data.ProjectController.PERMISSIONS.update);
-	        var isAdmin = this.projectController.userHasPermissionOverProject(user, null, dm.data.ProjectController.PERMISSIONS.administer);
-
-	        var readCheck = (canRead ? checked() : unchecked());
-	        var modifyCheck = (canModify ? checked() : unchecked());
-	        var adminCheck = (isAdmin ? checked() : unchecked());
-
-	        this._sanityCheckPermissionsUI(readCheck, modifyCheck, adminCheck);
-
-	        var tr = this.domHelper.createDom('tr', {},
-	            this.domHelper.createDom('td', {'about': user}, username),
-	            this.domHelper.createDom('td', {}, readCheck),
-	            this.domHelper.createDom('td', {}, modifyCheck),
-	            this.domHelper.createDom('td', {}, adminCheck)
-	        );
-	        $(tr).attr('about', user);
-
-	        if (this.databroker.user.equals(user)) {
-	            $(tr).addClass('info');
-	        }
-
-	        fragment.appendChild(tr);
-	        this.permissionsRows.push(tr);
-        }
-    }, this);
-
-    this._buildAddUser(fragment);
-
-    // Ensure the user can only grant permissions allowed by their current permission level
-    if (!this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.administer)) {
-        var rows = $(fragment).children();
-        goog.structs.forEach(rows, function(row) {
-            var userUri = $(row).attr('about');
-
-            var cells = $(row).children();
-
-            var readCheck = $(cells[1]).children().get(0);
-            var modifyCheck = $(cells[2]).children().get(0);
-            var adminCheck = $(cells[3]).children().get(0);
-
-            adminCheck.disabled = true;
-
-            if (!this.databroker.user.equals(userUri)) {
-                readCheck.disabled = true;
-                modifyCheck.disabled = true;
-            }
-            else if (!this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.update)) {
-                modifyCheck.disabled = true;
-            }
-        }, this);
-    }
-
-    var tbody = $(this.permissionsTable).find('tbody');
-    tbody.empty();
-    tbody.append(fragment);
-};
-
-dm.ProjectViewer.prototype.updateModalUI = function() {
-   $("#del-project").hide();
-   $("#clean-project").hide();
-   $("#create-footer").hide();
-   $("#main-footer").show();
-   $(".sc-ProjectViewer-modal .nav-pills").hide();
-
-   $(".sc-ProjectViewer-permissions-table").show();
-   $(".pub-access").show();
-   $(".form-actions").show();
-
-   if (this.projectController.currentProject) {
-      var uri = this.projectController.currentProject.uri;
-      this.workingResources.loadManifest(uri);
-
-      var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
-      $(this.modalTitle).text('\u201c' + (projectTitle || 'Untitled project') + '\u201d');
-
-      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user, uri,
-          dm.data.ProjectController.PERMISSIONS.administer)) {
-         $("#del-project").show();
-         $("#clean-project").show();
-         $(".sc-ProjectViewer-modal .nav-pills").show();
-      }
-
-      if (this.databroker.projectController.userHasPermissionOverProject(this.databroker.user,
-          uri, dm.data.ProjectController.PERMISSIONS.update)) {
-         $(".sc-ProjectViewer-modal .nav-pills").show();
-      }
-   } else {
-      $(this.modalTitle).text('No project selected');
-      $("#public-url").text("");
-   }
-
-    if (this.projectController.currentProject) {
-        var projectTitle = this.databroker.dataModel.getTitle(this.projectController.currentProject);
-        $(this.titleInput).val(projectTitle);
-        $(this.descriptionInput).val(this.projectController.currentProject.getOneProperty('dcterms:description') || '');
-
-        if (!this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.administer)) {
-            this.titleInput.disabled = true;
-            this.titleInput.title = "You need admin permissions to change the project's title";
-        }
-        else {
-            this.titleInput.disabled = false;
-            this.titleInput.title = "";
-        }
-
-        if (!this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.update)) {
-            this.descriptionInput.disabled = true;
-            this.descriptionInput.title = "You need modify permissions to change the project's description";
-        }
-        else {
-            this.descriptionInput.disabled = false;
-            this.descriptionInput.title = "";
-        }
-
-        this.updatePermissionsUI();
-    }
-};
-
-
 dm.ProjectViewer.prototype.showModal = function(state) {
     this.state = state || this.state;
 
@@ -547,7 +314,7 @@ dm.ProjectViewer.prototype.showModal = function(state) {
     );
 
     edit.find(".sc-ProjectViewer-permissions-table").toggle(
-        this.state == STATES.edit
+        permissions.administer && this.state == STATES.edit
     );
     edit.find(".pub-access").toggle(
         this.state == STATES.edit
@@ -701,18 +468,14 @@ dm.ProjectViewer.prototype.readPermissions = function() {
 
     goog.structs.forEach(users, function(user) {
         var userPermissions = {};
-        goog.structs.forEach(
-            goog.object.getKeys(dm.data.ProjectController.PERMISSIONS),
-            function(perm) {
-                userPermissions[perm] = this.projectController
-                    .userHasPermissionOverProject(
-                        user,
-                        project,
-                        dm.data.ProjectController.PERMISSIONS[perm]
-                    );
-            },
-            this
-        );
+        goog.structs.forEach(PERMISSIONS, function(perm) {
+            userPermissions[perm] = this.projectController
+                .userHasPermissionOverProject(
+                    user,
+                    project,
+                    dm.data.ProjectController.PERMISSIONS[perm]
+                );
+        }, this);
         this.addPermissions(user, userPermissions);
     }, this);
 
@@ -757,7 +520,7 @@ dm.ProjectViewer.prototype.userAdded = function(uri) {
     });
     if (selected) {
         this.databroker.getResource(selected.uri).defer().done(function(user) {
-            this.addPermissions(user);
+            this.addPermissions(user, { "read": true });
             this.sortPermissions();
             this.renderPermissions();
         }.bind(this));
@@ -766,7 +529,8 @@ dm.ProjectViewer.prototype.userAdded = function(uri) {
 
 dm.ProjectViewer.prototype.updatePermissions = function(e) {
     var target = $(e.target);
-    var uri = target.closest("tr").attr("about");
+    var tr = target.closest("tr");
+    var uri = tr.attr("about");
     if (!uri) {
         return;
     }
@@ -774,9 +538,29 @@ dm.ProjectViewer.prototype.updatePermissions = function(e) {
         if (record.uri != uri) {
             return;
         }
-        goog.array.forEach(["read", "update", "administer"], function(perm) {
+        goog.array.forEach(PERMISSIONS, function(perm, i) {
             if (target.hasClass(perm)) {
-                record.permissions[perm] = target.prop("checked");
+                if (target.prop("checked")) {
+                    for (var pc = 0; pc <= PERMISSIONS.indexOf(perm); pc++) {
+                        var p = PERMISSIONS[pc];
+                        tr.find("." + p).prop(
+                            "checked",
+                            record.permissions[p] = true
+                        );
+                    }
+                } else {
+                    for (
+                        var pc = PERMISSIONS.indexOf(perm);
+                        pc < PERMISSIONS.length;
+                        pc++
+                    ) {
+                        var p = PERMISSIONS[pc];
+                        tr.find("." + p).prop(
+                            "checked",
+                            record.permissions[p] = false
+                        );
+                    }
+                }
             }
         });
     });
@@ -806,7 +590,7 @@ dm.ProjectViewer.prototype.renderPermissions = function(reset) {
                 .append("<br>")
                 .append($("<small></small>").text(record.label));
 
-            goog.array.forEach(["read", "update", "administer"], function(perm) {
+            goog.array.forEach(PERMISSIONS, function(perm) {
                 $("<input type='checkbox'>")
                     .addClass(perm)
                     .prop("disabled", i == 0)
@@ -814,7 +598,7 @@ dm.ProjectViewer.prototype.renderPermissions = function(reset) {
             });
         }
 
-        goog.array.forEach(["read", "update", "administer"], function(perm) {
+        goog.array.forEach(PERMISSIONS, function(perm) {
             tr.find("." + perm).prop("checked", record.permissions[perm]);
         });
     }, this);
@@ -858,58 +642,41 @@ dm.ProjectViewer.prototype.cancelEditedProject = function(e) {
 };
 
 dm.ProjectViewer.prototype.saveEditedProject = function(event) {
-    var title = $(this.titleInput).val();
-    var description = $(this.descriptionInput).val();
-
-    if (this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.administer)) {
-        this.databroker.dataModel.setTitle(this.projectController.currentProject, title);
-    }
-    if (this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.update)) {
-        this.projectController.currentProject.setProperty('dcterms:description', dm.data.Literal(description));
+    var project = this.projectController.currentProject;
+    var permissions = this.permissions[0].permissions;
+    if (!project || !permissions.administer) {
+        return;
     }
 
-    goog.structs.forEach(this.permissionsRows, function(row) {
-        var cells = $(row).children();
+    this.databroker.dataModel.setTitle(project, $("#projectTitleInput").val());
+    project.setProperty(
+        "dcterms:description",
+        dm.data.Literal($("#projectDescriptionInput").val())
+    );
 
-        var userCell = cells[0];
-        var readCheck = $(cells[1]).children().get(0);
-        var modifyCheck = $(cells[2]).children().get(0);
-        var adminCheck = $(cells[3]).children().get(0);
-
-        var userUri = $(row).attr('about');
-
-        if (this.databroker.user.equals(userUri) || this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.administer)) {
-            if (readCheck.checked) {
-                if (!this.projectController.userHasPermissionOverProject(userUri, null, dm.data.ProjectController.PERMISSIONS.read)) {
-                    this.projectController.grantPermissionsToUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.read]);
-                }
-            }
-            else {
-                if (this.projectController.userHasPermissionOverProject(userUri, null, dm.data.ProjectController.PERMISSIONS.read)) {
-                    this.projectController.revokePermissionsFromUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.read]);
-                }
-            }
-            if (modifyCheck.checked) {
-                if (!this.projectController.userHasPermissionOverProject(userUri, null, dm.data.ProjectController.PERMISSIONS.update)) {
-                    this.projectController.grantPermissionsToUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.update]);
-                }
-            }
-            else {
-                if (this.projectController.userHasPermissionOverProject(userUri, null, dm.data.ProjectController.PERMISSIONS.update)) {
-                    this.projectController.revokePermissionsFromUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.update]);
-                }
-            }
-            if (adminCheck.checked) {
-                if (!this.projectController.userHasPermissionOverProject(userUri, null, dm.data.ProjectController.PERMISSIONS.administer)) {
-                    this.projectController.grantPermissionsToUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.administer]);
-                }
-            }
-            else {
-                if (this.projectController.userHasPermissionOverProject(userUri, null, dm.data.ProjectController.PERMISSIONS.administer)) {
-                    this.projectController.revokePermissionsFromUser(userUri, null, [dm.data.ProjectController.PERMISSIONS.administer]);
-                }
-            }
+    goog.array.forEach(this.permissions, function(record, i) {
+        if (i == 0) {
+            return; // we do not administer our own rights
         }
+
+        var user = record.uri;
+        goog.array.forEach(PERMISSIONS, function(perm) {
+            var p = dm.data.ProjectController.PERMISSIONS[perm];
+            if (record.permissions[perm]) {
+                this.projectController.userHasPermissionOverProject(
+                    user, project, p
+                ) || this.projectController.grantPermissionsToUser(
+                    user, project, [ p ]
+                );
+            } else {
+                this.projectController.userHasPermissionOverProject(
+                    user, project, p
+                ) && this.projectController.revokePermissionsFromUser(
+                    user, project, [ p ]
+                );
+            }
+        }, this);
+
     }, this);
 
     this.databroker.sync();
