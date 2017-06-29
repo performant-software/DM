@@ -116,11 +116,14 @@ public class UserDataMigration {
                                 .collect(Collectors.joining(" "))
                                 .trim();
 
+                        final String schemedLabel = URI.create(user.getURI()).getSchemeSpecificPart();
+
+                        user.removeAll(RDFS.label);
+                        user.addProperty(RDFS.label, schemedLabel);
+
                         user.addProperty(
                                 FOAF.name,
-                                name.isEmpty()
-                                        ? user.getRequiredProperty(RDFS.label).getString()
-                                        : name
+                                name.isEmpty() ? schemedLabel : name
                         );
 
                         for (Property nameProperty : nameProperties) {

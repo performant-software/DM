@@ -76,8 +76,10 @@ dm.ProjectViewer = function(clientApp, opt_domHelper) {
         this.updatePermissions.bind(this)
     );
 
-    $(".sc-ProjectViewer-permissions-table .add").typeahead({
-        source: this.usersTypeaheadSource.bind(this)
+    $(".sc-ProjectViewer-permissions-table .add-user select").selectize({
+        load: this.addUserOptions.bind(this),
+        closeAfterSelect: true,
+        onChange: this.userAdded.bind(this)
     });
 
     $(".sc-ProjectViewer-projectEdit .save").on(
@@ -660,10 +662,26 @@ dm.ProjectViewer.prototype.switchToProject = function(project, force) {
     return true;
 };
 
-dm.ProjectViewer.prototype.usersTypeaheadSource = function(query, results) {
-    return goog.structs.map(this.users, function(user) {
-        return [user.name, user.email, user.uri].join(" - ");
+dm.ProjectViewer.prototype.addUserOptions = function(query, results) {
+    var usersWithPermission = {};
+    goog.structs.forEach(this.permissions, function(record) {
+        usersWithPermission[record.uri] = true;
     });
+
+    var filter = query.toLowerCase();
+    var users = goog.structs.filter(this.users, function(user) {
+        if (usersWithPermission[user.uri]) {
+            return false;
+        }
+        return (user.name.toLowerCase().indexOf(filter) >= 0) ||
+            (user.email.toLowerCase().indexOf(filter) >= 0);
+    });
+    results(goog.structs.map(users, function(user) {
+        return {
+            value: user.uri,
+            text: [user.name, user.email].join(" - ")
+        };
+    }));
 };
 
 dm.ProjectViewer.prototype.readPermissions = function() {
@@ -695,15 +713,25 @@ dm.ProjectViewer.prototype.readPermissions = function() {
             },
             this
         );
-        var label = user.getOneProperty("rdfs:label") || user.uri;
-        this.permissions.push({
-            uri: user.uri,
-            label: label,
-            name: user.getOneProperty("foaf:name") || label,
-            user: user,
-            permissions: userPermissions
-        });
+        this.addPermissions(user, userPermissions);
     }, this);
+
+    this.sortPermissions();
+};
+
+dm.ProjectViewer.prototype.addPermissions = function(user, permissions) {
+    var label = user.getOneProperty("rdfs:label") || user.uri;
+    this.permissions.push({
+        uri: user.uri,
+        label: label,
+        name: user.getOneProperty("foaf:name") || label,
+        user: user,
+        permissions: permissions || {}
+    });
+};
+
+dm.ProjectViewer.prototype.sortPermissions = function() {
+    var user = this.databroker.user;
 
     this.permissions.sort(function(a, b) {
         if (a.uri == user.uri) {
@@ -715,17 +743,38 @@ dm.ProjectViewer.prototype.readPermissions = function() {
 
         return a.name.localeCompare(b.name);
     });
+
 };
+
+dm.ProjectViewer.prototype.userAdded = function(uri) {
+    var selectize = $(".sc-ProjectViewer-permissions-table .add-user select")
+            .get(0).selectize;
+    selectize.clear(true);
+    selectize.clearOptions();
+
+    var selected = goog.array.find(this.users, function(user) {
+        return user.uri == uri;
+    });
+    if (selected) {
+        this.databroker.getResource(selected.uri).defer().done(function(user) {
+            this.addPermissions(user);
+            this.sortPermissions();
+            this.renderPermissions();
+        }.bind(this));
+    }
+};
+
 dm.ProjectViewer.prototype.updatePermissions = function(e) {
-    console.log(e);
     var target = $(e.target);
     var uri = target.closest("tr").attr("about");
-
-    goog.structs.forEach(this.permissions, function(record) {
+    if (!uri) {
+        return;
+    }
+    goog.array.forEach(this.permissions, function(record) {
         if (record.uri != uri) {
             return;
         }
-        goog.structs.forEach(["read", "update", "administer"], function(perm) {
+        goog.array.forEach(["read", "update", "administer"], function(perm) {
             if (target.hasClass(perm)) {
                 record.permissions[perm] = target.prop("checked");
             }
@@ -737,25 +786,27 @@ dm.ProjectViewer.prototype.updatePermissions = function(e) {
 
 dm.ProjectViewer.prototype.renderPermissions = function(reset) {
     var permissionsTable = $(".sc-ProjectViewer-permissions-table tbody");
-    var add = permissionsTable.find(".add").closest("tr");
 
     if (reset) {
         permissionsTable.find("tr[about]").remove();
     }
-    goog.structs.forEach(this.permissions, function(record, i) {
+    goog.array.forEach(this.permissions, function(record, i) {
         if (record.label == "dm:guest") {
             return;
         }
 
         var tr = permissionsTable.find("tr[about='" + record.uri + "']");
         if (tr.length == 0) {
-            tr = $("<tr></tr>").insertBefore(add)
+            tr = $("<tr></tr>").appendTo(permissionsTable)
                 .attr("about", record.uri)
                 .toggleClass("info", i == 0);
 
-            $("<td></td>").appendTo(tr).text(record.name);
+            $("<td></td>").appendTo(tr)
+                .append(document.createTextNode(record.name))
+                .append("<br>")
+                .append($("<small></small>").text(record.label));
 
-            goog.structs.forEach(["read", "update", "administer"], function(perm) {
+            goog.array.forEach(["read", "update", "administer"], function(perm) {
                 $("<input type='checkbox'>")
                     .addClass(perm)
                     .prop("disabled", i == 0)
@@ -763,7 +814,7 @@ dm.ProjectViewer.prototype.renderPermissions = function(reset) {
             });
         }
 
-        goog.structs.forEach(["read", "update", "administer"], function(perm) {
+        goog.array.forEach(["read", "update", "administer"], function(perm) {
             tr.find("." + perm).prop("checked", record.permissions[perm]);
         });
     }, this);

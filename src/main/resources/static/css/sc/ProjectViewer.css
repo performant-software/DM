@@ -75,3 +75,7 @@ div.panel.panel-default.pub-access {
 div.pub-access .hidden {
    display: none;
 }
+   
+.add-user {
+    position: relative;
+}

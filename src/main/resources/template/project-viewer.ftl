@@ -49,11 +49,9 @@
                 </thead>
                 <tbody>
                     <td colspan="4">
-                        <div style="position: relative">
-                            <input type="text"
-                                   placeholder="Add a user ..."
-                                   autocomplete="off"
-                                   class="add" style="width: 90%">
+                        <div class="add-user">
+                            <select placeholder="Add a user ..." autocomplete="off">
+                            </select>
                         </div>
                     </td>
                 </tbody>
