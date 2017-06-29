@@ -7,6 +7,7 @@
 <script src="${cp}/static/js/jquery/jquery-ui-1.10.3.custom.js" type="text/javascript"></script>
 <script src="${cp}/static/js/bootstrap.min.js" type="text/javascript"></script>
 <script src="${cp}/static/js/fineuploader-3.1.1.js"></script>
+<script src="${cp}/static/js/selectize.min.js"></script>
 [#if local]
     <script src="${cp}/static/js/dm/ClientApp.js" type="text/javascript"></script>
 [#else]

@@ -1,6 +1,7 @@
 /* global require */
 require("../css/bootstrap.css");
 require("../css/fineuploader.css");
+require("../css/selectize.bootstrap2.css");
 require("../css/base.css");
 require("./closure-library/closure/goog/css/combobox.css");
 require("./closure-library/closure/goog/css/autocomplete.css");
