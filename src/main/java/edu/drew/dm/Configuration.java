@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
@@ -29,13 +30,15 @@ public class Configuration {
     public static Config application() {
         final Logger log = logger(Configuration.class);
 
-        final File localConfigFile = new File("local.conf");
-        if (localConfigFile.isFile()) {
-            final String localConfigPath = localConfigFile.getAbsolutePath();
-            log.info(String.format("Configuring application via %s", localConfigPath));
-            System.setProperty("config.file", localConfigPath);
+        for (File dir = new File(System.getProperty("user.dir")); dir != null; dir = dir.getParentFile()) {
+            final File localConfigFile = new File(dir, "dm.conf");
+            if (localConfigFile.isFile()) {
+                final String localConfigPath = localConfigFile.getAbsolutePath();
+                log.info(String.format("Configuring application via %s", localConfigPath));
+                System.setProperty("config.file", localConfigPath);
+                break;
+            }
         }
-
         final Config config = ConfigFactory.load();
         log.finer(() -> String.format(
                 "Configuration: %s",
