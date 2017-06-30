@@ -1,6 +1,6 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.Logging;
+import edu.drew.dm.Configuration;
 import it.sauronsoftware.cron4j.Task;
 import it.sauronsoftware.cron4j.TaskExecutionContext;
 
@@ -20,7 +20,7 @@ import java.util.zip.GZIPOutputStream;
  */
 public class SemanticDatabaseBackup extends Task {
 
-    private static final Logger LOG = Logging.inClass(SemanticDatabaseBackup.class);
+    private static final Logger LOG = Configuration.logger(SemanticDatabaseBackup.class);
 
     private final SemanticDatabase db;
     private final File dumps;

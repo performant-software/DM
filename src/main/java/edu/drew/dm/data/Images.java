@@ -1,6 +1,6 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.Logging;
+import edu.drew.dm.Configuration;
 import edu.drew.dm.Server;
 import edu.drew.dm.rdf.Models;
 import org.apache.jena.rdf.model.Model;
@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  */
 public class Images extends StaticHttpHandler {
 
-    private static final Logger LOG = Logging.inClass(Images.class);
+    private static final Logger LOG = Configuration.logger(Images.class);
 
     private static final int THUMBNAIL_SIZE = 100;
 

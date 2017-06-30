@@ -1,6 +1,6 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.Logging;
+import edu.drew.dm.Configuration;
 import edu.drew.dm.ProjectResource;
 import edu.drew.dm.rdf.Content;
 import edu.drew.dm.rdf.Exif;
@@ -62,7 +62,7 @@ import java.util.stream.Stream;
 
 public class TextIndex implements AutoCloseable {
 
-    private static final Logger LOG = Logging.inClass(TextIndex.class);
+    private static final Logger LOG = Configuration.logger(TextIndex.class);
     
     private final FSDirectory textIndex;
     private final SearcherManager searcherManager;

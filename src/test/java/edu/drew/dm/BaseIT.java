@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 public abstract class BaseIT {
 
+    protected Config config;
     protected Logger log;
     protected FileSystem fs;
     protected SemanticDatabase db;
@@ -22,24 +23,13 @@ public abstract class BaseIT {
 
     @BeforeClass
     public static void setupLogging() throws IOException {
-        Logging.configure();
+        Configuration.logging();
     }
 
     @Before
     public void setup() {
-        log = Logger.getLogger(getClass().getPackage().getName());
-
-        final File localConfigFile = new File("local.conf");
-        if (localConfigFile.isFile()) {
-            System.setProperty("config.file", localConfigFile.getPath());
-        }
-        
-        final Config config = ConfigFactory.load();
-        log.finer(() -> String.format(
-                "Configuration: %s",
-                config.root().render()
-        ));
-
+        log = Configuration.logger(getClass().getPackage());
+        config = Configuration.application();
         fs = new FileSystem(config);
         db = new SemanticDatabase(fs);
         images = new Images(fs);

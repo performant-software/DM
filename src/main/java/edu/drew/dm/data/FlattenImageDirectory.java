@@ -1,6 +1,6 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.Logging;
+import edu.drew.dm.Configuration;
 import edu.drew.dm.rdf.Models;
 
 import java.io.File;
@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class FlattenImageDirectory {
 
-    private static final Logger LOG = Logging.inClass(FlattenImageDirectory.class);
+    private static final Logger LOG = Configuration.logger(FlattenImageDirectory.class);
 
     public static void execute(Images images, SemanticDatabase db) throws IOException {
         final Path basePath = images.baseDirectory.toPath();

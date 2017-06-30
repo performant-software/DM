@@ -1,18 +1,13 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.Logging;
+import edu.drew.dm.Configuration;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
@@ -22,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class Index implements AutoCloseable, SemanticDatabase.TransactionLogListener {
 
-    private static final Logger LOG = Logging.inClass(Index.class);
+    private static final Logger LOG = Configuration.logger(Index.class);
 
     final TextIndex textIndex;
     final TextIndexSuggester textIndexSuggester;

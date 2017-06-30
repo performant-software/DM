@@ -66,14 +66,9 @@ import static org.apache.jena.vocabulary.DCTypes.Text;
 public class Server {
 
     public static void main(String[] args) throws Exception {
-        Logging.configure();
-        final Logger log = Logging.inClass(Server.class);
-
-        final Config config = ConfigFactory.load();
-        log.fine(() -> String.format(
-                "Configuration: %s",
-                config.root().render()
-        ));
+        Configuration.logging();
+        final Logger log = Configuration.logger(Server.class);
+        final Config config = Configuration.application();
 
         final FileSystem fs = new FileSystem(config);
 

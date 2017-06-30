@@ -101,7 +101,7 @@ public class ProjectResource {
 
     @POST
     public Model create(Model model) {
-        Logging.inClass(getClass()).info(() -> Models.n3(model));
+        Configuration.logger(getClass()).info(() -> Models.n3(model));
         throw Server.NOT_IMPLEMENTED;
     }
 
@@ -240,7 +240,7 @@ public class ProjectResource {
                     try (ProjectBundle bundle = ProjectBundle.create(uri, db, images)) {
                         bundle.asZip(output);
                     } catch (Throwable t) {
-                        Logging.inClass(ProjectResource.class).log(Level.WARNING, t, t::getMessage);
+                        Configuration.logger(ProjectResource.class).log(Level.WARNING, t, t::getMessage);
                     }
                 })
                 .build();

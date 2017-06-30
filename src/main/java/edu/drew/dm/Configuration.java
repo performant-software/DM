@@ -1,11 +1,14 @@
 package edu.drew.dm;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Date;
-import java.util.logging.Formatter;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -13,13 +16,9 @@ import java.util.logging.Logger;
 /**
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
-public class Logging {
+public class Configuration {
 
-    public static Logger inClass(Class<?> clz) {
-        return Logger.getLogger(clz.getName());
-    }
-
-    public static void configure() throws IOException {
+    public static void logging() throws IOException {
         if (System.getProperty("java.util.logging.config.file", "").isEmpty()) {
             try (InputStream logConfig = Server.class.getResourceAsStream("/logging.properties")) {
                 LogManager.getLogManager().readConfiguration(logConfig);
@@ -27,7 +26,37 @@ public class Logging {
         }
     }
 
-    public static class Formatter extends java.util.logging.Formatter {
+    public static Config application() {
+        final Logger log = logger(Configuration.class);
+
+        final File localConfigFile = new File("local.conf");
+        if (localConfigFile.isFile()) {
+            final String localConfigPath = localConfigFile.getAbsolutePath();
+            log.info(String.format("Configuring application via %s", localConfigPath));
+            System.setProperty("config.file", localConfigPath);
+        }
+
+        final Config config = ConfigFactory.load();
+        log.finer(() -> String.format(
+                "Configuration: %s",
+                config.root().render()
+        ));
+        return config;
+    }
+
+    public static Logger logger(String name) {
+        return Logger.getLogger(name);
+    }
+
+    public static Logger logger(Package pkg) {
+        return logger(pkg.getName());
+    }
+
+    public static Logger logger(Class<?> clz) {
+        return logger(clz.getName());
+    }
+
+    public static class LogFormatter extends java.util.logging.Formatter {
 
         private final Date date = new Date();
 

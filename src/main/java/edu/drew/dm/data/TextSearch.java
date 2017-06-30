@@ -1,6 +1,6 @@
 package edu.drew.dm.data;
 
-import edu.drew.dm.Logging;
+import edu.drew.dm.Configuration;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -19,7 +19,7 @@ public class TextSearch {
 
     public static final TextSearch EMPTY = new TextSearch(new Hit[0], null);
 
-    private static final Logger LOG = Logging.inClass(TextSearch.class);
+    private static final Logger LOG = Configuration.logger(TextSearch.class);
 
     public static TextSearch execute(Index index, String project, String query, int limit) {
         try {
