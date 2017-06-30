@@ -653,11 +653,15 @@ dm.ProjectViewer.prototype.saveEditedProject = function(event) {
         return;
     }
 
-    this.databroker.dataModel.setTitle(project, $("#projectTitleInput").val());
-    project.setProperty(
-        "dcterms:description",
-        dm.data.Literal($("#projectDescriptionInput").val())
-    );
+    var title = $("#projectTitleInput").val();
+    var description = $("#projectDescriptionInput").val();
+
+    if (this.databroker.dataModel.getTitle(project) != title) {
+        this.databroker.dataModel.setTitle(project, title);
+    }
+    if ((project.getOneProperty('dcterms:description') || "") != description) {
+        project.setProperty("dcterms:description", dm.data.Literal(description));
+    }
 
     goog.array.forEach(this.permissions, function(record, i) {
         if (i == 0) {
