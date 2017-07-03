@@ -213,8 +213,8 @@ dm.ProjectViewer.prototype.createProject = function() {
         dm.data.ProjectController.PERMISSIONS.update,
         dm.data.ProjectController.PERMISSIONS.administer
     ]);
-    this.databroker.sync();
     this.switchToProject(newProject);
+    this.databroker.sync();
 };
 
 
@@ -280,7 +280,9 @@ dm.ProjectViewer.prototype.showModal = function(state) {
             : "No project selected";
 
     this.readPermissions();
-    var permissions = this.permissions[0].permissions;
+    // FIXME does not work with no project chosen!!!
+    var permissions = this.permissions.length == 0
+            ? {} : this.permissions[0].permissions;
 
     var title = $(".modal-header h3")
             .text('\u201c' + (projectTitle) + '\u201d');
