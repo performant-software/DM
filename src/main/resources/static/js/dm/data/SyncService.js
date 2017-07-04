@@ -397,41 +397,10 @@ dm.data.SyncService.prototype.sendResource = function(uri, method, successHandle
     }
 };
 
-function fixQuotes( val ) {
-   var fixed = "";
-   var priorChar;
-   for (var i=0; i<val.length; i++) {
-      var currChar = val.charAt(i);
-      if (currChar == '"' ) {
-         if ( priorChar != '\\' ) {
-            fixed = fixed + "\\";
-         }
-      }
-      fixed = fixed + currChar;
-      priorChar = currChar;
-   }
-   return fixed;
-}
-
 dm.data.SyncService.prototype.sendQuads = function(quads, url, method, format, successHandler, errorHandler) {
     successHandler = successHandler || jQuery.noop;
     errorHandler = errorHandler || jQuery.noop;
     format = format || 'text/turtle';
-
-    goog.structs.forEach(quads, function(quad) {
-        if ( quad.predicate.indexOf("content#chars") > -1 || quad.predicate.indexOf("oa#exact") > -1 ) {
-          var ob = quad.object;
-          var stripped = ob.substring(1, ob.length-1);
-          stripped = stripped.replace(/\\\"/g, "\"");
-          stripped = stripped.replace(/\"/g, "\\\"");
-          var out = "\"" + stripped + "\"";
-          quad.object = out;
-        }
-
-        if(quad.object.match(/"".*""/)) {
-            quad.object = quad.object.split('""').join('"');
-        }
-    });
 
     this.databroker.serializeQuads(quads, format, function(data, error) {
         if (data != null) {
