@@ -38,7 +38,6 @@ dm.data.DataModel.VOCABULARY = {
     constraint: '<http://www.w3.org/ns/oa#ConstrainedBody>',
     isPartOf: '<http://purl.org/dc/terms/isPartOf>',
     forCanvasPredicates: ['<http://dms.stanford.edu/ns/forCanvas>', '<http://www.shared-canvas.org/ns/forCanvas>'],
-    manifestTypes: ['<http://www.shared-canvas.org/ns/Manifest>', '<http://dms.stanford.edu/ns/Manifest>'],
     canvasTypes: ['<http://dms.stanford.edu/ns/Canvas>', '<http://www.shared-canvas.org/ns/Canvas>'],
     sequenceTypes: ['<http://dms.stanford.edu/ns/Sequence>', '<http://www.shared-canvas.org/ns/Sequence>'],
     imageTypes: ['<http://dms.stanford.edu/ns/Image>', '<http://dms.stanford.edu/ns/ImageBody>', '<http://purl.org/dc/dcmitype/Image>'],
@@ -226,21 +225,6 @@ dm.data.DataModel.prototype.findAggregationContentsUris = function(aggregationUr
     return this.databroker.getResource(aggregationUri).getProperties('ore:aggregates');
 };
 
-dm.data.DataModel.prototype.findAggregationContentsUrisForRepoBrowser = function(aggregationUri) {
-    var uris = [];
-
-    var contentUris = this.findAggregationContentsUris(aggregationUri);
-    goog.structs.forEach(contentUris, function(contentUri) {
-        var contentResource = this.databroker.getResource(contentUri);
-
-        if (! contentResource.hasType('dms:AnnotationList')) {
-            uris.push(contentResource.uri);
-        }
-    }, this);
-
-    return uris;
-};
-
 /**
  * Returns the uris of resources aggregated into a manuscript, but does not include those which are labeled as being for
  * a specific canvas
@@ -314,28 +298,8 @@ dm.data.DataModel.prototype.findManuscriptImageAnnoUris = function(manifestUri) 
 };
 
 dm.data.DataModel.prototype.findManifestsContainingCanvas = function(canvasUri) {
-    canvasUri = dm.data.Term.wrapUri(canvasUri);
-
+    // FIXME: unused
     var manifestUris = new goog.structs.Set();
-
-    this.databroker.quadStore.forEachQuadMatchingQuery(
-        null, this.databroker.namespaces.expand('ore', 'aggregates'), canvasUri, null,
-        function(quad) {
-            var sequence = this.databroker.getResource(quad.subject);
-
-            if (sequence.hasAnyType(dm.data.DataModel.VOCABULARY.sequenceTypes)) {
-                this.databroker.quadStore.forEachQuadMatchingQuery(
-                    null, this.databroker.namespaces.expand('ore', 'aggregates'), quad.subject, null,
-                    function(quad) {
-                        var manifest = this.databroker.getResource(quad.subject);
-
-                        if (manifest.hasAnyType(dm.data.DataModel.VOCABULARY.manifestTypes)) {
-                            manifestUris.add(manifest.uri);
-                        }
-                    }.bind(this));
-            }
-        }.bind(this));
-
     return manifestUris.getValues();
 };
 

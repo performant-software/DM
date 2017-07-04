@@ -15,8 +15,6 @@ goog.require('dm.viewer.Viewer');
  *
  * Displays a list of dm.resource.ResourceSummaryView objects
  *
- * {dm.viewer.Finder} should now be used to display a list of resources
- *
  * @author tandres@drew.edu (Tim Andres)
  * @constructor
  * @extends {dm.viewer.Viewer}
@@ -362,7 +360,7 @@ dm.viewer.ResourceListViewer.prototype.withAllSummariesMatchingId = function (id
 };
 
 /**
- * Calls the given function with each summary in this Finder
+ * Calls the given function with each summary in this viewer
  *
  * @param f {function(dm.resource.ResourceSummary)}
  * @param opt_fScope {Object} scope in which to call f

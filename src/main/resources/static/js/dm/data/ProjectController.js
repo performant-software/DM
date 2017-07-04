@@ -214,7 +214,7 @@ dm.data.ProjectController.prototype.fireProjectSelected = function() {
     var event = new goog.events.Event('projectSelected', this);
     event.project = this.currentProject;
     this.dispatchEvent(event);
-    DM.projectSelected(this.currentProject);
+    DM.projectSelected(this.currentProject.uri);
 };
 
 dm.data.ProjectController.prototype.addResourceToProject = function(resource, project) {

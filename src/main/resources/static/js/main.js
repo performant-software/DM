@@ -4,6 +4,7 @@ const { logger } = require("redux-logger");
 const { createActions, handleActions } = require("redux-actions");
 
 const actions = createActions(
+    "USER_LOGGED_IN",
     "PROJECT_SELECTED",
     "RESOURCES_CHANGED",
     "RESOURCE_SELECTED"
@@ -11,9 +12,14 @@ const actions = createActions(
 
 const reducer = handleActions({
 
+    [actions.userLoggedIn]: (state, action) => ({
+        ...state,
+        user: action.payload
+    }),
+
     [actions.projectSelected]: (state, action) => ({
         ...state,
-        project: action.payload.uri,
+        project: action.payload,
         resourceSelected: undefined
     }),
 
@@ -28,6 +34,7 @@ const reducer = handleActions({
     })
 
 }, {
+    user: undefined,
     project: undefined,
     resources: [],
     resourceSelected: undefined

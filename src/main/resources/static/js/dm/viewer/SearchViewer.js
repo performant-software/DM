@@ -1,4 +1,4 @@
-goog.provide('dm.SearchViewer');
+goog.provide('dm.viewer.SearchViewer');
 
 goog.require('goog.dom.DomHelper');
 goog.require('goog.events');
@@ -13,7 +13,7 @@ goog.require('dm.widgets.SearchResultItem');
  * @param  {dm.ClientApp} clientApp
  * @param  {goog.dom.DomHelper?} opt_domHelper
  */
-dm.SearchViewer = function(clientApp, opt_domHelper) {
+dm.viewer.SearchViewer = function(clientApp, opt_domHelper) {
     this.clientApp = clientApp;
     this.databroker = clientApp.databroker;
     this.searchClient = this.databroker.searchClient;
@@ -33,15 +33,15 @@ dm.SearchViewer = function(clientApp, opt_domHelper) {
     this.addListenersToButton('#searchButton');
 };
 
-dm.SearchViewer.prototype.getElement = function() {
+dm.viewer.SearchViewer.prototype.getElement = function() {
     return this.element;
 };
 
-dm.SearchViewer.prototype.render = function(parent) {
+dm.viewer.SearchViewer.prototype.render = function(parent) {
     jQuery(parent).append(this.element);
 };
 
-dm.SearchViewer.prototype._buildModal = function() {
+dm.viewer.SearchViewer.prototype._buildModal = function() {
     jQuery(this.element).on('shown', function(event) {
         this.searchField.focus();
     }.bind(this));
@@ -67,7 +67,7 @@ dm.SearchViewer.prototype._buildModal = function() {
     this.element.appendChild(this.modalFooter);
 };
 
-dm.SearchViewer.prototype._buildModalHeader = function() {
+dm.viewer.SearchViewer.prototype._buildModalHeader = function() {
     var closeButton = this.domHelper.createDom('button', {'class': 'close'}, '×');
     $(closeButton).attr({
         'data-dismiss': 'modal',
@@ -101,7 +101,7 @@ dm.SearchViewer.prototype._buildModalHeader = function() {
     this.modalHeader.appendChild(this.searchField);
 };
 
-dm.SearchViewer.prototype._buildModalBody = function() {
+dm.viewer.SearchViewer.prototype._buildModalBody = function() {
     this.searchDetailsDiv = this.domHelper.createDom('div', {'class': 'sc-SearchViewer-search-details'});
     this.modalBody.appendChild(this.searchDetailsDiv);
 
@@ -112,29 +112,29 @@ dm.SearchViewer.prototype._buildModalBody = function() {
     this.modalBody.appendChild(this.messageDiv);
 };
 
-dm.SearchViewer.prototype.showModal = function() {
+dm.viewer.SearchViewer.prototype.showModal = function() {
     jQuery(this.element).modal('show');
 };
 
-dm.SearchViewer.prototype.hideModal = function() {
+dm.viewer.SearchViewer.prototype.hideModal = function() {
     jQuery(this.element).modal('hide');
 };
 
-dm.SearchViewer.prototype.toggleModal = function() {
+dm.viewer.SearchViewer.prototype.toggleModal = function() {
     jQuery(this.element).modal('toggle');
 };
 
-dm.SearchViewer.prototype.addListenersToButton = function(button) {
+dm.viewer.SearchViewer.prototype.addListenersToButton = function(button) {
     jQuery(button).on('click', function(event) {
         this.toggleModal();
     }.bind(this));
 };
 
-dm.SearchViewer.prototype._handleWorkingResourcesOpenRequest = function(event) {
+dm.viewer.SearchViewer.prototype._handleWorkingResourcesOpenRequest = function(event) {
     this.openViewerForResource(event.resource);
 };
 
-dm.SearchViewer.prototype.openViewerForResource = function(resource) {
+dm.viewer.SearchViewer.prototype.openViewerForResource = function(resource) {
     var resource = this.databroker.getResource(resource);
     var clone = this.viewerGrid.isOpen(resource.uri);
 
@@ -162,20 +162,20 @@ dm.SearchViewer.prototype.openViewerForResource = function(resource) {
     }
 };
 
-dm.SearchViewer.prototype._handleSearchFieldKeydown = function(event) {
+dm.viewer.SearchViewer.prototype._handleSearchFieldKeydown = function(event) {
     if (event.keyCode == goog.events.KeyCodes.ENTER || event.keyCode == goog.events.KeyCodes.MAC_ENTER) {
         this.query(this.searchField.value);
     }
 };
 
-dm.SearchViewer.prototype._handleProjectSelected = function(event) {
+dm.viewer.SearchViewer.prototype._handleProjectSelected = function(event) {
     this.searchField.value = "";
     this.hideMessage();
     this.clearResults();
     this.clearSearchDetails();
 };
 
-dm.SearchViewer.prototype.setSearchDetails = function(query, results, spellingSuggestion) {
+dm.viewer.SearchViewer.prototype.setSearchDetails = function(query, results, spellingSuggestion) {
     this.clearSearchDetails();
 
     jQuery(this.searchDetailsDiv).text('Showing ' + results.length + ' results for \u201c' + query + '\u201d');
@@ -192,11 +192,11 @@ dm.SearchViewer.prototype.setSearchDetails = function(query, results, spellingSu
     }
 };
 
-dm.SearchViewer.prototype.clearSearchDetails = function() {
+dm.viewer.SearchViewer.prototype.clearSearchDetails = function() {
     jQuery(this.searchDetailsDiv).empty();
 };
 
-dm.SearchViewer.prototype.query = function(query) {
+dm.viewer.SearchViewer.prototype.query = function(query) {
     if (query.length > 0) {
         this.searchClient.query(query, function(results, spellingSuggestion, queryReturned) {
             if (results.length > 0 || spellingSuggestion) {
@@ -221,7 +221,7 @@ dm.SearchViewer.prototype.query = function(query) {
     }
 };
 
-dm.SearchViewer.prototype.createSearchResultItem = function(result) {
+dm.viewer.SearchViewer.prototype.createSearchResultItem = function(result) {
     var uri = result.uri;
 
     var item = new dm.widgets.SearchResultItem(this.databroker, uri, this.domHelper);
@@ -232,7 +232,7 @@ dm.SearchViewer.prototype.createSearchResultItem = function(result) {
     return item;
 };
 
-dm.SearchViewer.prototype.setResults = function(results) {
+dm.viewer.SearchViewer.prototype.setResults = function(results) {
     this.clearResults();
 
     var wrItems = [];
@@ -246,11 +246,11 @@ dm.SearchViewer.prototype.setResults = function(results) {
     this.workingResources.addItems(wrItems);
 };
 
-dm.SearchViewer.prototype.clearResults = function() {
+dm.viewer.SearchViewer.prototype.clearResults = function() {
     this.workingResources.clear();
 };
 
-dm.SearchViewer.prototype.showMessage = function(message) {
+dm.viewer.SearchViewer.prototype.showMessage = function(message) {
     jQuery(this.messageDiv).text(message);
 
     // Calculate the height of the div without actually showing it
@@ -268,6 +268,6 @@ dm.SearchViewer.prototype.showMessage = function(message) {
     jQuery(this.messageDiv).fadeIn(400);
 };
 
-dm.SearchViewer.prototype.hideMessage = function() {
+dm.viewer.SearchViewer.prototype.hideMessage = function() {
     jQuery(this.messageDiv).hide();
 };

@@ -10,7 +10,7 @@ goog.require('goog.events.EventType');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.ui.Popup');
 
-goog.require('dm.ui.AnnoTitlesList');
+goog.require('dm.viewer.AnnoTitlesList');
 goog.require('dm.util.StyleUtil');
 goog.require('dm.Util');
 goog.require('dm.widgets.Toolbar');
@@ -501,7 +501,7 @@ function(menuButtons, resourceId, opt_position) {
 
     var contextMenu = new dm.widgets.Toolbar(menuDiv, menuButtons);
 
-    var annoTitlesList = new dm.ui.AnnoTitlesList(this.clientApp, this,
+    var annoTitlesList = new dm.viewer.AnnoTitlesList(this.clientApp, this,
                                                    resourceId, this.domHelper);
     annoTitlesList.render(menuDiv);
     this.annoTitlesList = annoTitlesList;

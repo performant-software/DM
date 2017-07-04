@@ -4,7 +4,6 @@ goog.require('goog.dom');
 goog.require('goog.dom.TagName');
 goog.require('goog.editor.Plugin');
 goog.require('dm.viewer.ResourceListViewer');
-goog.require('dm.ui.Bezel');
 goog.require('dm.events.ResourceClick');
 goog.require('goog.userAgent.product');
 
@@ -22,7 +21,7 @@ dm.viewer.TextEditorAnnotate = function(viewer) {
 
     this.clientApp = this.viewer.clientApp;
     this.databroker = this.clientApp.getDatabroker();
-	
+
 	this.lastStartNode = null;
 	this.lastEndNode = null;//debug hack
 };
@@ -53,10 +52,10 @@ dm.viewer.TextEditorAnnotate.prototype.isSupportedCommand = function(command) {
 };
 
 dm.viewer.TextEditorAnnotate.prototype.execCommand = function (command) {
-      
+
    var domHelper = this.fieldObject.getEditableDomHelper();
    var selectedAnnotation = domHelper.getElementByClass(dm.viewer.TextEditorAnnotate.ANNOTATION_CLASS_SELECTED);
-    
+
    // if we have one selected assume we need to delete it, otherwise we're adding new.
    this.getFieldObject().dispatchBeforeChange();
    var fireEvents = true;
@@ -66,7 +65,7 @@ dm.viewer.TextEditorAnnotate.prototype.execCommand = function (command) {
 	else {
 	   fireEvents = this.addAnnotation(this.fieldObject.getRange());
    }
-   
+
    if (fireEvents ) {
       this.getFieldObject().dispatchChange();
       this.getFieldObject().dispatchSelectionChangeEvent();
@@ -103,7 +102,7 @@ dm.viewer.TextEditorAnnotate.prototype.createHighlightResource = function(highli
    specificResource.addProperty('oa:hasSelector', highlight.bracketedUri);
 
    return highlight;
-}; 
+};
 
 
 dm.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highlightUri) {
@@ -131,7 +130,7 @@ dm.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highli
    if (deleted.length > 0) {
       this.databroker.syncService.annotsDeleted(deleted);
    }
-}; 
+};
 
 
 dm.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() {
@@ -150,23 +149,23 @@ dm.viewer.TextEditorAnnotate.prototype.updateAllHighlightResources = function() 
 
 
 /**
- * Add annotation wrapper to a selection 
+ * Add annotation wrapper to a selection
  * @param {string} range The range object for the selection
  */
 dm.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 	if (range == null || range.getText() == '') {
 		return false;
 	}
-	
+
 	var htmlFrag = range.getHtmlFragment().replace(/\s+/g, ' ');
 	var validHtml = normalizeFrag(range.getValidHtml());
-	
+
 	if ( htmlFrag != validHtml ) {
 	   $("#addAnnotation").removeClass("goog-toolbar-button-checked");
 		alert("You cannot make annotations across multiple styles of text.\n\nPlease normalize or remove styling and try again.");
 		return false;
 	}
-	
+
 	// find the caret position of the end of the current selection
 	// within the iframe editor body
 	var editorIframe = $("#" + this.fieldObject.id);
@@ -185,7 +184,7 @@ dm.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
 
    // Add the highlight markup
 	var highlightUri = this.databroker.createUuid();
-	var highlightResource = this.createHighlightResource(highlightUri, range);		
+	var highlightResource = this.createHighlightResource(highlightUri, range);
 	var span = this.createAnnoSpan(highlightUri);
 	range.surroundContents(span);
 
@@ -194,7 +193,7 @@ dm.viewer.TextEditorAnnotate.prototype.addAnnotation = function(range) {
    if ( fullLen == caretOffset || atNodeEnd ) {
       $(span).after("&nbsp;");
    }
-   
+
 	return true;
 };
 
@@ -233,7 +232,7 @@ dm.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 	var specificResourceUri = this.databroker.dataModel.findSelectorSpecificResourceUri(selector);
 
 	var self = this;
-	
+
 	// Check for click listeners so that they aren't fired multiple times
 	if(!goog.events.hasListener(object, goog.events.EventType.CLICK)) {
 		goog.events.listen(object, goog.events.EventType.CLICK, function(mouseEvent) {
@@ -242,20 +241,20 @@ dm.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 			return this.handleHighlightClick(object, mouseEvent);
 		}, false, this);
 	}
-    
+
     if (!goog.events.hasListener(object, goog.events.EventType.MOUSEOVER)) {
         goog.events.listen(object, goog.events.EventType.MOUSEOVER, function( mouseEvent ) {
             this.hoverAnnotationSpan(object);
             return false;
         }, false, this);
     }
-    
+
     if (!goog.events.hasListener(object, goog.events.EventType.MOUSEOUT)) {
         goog.events.listen(object, goog.events.EventType.MOUSEOUT, function( mouseEvent ) {
 			return this.unhoverAnnotationSpan(object);
         }, false, this);
     }
-    
+
     var createButtonGenerator = dm.widgets.MenuUtil.createDefaultDomGenerator;
 
     if (this.viewer.isEditable()) {
@@ -272,7 +271,7 @@ dm.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 		        },
 	            'Annotate this highlight'
 			),
-		  
+
 			new dm.widgets.MenuItem(
 				"createLink",
 				createButtonGenerator("atb-radialmenu-button atb-radialmenu-button-create-link"),
@@ -300,9 +299,9 @@ dm.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
     else {
     	var menuButtons = [];
     }
-    
+
     this.viewer.addHoverMenuListenersToElement(object, menuButtons, specificResourceUri);
-	
+
 	return true;
 };
 
@@ -419,7 +418,7 @@ dm.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
 
     var eventDispatcher = this.viewer.clientApp.getEventDispatcher();
     var event = new dm.events.ResourceClick(specificResourceUri, eventDispatcher, this.viewer);
-    
+
     eventDispatcher.dispatchEvent(event);
 };
 
@@ -428,7 +427,7 @@ dm.viewer.TextEditorAnnotate.prototype.handleHighlightClick = function (tag) {
  **/
 dm.viewer.TextEditorAnnotate.prototype.hoverAnnotationSpan = function(forSpan) {
    $(forSpan).addClass(dm.viewer.TextEditorAnnotate.ANNOTATION_CLASS_HOVER);
-}; 
+};
 
 /**
  * unhoverAnnotationSpan()
@@ -445,7 +444,7 @@ dm.viewer.TextEditorAnnotate.prototype.showErrorMessage = function(msg) {
 	this.viewer.showErrorMessage(msg);
 };
 
-/** 
+/**
  * Create a new text annotation on this highlight
  */
 dm.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
@@ -459,11 +458,11 @@ dm.viewer.TextEditorAnnotate.prototype.createNewAnnoBody = function(spanElem) {
 
    var annoBodyEditor = new dm.viewer.TextEditor(this.clientApp);
    this.viewer.openRelatedViewer(body.uri, annoBodyEditor);
-   
+
    var email = $.trim($("#logged-in-email").text());
    annoBodyEditor.lockStatus(body.uri,true,true, email, null);
    annoBodyEditor.lockResource(body.uri,null,null);
-   
+
    annoBodyEditor.loadResourceByUri(body.uri);
 };
 

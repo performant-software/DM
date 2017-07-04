@@ -15,11 +15,9 @@ goog.require('dm.data.QuadStore');
 goog.require('dm.data.Graph');
 goog.require('dm.data.DataModel');
 goog.require('dm.data.SyncService');
-goog.require('dm.data.RDFQueryParser');
 goog.require('dm.data.N3Parser');
 goog.require('dm.data.NamespaceManager');
 goog.require('dm.data.ProjectController');
-goog.require('dm.data.RDFQuerySerializer');
 goog.require('dm.data.SearchClient');
 goog.require('dm.data.Term');
 goog.require('dm.data.TurtleSerializer');
@@ -50,15 +48,9 @@ dm.data.Databroker = function(clientApp) {
     });
     this.syncService.databroker = this;
 
-    this.parsers = [dm.data.N3Parser, dm.data.RDFQueryParser];
+    this.parsers = [dm.data.N3Parser];
 
     this.serializersByType = {
-        'application/rdf+xml': dm.data.RDFQuerySerializer,
-        'application/xml': dm.data.RDFQuerySerializer,
-        'text/rdf+xml': dm.data.RDFQuerySerializer,
-        'text/xml': dm.data.RDFQuerySerializer,
-        'application/json': dm.data.RDFQuerySerializer,
-        'text/json': dm.data.RDFQuerySerializer,
         'text/turtle': dm.data.TurtleSerializer,
         'text/n3': dm.data.TurtleSerializer
     };

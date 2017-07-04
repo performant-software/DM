@@ -2,8 +2,6 @@ goog.provide('dm.viewer.CanvasViewer');
 
 goog.require('dm.viewer.Viewer');
 
-goog.require('dm.ui.InfoPane');
-
 goog.require('dm.canvas.CanvasViewer');
 goog.require('dm.canvas.FabricCanvasFactory');
 goog.require('dm.viewer.TextEditor');

@@ -1,4 +1,4 @@
-goog.provide('dm.ui.AnnoTitlesList');
+goog.provide('dm.viewer.AnnoTitlesList');
 
 goog.require('dm.resource.ResourceSummaryFactory');
 
@@ -13,7 +13,7 @@ goog.require('goog.structs.Set');
  * @param opt_uri {string} the id of the resource for which the list is being shown
  * @param opt_domHelper {goog.dom.DomHelper}
  */
-dm.ui.AnnoTitlesList = function (clientApp, viewer, opt_uri, opt_domHelper) {
+dm.viewer.AnnoTitlesList = function (clientApp, viewer, opt_uri, opt_domHelper) {
     this.clientApp = clientApp;
     this.viewer = viewer;
     this.databroker = this.clientApp.getDatabroker();
@@ -35,7 +35,7 @@ dm.ui.AnnoTitlesList = function (clientApp, viewer, opt_uri, opt_domHelper) {
     this.targetAnnoResourcesByUri = new dm.util.DefaultDict(function(){return [];});
 };
 
-dm.ui.AnnoTitlesList.prototype.decorate = function (div) {
+dm.viewer.AnnoTitlesList.prototype.decorate = function (div) {
     this.rootDiv = div;
     jQuery(this.rootDiv).addClass('atb-annoTitlesList');
 
@@ -72,7 +72,7 @@ dm.ui.AnnoTitlesList.prototype.decorate = function (div) {
     }
 };
 
-dm.ui.AnnoTitlesList.prototype.render = function (div) {
+dm.viewer.AnnoTitlesList.prototype.render = function (div) {
     var newDiv = this.domHelper.createDom('div');
     this.decorate(newDiv);
     div.appendChild(newDiv);
@@ -80,7 +80,7 @@ dm.ui.AnnoTitlesList.prototype.render = function (div) {
     return newDiv;
 };
 
-dm.ui.AnnoTitlesList.prototype.clear = function() {
+dm.viewer.AnnoTitlesList.prototype.clear = function() {
     this.uri = null;
 
     this.summariesByUri = new goog.structs.Map();
@@ -94,7 +94,7 @@ dm.ui.AnnoTitlesList.prototype.clear = function() {
     jQuery(this.targetTitlesDiv).empty();
 };
 
-dm.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
+dm.viewer.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     var uri = event.resource.uri;
     var summary = event.currentTarget;
     var resource = event.resource;
@@ -144,7 +144,7 @@ dm.ui.AnnoTitlesList.prototype.summaryClickHandler = function (event) {
     }
 };
 
-dm.ui.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
+dm.viewer.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
    var resource = event.resource;
    var uri = event.resource.uri;
    var summary = event.currentTarget;
@@ -182,7 +182,7 @@ dm.ui.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
 };
 
 
-dm.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv, relationType) {
+dm.viewer.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDiv, relationType) {
     for (var i = 0; i < uris.length; i++) {
         var uri = uris[i];
 
@@ -242,7 +242,7 @@ dm.ui.AnnoTitlesList.prototype._renderSummaries = function (uris, list, renderDi
     }
 };
 
-dm.ui.AnnoTitlesList.prototype.removeSummary = function(summary, list) {
+dm.viewer.AnnoTitlesList.prototype.removeSummary = function(summary, list) {
     jQuery(summary.getElement()).animate({
         left: '100%',
         opacity: 0.0,
@@ -254,7 +254,7 @@ dm.ui.AnnoTitlesList.prototype.removeSummary = function(summary, list) {
     goog.array.remove(list, summary);
 };
 
-dm.ui.AnnoTitlesList.prototype.loadForResource = function (uri) {
+dm.viewer.AnnoTitlesList.prototype.loadForResource = function (uri) {
     this.clear();
 
     if (uri instanceof dm.data.Resource) uri = uri.uri;

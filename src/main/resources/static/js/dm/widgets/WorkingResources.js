@@ -13,9 +13,7 @@ goog.require('goog.events.Event');
 
 goog.require('dm.util.StyleUtil');
 
-goog.require('dm.widgets.WorkingResourcesFolio');
 goog.require('dm.widgets.WorkingResourcesItem');
-goog.require('dm.widgets.WorkingResourcesManuscript');
 goog.require('dm.widgets.WorkingResourcesText');
 
 /**
@@ -133,14 +131,7 @@ dm.widgets.WorkingResources.prototype.createItem = function(uri) {
     var resource = this.databroker.getResource(uri);
     var item = null;
 
-    if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.manifestTypes)) {
-        item = new dm.widgets.WorkingResourcesManuscript(
-            this.databroker,
-            uri,
-            this.domHelper
-        );
-    }
-    else if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
+    if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
         item = new dm.widgets.WorkingResourcesItem(
             this.databroker,
             uri,
@@ -225,10 +216,7 @@ dm.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLoa
 
     this.updateItemAttrs(item);
 
-    if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.manifestTypes)) {
-        this.updateManuscript(item, opt_isFullyLoaded);
-    }
-    else if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
+    if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
         this.updateCanvas(item, opt_isFullyLoaded);
     }
     else if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.textTypes)) {
@@ -236,58 +224,6 @@ dm.widgets.WorkingResources.prototype.updateItem = function(item, opt_isFullyLoa
     }
 
     return item;
-};
-
-dm.widgets.WorkingResources.prototype.updateManuscript = function(item, opt_isFullyLoaded) {
-    var uri = item.getUri();
-
-    item.setTooltip('Show the folia in ' +
-                    item.getTitle() || 'this manuscript');
-
-    var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
-    if (sequenceUri) {
-        var sequence = this.databroker.getResource(sequenceUri);
-        var foliaUris = this.databroker.getListUrisInOrder(sequence.getOneProperty('sc:hasCanvases'));
-        if (foliaUris.length > 0) {
-            var thumbSrc = this.databroker.dataModel.findCanvasImageUris(foliaUris[0])[0];
-            if (thumbSrc) {
-                var image = this.databroker.getResource(thumbSrc);
-                var size = new goog.math.Size(
-                    image.getOneProperty('exif:width'),
-                    image.getOneProperty('exif:height')
-                ).scaleToFit(dm.widgets.WorkingResources.THUMB_SIZE);
-
-                var src = thumbSrc + '?w=' + Math.round(size.width) + '&h=' +
-                    Math.round(size.height);
-
-                item.setThumb(src, size.width, size.height);
-            }
-
-            for (var i = 0, len = foliaUris.length; i < len; i++) {
-                var folioUri = foliaUris[i];
-
-                if (! item.containsFolio(folioUri)) {
-                    var folioItem = new dm.widgets.WorkingResourcesFolio(
-                        this.databroker,
-                        folioUri,
-                        this.domHelper
-                    );
-                    this.addListenersToItem(folioItem);
-                    item.addFolio(folioItem);
-                }
-                else {
-                    var folioItem = item.getFolio(folioUri);
-                }
-
-                this.updateFolio(folioItem);
-                folioItem.manuscriptUrisInOrder = foliaUris;
-                folioItem.manuscriptIndex = i;
-            }
-        }
-        else if (opt_isFullyLoaded) {
-            item.showFoliaMessage('empty manuscript');
-        }
-    }
 };
 
 dm.widgets.WorkingResources.prototype.updateCanvas = function(item, opt_isFullyLoaded) {
@@ -345,35 +281,6 @@ dm.widgets.WorkingResources.prototype.refreshItem = function(item) {
     }
 
     var withResource = function(resource) {
-        if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.manifestTypes)) {
-            var onUpdate = function(sequence) {
-                this.updateItem(item);
-            }.bind(this);
-
-            var onLoaded = function(sequence) {
-                this.updateItem(item, true);
-            }.bind(this);
-
-            var aggregatedUris = this.databroker.dataModel.findManuscriptAggregationUris(uri);
-            for (var i=0; i<aggregatedUris.length; i++) {
-                this.databroker.getDeferredResource(aggregatedUris[i]).
-                    progress(onUpdate).done(onLoaded);
-            }
-
-            /*
-            var sequenceUri = this.databroker.dataModel.findManuscriptSequenceUris(uri)[0];
-            var imageAnnoUri = this.databroker.dataModel.findManuscriptImageAnnoUris(uri)[0];
-            if (sequenceUri) {
-                this.databroker.getDeferredResource(sequenceUri).
-                    progress(withSequence).done(withSequence);
-            }
-            if (imageAnnoUri) {
-                this.databroker.getDeferredResource(imageAnnoUri).
-                    progress(withSequence).done(withSequence);
-            }
-            */
-        }
-
         if (goog.isFunction(item.hideFoliaMessage)) {
             item.hideFoliaMessage();
         }
@@ -415,11 +322,9 @@ dm.widgets.WorkingResources.prototype.addListenersToItem = function(item) {
     goog.events.listen(item, 'action', this.handleItemAction, false, this);
     goog.events.listen(item, 'remove-click', this.handleItemRemove, false, this);
 
-    if (! resource.hasAnyType(dm.data.DataModel.VOCABULARY.manifestTypes)) {
-        goog.events.listen(item.getElement(), 'click', function(event) {
-            this.fireOpenRequest(item);
-        }, false, this);
-    }
+    goog.events.listen(item.getElement(), 'click', function(event) {
+        this.fireOpenRequest(item);
+    }, false, this);
 };
 
 dm.widgets.WorkingResources.prototype.addItem = function(item) {

@@ -11,9 +11,6 @@ goog.require('goog.ui.KeyboardShortcutHandler');
 goog.require('goog.ui.Popup');
 goog.require('goog.Uri');
 
-goog.require('dm.ProjectViewer');
-goog.require('dm.SearchViewer');
-
 goog.require('dm.data.Databroker');
 goog.require('dm.data.DataModel');
 goog.require('dm.data.Quad');
@@ -23,12 +20,13 @@ goog.require('dm.data.Term');
 goog.require('dm.events.LinkingModeEntered');
 goog.require('dm.events.LinkingModeExited');
 
+goog.require('dm.viewer.ProjectViewer');
+goog.require('dm.viewer.SearchViewer');
 goog.require('dm.viewer.TextEditor');
 goog.require('dm.viewer.CanvasViewer');
-goog.require('dm.viewer.AudioViewer');
 goog.require('dm.viewer.ViewerGrid');
 
-goog.require('dm.ui.Bezel');
+goog.require('dm.widgets.Bezel');
 
 goog.require("dm.util.StyleUtil"); //used for a giant hack
 goog.require("dm.util.ReferenceUtil");
@@ -41,8 +39,8 @@ dm.ClientApp = function (basePath, username) {
     this.viewerGrid = new dm.viewer.ViewerGrid();
 
     this.databroker = goog.global.databroker = new dm.data.Databroker(this);
-    this.projectViewer = goog.global.projectViewer = new dm.ProjectViewer(this);
-    this.searchViewer = goog.global.searchViewer = new dm.SearchViewer(this);
+    this.projectViewer = goog.global.projectViewer = new dm.viewer.ProjectViewer(this);
+    this.searchViewer = goog.global.searchViewer = new dm.viewer.SearchViewer(this);
 
     this.eventDispatcher = new goog.events.EventTarget();
 
@@ -102,40 +100,6 @@ dm.ClientApp.prototype.getAnnotationBody = function() {
 
 dm.ClientApp.prototype.setAnnotationBody = function(annotationBody) {
     this.annotationBody = annotationBody;
-};
-
-/**
- * @param popup {dm.ui.PopupWindow}
- */
-dm.ClientApp.prototype.registerPopup = function (popup) {
-    this.popupsByName[popup.getName()] = popup;
-};
-
-dm.ClientApp.prototype.unregisterPopup = function (popup) {
-    this.popupsByName[popup.getName()] = null;
-};
-
-dm.ClientApp.prototype.getPopupByName = function (name) {
-    return this.popupsByName[name];
-};
-
-dm.ClientApp.prototype.forEachPopup = function (fn, opt_scope) {
-    for (var name in this.popupsByName) {
-        var popup = this.popupsByName[name];
-
-        if (popup)
-            fn.call(opt_scope || window, popup);
-    }
-};
-
-dm.ClientApp.prototype.numOpenPopups = function () {
-    var num = 0;
-
-    this.forEachPopup(function (popup) {
-        num ++;
-    }, this);
-
-    return num;
 };
 
 dm.ClientApp.prototype.getUsername = function () {
@@ -226,7 +190,7 @@ dm.ClientApp.prototype.annoLinkCreationHandler_ = function (e) {
 
            var anno = this.databroker.dataModel.createAnno(bodyId, targetUri);
 
-           var bezel = new dm.ui.Bezel('atb-bezel-linked');
+           var bezel = new dm.widgets.Bezel('atb-bezel-linked');
            bezel.show();
 
            this.databroker.sync();
@@ -261,7 +225,7 @@ dm.ClientApp.prototype.undoLastAnnoLinkCreation = function () {
 
         }, this, null);
 
-        var bezel = new dm.ui.Bezel('atb-bezel-unlinked');
+        var bezel = new dm.widgets.Bezel('atb-bezel-unlinked');
         bezel.show();
     }
 
@@ -287,9 +251,6 @@ dm.ClientApp.prototype.createViewerForUri = function(uri) {
     }
     else if (resource.hasAnyType(dm.data.DataModel.VOCABULARY.canvasTypes)) {
         viewer = new dm.viewer.CanvasViewer(clientApp);
-    }
-    else if (resource.hasAnyType(['dctypes:Audio', 'dms:AudioSegment'])) {
-        viewer = new dm.viewer.AudioViewer(clientApp);
     }
     else if (resource.hasAnyType('oa:SpecificResource')) {
         var selector = resource.getOneResourceByProperty('oa:hasSelector');

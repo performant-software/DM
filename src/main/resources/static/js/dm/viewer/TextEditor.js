@@ -24,7 +24,6 @@ goog.require('goog.cssom.iframe.style');
 goog.require('goog.asserts');
 goog.require('goog.string');
 
-goog.require('dm.viewer.Finder');
 goog.require('dm.viewer.Viewer');
 
 //begin radial menus test includes:
@@ -49,7 +48,6 @@ goog.require('dm.widgets.GlassPane');
 goog.require('dm.widgets.ForegroundMenuDisplayer');
 
 goog.require('dm.events.ResourceClick');
-goog.require('dm.events.ResourceModified');
 
 /**
  * dm.viewer.TextEditor

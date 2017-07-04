@@ -1,5 +1,5 @@
-/* global $ */
-goog.provide('dm.ProjectViewer');
+/* global DM, $ */
+goog.provide('dm.viewer.ProjectViewer');
 
 goog.require('goog.dom.DomHelper');
 goog.require('goog.string');
@@ -23,7 +23,7 @@ var STATES = {
 
 var PERMISSIONS = ["read", "update", "administer"];
 
-dm.ProjectViewer = function(clientApp, opt_domHelper) {
+dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
     this.clientApp = clientApp;
     this.databroker = clientApp.databroker;
     this.projectController = this.databroker.projectController;
@@ -124,15 +124,18 @@ dm.ProjectViewer = function(clientApp, opt_domHelper) {
     );
 
     $.when($.getJSON("/store/users"), this.databroker.user.defer()).done(
-        function(users) {
+        function(users, user) {
+            DM.userLoggedIn(user.shift().getOneProperty("rdfs:label"));
+
             this.users = users.shift();
             this.projectController.autoSelectProject();
             this.updateProjects();
+
         }.bind(this)
     );
 };
 
-dm.ProjectViewer.prototype.updateCurrentProjectStatus = function(action, method) {
+dm.viewer.ProjectViewer.prototype.updateCurrentProjectStatus = function(action, method) {
     var project = this.projectController.currentProject;
     if (project) {
         $.ajax({
@@ -148,7 +151,7 @@ dm.ProjectViewer.prototype.updateCurrentProjectStatus = function(action, method)
     }
 }
 
-dm.ProjectViewer.prototype.togglePublicAccess = function(e) {
+dm.viewer.ProjectViewer.prototype.togglePublicAccess = function(e) {
     if ($("#public-access").is(':checked') ) {
         this.updateCurrentProjectStatus("share current project", "POST");
     } else if (confirm("Remove all public access to this project?")) {
@@ -156,7 +159,7 @@ dm.ProjectViewer.prototype.togglePublicAccess = function(e) {
     }
 };
 
-dm.ProjectViewer.prototype.cleanProject = function() {
+dm.viewer.ProjectViewer.prototype.cleanProject = function() {
     var project = this.projectController.currentProject;
     if (!project || $("#clean-project").hasClass("disabled") ) {
         return;
@@ -172,7 +175,7 @@ dm.ProjectViewer.prototype.cleanProject = function() {
     });
 };
 
-dm.ProjectViewer.prototype.deleteProject = function() {
+dm.viewer.ProjectViewer.prototype.deleteProject = function() {
     var project = this.projectController.currentProject;
     if (!project || $("#del-project").hasClass("disabled")) {
         return;
@@ -196,7 +199,7 @@ dm.ProjectViewer.prototype.deleteProject = function() {
     });
 };
 
-dm.ProjectViewer.prototype.createProject = function() {
+dm.viewer.ProjectViewer.prototype.createProject = function() {
     var title = $("#projectTitleInput").val();
     var description = $("#projectDescriptionInput").val();
     if (title == "") {
@@ -218,7 +221,7 @@ dm.ProjectViewer.prototype.createProject = function() {
 };
 
 
-dm.ProjectViewer.prototype.updateProjects = function() {
+dm.viewer.ProjectViewer.prototype.updateProjects = function() {
     var project = this.projectController.currentProject;
     $(".sc-ProjectViewer-projectButtonTitle").text(
         project
@@ -271,7 +274,7 @@ dm.ProjectViewer.prototype.updateProjects = function() {
     }
 };
 
-dm.ProjectViewer.prototype.showModal = function(state) {
+dm.viewer.ProjectViewer.prototype.showModal = function(state) {
     this.state = state || this.state;
 
     var project = this.projectController.currentProject;
@@ -394,21 +397,21 @@ dm.ProjectViewer.prototype.showModal = function(state) {
     $(".sc-ProjectViewer-modal").modal('show');
 };
 
-dm.ProjectViewer.prototype.newProject = function(e) {
+dm.viewer.ProjectViewer.prototype.newProject = function(e) {
     $(".sc-ProjectViewer-button .dropdown-toggle").dropdown("toggle");
     this.isGuest || this.showModal(STATES.create);
 };
 
-dm.ProjectViewer.prototype.projectView = function(e) {
+dm.viewer.ProjectViewer.prototype.projectView = function(e) {
     this.showModal(STATES.project);
 };
 
-dm.ProjectViewer.prototype.projectChosen = function(e) {
+dm.viewer.ProjectViewer.prototype.projectChosen = function(e) {
     $(".sc-ProjectViewer-button .dropdown-toggle").dropdown("toggle");
     this.switchToProject($(e.target).closest("li").attr("about"));
 };
 
-dm.ProjectViewer.prototype.switchToProject = function(project, force) {
+dm.viewer.ProjectViewer.prototype.switchToProject = function(project, force) {
     project = this.databroker.getResource(project);
     if (!force && project.equals(this.projectController.currentProject)) {
         return false;
@@ -431,7 +434,7 @@ dm.ProjectViewer.prototype.switchToProject = function(project, force) {
     return true;
 };
 
-dm.ProjectViewer.prototype.addUserOptions = function(query, results) {
+dm.viewer.ProjectViewer.prototype.addUserOptions = function(query, results) {
     var usersWithPermission = {};
     goog.structs.forEach(this.permissions, function(record) {
         usersWithPermission[record.uri] = true;
@@ -453,7 +456,7 @@ dm.ProjectViewer.prototype.addUserOptions = function(query, results) {
     }));
 };
 
-dm.ProjectViewer.prototype.readPermissions = function() {
+dm.viewer.ProjectViewer.prototype.readPermissions = function() {
     this.permissions = [];
 
     var user = this.databroker.user;
@@ -489,7 +492,7 @@ dm.ProjectViewer.prototype.readPermissions = function() {
     this.sortPermissions();
 };
 
-dm.ProjectViewer.prototype.addPermissions = function(user, permissions) {
+dm.viewer.ProjectViewer.prototype.addPermissions = function(user, permissions) {
     var label = user.getOneProperty("rdfs:label") || user.uri;
     this.permissions.push({
         uri: user.uri,
@@ -500,7 +503,7 @@ dm.ProjectViewer.prototype.addPermissions = function(user, permissions) {
     });
 };
 
-dm.ProjectViewer.prototype.sortPermissions = function() {
+dm.viewer.ProjectViewer.prototype.sortPermissions = function() {
     var user = this.databroker.user;
 
     this.permissions.sort(function(a, b) {
@@ -516,7 +519,7 @@ dm.ProjectViewer.prototype.sortPermissions = function() {
 
 };
 
-dm.ProjectViewer.prototype.userAdded = function(uri) {
+dm.viewer.ProjectViewer.prototype.userAdded = function(uri) {
     var selectize = $(".sc-ProjectViewer-permissions-table .add-user select")
             .get(0).selectize;
     selectize.clear(true);
@@ -534,7 +537,7 @@ dm.ProjectViewer.prototype.userAdded = function(uri) {
     }
 };
 
-dm.ProjectViewer.prototype.updatePermissions = function(e) {
+dm.viewer.ProjectViewer.prototype.updatePermissions = function(e) {
     var target = $(e.target);
     var tr = target.closest("tr");
     var uri = tr.attr("about");
@@ -575,7 +578,7 @@ dm.ProjectViewer.prototype.updatePermissions = function(e) {
     this.renderPermissions();
 };
 
-dm.ProjectViewer.prototype.renderPermissions = function(reset) {
+dm.viewer.ProjectViewer.prototype.renderPermissions = function(reset) {
     var permissionsTable = $(".sc-ProjectViewer-permissions-table tbody");
 
     if (reset) {
@@ -611,12 +614,12 @@ dm.ProjectViewer.prototype.renderPermissions = function(reset) {
     }, this);
 };
 
-dm.ProjectViewer.prototype.projectSelected = function(e) {
+dm.viewer.ProjectViewer.prototype.projectSelected = function(e) {
     this.readPermissions();
     this.switchToProject(e.project.uri, true);
 };
 
-dm.ProjectViewer.prototype.openViewerForResource = function(resource) {
+dm.viewer.ProjectViewer.prototype.openViewerForResource = function(resource) {
     var resource = this.databroker.getResource(resource);
 
     var clone = this.viewerGrid.isOpen(resource.uri);
@@ -644,11 +647,11 @@ dm.ProjectViewer.prototype.openViewerForResource = function(resource) {
 };
 
 
-dm.ProjectViewer.prototype.cancelEditedProject = function(e) {
+dm.viewer.ProjectViewer.prototype.cancelEditedProject = function(e) {
     this.showModal(STATES.project);
 };
 
-dm.ProjectViewer.prototype.saveEditedProject = function(event) {
+dm.viewer.ProjectViewer.prototype.saveEditedProject = function(event) {
     var project = this.projectController.currentProject;
     var permissions = this.permissions[0].permissions;
     if (!project || !permissions.administer) {
@@ -696,7 +699,7 @@ dm.ProjectViewer.prototype.saveEditedProject = function(event) {
     this.showModal(STATES.project);
 };
 
-dm.ProjectViewer.prototype.newText = function(e) {
+dm.viewer.ProjectViewer.prototype.newText = function(e) {
     if (this.isGuest) {
         return;
     }
@@ -711,25 +714,25 @@ dm.ProjectViewer.prototype.newText = function(e) {
     $(".sc-ProjectViewer-modal").modal('hide');
 };
 
-dm.ProjectViewer.prototype.newImage = function(e) {
+dm.viewer.ProjectViewer.prototype.newImage = function(e) {
     this.isGuest || this.showModal(STATES.imageUpload);
 };
 
-dm.ProjectViewer.prototype.projectEdit = function(event) {
+dm.viewer.ProjectViewer.prototype.projectEdit = function(event) {
     this.isGuest || this.showModal(STATES.edit);
 };
 
-dm.ProjectViewer.prototype.projectDownload = function(e) {
+dm.viewer.ProjectViewer.prototype.projectDownload = function(e) {
     var project = this.projectController.currentProject;
     var url = this.databroker.syncService.getProjectDownloadUrl(project.uri);
     window.open(url);
 };
 
-dm.ProjectViewer.prototype.cancelCanvasUpload = function(event) {
+dm.viewer.ProjectViewer.prototype.cancelCanvasUpload = function(event) {
     this.showModal(STATES.project);
 };
 
-dm.ProjectViewer.prototype.updateCanvasTitle = function(event) {
+dm.viewer.ProjectViewer.prototype.updateCanvasTitle = function(event) {
     var form = $(".sc-ProjectViewer-uploadCanvas");
     var titleInput = form.find("#canvasTitleInput");
     var fileInput = form.find("#canvasFileInput");
@@ -760,7 +763,7 @@ dm.ProjectViewer.prototype.updateCanvasTitle = function(event) {
 };
 
 
-dm.ProjectViewer.prototype.uploadCanvas = function(event) {
+dm.viewer.ProjectViewer.prototype.uploadCanvas = function(event) {
     var form = $(".sc-ProjectViewer-uploadCanvas");
 
     var progress = form.find(".progress");
