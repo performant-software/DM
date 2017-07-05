@@ -1,11 +1,13 @@
 goog.provide('dm.data.Resource');
 
-goog.require('goog.structs.Set');
-goog.require('dm.util.DefaultDict');
 goog.require('goog.array');
+goog.require('goog.structs.Set');
+
 goog.require('dm.data.Quad');
 goog.require('dm.data.TurtleSerializer');
 goog.require('dm.data.Term');
+
+goog.require('dm.util.DefaultDict');
 
 /**
  * A convenient wrapper around the databroker methods for querying information
@@ -294,7 +296,9 @@ dm.data.Resource.prototype.addProperty = function(predicate, object) {
  * Ensures that a property has only one value by deleting any values for that predicate and adding that one property.
  */
 dm.data.Resource.prototype.setProperty = function(predicate, object) {
-    return this.deleteProperty(predicate).addProperty(predicate, object);
+    return this.hasProperty(predicate, object)
+        ? this
+        : this.deleteProperty(predicate).addProperty(predicate, object);
 };
 
 dm.data.Resource.prototype.deleteProperty = function(predicate, opt_object) {

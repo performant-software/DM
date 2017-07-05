@@ -30,7 +30,7 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
     this.viewerGrid = clientApp.viewerGrid;
 
     this.state = STATES.project;
-    this.isGuest = (this.databroker.user.uri.split("/").pop() === "dm:guest");
+    this.isGuest = true;
 
     this.domHelper = opt_domHelper || new goog.dom.DomHelper();
 
@@ -109,7 +109,6 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
         this.updateCanvasTitle.bind(this)
     );
 
-    $("#clean-project").on("click", eventHandler(this.cleanProject.bind(this)));
     $("#del-project").on("click", eventHandler(this.deleteProject.bind(this)));
     $("#create-proj").on("click", eventHandler(this.createProject.bind(this)));
 
@@ -123,9 +122,11 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
         this.projectSelected, false, this
     );
 
-    $.when($.getJSON("/store/users"), this.databroker.user.defer()).done(
+    $.when($.getJSON("/store/users"), this.databroker.userDataLoad).done(
         function(users, user) {
-            DM.userLoggedIn(user.shift().getOneProperty("rdfs:label"));
+            user = user.shift();
+            this.isGuest = (user.uri.split("/").pop() === "dm:guest");
+            DM.userLoggedIn(user.getOneProperty("rdfs:label"));
 
             this.users = users.shift();
             this.projectController.autoSelectProject();
@@ -139,7 +140,7 @@ dm.viewer.ProjectViewer.prototype.updateCurrentProjectStatus = function(action, 
     var project = this.projectController.currentProject;
     if (project) {
         $.ajax({
-            url: this.databroker.syncService.restUrl(project.uri) + 'share',
+            url: this.databroker.projectShareUrl(project.uri),
             method: method,
             complete: (function(xhr, textStatus) {
                 if (textStatus !== "success") {
@@ -159,22 +160,6 @@ dm.viewer.ProjectViewer.prototype.togglePublicAccess = function(e) {
     }
 };
 
-dm.viewer.ProjectViewer.prototype.cleanProject = function() {
-    var project = this.projectController.currentProject;
-    if (!project || $("#clean-project").hasClass("disabled") ) {
-        return;
-    }
-    $("#clean-project").addClass("disabled");
-    $.ajax({
-        url: this.databroker.syncService.restUrl(project.uri) + 'cleanup',
-        method: "POST",
-        complete:  function(xhr, textStatus) {
-            alert(xhr.responseText);
-            $("#clean-project").removeClass("disabled");
-        }
-    });
-};
-
 dm.viewer.ProjectViewer.prototype.deleteProject = function() {
     var project = this.projectController.currentProject;
     if (!project || $("#del-project").hasClass("disabled")) {
@@ -186,17 +171,17 @@ dm.viewer.ProjectViewer.prototype.deleteProject = function() {
 
     $("#del-project").addClass("disabled");
     $.ajax({
-        url: this.databroker.syncService.restUrl(project.uri),
-        method: "DELETE",
-        complete: function(xhr, textStatus) {
+        url: this.databroker.projectUrl(project.uri),
+        method: "DELETE"
+    }).done(
+        function() { window.location.reload(); }
+    ).fail(
+        function() {
             $("#del-project").removeClass("disabled");
-            if (textStatus !="success") {
-                alert("Unable to delete project: "+ xhr.responseText);
-            } else {
-                window.location.reload();
-            }
+            console.error(arguments);
+            alert("Unable to delete project!");
         }
-    });
+    );
 };
 
 dm.viewer.ProjectViewer.prototype.createProject = function() {
@@ -308,10 +293,6 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
         "hidden disabled",
         !permissions.administer
     );
-    $("#clean-project").toggleClass(
-        "hidden disabled",
-        !permissions.administer
-    );
 
     var edit = $(".sc-ProjectViewer-projectEdit").toggleClass(
         "hidden",
@@ -358,7 +339,7 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
 
         edit.children().addClass("disabled");
         $.getJSON(
-            this.databroker.syncService.restUrl(project.uri) + 'share',
+            this.databroker.projectShareUrl(project.uri),
             (function(data, status) {
                 edit.children().removeClass("disabled");
                 $("#public-access").toggleClass(
@@ -386,8 +367,8 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
         $("#projectDescriptionInput").val("");
         break;
     case STATES.imageUpload:
-        canvas.find(".progress").hide();
-        progress.find(".bar").css("width", "0%");
+        canvas.find(".progress").hide()
+            .find(".bar").css("width", "0%");
 
         canvas.find("#canvasTitleInput").val("");
         canvas.find("#canvasFileInput").val("");
@@ -724,7 +705,7 @@ dm.viewer.ProjectViewer.prototype.projectEdit = function(event) {
 
 dm.viewer.ProjectViewer.prototype.projectDownload = function(e) {
     var project = this.projectController.currentProject;
-    var url = this.databroker.syncService.getProjectDownloadUrl(project.uri);
+    var url = this.databroker.projectDownloadUrl(project.uri);
     window.open(url);
 };
 
@@ -775,29 +756,30 @@ dm.viewer.ProjectViewer.prototype.uploadCanvas = function(event) {
     progress.slideDown(200).addClass('active');
     progressBar.css('width', '5%');
 
-    this.projectController.uploadCanvas(title, file,
-
-        (function() {
-            // Success
-            progress.removeClass("active");
-            progressBar.css('width', '100%');
-            this.showModal(STATES.project);
-        }).bind(this),
-
-        function(event) {
-            // Failure
-            alert('Image upload failed. The server returned a status code of ' +
-                  event.target.status + '.');
-        },
-
-        function(event) {
-            // Progress
-            if (event.lengthComputable) {
-                progressBar.css(
-                    'width',
-                    Math.max(5, event.loaded / event.total * 100) + '%'
-                );
+    this.databroker.uploadCanvas(title, file)
+        .done(
+            function() {
+                // Success
+                progress.removeClass("active");
+                progressBar.css('width', '100%');
+                this.showModal(STATES.project);
+            }.bind(this)
+        )
+        .fail(
+            function() {
+                // Failure
+                console.error(arguments);
+                alert('Image upload failed.');
             }
-        }
-    );
+        ).progress(
+            function(event) {
+                // Progress
+                if (event.lengthComputable) {
+                    progressBar.css(
+                        'width',
+                        Math.max(5, event.loaded / event.total * 100) + '%'
+                    );
+                }
+            }
+        );
 };

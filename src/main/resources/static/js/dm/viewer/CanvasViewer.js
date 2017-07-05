@@ -502,7 +502,7 @@ dm.viewer.CanvasViewer.prototype.deleteFeature = function(uri) {
    this.databroker.sync();
 
    if (deleted.length > 0) {
-      this.databroker.syncService.annotsDeleted(deleted);
+      this.databroker.annotsDeleted(deleted);
    }
 };
 

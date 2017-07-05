@@ -7,10 +7,10 @@ goog.require('dm.util.DefaultDict');
  * An indexed store of {dm.data.Quad} Quads (triples with a context),
  * which allows fast querying.
  *
- * @class 
- * 
+ * @class
+ *
  * @author tandres@drew.edu (Tim Andres)
- * 
+ *
  * @param {array.<dm.data.Quad>} [opt_quads] Quads to add to the store.
  */
 dm.data.QuadStore = function(opt_quads) {
@@ -31,7 +31,7 @@ dm.data.QuadStore = function(opt_quads) {
  * (null or undefined is treated as a wildcard)
  *
  * IMPORTANT: Modifying this set modifies the index.
- * 
+ *
  * @param  {string|null|undefined} subject    The subject to search for, or null as a wildcard.
  * @param  {string|null|undefined} predicate  The predicate to search for, or null as a wildcard.
  * @param  {string|null|undefined} object     The object to search for, or null as a wildcard.
@@ -440,10 +440,12 @@ dm.data.QuadStore.prototype.clone = function(opt_shallow) {
  * @return {dm.data.QuadStore} this.
  */
 dm.data.QuadStore.prototype.clear = function() {
+    var quads = this.getQuads();
+
     this.quads.clear();
     this.indexedQuads.clear();
 
-    return this;
+    return quads;
 };
 
 /**

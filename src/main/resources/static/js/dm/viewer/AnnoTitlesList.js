@@ -158,7 +158,7 @@ dm.viewer.AnnoTitlesList.prototype.deleteClickHandler = function(event) {
       deleted.push(delUri);
    }
    if (deleted.length > 0) {
-      this.databroker.syncService.annotsDeleted(deleted);
+      this.databroker.annotsDeleted(deleted);
    }
 
    if (summary.relationType == 'body') {

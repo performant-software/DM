@@ -1,3 +1,5 @@
+/* global jQuery */
+
 goog.provide('dm.data.Databroker');
 
 goog.require('goog.Uri');
@@ -8,14 +10,14 @@ goog.require('goog.structs.Set');
 goog.require('goog.events.Event');
 goog.require('goog.events.EventTarget');
 
+goog.require("n3.parser");
+
 goog.require('dm.data.Resource');
 goog.require('dm.data.Quad');
 goog.require('dm.data.BNode');
 goog.require('dm.data.QuadStore');
 goog.require('dm.data.Graph');
 goog.require('dm.data.DataModel');
-goog.require('dm.data.SyncService');
-goog.require('dm.data.N3Parser');
 goog.require('dm.data.NamespaceManager');
 goog.require('dm.data.ProjectController');
 goog.require('dm.data.SearchClient');
@@ -32,59 +34,33 @@ goog.require('dm.util.DeferredCollection');
  *
  * @author tandres@drew.edu (Tim Andres)
  */
-dm.data.Databroker = function(clientApp) {
+dm.data.Databroker = function(basePath, username) {
     goog.events.EventTarget.call(this);
 
-    this.clientApp = clientApp;
-
-    this.namespaces = new dm.data.NamespaceManager();
-    this.quadStore = new dm.data.QuadStore();
-
-    this.basePath = this.clientApp.basePath;
-    this.baseUri = [window.location.protocol, "//", window.location.host, this.basePath ].join("");
-    this.syncService = new dm.data.SyncService({
-        'dmBaseUri': [ this.baseUri, "store"].join("/"),
-        'restBasePath' : [this.basePath, "store"].join("/")
-    });
-    this.syncService.databroker = this;
-
-    this.parsers = [dm.data.N3Parser];
-
-    this.serializersByType = {
-        'text/turtle': dm.data.TurtleSerializer,
-        'text/n3': dm.data.TurtleSerializer
-    };
-
-    this.receivedUrls = new goog.structs.Set();
-    this.failedUrls = new goog.structs.Set();
+    this.baseUri = [
+        window.location.protocol, "//",
+        window.location.host, basePath
+    ].join("");
 
     this._bNodeCounter = 0;
+    this.namespaces = new dm.data.NamespaceManager();
 
+    this.quadStore = new dm.data.QuadStore();
     this.newQuadStore = new dm.data.QuadStore();
     this.deletedQuadsStore = new dm.data.QuadStore();
 
-    this.newResourceUris = new goog.structs.Set();
-    this.deletedResourceUris = new goog.structs.Set();
-
-    this.hasSyncErrors = false;
 
     this.dataModel = new dm.data.DataModel(this);
     this.projectController = new dm.data.ProjectController(this);
     this.searchClient = new dm.data.SearchClient(this);
 
-    this.user = this.getResource(this.syncService.restUri(null, dm.data.SyncService.RESTYPE.user, clientApp.username, null));
-    var userUrl = this.syncService.restUrl(null, dm.data.SyncService.RESTYPE.user, clientApp.username, null);
-
-    this.quadStore.addQuad(new dm.data.Quad(
-        this.user.bracketedUri,
-        this.namespaces.expand('ore', 'isDescribedBy'),
-        dm.data.Term.wrapUri(userUrl)
-    ));
+    this.user = undefined;
+    this.userDataLoad = this.getDeferredResource(
+        this.userUrl(username)
+    ).done(function(user) { this.user = user; }.bind(this));
 };
 
 goog.inherits(dm.data.Databroker, goog.events.EventTarget);
-
-dm.data.Databroker.SYNC_INTERVAL = 60 * 1000;
 
 /**
  * @return {dm.data.NamespaceManager} The namespace utility object associated with the data store.
@@ -100,133 +76,96 @@ dm.data.Databroker.prototype.getQuadStore = function() {
     return this.quadStore;
 };
 
-/**
- * Fetches an rdf formatted file, and calls the handler with the jQuery.rdfquery object
- * @param {string} url
- * @param {function(jQuery.rdfquery, Object, string)} [handler]
- */
-dm.data.Databroker.prototype.fetchRdf = function(url, handler) {
-    var deferred = jQuery.Deferred();
+dm.data.Databroker.prototype.readRdf = function(data) {
+    var quads = [];
 
-    jQuery.ajax({
-        type: 'GET',
-        url: url,
-        headers: {
-            'Accept': [
-                'text/turtle',
-                'text/n3',
-                'text/xml',
-                'application/xml',
-                'application/rdf+xml',
-                'text/rdf+xml',
-                'text/json',
-                'application/json'
-            ].join(', ')
-        },
-        success: function (data, textStatus, jqXhr) {
-            this.receivedUrls.add(url);
-            if (data) {
-                this.processResponse(data, url, jqXhr, function () {
-                    (handler || jQuery.noop).apply(this, arguments);
-                    deferred.resolveWith(this, arguments);
-                });
-            }
-            else {
-                // Received a successful response with no data, such as a 204
-            }
-        }.bind(this),
-        error: function (jqXhr, textStatus, errorThrown) {
-            this.failedUrls.add(url);
+    var result = jQuery.Deferred();
 
-            deferred.rejectWith(this, arguments);
-        }.bind(this)
-    });
-
-    return deferred;
-};
-
-dm.data.Databroker.prototype.getNextBNode = function() {
-    var node = new dm.data.BNode(this._bNodeCounter);
-    this._bNodeCounter ++;
-    return node;
-};
-
-/**
- * Returns a quad with Blank Nodes guaranteed to be unique in the main quad store.
- * @param  {dm.data.Quad} quad             The quad to make unique
- * @param  {goog.structs.Map} bNodeMapping A reference to a mapping of old BNodes to new BNodes
- *                                         for the current batch of quads (usually one file)
- * @return {dm.data.Quad}                  A guaranteed BNode safe quad.
- */
-dm.data.Databroker.prototype.getBNodeHandledQuad = function(quad, bNodeMapping) {
-    var modifiedQuad = quad.clone();
-
-    goog.structs.forEach(['subject', 'predicate', 'object', 'context'], function(prop) {
-        if (dm.data.Term.isBNode(quad[prop])) {
-            if (bNodeMapping.containsKey(quad[prop])) {
-                modifiedQuad[prop] = bNodeMapping.get(quad[prop]);
-            }
-            else {
-                var newBNode = this.getNextBNode();
-                modifiedQuad[prop] = newBNode;
-                bNodeMapping.set(quad[prop], newBNode);
-            }
-        }
-    }, this);
-
-    return modifiedQuad;
-};
-
-dm.data.Databroker.prototype.processResponse = function(data, url, jqXhr, handler) {
-    var responseHeaders = jqXhr.getAllResponseHeaders();
-    var type = dm.data.Parser.parseContentType(responseHeaders);
-    this.processRdfData(data, url, type, function(data) {
-        var event = new goog.events.Event("read", this);
-        event.url = url;
-        event.data = data;
-        this.dispatchEvent(event);
-
-        handler(data);
-    }.bind(this));
-};
-
-dm.data.Databroker.prototype.processRdfData = function(data, url, format, handler) {
-    var bNodeMapping = new goog.structs.Map();
-
-    this.parseRdf(data, url, format, function(quadBatch, done, error) {
-        for (var i = 0, len = quadBatch.length; i < len; i++) {
-            var bNodeHandledQuad = this.getBNodeHandledQuad(quadBatch[i], bNodeMapping);
-            if (!this.deletedQuadsStore.containsQuad(bNodeHandledQuad)) {
-                this.quadStore.addQuad(bNodeHandledQuad);
-            }
-        }
-
-        if (done) {
-            handler(data);
-        }
-        if (error) {
-            console.error(error);
-        }
-    }.bind(this));
-};
-
-dm.data.Databroker.prototype.parseRdf = function(data, url, format, handler) {
-    var success = false;
-    for (var i = 0, len = this.parsers.length; i < len; i++) {
-        var parser = new this.parsers[i](this);
-
-        try {
-            parser.parse(data, null, handler);
-            success = true;
-            break;
-        }
-        catch (e) {
-            console.warn('Parser', parser, 'failed on data', data, 'with error', e);
-        }
+    if (!data) {
+        // Received a successful response with no data, such as a 204
+        return result.resolveWith(this, [quads]);
     }
 
-    if (!success) {
-        console.error('RDF could not be parsed', data);
+    try {
+        var bNodeMapping = new goog.structs.Map();
+        (new N3Parser()).parse(data, function(error, triple) {
+            if (error) {
+                result.rejectWith(this, [error]);
+                return;
+            }
+
+            if (triple) {
+                var quad = new dm.data.Quad(
+                    this.wrapTerm(triple.subject),
+                    this.wrapTerm(triple.predicate),
+                    this.wrapTerm(triple.object)
+                );
+
+                var mappedQuad = quad.clone();
+                goog.structs.forEach(
+                    ['subject', 'predicate', 'object', 'context'],
+                    function(prop) {
+                        if (!dm.data.Term.isBNode(quad[prop])) {
+                            return;
+                        }
+                        if (bNodeMapping.containsKey(quad[prop])) {
+                            mappedQuad[prop] = bNodeMapping.get(quad[prop]);
+                        } else {
+                            bNodeMapping.set(
+                                quad[prop],
+                                mappedQuad[prop] = new dm.data.BNode(
+                                    this._bNodeCounter++
+                                )
+                            );
+                        }
+                    },
+                    this
+                );
+
+                quads.push(mappedQuad);
+
+                if (!this.deletedQuadsStore.containsQuad(mappedQuad)) {
+                    this.quadStore.addQuad(mappedQuad);
+                }
+                return;
+            }
+
+            result.resolveWith(this, [quads]);
+        }.bind(this));
+    }
+    catch (error) {
+        return jQuery.Deferred().rejectWith(this, [error]);
+    }
+
+    return result;
+};
+
+dm.data.Databroker.prototype.fetchRdf = function(url) {
+    var request = jQuery.ajax({
+        type: 'GET',
+        url: url,
+        headers: { 'Accept': 'text/turtle, text/n3' }
+    });
+
+    request = request.then(this.readRdf.bind(this));
+
+    request = request.fail(function() {
+        return jQuery.Deferred().rejectWith(this, [arguments]);
+    }.bind(this));
+
+    return request;
+};
+
+dm.data.Databroker.prototype.wrapTerm = function(str) {
+    /*
+     * Not using dm.data.Term utilities here since we can make more efficient
+     * assumptions with this parser
+     */
+    if (str[0] != '"'  && str.substring(0, 2) != '_:') {
+        return ['<', str.replace(/>/g, '\\>'), '>'].join('');
+    }
+    else {
+        return str;
     }
 };
 
@@ -243,6 +182,7 @@ dm.data.Databroker.prototype.addNewQuad = function(quad) {
     this.quadStore.addQuad(quad);
     if (isActuallyNew) {
         this.newQuadStore.addQuad(quad);
+        this.deletedQuadsStore.removeQuad(quad);
     }
 
     return this;
@@ -257,6 +197,7 @@ dm.data.Databroker.prototype.addNewQuads = function(quads) {
 dm.data.Databroker.prototype.deleteQuad = function(quad) {
     this.quadStore.removeQuad(quad);
     this.deletedQuadsStore.addQuad(quad);
+    this.newQuadStore.removeQuad(quad);
 
     return this;
 };
@@ -268,11 +209,6 @@ dm.data.Databroker.prototype.deleteQuads = function(quads) {
 
 dm.data.Databroker.prototype.dumpQuadStore = function(opt_outputType) {
     return this.dumpQuads(this.quadStore.getQuads(), opt_outputType);
-};
-
-dm.data.Databroker.prototype.serializeQuads = function(quads, opt_format, handler) {
-    var format = opt_format || 'application/rdf+xml';
-    (new this.serializersByType[format](this)).serialize(quads, format, handler);
 };
 
 /**
@@ -324,7 +260,7 @@ dm.data.Databroker.prototype.getUrlsToRequestForResources = function(uris, opt_f
             urlGuesses = this.guessResourceUrls(uri);
             for (var j = 0, lenj = urlGuesses.length; j < lenj; j++) {
                 var url = decodeURIComponent(urlGuesses[j]);
-                if ((!opt_forceReload || !urlsToRequest.contains(url)) && !this.failedUrls.contains(url)) {
+                if (!opt_forceReload || !urlsToRequest.contains(url)) {
                     urlsToRequest.add(url);
                 }
             }
@@ -371,8 +307,15 @@ dm.data.Databroker.prototype.getDeferredResource = function(uri) {
     urlsToRequest.getValues().forEach(function(url) {
         deferredFetches.push(url);
         this.fetchRdf(url)
-            .fail(function() { failedFetches.push(url); checkCompletion(); })
-            .done(function() { successfulFetches.push(url); checkCompletion(); });
+            .fail(function(url) {
+                console.error(arguments);
+                failedFetches.push(url);
+                checkCompletion();
+            })
+            .done(function() {
+                successfulFetches.push(url);
+                checkCompletion();
+            });
     }, this);
 
     successfulFetches.push("");
@@ -455,8 +398,6 @@ dm.data.Databroker.prototype.createResource = function(uri, type) {
     if (type) {
         resource.addProperty('rdf:type', type);
     }
-
-    this.newResourceUris.add(resource.bracketedUri);
 
     return resource;
 };
@@ -575,9 +516,9 @@ dm.data.Databroker.prototype.guessResourceUrls = function(uri) {
         }
         else {
             return [
-                uri,
-                uri + '.xml',
-                uri + '.rdf'//,
+                uri//,
+                //uri + '.xml',
+                //uri + '.rdf',
                 //uri + '.n3',
                 //uri + '.ttl'
             ];
@@ -598,16 +539,7 @@ dm.data.Databroker.prototype.guessResourceUrls = function(uri) {
     for (var i = 0, len = guesses.length; i < len; i++) {
         var guess = guesses[i];
 
-        if (this.receivedUrls.contains(guess)) {
-            return [guess];
-        }
-    }
-
-    for (var i = 0, len = guesses.length; i < len; i++) {
-        var guess = guesses[i];
-
-        if (! this.failedUrls.contains(guess) &&
-            dm.data.Term.isUri(guess)) {
+        if (dm.data.Term.isUri(guess)) {
             filteredGuesses.push(guess);
         }
     }
@@ -711,11 +643,32 @@ dm.data.Databroker.prototype.createUuid = function() {
 };
 
 dm.data.Databroker.prototype.sync = function() {
-    return this.syncService.requestSync();
-};
+    var updated = this.newQuadStore.clear();
+    var removed = this.deletedQuadsStore.clear();
 
-dm.data.Databroker.prototype.syncNew = function() {
-    return this.syncService.requestSyncNew();
+    if (updated.length == 0 && removed.length == 0) {
+        return jQuery.Deferred().resolveWith(this, [updated, removed]);
+    }
+
+    var projectUri = this.projectController.currentProject.uri;
+    var request = jQuery.ajax({
+        type: "PUT",
+        url: [this.projectUrl(projectUri), "synchronize"].join("/"),
+        data: {
+            update: new dm.data.TurtleSerializer(this).serialize(updated),
+            remove: new dm.data.TurtleSerializer(this).serialize(removed)
+        }
+    });
+
+    request = request.then(function(response) {
+        return jQuery.Deferred().resolveWith(this, [updated, removed]);
+    });
+
+    request = request.fail(function(response) {
+        console.error(arguments);
+    });
+
+    return request;
 };
 
 dm.data.Databroker.prototype.compareUrisByTitle = function(a, b) {
@@ -724,6 +677,38 @@ dm.data.Databroker.prototype.compareUrisByTitle = function(a, b) {
 
 dm.data.Databroker.prototype.sortUrisByTitle = function(uris) {
     goog.array.sort(uris, this.compareUrisByTitle.bind(this));
+};
+
+dm.data.Databroker.prototype.uploadCanvas = function(title, file) {
+    var projectUri = this.projectController.currentProject.uri;
+
+    var result = jQuery.Deferred();
+    var notify = function() { result.notifyWith(this, arguments); }.bind(this);
+    var resolve = function() { result.resolveWith(this, arguments); }.bind(this);
+    var reject = function() { result.rejectWith(this, arguments); }.bind(this);
+
+    var data = new FormData();
+    data.append('title', title);
+    data.append('image_file', file);
+
+    var xhr = new XMLHttpRequest();
+    xhr.addEventListener('load', function(event) {
+        var xhr = event.target;
+        if (goog.string.startsWith(String(xhr.status), '2')) {
+            this.readRdf(xhr.responseText).done(resolve).fail(reject);
+        } else {
+            reject.apply(arguments);
+        }
+    }.bind(this));
+
+    xhr.addEventListener('progress', notify);
+    xhr.addEventListener('error', reject);
+    xhr.addEventListener('abort', reject);
+
+    xhr.open('POST', this.canvasUploadUrl(projectUri));
+    xhr.send(data);
+
+    return result;
 };
 
 dm.data.Databroker.getUri = function(obj) {
@@ -739,4 +724,56 @@ dm.data.Databroker.getUri = function(obj) {
     else if (obj instanceof dm.data.Uri) {
         return obj.unwrapped();
     }
+};
+
+dm.data.Databroker.prototype.annotsDeleted = function(deleted) {
+    var projectUri = this.projectController.currentProject.uri;
+    return $.ajax({
+        url : this.projectLinkRemovalCallback(projectUri),
+        method : "POST",
+        data: { uuids: deleted.join() }
+    });
+};
+
+
+dm.data.Databroker.prototype.projectUrl = function(projectUri) {
+    return [this.baseUri, "store", "projects", projectUri].join("/");
+};
+
+dm.data.Databroker.prototype.projectShareUrl = function(projectUri) {
+    return [this.projectUrl(projectUri), "share"].join("/");
+};
+
+dm.data.Databroker.prototype.projectDownloadUrl = function(projectUri) {
+    return [this.projectUrl(projectUri), "download"].join("/");
+};
+
+dm.data.Databroker.prototype.projectContentRemovalUrl = function(projectUri) {
+    return [this.projectUrl(projectUri), "remove_triples"].join("/");
+};
+
+dm.data.Databroker.prototype.projectLinkRemovalUrl = function(projectUri) {
+    return [this.projectUrl(projectUri), "removed"].join("/");
+};
+
+dm.data.Databroker.prototype.userUrl = function(user) {
+    return [this.baseUri, "store", "users", user].join("/");
+};
+
+dm.data.Databroker.prototype.canvasUploadUrl = function(projectUri) {
+    return [this.projectUrl(projectUri), "canvases", "create"].join("/");
+};
+
+dm.data.Databroker.prototype.searchUrl = function(projectUri, query, limit) {
+    return [
+        [this.projectUrl(projectUri), "search"].join("/"),
+        jQuery.param({ q: query, limit: limit || 2000 })
+    ].join("?");
+};
+
+dm.data.Databroker.prototype.searchAutoCompleteUrl = function(projectUri, prefix) {
+    return [
+        [this.projectUrl(projectUri), "search_autocomplete"].join("/"),
+        jQuery.param({ q: prefix })
+    ].join("?");
 };

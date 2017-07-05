@@ -14,7 +14,6 @@ goog.require('goog.Uri');
 goog.require('dm.data.Databroker');
 goog.require('dm.data.DataModel');
 goog.require('dm.data.Quad');
-goog.require('dm.data.SyncService');
 goog.require('dm.data.Term');
 
 goog.require('dm.events.LinkingModeEntered');
@@ -38,7 +37,10 @@ dm.ClientApp = function (basePath, username) {
     this.domHelper = new goog.dom.DomHelper();
     this.viewerGrid = new dm.viewer.ViewerGrid();
 
-    this.databroker = goog.global.databroker = new dm.data.Databroker(this);
+    this.databroker = goog.global.databroker = new dm.data.Databroker(
+        basePath, username
+    );
+
     this.projectViewer = goog.global.projectViewer = new dm.viewer.ProjectViewer(this);
     this.searchViewer = goog.global.searchViewer = new dm.viewer.SearchViewer(this);
 

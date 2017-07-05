@@ -178,8 +178,8 @@ dm.data.ProjectController.prototype.linkedProject = function() {
         .shift();
 }
 
-dm.data.ProjectController.prototype.autoSelectProject = function(user) {
-    user = this.databroker.getResource(user || this.databroker.user);
+dm.data.ProjectController.prototype.autoSelectProject = function() {
+    var user = this.databroker.user;
 
     var linkedProject = this.linkedProject();
     if (linkedProject) {
@@ -234,41 +234,4 @@ dm.data.ProjectController.prototype.createProject = function(uri) {
     this.grantAllPermissionsToUser(this.databroker.user, project);
 
     return project;
-};
-
-dm.data.ProjectController.prototype.getCanvasUploadUrl = function() {
-    return this.databroker.syncService.restUrl(this.currentProject.uri, dm.data.SyncService.RESTYPE.canvas) + 'create';
-};
-
-dm.data.ProjectController.prototype.uploadCanvas = function(title, file, opt_successHandler, opt_errorHandler, opt_progressHandler) {
-    var data = new FormData();
-    data.append('title', title);
-    data.append('image_file', file);
-
-    var url = this.getCanvasUploadUrl();
-
-    var xhr = new XMLHttpRequest();
-    xhr.addEventListener('load', function(event) {
-        var xhr = event.target;
-        if (goog.string.startsWith(String(xhr.status), '2')) {
-            this.databroker.processResponse(event.target.response, url, xhr, opt_successHandler || jQuery.noop);
-        }
-        else {
-            if (goog.isFunction(opt_errorHandler)) {
-                opt_errorHandler(event);
-            }
-        }
-    }.bind(this));
-    if (goog.isFunction(opt_progressHandler)) {
-        xhr.addEventListener('progress', opt_progressHandler);
-    }
-    if (goog.isFunction(opt_errorHandler)) {
-        xhr.addEventListener('error', opt_errorHandler);
-        xhr.addEventListener('abort', opt_errorHandler);
-    }
-
-    xhr.open('POST', url);
-
-    xhr.send(data);
-    return xhr;
 };

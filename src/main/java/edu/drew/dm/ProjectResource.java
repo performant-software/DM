@@ -27,6 +27,7 @@ import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
@@ -47,6 +49,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -54,6 +57,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
+import static edu.drew.dm.data.SemanticDatabase.merge;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static java.time.temporal.ChronoUnit.MINUTES;
 
@@ -109,6 +113,28 @@ public class ProjectResource {
     @PUT
     public Model update(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
         return db.merge(model);
+    }
+
+    @Path("/{uri}/synchronize")
+    @PUT
+    @Consumes("application/x-www-form-urlencoded")
+    @Produces("application/json")
+    public JsonNode synchronize(
+            @PathParam("uri") String uri,
+            @FormParam("update") String update,
+            @FormParam("remove") String remove) {
+        long start = System.currentTimeMillis();
+        final Model updateModel = Models.create().read(new StringReader(update), "", "TTL");
+        final Model removalModel = Models.create().read(new StringReader(remove), "", "TTL");
+
+        db.write(target -> {
+            merge(target, updateModel);
+            target.remove(removalModel);
+            return null;
+        });
+
+        return objectMapper.createObjectNode()
+                .put("timeMs", System.currentTimeMillis() - start);
     }
 
     @Path("/{uri}")

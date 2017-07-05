@@ -1,39 +1,21 @@
 goog.provide('dm.data.TurtleSerializer');
 
-goog.require('dm.data.Serializer');
 goog.require('dm.data.QuadStore');
 
 dm.data.TurtleSerializer = function(databroker) {
-    dm.data.Serializer.call(this, databroker);
-
+    this.databroker = databroker;
     this.compact = true;
     this.indentString = '  ';
 };
-goog.inherits(dm.data.TurtleSerializer, dm.data.Serializer);
 
-dm.data.TurtleSerializer.prototype.serializableTypes = new goog.structs.Set([
-    'text/turtle',
-    'text/n3'
-]);
+dm.data.TurtleSerializer.prototype.serialize = function(quads) {
+    var lines = [];
 
+    lines.push(this.getPrefixesString(this.databroker.namespaces));
+    lines.push(this.getTriplesString(quads));
 
-dm.data.TurtleSerializer.prototype.serialize = function(quads, opt_format, handler) {
-   var format = opt_format || 'text/turtle';
-
-   var lines = [];
-
-   lines.push(this.getPrefixesString(this.databroker.namespaces));
-   lines.push(this.getTriplesString(quads));
-
-   if (this.compact) {
-      var data = lines.join('\n');
-   } else {
-      var data = lines.join('\n\n');
-   }
-
-   handler(data, null, format);
-}; 
-
+    return this.linesToStr(lines);
+};
 
 dm.data.TurtleSerializer.prototype.getTriplesString = function(quads) {
     var quadStore = new dm.data.QuadStore(quads);
@@ -66,12 +48,7 @@ dm.data.TurtleSerializer.prototype.getTriplesString = function(quads) {
         lines.push([subject, predicateEntries.join(' ;'), ' .'].join(''));
     }, this);
 
-    if (this.compact) {
-        return lines.join('\n');
-    }
-    else {
-        return lines.join('\n\n');
-    }
+    return this.linesToStr(lines);
 };
 
 dm.data.TurtleSerializer.prototype.getPrefixesString = function(namespaces) {
@@ -127,4 +104,8 @@ dm.data.TurtleSerializer.prototype.getIndent = function(level) {
     }
 
     return arr.join('');
+};
+
+dm.data.TurtleSerializer.prototype.linesToStr = function(lines) {
+    return lines.join(this.compact ? "\n" : "\n\n");
 };

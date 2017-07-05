@@ -121,7 +121,7 @@ dm.viewer.TextEditor.prototype.setHtml = function (htmlString) {
  * @param stylesheetURI {!string} the URI of the stylesheet *relative to the html document*
  **/
 dm.viewer.TextEditor.prototype.addStylesheetToEditor = function (stylesheetURI) {
-   var le = $("<link></link");
+   var le = $("<link></link>");
    le.attr('rel', 'stylesheet');
    le.attr('href', stylesheetURI);
    var doc = $(this.editorIframeElement).contents();
@@ -360,11 +360,9 @@ dm.viewer.TextEditor.prototype.initStatusChecker = function() {
       } else if (self.loadError === true) {
          status = "Load failed!";
       } else {
-         if (!self.unsavedChanges && !self.databroker.syncService.hasUnsavedChanges() && !self.databroker.hasSyncErrors) {
+         if (!self.unsavedChanges) {
            status = "Saved";
-         } else if (self.databroker.hasSyncErrors) {
-           status = "Not Saved - Sync Errors!";
-         } else if (self.unsavedChanges || self.databroker.syncService.hasUnsavedChanges()) {
+         } else if (self.unsavedChanges) {
            status = "Saving...";
          }
       }

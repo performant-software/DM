@@ -14,17 +14,15 @@ dm.data.SearchClient = function(databroker) {
  * @param {Function?} opt_errorCallback A function to call in case of a network error.
  */
 dm.data.SearchClient.prototype.query = function(query, callback, opt_errorCallback) {
+    var projectUri = this.databroker.projectController.currentProject.uri;
     jQuery.ajax({
-        'url': this.getSearchUrl(query),
+        'url': this.databroker.searchUrl(projectUri, query),
         'type': 'GET',
         'success': function(data, textStatus, jqXHR) {
             for (var i=0, len=data.results.length; i<len; i++) {
                 var result = data.results[i];
                 this.buildRdfForResult(result);
             }
-            // this.databroker.processRdfData(data['n3'], 'n3', function() {
-            //    callback(data['results'], data['spelling_suggestion']);
-            // });
             callback(data['results'], data['spelling_suggestion'], query);
         }.bind(this),
         'error': function(jqXHR, textStatus, errorThrown) {
@@ -33,12 +31,6 @@ dm.data.SearchClient.prototype.query = function(query, callback, opt_errorCallba
             }
         }
     });
-};
-
-dm.data.SearchClient.prototype.getSearchUrl = function(query) {
-    var projectUri = this.databroker.projectController.currentProject.uri;
-
-    return this.databroker.syncService.restUrl(projectUri, dm.data.SyncService.RESTYPE.search, null, {'q': query});
 };
 
 dm.data.SearchClient.prototype.buildRdfForResult = function(result) {
@@ -58,15 +50,10 @@ dm.data.SearchClient.prototype.buildRdfForResult = function(result) {
     ]);
 };
 
-dm.data.SearchClient.prototype.getAutocompleteUrl = function(query) {
-    var projectUri = this.databroker.projectController.currentProject.uri;
-
-    return this.databroker.syncService.restUrl(projectUri, dm.data.SyncService.RESTYPE.search_autocomplete, null, {'q': query});
-};
-
 dm.data.SearchClient.prototype.autocomplete = function(query, callback) {
+    var projectUri = this.databroker.projectController.currentProject.uri;
     jQuery.ajax({
-        'url': this.getAutocompleteUrl(query),
+        'url': this.databroker.searchAutoCompleteUrl(projectUri, query),
         'type': 'GET',
         'success': function(data, textStatus, jqXHR) {
             callback(data);

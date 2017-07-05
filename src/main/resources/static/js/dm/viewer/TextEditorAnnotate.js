@@ -128,7 +128,7 @@ dm.viewer.TextEditorAnnotate.prototype.deleteHighlightResource = function(highli
    this.viewer.saveContents();
 
    if (deleted.length > 0) {
-      this.databroker.syncService.annotsDeleted(deleted);
+      this.databroker.annotsDeleted(deleted);
    }
 };
 
