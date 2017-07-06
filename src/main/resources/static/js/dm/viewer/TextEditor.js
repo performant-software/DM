@@ -674,38 +674,34 @@ dm.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
             this.uri = resource.getUri();
             this.setDisplayTitle(this.databroker.dataModel.getTitle(resource));
 
-            this.databroker.dataModel.textContents(resource, function(contents, error) {
-                if (contents || this.databroker.dataModel.getTitle(resource)) {
+            var contents = this.databroker.dataModel.getTextContent(resource);
 
-                  if (contents != null) {
-                     contents = contents.replace(/a href=/g, "a target='_blank' href=").replace(/atb-editor-textannotation-nohighlight|atb-editor-textannotation-selected/g, "");
-                  }
-                	this.setHtml(contents);
-                    var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
-                    textEditorAnnotate.addListenersToAllHighlights();
-                    $("#save-status-"+this.useID).text("Loaded");
+            contents = contents
+                .replace(/a href=/g, "a target='_blank' href=")
+                .replace(/atb-editor-textannotation-nohighlight/g, "")
+                .replace(/atb-editor-textannotation-selected/g, "");
 
-										var loadStatus =  $("#load-status-" + this.useID);
-										loadStatus.text("Loaded");
-										loadStatus.fadeOut(500, function() {
-                       loadStatus.remove();
-                    });
+            this.setHtml(contents);
 
-                    if (opt_doAfter) {
-                       opt_doAfter();
-                    }
+            this.field.getPluginByClassId('Annotation')
+                .addListenersToAllHighlights();
 
-                    if ( contents == null) {
-                       this.loadingContent = false;
-                    }
-                    this.field.clearDelayedChange();
+            $("#save-status-" + this.useID).text("Loaded");
 
-                }
-                else {
-                   this.loadError = true;
-                   console.error(error);
-                }
-            }.bind(this));
+            var loadStatus =  $("#load-status-" + this.useID);
+
+            loadStatus.text("Loaded");
+            loadStatus.fadeOut(500, function() {
+                loadStatus.remove();
+            });
+
+            if (opt_doAfter) {
+                opt_doAfter();
+            }
+
+            this.loadingContent = false;
+            this.field.clearDelayedChange();
+
         }.bind(this));
 
         this.resource = resource;

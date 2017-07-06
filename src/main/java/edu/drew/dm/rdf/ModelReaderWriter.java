@@ -11,6 +11,8 @@ import org.apache.jena.rdf.model.Model;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import javax.ws.rs.NotFoundException;
@@ -46,7 +48,7 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
         if (mediaType.isCompatible(MediaType.valueOf("text/plain"))) {
             lang = "N-TRIPLE";
         }
-        return internalize(Models.create().read(new IO.NonClosingInputStream(entityStream), "", lang));
+        return read(new IO.NonClosingInputStream(entityStream), lang);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
             lang = "N-TRIPLE";
         }
 
-        externalize(model, ui).write(new IO.NonClosingOutputStream(entityStream), lang);
+        write(model, ui, new IO.NonClosingOutputStream(entityStream), lang);
     }
 
     @Override
@@ -91,6 +93,22 @@ public class ModelReaderWriter implements MessageBodyReader<Model>, MessageBodyW
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return Model.class.isAssignableFrom(type);
+    }
+
+    public static Model read(InputStream in, String lang) {
+        return internalize(Models.create().read(in, "", lang));
+    }
+
+    public static Model read(Reader in, String lang) {
+        return internalize(Models.create().read(in, "", lang));
+    }
+
+    public static void write(Model model, UriInfo ui, OutputStream out, String lang) {
+        externalize(model, ui).write(out, lang);
+    }
+
+    public static void write(Model model, UriInfo ui, Writer out, String lang) {
+        externalize(model, ui).write(out, lang);
     }
 
     public static Model internalize(Model model) {

@@ -10,6 +10,7 @@ import edu.drew.dm.data.ProjectBundle;
 import edu.drew.dm.data.TextIndexSuggestion;
 import edu.drew.dm.data.TextSearch;
 import edu.drew.dm.data.SemanticDatabase;
+import edu.drew.dm.rdf.ModelReaderWriter;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenAnnotation;
 import edu.drew.dm.rdf.OpenArchivesTerms;
@@ -25,6 +26,7 @@ import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
+import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -67,6 +69,8 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 @Path("/store/projects")
 public class ProjectResource {
 
+    private static final Logger LOG = Configuration.logger(ProjectResource.class);
+
     private final SemanticDatabase db;
     private final Index index;
     private final Images images;
@@ -105,7 +109,7 @@ public class ProjectResource {
 
     @POST
     public Model create(Model model) {
-        Configuration.logger(getClass()).info(() -> Models.n3(model));
+        LOG.info(() -> Models.n3(model));
         throw Server.NOT_IMPLEMENTED;
     }
 
@@ -124,8 +128,11 @@ public class ProjectResource {
             @FormParam("update") String update,
             @FormParam("remove") String remove) {
         long start = System.currentTimeMillis();
-        final Model updateModel = Models.create().read(new StringReader(update), "", "TTL");
-        final Model removalModel = Models.create().read(new StringReader(remove), "", "TTL");
+        final Model updateModel = ModelReaderWriter.read(new StringReader(update), "TTL");
+        final Model removalModel = ModelReaderWriter.read(new StringReader(remove), "TTL");
+
+        LOG.fine(() -> Models.n3(updateModel));
+        LOG.fine(() -> Models.n3(removalModel));
 
         db.write(target -> {
             merge(target, updateModel);

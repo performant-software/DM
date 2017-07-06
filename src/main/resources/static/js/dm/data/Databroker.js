@@ -62,24 +62,9 @@ dm.data.Databroker = function(basePath, username) {
 
 goog.inherits(dm.data.Databroker, goog.events.EventTarget);
 
-/**
- * @return {dm.data.NamespaceManager} The namespace utility object associated with the data store.
- */
-dm.data.Databroker.prototype.getNamespaceManager = function() {
-    return this.namespaces;
-};
-
-/**
- * @return {dm.data.QuadStore} The quad store which holds all rdf data.
- */
-dm.data.Databroker.prototype.getQuadStore = function() {
-    return this.quadStore;
-};
-
 dm.data.Databroker.prototype.readRdf = function(data) {
-    var quads = [];
-
     var result = jQuery.Deferred();
+    var quads = [];
 
     if (!data) {
         // Received a successful response with no data, such as a 204
@@ -134,7 +119,7 @@ dm.data.Databroker.prototype.readRdf = function(data) {
         }.bind(this));
     }
     catch (error) {
-        return jQuery.Deferred().rejectWith(this, [error]);
+        result.rejectWith(this, [error]);
     }
 
     return result;
@@ -157,16 +142,28 @@ dm.data.Databroker.prototype.fetchRdf = function(url) {
 };
 
 dm.data.Databroker.prototype.wrapTerm = function(str) {
-    /*
-     * Not using dm.data.Term utilities here since we can make more efficient
-     * assumptions with this parser
-     */
-    if (str[0] != '"'  && str.substring(0, 2) != '_:') {
-        return ['<', str.replace(/>/g, '\\>'), '>'].join('');
-    }
-    else {
+    if (str.substring(0, 2) == '_:') {
+        // BNode
         return str;
     }
+    if (str[0] != '"') {
+        // URI
+        return ['<', str.replace(/>/g, '\\>'), '>'].join('');
+    }
+
+
+    var literalEnd = str.indexOf('"^^');
+    if (literalEnd < 0) {
+        literalEnd = str.length - 1;
+    }
+
+    str = [
+        '"',
+        dm.data.Term._escapeLiteral(str.substring(1, literalEnd)),
+        str.substring(literalEnd)
+    ].join("");
+
+    return str;
 };
 
 /**
@@ -205,10 +202,6 @@ dm.data.Databroker.prototype.deleteQuad = function(quad) {
 dm.data.Databroker.prototype.deleteQuads = function(quads) {
     goog.structs.forEach(quads, this.deleteQuad, this);
     return this;
-};
-
-dm.data.Databroker.prototype.dumpQuadStore = function(opt_outputType) {
-    return this.dumpQuads(this.quadStore.getQuads(), opt_outputType);
 };
 
 /**
@@ -369,7 +362,10 @@ dm.data.Databroker.prototype.getDeferredResourceCollection = function(uris) {
 };
 
 dm.data.Databroker.prototype.getResource = function(uri) {
-    goog.asserts.assert(uri != null, 'uri passed to dm.data.Databroker#getResource is null or undefined');
+    goog.asserts.assert(
+        uri != null,
+        'uri passed to dm.data.Databroker#getResource is null or undefined'
+    );
 
     var graph = new dm.data.Graph(this.quadStore, null);
 

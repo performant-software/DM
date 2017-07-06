@@ -116,17 +116,17 @@ dm.data.Term.wrapUri = function(str) {
 };
 
 dm.data.Term._escapeLiteral = function(str) {
-    if (str == null) {
-        return ''
-    }
-    else {
-        return str.replace(/("|\\)/g, '\\$1').replace(/(\t)/g, '\\t');
-    }
+    return (str || "")
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\t/g, '\\t');
 };
 
 dm.data.Term._unescapeLiteral = function(str) {
-    // return str.replace(/(?:\\(")|\\(\\)|\\(>)|\\(\^))/g, '$1').replace(/(\\t)/g, '\t')
-    return str.replace(/(?:\\(")|\\(>)|\\(\^))/g, '$1').replace(/(\\t)/g, '\t').replace(/\\\\/g, '\\');
+    return (str || "")
+        .replace(/\\\\/g, '\\')
+        .replace(/\\"/g, '"')
+        .replace(/\\t/g, '\t');
 };
 
 dm.data.Term.wrapLiteral = function(str) {
@@ -148,7 +148,7 @@ dm.data.Term.isWrappedLiteral = function(str) {
     else if (str instanceof dm.data.Term) {
         return false;
     }
-    else if ((str.charAt(0) == '"') && (str.charAt(str.length - 1) == '"') && (str.charAt(str.length - 2) != '\\')) {
+    else if ((str.charAt(0) == '"') && (str.charAt(str.length - 1) == '"')) {
         return true;
     } else if (dm.data.Term.quotesAndDatatypeRegex.test(str)) {
         return true;

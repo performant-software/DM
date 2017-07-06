@@ -558,68 +558,43 @@ dm.data.DataModel.prototype.findSpecificResourcesInResource = function(resource,
 };
 
 dm.data.DataModel.prototype.createText = function(opt_title, opt_content) {
-    var text = this.databroker.createResource();
-    text.addProperty('rdf:type', 'dctypes:Text');
-    text.addProperty('rdf:type', 'cnt:ContentAsText');
-    text.addProperty('dc:format', '"text/html"');
+    var text = this.databroker.createResource()
+            .addProperty('rdf:type', 'dctypes:Text')
+            .addProperty('rdf:type', 'cnt:ContentAsText')
+            .addProperty('dc:format', new dm.data.Literal("text/html"));
 
     if (opt_title) {
         this.setTitle(text, opt_title);
     }
 
-    if (opt_content) {
-        this.setTextContent(text, opt_content);
-    }
-    else {
-        text.addProperty('cnt:chars', '""');
-    }
+    this.setTextContent(text, opt_content || "");
 
     return text;
 };
 
-dm.data.DataModel.prototype.textContents = function(text, handler, opt_forceReload) {
-    window.setTimeout(function() {
-        text = this.databroker.getResource(text);
-
-        var content = text.getOneProperty('cnt:chars');
-        if (content) {
-            handler(content);
-        }
-        else {
-            text.defer().done(function() {
-                var content = text.getOneProperty('cnt:chars');
-                if (content) {
-                    handler(content);
-                }
-                else {
-                    var error = new Error();
-                    error.message = "No text content for " + text;
-                    handler(null, error);
-                }
-            }.bind(this));
-        }
-    }.bind(this), 1);
+dm.data.DataModel.prototype.getTextContent = function(text) {
+    return this.databroker.getResource(text)
+        .getOneProperty("cnt:chars");
 };
 
 dm.data.DataModel.prototype.setTextContent = function(text, content) {
-    text = this.databroker.getResource(text);
-
-    text.setProperty('cnt:chars', new dm.data.Literal(content));
+    this.databroker.getResource(text)
+        .setProperty("cnt:chars", new dm.data.Literal(content));
 };
 
 dm.data.DataModel.prototype.getTitle = function(resource) {
     resource = this.databroker.getResource(resource);
 
-    return resource.getOneProperty('dc:title') || resource.getOneProperty('rdfs:label') || '';
+    return resource.getOneProperty('dc:title') ||
+        resource.getOneProperty('rdfs:label') || '';
 };
 
 dm.data.DataModel.prototype.setTitle = function(resource, title) {
     resource = this.databroker.getResource(resource);
+    title = new dm.data.Literal(title);
 
-    var wrappedTitle = new dm.data.Literal(title);
-
-    resource.setProperty('dc:title', wrappedTitle);
-    resource.setProperty('rdfs:label', wrappedTitle);
+    resource.setProperty('dc:title', title);
+    resource.setProperty('rdfs:label', title);
 };
 
 dm.data.DataModel.prototype.removeResourceFromProject = function(project, resource) {
