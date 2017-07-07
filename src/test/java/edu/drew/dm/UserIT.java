@@ -9,8 +9,10 @@ import org.apache.jena.vocabulary.RDF;
 import org.junit.Test;
 
 import static edu.drew.dm.user.UserDataMigration.ensureRealm;
+import static edu.drew.dm.user.UserDataMigration.mergeAccounts;
 import static edu.drew.dm.user.UserDataMigration.migrateNamingSchema;
 import static edu.drew.dm.user.UserDataMigration.normalizeEmailAddresses;
+import static edu.drew.dm.user.UserDataMigration.removeGuestsLastOpenedProject;
 
 public class UserIT extends BaseIT {
 
@@ -19,12 +21,13 @@ public class UserIT extends BaseIT {
         ensureRealm(db);
         migrateNamingSchema(db);
         normalizeEmailAddresses(db);
+        removeGuestsLastOpenedProject(db);
+        mergeAccounts(db);
 
         final User gremid = new User(
                 User.uri("performant", "gregor.middell@pagina.gmbh"),
                 "Gregor Middell",
-                "gregor.middell@pagina.gmbh",
-                "gregor@middell.net"
+                "gregor.middell@pagina.gmbh"
         );
 
         gremid.updateIn(db);

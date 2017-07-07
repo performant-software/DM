@@ -2,7 +2,6 @@ package edu.drew.dm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import edu.drew.dm.data.FileSystem;
 import edu.drew.dm.data.FlattenImageDirectory;
 import edu.drew.dm.data.Images;
@@ -91,6 +90,9 @@ public class Server {
         UserDataMigration.ensureRealm(db);
         UserDataMigration.migrateNamingSchema(db);
         UserDataMigration.normalizeEmailAddresses(db);
+        UserDataMigration.removeGuestsLastOpenedProject(db);
+        UserDataMigration.mergeAccounts(db);
+
 
         User.GUEST.updateIn(db);
 
