@@ -1,4 +1,4 @@
-/* global jQuery */
+/* global jQuery, DM */
 
 goog.provide('dm.data.Databroker');
 
@@ -661,10 +661,22 @@ dm.data.Databroker.prototype.sync = function() {
     });
 
     request = request.then(function(response) {
+        DM.dataSynchronized({
+            success: true,
+            date: (new Date()).toISOString(),
+            updated: updated,
+            removed: removed
+        });
         return jQuery.Deferred().resolveWith(this, [updated, removed]);
     });
 
     request = request.fail(function(response) {
+        DM.dataSynchronized({
+            success: false,
+            date: (new Date()).toISOString(),
+            updated: updated,
+            removed: removed
+        });
         console.error(arguments);
     });
 

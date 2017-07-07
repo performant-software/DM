@@ -7,7 +7,8 @@ const actions = createActions(
     "USER_LOGGED_IN",
     "PROJECT_SELECTED",
     "RESOURCES_CHANGED",
-    "RESOURCE_SELECTED"
+    "RESOURCE_SELECTED",
+    "DATA_SYNCHRONIZED"
 );
 
 const reducer = handleActions({
@@ -31,13 +32,21 @@ const reducer = handleActions({
     [actions.resourceSelected]: (state, action) => ({
         ...state,
         resourceSelected: action.payload
+    }),
+
+    [actions.dataSynchronized]: (state, action) => ({
+        ...state,
+        transactions: state.transactions.concat([
+            action.payload
+        ]).slice(-10)
     })
 
 }, {
     user: undefined,
     project: undefined,
     resources: [],
-    resourceSelected: undefined
+    resourceSelected: undefined,
+    transactions: []
 });
 
 const store = createStore(reducer, applyMiddleware(logger));
