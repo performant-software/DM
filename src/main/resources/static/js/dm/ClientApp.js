@@ -33,14 +33,12 @@ goog.require("dm.util.ReferenceUtil");
 dm.ClientApp = function (basePath, username) {
     this.basePath = basePath;
     this.username = username;
+    this.isGuest = (username == "dm:guest");
 
     this.domHelper = new goog.dom.DomHelper();
     this.viewerGrid = new dm.viewer.ViewerGrid();
 
-    this.databroker = goog.global.databroker = new dm.data.Databroker(
-        basePath, username
-    );
-
+    this.databroker = goog.global.databroker = new dm.data.Databroker(this);
     this.projectViewer = goog.global.projectViewer = new dm.viewer.ProjectViewer(this);
     this.searchViewer = goog.global.searchViewer = new dm.viewer.SearchViewer(this);
 

@@ -30,7 +30,7 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
     this.viewerGrid = clientApp.viewerGrid;
 
     this.state = STATES.project;
-    this.isGuest = true;
+    this.isGuest = clientApp.isGuest;
 
     this.domHelper = opt_domHelper || new goog.dom.DomHelper();
 
@@ -125,7 +125,6 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
     $.when($.getJSON("/store/users"), this.databroker.userDataLoad).done(
         function(users, user) {
             user = user.shift();
-            this.isGuest = (user.uri.split("/").pop() === "dm:guest");
             DM.userLoggedIn(user.getOneProperty("rdfs:label"));
 
             this.users = users.shift();

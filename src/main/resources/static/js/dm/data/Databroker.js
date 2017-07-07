@@ -34,12 +34,13 @@ goog.require('dm.util.DeferredCollection');
  *
  * @author tandres@drew.edu (Tim Andres)
  */
-dm.data.Databroker = function(basePath, username) {
+dm.data.Databroker = function(clientApp) {
     goog.events.EventTarget.call(this);
 
+    this.clientApp = clientApp;
     this.baseUri = [
         window.location.protocol, "//",
-        window.location.host, basePath
+        window.location.host, clientApp.basePath
     ].join("");
 
     this._bNodeCounter = 0;
@@ -56,7 +57,7 @@ dm.data.Databroker = function(basePath, username) {
 
     this.user = undefined;
     this.userDataLoad = this.getDeferredResource(
-        this.userUrl(username)
+        this.userUrl(clientApp.username)
     ).done(function(user) { this.user = user; }.bind(this));
 };
 

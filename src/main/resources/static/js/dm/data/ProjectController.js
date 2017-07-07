@@ -155,8 +155,15 @@ dm.data.ProjectController.prototype.selectProject = function(project) {
     if (!project.equals(this.currentProject)) {
         this.currentProject = project;
 
-        if (!this.databroker.user.getOneUnescapedProperty('dm:lastOpenProject') != this.currentProject.bracketedUri) {
-            this.databroker.user.setProperty('dm:lastOpenProject', this.currentProject.bracketedUri);
+        if (!this.databroker.user.getOneUnescapedProperty('dm:lastOpenProject') !=
+            this.currentProject.bracketedUri) {
+
+            if (!this.databroker.clientApp.isGuest) {
+                this.databroker.user.setProperty(
+                    'dm:lastOpenProject',
+                    this.currentProject.bracketedUri
+                );
+            }
         }
 
         this.history.setToken(dm.data.ProjectController.projectShortcut(this.currentProject.uri));
