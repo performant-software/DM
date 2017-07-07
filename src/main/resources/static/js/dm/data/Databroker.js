@@ -748,10 +748,6 @@ dm.data.Databroker.prototype.projectDownloadUrl = function(projectUri) {
     return [this.projectUrl(projectUri), "download"].join("/");
 };
 
-dm.data.Databroker.prototype.projectContentRemovalUrl = function(projectUri) {
-    return [this.projectUrl(projectUri), "remove_triples"].join("/");
-};
-
 dm.data.Databroker.prototype.projectLinkRemovalUrl = function(projectUri) {
     return [this.projectUrl(projectUri), "removed"].join("/");
 };

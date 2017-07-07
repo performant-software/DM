@@ -27,7 +27,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
@@ -53,18 +52,6 @@ public class CanvasResource {
     @GET
     public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) {
         return store.read((source, target) -> Annotations.SCOPE.copy(source.createResource(uri), target));
-    }
-
-    @Path("/{uri}")
-    @POST
-    public Model create(@PathParam("projectUri") String project, @PathParam("uri") String canvas, Model model) {
-        return store.merge(model);
-    }
-
-    @Path("/{uri}")
-    @PUT
-    public Model update(@PathParam("projectUri") String project, @PathParam("uri") String canvas, Model model) {
-        return store.merge(model);
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")

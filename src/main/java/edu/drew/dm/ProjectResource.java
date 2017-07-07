@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.drew.dm.data.Images;
 import edu.drew.dm.data.Index;
 import edu.drew.dm.data.ProjectBundle;
+import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.data.TextIndexSuggestion;
 import edu.drew.dm.data.TextSearch;
-import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.rdf.ModelReaderWriter;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenAnnotation;
@@ -26,7 +26,6 @@ import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
-import sun.rmi.runtime.Log;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -51,7 +50,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -291,12 +289,6 @@ public class ProjectResource {
     public Model cleanupLinks(@FormParam("uuids") String uuids) {
         Logger.getLogger(ProjectResource.class.getName()).fine(() -> uuids);
         throw Server.NOT_IMPLEMENTED;
-    }
-
-    @Path("/{uri}/remove_triples")
-    @PUT
-    public Model deleteContents(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
-        return db.remove(model);
     }
 
     public static Model externalize(Model model, UriInfo ui) {

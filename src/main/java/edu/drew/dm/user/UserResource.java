@@ -11,7 +11,6 @@ import edu.drew.dm.rdf.Perm;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.RDF;
@@ -23,7 +22,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -105,19 +103,6 @@ public class UserResource implements SemanticDatabase.TransactionLogListener {
                     });
         });
     }
-
-    @Path("/{user}")
-    @PUT
-    public Model update(@PathParam("user") String user, Model model, @Context  UriInfo ui) throws ParseException {
-        return store.merge(model);
-    }
-
-    @Path("/{uri}/remove_triples")
-    @PUT
-    public Model remove(@PathParam("uri") String uri, Model model, @Context UriInfo ui) {
-        return store.remove(model);
-    }
-
 
     public static Model externalize(Model model, UriInfo ui) {
         model.listSubjectsWithProperty(RDF.type, FOAF.Agent).forEachRemaining(agent -> {
