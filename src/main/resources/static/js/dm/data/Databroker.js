@@ -729,7 +729,7 @@ dm.data.Databroker.getUri = function(obj) {
 dm.data.Databroker.prototype.annotsDeleted = function(deleted) {
     var projectUri = this.projectController.currentProject.uri;
     return $.ajax({
-        url : this.projectLinkRemovalCallback(projectUri),
+        url : this.projectLinkRemovalUrl(projectUri),
         method : "POST",
         data: { uuids: deleted.join() }
     });

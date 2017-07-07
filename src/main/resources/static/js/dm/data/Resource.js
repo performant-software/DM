@@ -335,8 +335,6 @@ dm.data.Resource.prototype.delete = function() {
         );
     }, this);
 
-    this.databroker.deletedResourceUris.add(this.uri);
-
     return this;
 };
 

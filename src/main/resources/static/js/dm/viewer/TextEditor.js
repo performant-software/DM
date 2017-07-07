@@ -698,12 +698,12 @@ dm.viewer.TextEditor.prototype.loadResourceByUri = function(uri, opt_doAfter) {
                 opt_doAfter();
             }
 
+            this.resource = resource;
             this.loadingContent = false;
             this.field.clearDelayedChange();
 
         }.bind(this));
 
-        this.resource = resource;
     } else if (resource.hasType('oa:SpecificResource')) {
         var selector = resource.getOneResourceByProperty('oa:hasSelector');
 
