@@ -652,12 +652,8 @@ dm.data.Databroker.prototype.sync = function() {
         type: "PUT",
         url: [this.projectUrl(projectUri), "synchronize"].join("/"),
         data: {
-            update: (updated.length == 0
-                     ? ""
-                     : new dm.data.TurtleSerializer(this).serialize(updated)),
-            remove: (removed.length == 0
-                     ? ""
-                     : new dm.data.TurtleSerializer(this).serialize(removed))
+            update: new dm.data.TurtleSerializer(this).serialize(updated),
+            remove: new dm.data.TurtleSerializer(this).serialize(removed)
         }
     });
 

@@ -11,8 +11,10 @@ dm.data.TurtleSerializer = function(databroker) {
 dm.data.TurtleSerializer.prototype.serialize = function(quads) {
     var lines = [];
 
-    lines.push(this.getPrefixesString(this.databroker.namespaces));
-    lines.push(this.getTriplesString(quads));
+    if (quads.length > 0) {
+        lines.push(this.getPrefixesString(this.databroker.namespaces));
+        lines.push(this.getTriplesString(quads));
+    }
 
     return this.linesToStr(lines);
 };
