@@ -1,12 +1,12 @@
 package edu.drew.dm.data;
 
 import edu.drew.dm.Configuration;
-import edu.drew.dm.ProjectResource;
 import edu.drew.dm.rdf.Content;
 import edu.drew.dm.rdf.Exif;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenAnnotation;
 import edu.drew.dm.rdf.SharedCanvas;
+import edu.drew.dm.rdf.TypeBasedTraversal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -190,7 +190,7 @@ public class TextIndex implements AutoCloseable {
                             .toSet();
 
                     for (Resource project : projects) {
-                        ProjectResource.SCOPE.visit(project, resource -> {
+                        TypeBasedTraversal.ofProject(project).forEach(resource -> {
                             indexText(indexWriter, project, resource);
                             indexCanvas(indexWriter, project, resource);
                         });

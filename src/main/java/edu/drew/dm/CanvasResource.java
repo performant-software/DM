@@ -2,12 +2,12 @@ package edu.drew.dm;
 
 import edu.drew.dm.data.Images;
 import edu.drew.dm.data.SemanticDatabase;
-import edu.drew.dm.rdf.Annotations;
 import edu.drew.dm.rdf.Exif;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenAnnotation;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.SharedCanvas;
+import edu.drew.dm.rdf.TypeBasedTraversal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -51,13 +51,13 @@ public class CanvasResource {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) {
-        return store.read((source, target) -> Annotations.SCOPE.copy(source.createResource(uri), target));
+        return store.read((source, target) -> TypeBasedTraversal.ofAnnotations(source.createResource(uri)).into(target));
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String projectUri, @PathParam("uri") String canvasUri, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
-        return store.read((source, target) -> Annotations.SPECIFIC_RESOURCE_SCOPE.copy(source.createResource(resourceUri), target));
+        return store.read((source, target) -> TypeBasedTraversal.ofSpecificResource(source.createResource(resourceUri)).into(target));
     }
 
     @Path("/create")

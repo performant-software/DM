@@ -12,11 +12,10 @@ import edu.drew.dm.data.TextIndexSuggestion;
 import edu.drew.dm.data.TextSearch;
 import edu.drew.dm.rdf.ModelReaderWriter;
 import edu.drew.dm.rdf.Models;
-import edu.drew.dm.rdf.OpenAnnotation;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.Perm;
 import edu.drew.dm.rdf.SharedCanvas;
-import edu.drew.dm.rdf.Traversal;
+import edu.drew.dm.rdf.TypeBasedTraversal;
 import edu.drew.dm.user.User;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -30,8 +29,6 @@ import org.apache.jena.vocabulary.RDF;
 import java.io.IOException;
 import java.io.StringReader;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -147,7 +144,7 @@ public class ProjectResource {
     public Model delete(@PathParam("uri") String uri) {
         final Model removed = db.write(model -> {
             final Resource project = model.createResource(uri);
-            final Model toRemove = SCOPE.copy(project, Models.create());
+            final Model toRemove = TypeBasedTraversal.ofProject(project).into(Models.create());
 
             model.listSubjectsWithProperty(RDF.type, FOAF.Agent)
                     .forEachRemaining(user -> user.listProperties()
@@ -309,47 +306,5 @@ public class ProjectResource {
                 .resolveTemplate("uri", uri)
                 .build().toString();
     }
-
-    public static Traversal SCOPE = new Traversal()
-            .configureType(
-                    DCTypes.Collection,
-                    Collections.singleton(Perm.hasPermissionOver),
-                    Collections.singleton(OpenArchivesTerms.aggregates)
-            )
-            .configureType(
-                    DCTypes.Image,
-                    Collections.singleton(OpenAnnotation.hasBody),
-                    Collections.emptySet()
-            )
-            .configureType(
-                    SharedCanvas.Canvas,
-                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenAnnotation.hasBody, OpenArchivesTerms.aggregates),
-                    Collections.emptySet()
-            )
-            .configureType(
-                    DCTypes.Text,
-                    Arrays.asList(OpenAnnotation.hasSource, OpenAnnotation.hasTarget, OpenAnnotation.hasBody, OpenArchivesTerms.aggregates),
-                    Collections.emptySet()
-            )
-            .configureType(
-                    OpenAnnotation.SpecificResource,
-                    Arrays.asList(OpenAnnotation.hasTarget, OpenAnnotation.hasBody),
-                    Arrays.asList(OpenAnnotation.hasSelector, OpenAnnotation.hasSource)
-            )
-            .configureType(
-                    OpenAnnotation.Annotation,
-                    Collections.emptySet(),
-                    Arrays.asList(OpenAnnotation.hasTarget, OpenAnnotation.hasBody)
-            )
-            .configureType(
-                    OpenAnnotation.TextQuoteSelector,
-                    Collections.singleton(OpenAnnotation.hasSelector),
-                    Collections.emptySet()
-            )
-            .configureType(
-                    OpenAnnotation.SvgSelector,
-                    Collections.singleton(OpenAnnotation.hasSelector),
-                    Collections.emptySet()
-            );
 
 }

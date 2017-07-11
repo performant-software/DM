@@ -1,69 +1,60 @@
 package edu.drew.dm.rdf;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.util.iterator.NullIterator;
-import org.apache.jena.vocabulary.RDF;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Consumer;
 
-/**
- * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
- */
-public class Traversal {
+public abstract class Traversal implements Iterable<Resource> {
 
-    private Map<Resource, Set<Property>> outgoing = new HashMap<>();
-    private Map<Resource, Set<Property>> incoming = new HashMap<>();
+    protected final Resource start;
 
-    public Traversal configureType(Resource type, Collection<Property> incomingProperties, Collection<Property> outgoingProperties) {
-        this.incoming.computeIfAbsent(type, t -> new HashSet<>()).addAll(incomingProperties);
-        this.outgoing.computeIfAbsent(type, t -> new HashSet<>()).addAll(outgoingProperties);
-        return this;
+    protected Traversal(Resource start) {
+        this.start = start;
     }
 
-    public void visit(Resource start, Consumer<Resource> consumer) {
-        final Queue<Resource> frontier = new LinkedList<>(Collections.singleton(start));
-        final Set<Resource> visited = new HashSet<>();
-        while (!frontier.isEmpty()) {
-            final Resource resource = frontier.remove();
-            if (!visited.contains(resource)) {
-                consumer.accept(resource);
-                visited.add(resource);
-                nextOf(resource).filterDrop(visited::contains).forEachRemaining(frontier::add);
+    protected abstract ExtendedIterator<Resource> nextOf(Resource resource);
+
+    @Override
+    public Iterator<Resource> iterator() {
+        return new Iterator<Resource>() {
+            private final Queue<Resource> frontier = new LinkedList<>(Collections.singleton(start));
+            private final Set<Resource> visited = new HashSet<>();
+
+            private Resource next;
+
+            @Override
+            public boolean hasNext() {
+                while (next == null && !frontier.isEmpty()) {
+                    next = frontier.remove();
+                    if (visited.contains(next)) {
+                        next = null;
+                        continue;
+                    }
+                    visited.add(next);
+                    nextOf(next).filterDrop(visited::contains).forEachRemaining(frontier::add);
+                }
+                return (next != null);
             }
-        }
+
+            @Override
+            public Resource next() {
+                final Resource next = this.next;
+                this.next = null;
+                return next;
+            }
+        };
     }
 
-    public Model copy(Resource start, Model target) {
-        visit(start, resource -> target.add(resource.listProperties()));
+    public Model into(Model target) {
+        forEach(resource -> target.add(resource.listProperties()));
         return target;
-    }
-
-    public ExtendedIterator<Resource> nextOf(Resource r) {
-        ExtendedIterator<Resource> next = new NullIterator<>();
-        final Model model = r.getModel();
-        for (Statement typeStmt : r.listProperties(RDF.type).toList()) {
-            final Resource type = typeStmt.getObject().asResource();
-            for (Property outgoingProperty : outgoing.getOrDefault(type, Collections.emptySet())) {
-                next = next.andThen(model.listObjectsOfProperty(r, outgoingProperty).mapWith(RDFNode::asResource));
-            }
-            for (Property incomingProperty : incoming.getOrDefault(type, Collections.emptySet())) {
-                next = next.andThen(model.listResourcesWithProperty(incomingProperty, r).mapWith(RDFNode::asResource));
-            }
-        }
-        return next;
     }
 
 }
