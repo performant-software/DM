@@ -116,34 +116,56 @@ dm.data.ProjectController.prototype.userHasPermissionOverProject = function(user
 dm.data.ProjectController.prototype.findProjectContents = function(project) {
     project = this.databroker.getResource(project || this.currentProject);
 
-    var contentsInOrder = this.databroker.getListUrisInOrder(project);
+    var contentOrder = goog.array.map(
+        project.asList(),
+        function(node) { return node[0].uri; }
+    );
 
-    if (contentsInOrder.length > 0) {
-        return contentsInOrder;
-    }
-    else {
-        contentsInOrder = project.getProperties('ore:aggregates');
-        this.databroker.sortUrisByTitle(contentsInOrder);
-        return contentsInOrder;
-    }
+
+    var databroker = this.databroker;
+    var dataModel = databroker.dataModel;
+    var contents = project.getProperties('ore:aggregates');
+
+    goog.array.sort(contents, function(a, b) {
+        var ai = contentOrder.indexOf(a);
+        var bi = contentOrder.indexOf(b);
+
+        if (ai < 0 && bi < 0) {
+            return goog.array.defaultCompare(
+                dataModel.getTitle(databroker.getResource(a)),
+                dataModel.getTitle(databroker.getResource(b))
+            );
+        }
+
+        return (ai - bi);
+    });
+
+    return contents;
 };
 
 dm.data.ProjectController.prototype.reorderProjectContents = function(project, uris) {
     project = this.databroker.getResource(project || this.currentProject);
 
-    var list = project;
-    var nilUri = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil';
+    goog.array.forEach(
+        project.asList(),
+        function(node) {
+            node = node[1];
+            node.deleteProperty("rdf:type", "rdf:List");
+            node.deleteProperty("rdf:first");
+            node.deleteProperty("rdf:rest");
+        }
+    );
 
-    for (var i = 0; i < uris.length; i++) {
-      list.addProperty("rdf:first", this.databroker.getResource(uris[i]));
-      if (i < uris.length - 1) {
-        var restResource = this.databroker.createResource(null, "rdf:List");
-        list.addProperty("rdf:rest", restResource);
-        list = restResource;
-      }
-      else {
-        list.addProperty("rdf:rest", nilUri);
-      }
+    for (var i = 0, node = project; node ; i++) {
+        node.addType("rdf:List");
+        node.addProperty("rdf:first", this.databroker.getResource(uris[i]));
+
+        var rest = (i == uris.length - 1)
+                ? undefined
+                : this.databroker.createResource(null);
+
+        node.addProperty("rdf:rest", rest || "rdf:nil");
+        node = rest;
     }
 
     this.databroker.sync();

@@ -500,10 +500,22 @@ dm.data.Resource.prototype.defer = function() {
     return this.databroker.getDeferredResource(this);
 };
 
-dm.data.Resource.compareByTitle = function(a, b) {
-    var getTitle = a.databroker.dataModel.getTitle;
-    var titleA = getTitle(a).toLowerCase();
-    var titleB = getTitle(b).toLowerCase();
+dm.data.Resource.prototype.asList = function() {
+    var list = [];
 
-    return goog.array.defaultCompare(titleA, titleB);
+    for (var node = this; node; ) {
+
+        node = this.databroker.getResource(
+            node
+        );
+        if (node.hasType("rdf:List")) {
+            var item = this.databroker.getResource(
+                node.getOneProperty("rdf:first")
+            );
+            list.push([item, node]);
+        }
+        node = node.getOneProperty("rdf:rest");
+    }
+
+    return list;
 };

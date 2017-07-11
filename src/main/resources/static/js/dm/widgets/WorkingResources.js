@@ -379,6 +379,7 @@ dm.widgets.WorkingResources.prototype._onDragStart = function(event) {
 };
 
 dm.widgets.WorkingResources.prototype._onDragEnd = function(event) {
-   var itemUris = jQuery(".atb-WorkingResourcesItem").map(function() { return jQuery(this).data("uri"); }).toArray();
-  //  this.databroker.projectController.reorderProjectContents(this.uri, itemUris);
+    var itemUris = jQuery(".atb-WorkingResourcesItem")
+            .map(function() { return jQuery(this).data("uri"); }).toArray();
+    this.databroker.projectController.reorderProjectContents(this.uri, itemUris);
 };

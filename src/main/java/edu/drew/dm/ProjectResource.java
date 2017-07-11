@@ -99,6 +99,8 @@ public class ProjectResource {
                             CanvasResource.imageAnnotations(part, target);
                         }
                     });
+
+            TypeBasedTraversal.ofList(project).into(target);
         });
     }
 

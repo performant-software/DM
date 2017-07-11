@@ -680,14 +680,6 @@ dm.data.Databroker.prototype.sync = function() {
     return request;
 };
 
-dm.data.Databroker.prototype.compareUrisByTitle = function(a, b) {
-    return dm.data.Resource.compareByTitle(this.getResource(a), this.getResource(b));
-};
-
-dm.data.Databroker.prototype.sortUrisByTitle = function(uris) {
-    goog.array.sort(uris, this.compareUrisByTitle.bind(this));
-};
-
 dm.data.Databroker.prototype.uploadCanvas = function(title, file) {
     var projectUri = this.projectController.currentProject.uri;
 

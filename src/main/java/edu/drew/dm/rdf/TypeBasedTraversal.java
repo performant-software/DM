@@ -51,12 +51,26 @@ public class TypeBasedTraversal extends Traversal {
         return next;
     }
 
+    public static TypeBasedTraversal ofList(Resource start) {
+        return new TypeBasedTraversal(start)
+                .configureType(
+                        RDF.List,
+                        Collections.emptySet(),
+                        Arrays.asList(RDF.first, RDF.rest)
+                );
+    }
+
     public static TypeBasedTraversal ofProject(Resource start) {
         return new TypeBasedTraversal(start)
                 .configureType(
                         DCTypes.Collection,
                         Collections.singleton(Perm.hasPermissionOver),
                         Collections.singleton(OpenArchivesTerms.aggregates)
+                )
+                .configureType(
+                        RDF.List,
+                        Collections.emptySet(),
+                        Arrays.asList(RDF.first, RDF.rest)
                 )
                 .configureType(
                         DCTypes.Image,
