@@ -1,5 +1,6 @@
 package edu.drew.dm.user;
 
+import edu.drew.dm.WorkspaceResource;
 import org.glassfish.grizzly.http.server.Request;
 
 import java.io.IOException;
@@ -35,6 +36,13 @@ public class SecurityContextFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         final Request request = requestProvider.get();
+
+        if (request.getRequestedSessionId() != null && !request.isRequestedSessionIdValid()) {
+            throw new WebApplicationException(
+                    WorkspaceResource.redirectTo(requestContext.getUriInfo())
+            );
+        }
+
         final User authenticated = User.get(request);
         if (authenticated != null) {
             requestContext.setSecurityContext(authenticated);

@@ -1,11 +1,9 @@
 package edu.drew.dm.user;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.drew.dm.WorkspaceResource;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.user.auth.AuthenticationProvider;
 import edu.drew.dm.user.auth.AuthenticationProviderRegistry;
-import edu.drew.dm.WorkspaceResource;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
@@ -15,10 +13,8 @@ import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -33,17 +29,14 @@ public class AuthenticationResource {
     private final SemanticDatabase db;
     private final Provider<Request> requestProvider;
     private final AuthenticationProviderRegistry authenticationProviders;
-    private final ObjectMapper objectMapper;
 
     @Inject
     public AuthenticationResource(SemanticDatabase db,
                                   Provider<Request> requestProvider,
-                                  AuthenticationProviderRegistry authenticationProviders,
-                                  ObjectMapper objectMapper) {
+                                  AuthenticationProviderRegistry authenticationProviders) {
         this.db = db;
         this.requestProvider = requestProvider;
         this.authenticationProviders = authenticationProviders;
-        this.objectMapper = objectMapper;
     }
 
     @Path("/login")

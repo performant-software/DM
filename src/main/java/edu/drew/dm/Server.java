@@ -42,6 +42,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -185,6 +186,9 @@ public class Server {
         }
 
         final ServerConfiguration serverConfig = server.getServerConfiguration();
+        serverConfig.setSessionTimeoutSeconds(
+                (int) config.getDuration("http.session-timeout", TimeUnit.SECONDS)
+        );
 
         serverConfig.addHttpHandler(
                 new CLStaticHttpHandler(Server.class.getClassLoader(), "/static/"),
