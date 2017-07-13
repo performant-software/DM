@@ -118,6 +118,7 @@ public class Server {
                 bind(index).to(Index.class);
                 bind(images).to(Images.class);
                 bind(authProviders).to(AuthenticationProviderRegistry.class);
+                bind(new Dashboard(config)).to(Dashboard.class);
                 bind(Templates.class).to(Templates.class).in(RequestScoped.class);
             }
         });

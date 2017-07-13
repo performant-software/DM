@@ -25,6 +25,8 @@ import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
+import org.glassfish.grizzly.http.server.Request;
+import org.glassfish.grizzly.http.server.Session;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -36,6 +38,8 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -51,10 +55,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import static edu.drew.dm.data.SemanticDatabase.merge;
+import static edu.drew.dm.user.UserResource.userResource;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static java.time.temporal.ChronoUnit.MINUTES;
 
@@ -62,6 +68,7 @@ import static java.time.temporal.ChronoUnit.MINUTES;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/projects")
+@Singleton
 public class ProjectResource {
 
     private static final Logger LOG = Configuration.logger(ProjectResource.class);
@@ -69,16 +76,50 @@ public class ProjectResource {
     private final SemanticDatabase db;
     private final Index index;
     private final Images images;
+    private final Dashboard dashboard;
     private final ObjectMapper objectMapper;
+    private final Provider<Request> requestProvider;
 
     @Inject
-    public ProjectResource(SemanticDatabase db, Index index, Images images, ObjectMapper objectMapper) {
+    public ProjectResource(SemanticDatabase db,
+                           Index index,
+                           Images images,
+                           Dashboard dashboard,
+                           ObjectMapper objectMapper,
+                           Provider<Request> requestProvider) {
         this.db = db;
         this.index = index;
         this.images = images;
+        this.dashboard = dashboard;
         this.objectMapper = objectMapper;
+        this.requestProvider = requestProvider;
     }
 
+    @Path("/dashboard")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public JsonNode readDashboard(@Context SecurityContext securityCtx, @Context UriInfo ui) {
+        final ObjectNode currentProjects = objectMapper.createObjectNode();
+        dashboard.currentProjects().forEach((id, openProject) -> currentProjects
+                .with(openProject.user.getSchemeSpecificPart())
+                .put("uri", userResource(ui, openProject.user))
+                .withArray("projects").addObject()
+                    .put("project", openProject.project)
+                    .put("session", id));
+        return currentProjects;
+    }
+
+    @Path("/dashboard")
+    @POST
+    public Response changeDashboard(@FormParam("project") String uri) {
+        final Request request = requestProvider.get();
+        final Session session = request.getSession(false);
+        if (session != null) {
+            dashboard.registerCurrentProject(session.getIdInternal(), User.get(request), uri);
+        }
+        return Response.noContent().build();
+    }
+    
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("uri") String uri, @Context UriInfo ui) {

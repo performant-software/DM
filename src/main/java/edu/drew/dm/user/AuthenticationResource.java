@@ -1,5 +1,6 @@
 package edu.drew.dm.user;
 
+import edu.drew.dm.Dashboard;
 import edu.drew.dm.WorkspaceResource;
 import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.user.auth.AuthenticationProvider;
@@ -8,6 +9,7 @@ import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import java.net.URI;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.GET;
@@ -27,14 +29,17 @@ import javax.ws.rs.core.UriInfo;
 public class AuthenticationResource {
 
     private final SemanticDatabase db;
+    private final Dashboard dashboard;
     private final Provider<Request> requestProvider;
     private final AuthenticationProviderRegistry authenticationProviders;
 
     @Inject
     public AuthenticationResource(SemanticDatabase db,
+                                  Dashboard dashboard,
                                   Provider<Request> requestProvider,
                                   AuthenticationProviderRegistry authenticationProviders) {
         this.db = db;
+        this.dashboard = dashboard;
         this.requestProvider = requestProvider;
         this.authenticationProviders = authenticationProviders;
     }
@@ -57,8 +62,13 @@ public class AuthenticationResource {
     @Path("/logout")
     @GET
     public Response logout(@Context UriInfo ui) {
-        User.remove(requestProvider.get());
+        final Request request = requestProvider.get();
 
+        Optional.ofNullable(request.getSession(false))
+                .ifPresent(session -> dashboard.removeCurrentProjects(session.getIdInternal()));
+
+        User.remove(request);
+        
         return WorkspaceResource.redirectTo(ui);
     }
 

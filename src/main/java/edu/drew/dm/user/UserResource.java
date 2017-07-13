@@ -129,7 +129,7 @@ public class UserResource implements SemanticDatabase.TransactionLogListener {
 
     private static final Pattern USER_URI = Pattern.compile("/store/users/([^:]+):(.+)$");
 
-    private static String userResource(UriInfo ui, URI user) {
+    public static String userResource(UriInfo ui, URI user) {
         return Server.baseUri(ui)
                 .path(UserResource.class)
                 .path(UserResource.class, "read")

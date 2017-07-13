@@ -3,6 +3,8 @@ const { applyMiddleware, createStore, compose } = require("redux");
 const { logger } = require("redux-logger");
 const { createActions, handleActions } = require("redux-actions");
 
+const { ProjectChangeListener } = require("./project");
+
 const actions = createActions(
     "USER_LOGGED_IN",
     "PROJECT_SELECTED",
@@ -54,3 +56,5 @@ window.DM = Object.assign(window.DM || {}, { store });
 
 const dispatch = store.dispatch.bind(store);
 Object.keys(actions).forEach(k => window.DM[k] = compose(dispatch, actions[k]));
+
+(new ProjectChangeListener()).subscribeTo(store);

@@ -85,6 +85,11 @@ public class User implements SecurityContext, Principal {
         return emailAddresses.length == 0 ? null : emailAddresses[0];
     }
 
+    @Override
+    public String toString() {
+        return uri.toString();
+    }
+
     public static URI uri(String realm, String id) {
         try {
             return new URI("user", String.join(":", realm, id), null);
