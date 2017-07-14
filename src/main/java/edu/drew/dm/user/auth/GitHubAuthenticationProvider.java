@@ -34,7 +34,7 @@ public class GitHubAuthenticationProvider extends AuthenticationProvider {
             service = new ServiceBuilder()
                     .apiKey(config.getString("auth.oauth.github.key"))
                     .apiSecret(config.getString("auth.oauth.github.secret"))
-                    .scope("user")
+                    .scope("user:email")
                     .callback(oauthCallbackUri(ui))
                     .build(GitHubApi.instance());
         }
