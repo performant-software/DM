@@ -108,12 +108,12 @@ public class SemanticDatabase implements AutoCloseable {
 
     public <T> T transaction(ReadWrite rw, Transaction<T> tx) {
         dataset.begin(rw);
-        final Model model = dataset.getDefaultModel();
 
         final TransactionLog transactionLog = new TransactionLog();
-        model.register(transactionLog);
+        final Model model = dataset.getDefaultModel();
 
         try {
+            model.register(transactionLog);
             final T result = tx.execute(model);
             dataset.commit();
             if (rw == ReadWrite.WRITE) {
@@ -125,7 +125,9 @@ public class SemanticDatabase implements AutoCloseable {
             }
             return result;
         } finally {
-            model.unregister(transactionLog);
+            if (model != null) {
+                model.unregister(transactionLog);
+            }
             dataset.end();
         }
     }
