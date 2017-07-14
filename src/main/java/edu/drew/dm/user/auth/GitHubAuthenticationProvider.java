@@ -48,10 +48,14 @@ public class GitHubAuthenticationProvider extends AuthenticationProvider {
 
     @Override
     protected User parseProfile(JsonNode profile) {
+        final String login = profile.path("login").asText();
+        final JsonNode name = profile.path("name");
+        final JsonNode email = profile.path("email");
+
         return new User(
-                User.uri(getKey(), profile.path("login").asText()),
-                profile.path("name").asText(),
-                profile.path("email").asText()
+                User.uri(getKey(), login),
+                name.isTextual() ? name.asText() : login,
+                email.isTextual() ? email.asText() : String.format("%s@github.local", login)
         );
     }
 }
