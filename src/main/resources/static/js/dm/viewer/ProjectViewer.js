@@ -425,6 +425,9 @@ dm.viewer.ProjectViewer.prototype.addUserOptions = function(query, results) {
         if (usersWithPermission[user.uri]) {
             return false;
         }
+        if (user.id == "dm:guest") {
+            return false;
+        }
         return (user.name.toLowerCase().indexOf(filter) >= 0) ||
             (user.email.toLowerCase().indexOf(filter) >= 0);
     });
