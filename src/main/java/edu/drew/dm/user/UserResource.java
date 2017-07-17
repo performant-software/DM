@@ -33,57 +33,37 @@ import javax.ws.rs.core.UriInfo;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/users")
-@Singleton
-public class UserResource implements SemanticDatabase.TransactionLogListener {
+public class UserResource {
 
     private final SemanticDatabase store;
     private final ObjectMapper objectMapper;
-
-    private JsonNode users;
+    private final UserAuthorization authorization;
 
     @Inject
-    public UserResource(SemanticDatabase db, ObjectMapper objectMapper) {
+    public UserResource(SemanticDatabase db, ObjectMapper objectMapper, UserAuthorization authorization) {
         this.store = db;
         this.objectMapper = objectMapper;
-        db.addTransactionLogListener(this);
-    }
-
-    @Override
-    public synchronized void transactionLogged(SemanticDatabase.TransactionLog txLog) {
-        if (users == null) {
-            return;
-        }
-
-        final boolean userModified = Models.create().add(txLog.added).add(txLog.removed)
-                .listStatements(null, RDF.type, FOAF.Agent)
-                .hasNext();
-
-        if (userModified) {
-            users = null;
-        }
+        this.authorization = authorization;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public synchronized JsonNode list(@Context UriInfo ui) {
-        if (users == null) {
-            users = store.read(model -> {
-                final ArrayNode users = objectMapper.createArrayNode();
-                model.listSubjectsWithProperty(RDF.type, FOAF.Agent)
-                        .mapWith(User::new)
-                        .forEachRemaining(user -> {
-                            for (String emailAddress : user.emailAddresses) {
-                                users.addObject()
-                                        .put("id", user.getName())
-                                        .put("uri", userResource(ui, user.uri))
-                                        .put("name", user.getDisplayName())
-                                        .put("email", emailAddress);
-                            }
-                });
-                return users;
-            });
-        }
-        return users;
+        return store.read(model -> {
+            final ArrayNode users = objectMapper.createArrayNode();
+            model.listSubjectsWithProperty(RDF.type, FOAF.Agent)
+                    .mapWith(User::new)
+                    .forEachRemaining(user -> {
+                        for (String emailAddress : user.emailAddresses) {
+                            users.addObject()
+                                    .put("id", user.getName())
+                                    .put("uri", userResource(ui, user.uri))
+                                    .put("name", user.getDisplayName())
+                                    .put("email", emailAddress);
+                        }
+                    });
+            return users;
+        });
     }
 
 

@@ -11,7 +11,6 @@ import org.glassfish.jersey.server.ContainerRequest;
 import java.net.URI;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -30,17 +29,17 @@ public class AuthenticationResource {
 
     private final SemanticDatabase db;
     private final Dashboard dashboard;
-    private final Provider<Request> requestProvider;
+    private final Request request;
     private final AuthenticationProviderRegistry authenticationProviders;
 
     @Inject
     public AuthenticationResource(SemanticDatabase db,
                                   Dashboard dashboard,
-                                  Provider<Request> requestProvider,
+                                  Request request,
                                   AuthenticationProviderRegistry authenticationProviders) {
         this.db = db;
         this.dashboard = dashboard;
-        this.requestProvider = requestProvider;
+        this.request = request;
         this.authenticationProviders = authenticationProviders;
     }
 
@@ -62,8 +61,6 @@ public class AuthenticationResource {
     @Path("/logout")
     @GET
     public Response logout(@Context UriInfo ui) {
-        final Request request = requestProvider.get();
-
         Optional.ofNullable(request.getSession(false))
                 .ifPresent(session -> dashboard.removeCurrentProjects(session.getIdInternal()));
 
@@ -80,7 +77,7 @@ public class AuthenticationResource {
         final User user = authenticationProviders.lookup(provider).user(ui, code);
 
         user.updateIn(db);
-        User.set(requestProvider.get(), user);
+        User.set(request, user);
 
         return WorkspaceResource.redirectTo(ui);
     }

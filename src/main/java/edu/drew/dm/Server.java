@@ -11,9 +11,9 @@ import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.data.SemanticDatabaseBackup;
 import edu.drew.dm.rdf.ModelReaderWriter;
 import edu.drew.dm.user.AuthenticationResource;
+import edu.drew.dm.user.UserAuthorization;
 import edu.drew.dm.user.SecurityContextFilter;
 import edu.drew.dm.user.User;
-import edu.drew.dm.user.UserDataMigration;
 import edu.drew.dm.user.UserResource;
 import edu.drew.dm.user.auth.AuthenticationProviderRegistry;
 import it.sauronsoftware.cron4j.Scheduler;
@@ -112,6 +112,7 @@ public class Server {
                 bind(images).to(Images.class);
                 bind(authProviders).to(AuthenticationProviderRegistry.class);
                 bind(new Dashboard(config)).to(Dashboard.class);
+                bind(UserAuthorization.class).to(UserAuthorization.class).in(RequestScoped.class);
                 bind(Templates.class).to(Templates.class).in(RequestScoped.class);
             }
         });

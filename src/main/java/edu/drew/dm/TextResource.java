@@ -4,6 +4,7 @@ import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.rdf.OpenAnnotation;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.TypeBasedTraversal;
+import edu.drew.dm.user.UserAuthorization;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
 import org.apache.jena.vocabulary.DCTypes;
@@ -24,21 +25,25 @@ public class TextResource {
 
 
     private final SemanticDatabase db;
+    private final UserAuthorization authorization;
 
     @Inject
-    public TextResource(SemanticDatabase db) {
+    public TextResource(SemanticDatabase db, UserAuthorization authorization) {
         this.db = db;
+        this.authorization = authorization;
     }
 
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) throws ParseException {
+        authorization.checkReadAccess(projectUri);
         return db.read((source, target) -> TypeBasedTraversal.ofAnnotations(source.createResource(uri)).into(target));
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String projectUri, @PathParam("uri") String textUri, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
+        authorization.checkReadAccess(projectUri);
         return db.read((source, target) -> TypeBasedTraversal.ofSpecificResource(source.createResource(resourceUri)).into(target));
     }
 

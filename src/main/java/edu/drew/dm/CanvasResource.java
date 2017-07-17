@@ -8,6 +8,7 @@ import edu.drew.dm.rdf.OpenAnnotation;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.SharedCanvas;
 import edu.drew.dm.rdf.TypeBasedTraversal;
+import edu.drew.dm.user.UserAuthorization;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.lang.sparql_11.ParseException;
@@ -41,22 +42,26 @@ public class CanvasResource {
 
     private final SemanticDatabase store;
     private final Images images;
+    private final UserAuthorization authorization;
 
     @Inject
-    public CanvasResource(SemanticDatabase store, Images images) {
+    public CanvasResource(SemanticDatabase store, Images images, UserAuthorization authorization) {
         this.store = store;
         this.images = images;
+        this.authorization = authorization;
     }
 
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("projectUri") String projectUri, @PathParam("uri") String uri, @Context UriInfo ui) {
+        authorization.checkReadAccess(projectUri);
         return store.read((source, target) -> TypeBasedTraversal.ofAnnotations(source.createResource(uri)).into(target));
     }
 
     @Path("/{uri}/specific_resource/{resourceUri}")
     @GET
     public Model readSpecificResource(@PathParam("projectUri") String projectUri, @PathParam("uri") String canvasUri, @PathParam("resourceUri") String resourceUri, @Context UriInfo ui) throws ParseException {
+        authorization.checkReadAccess(projectUri);
         return store.read((source, target) -> TypeBasedTraversal.ofSpecificResource(source.createResource(resourceUri)).into(target));
     }
 
@@ -68,6 +73,8 @@ public class CanvasResource {
                         @FormDataParam("image_file") FormDataContentDisposition imageFileMetadata,
                         @FormDataParam("image_file") InputStream imageFileContents,
                         @Context UriInfo ui) throws IOException {
+
+        authorization.checkUpdateAccess(project);
 
         final File imageFile = images.create(imageFileMetadata.getFileName(), imageFileContents);
         final Dimension imageDimension = Images.dimension(imageFile);

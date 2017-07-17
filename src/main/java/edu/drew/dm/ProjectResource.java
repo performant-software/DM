@@ -17,6 +17,7 @@ import edu.drew.dm.rdf.Perm;
 import edu.drew.dm.rdf.SharedCanvas;
 import edu.drew.dm.rdf.TypeBasedTraversal;
 import edu.drew.dm.user.EmailAddress;
+import edu.drew.dm.user.UserAuthorization;
 import edu.drew.dm.user.User;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -26,7 +27,6 @@ import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Session;
 
@@ -41,8 +41,6 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -71,7 +69,6 @@ import static java.time.temporal.ChronoUnit.MINUTES;
  * @author <a href="http://gregor.middell.net/">Gregor Middell</a>
  */
 @Path("/store/projects")
-@Singleton
 public class ProjectResource {
 
     private static final Logger LOG = Configuration.logger(ProjectResource.class);
@@ -81,7 +78,8 @@ public class ProjectResource {
     private final Images images;
     private final Dashboard dashboard;
     private final ObjectMapper objectMapper;
-    private final Provider<Request> requestProvider;
+    private final UserAuthorization authorization;
+    private final Request request;
 
     @Inject
     public ProjectResource(SemanticDatabase db,
@@ -89,13 +87,15 @@ public class ProjectResource {
                            Images images,
                            Dashboard dashboard,
                            ObjectMapper objectMapper,
-                           Provider<Request> requestProvider) {
+                           UserAuthorization authorization,
+                           Request request) {
         this.db = db;
         this.index = index;
         this.images = images;
         this.dashboard = dashboard;
         this.objectMapper = objectMapper;
-        this.requestProvider = requestProvider;
+        this.authorization = authorization;
+        this.request = request;
     }
 
     @Path("/dashboard")
@@ -136,10 +136,13 @@ public class ProjectResource {
     @Path("/dashboard")
     @POST
     public Response changeDashboard(@FormParam("project") String uri) {
-        final Request request = requestProvider.get();
         final Session session = request.getSession(false);
         if (session != null) {
-            dashboard.registerCurrentProject(session.getIdInternal(), User.get(request), uri);
+            dashboard.registerCurrentProject(
+                    session.getIdInternal(),
+                    Optional.ofNullable(User.get(request)).orElse(User.GUEST),
+                    uri
+            );
         }
         return Response.noContent().build();
     }
@@ -147,6 +150,8 @@ public class ProjectResource {
     @Path("/{uri}")
     @GET
     public Model read(@PathParam("uri") String uri, @Context UriInfo ui) {
+        authorization.checkReadAccess(uri);
+
         return db.read((source, target) -> {
             final Resource project = source.createResource(uri);
 
@@ -190,6 +195,9 @@ public class ProjectResource {
             @FormParam("update") String update,
             @FormParam("remove") String remove) {
         long start = System.currentTimeMillis();
+
+        authorization.checkUpdateAccess(uri);
+        
         final Model updateModel = ModelReaderWriter.read(new StringReader(update), "TTL");
         final Model removalModel = ModelReaderWriter.read(new StringReader(remove), "TTL");
 
@@ -209,6 +217,8 @@ public class ProjectResource {
     @Path("/{uri}")
     @DELETE
     public Model delete(@PathParam("uri") String uri) {
+        authorization.checkAdminAccess(uri);
+
         final Model removed = db.write(model -> {
             final Resource project = model.createResource(uri);
             final Model toRemove = TypeBasedTraversal.ofProject(project).into(Models.create());
@@ -224,7 +234,7 @@ public class ProjectResource {
 
         final Set<Resource> orphanedImages = db.read(source -> removed
                 .listSubjectsWithProperty(RDF.type, DCTypes.Image)
-                .filterDrop(image -> source.containsResource(image))
+                .filterDrop(source::containsResource)
                 .toSet());
         orphanedImages.forEach(images::delete);
 
@@ -235,6 +245,7 @@ public class ProjectResource {
     @Produces(MediaType.TEXT_PLAIN)
     @POST
     public String cleanup(@PathParam("uri") String uri) {
+        authorization.checkUpdateAccess(uri);
         return String.format("%d orphaned text removed, %d orphaned annotations removed.", 0, 0);
     }
 
@@ -242,6 +253,7 @@ public class ProjectResource {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode isShared(@PathParam("uri") String uri) {
+        authorization.checkReadAccess(uri);
         return objectMapper.createObjectNode().put("public", (boolean) db.read(source ->
                 source.containsAll(publishedProject(uri))
         ));
@@ -251,6 +263,7 @@ public class ProjectResource {
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     public JsonNode share(@PathParam("uri") String uri) {
+        authorization.checkAdminAccess(uri);
         db.merge(publishedProject(uri));
         return objectMapper.createObjectNode().put("success", true);
     }
@@ -259,6 +272,7 @@ public class ProjectResource {
     @Produces(MediaType.APPLICATION_JSON)
     @DELETE
     public JsonNode revokeShare(@PathParam("uri") String uri) {
+        authorization.checkAdminAccess(uri);
         db.remove(publishedProject(uri));
         return objectMapper.createObjectNode().put("success", true);
     }
@@ -278,6 +292,8 @@ public class ProjectResource {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode search(@PathParam("uri") String project, @QueryParam("q") @DefaultValue("") String query, @QueryParam("limit") @DefaultValue("2000") int limit, @Context UriInfo ui) throws Exception {
+        authorization.checkReadAccess(project);
+
         final TextSearch search = TextSearch.execute(index, project, query, limit);
         final ObjectNode response = objectMapper.createObjectNode();
 
@@ -317,6 +333,7 @@ public class ProjectResource {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     public JsonNode autocomplete(@PathParam("uri") String uri, @QueryParam("q") @DefaultValue("") String prefix) throws IOException {
+        authorization.checkReadAccess(uri);
         return TextIndexSuggestion.lookup(index, uri, prefix, 10).stream()
                 .collect(objectMapper::createArrayNode, ArrayNode::add, ArrayNode::addAll);
     }
@@ -324,6 +341,7 @@ public class ProjectResource {
     @Path("/{uri}/download")
     @GET
     public Response download(@PathParam("uri") String uri) {
+        authorization.checkReadAccess(uri);
         return Response.ok()
                 .type(new MediaType("application", "zip"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, String.format(
@@ -350,9 +368,10 @@ public class ProjectResource {
     
     @Path("/{uri}/removed")
     @POST
-    public Model cleanupLinks(@FormParam("uuids") String uuids) {
+    public Response cleanupLinks(@PathParam("uri") String uri, @FormParam("uuids") String uuids) {
+        authorization.checkUpdateAccess(uri);
         Logger.getLogger(ProjectResource.class.getName()).fine(() -> uuids);
-        throw Server.NOT_IMPLEMENTED;
+        return Response.noContent().build();
     }
 
     public static Model externalize(Model model, UriInfo ui) {
