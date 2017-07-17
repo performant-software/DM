@@ -1,0 +1,17 @@
+#! /usr/bin/env python
+# -*- mode: python -*-
+
+import sys
+
+from os import chdir, execvp
+from os.path import dirname, join, realpath
+
+base_dir = dirname(dirname(realpath(__file__)))
+
+cmd = ["java"] +\
+      ["-cp", join(base_dir, "target", "dm-1.0-SNAPSHOT.jar")] +\
+      ["edu.drew.dm.AdminUserCreation"] +\
+      sys.argv[1:]
+
+chdir(base_dir)
+execvp(cmd[0], cmd)

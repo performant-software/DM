@@ -3,6 +3,7 @@ package edu.drew.dm.data;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.Perm;
+import edu.drew.dm.user.UserDataMigration;
 import edu.drew.dm.util.IO;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
@@ -80,10 +81,15 @@ public class SemanticDatabase implements AutoCloseable {
                     ).collect(Collectors.joining("\n")).trim())
             ));
         }
+        UserDataMigration.ensureRealm(this);
+        UserDataMigration.migrateNamingSchema(this);
+        UserDataMigration.normalizeEmailAddresses(this);
+        UserDataMigration.removeGuestsLastOpenedProject(this);
+        UserDataMigration.mergeAccounts(this);
     }
 
     public boolean isEmpty() {
-        return dataset.getDefaultModel().isEmpty();
+        return read(Model::isEmpty);
     }
 
     public Dataset dataset() {

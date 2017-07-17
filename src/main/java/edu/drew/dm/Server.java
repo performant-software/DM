@@ -88,13 +88,6 @@ public class Server {
             }
         }
 
-        UserDataMigration.ensureRealm(db);
-        UserDataMigration.migrateNamingSchema(db);
-        UserDataMigration.normalizeEmailAddresses(db);
-        UserDataMigration.removeGuestsLastOpenedProject(db);
-        UserDataMigration.mergeAccounts(db);
-
-
         User.GUEST.updateIn(db);
 
         final Index index = new Index(fs, db);
