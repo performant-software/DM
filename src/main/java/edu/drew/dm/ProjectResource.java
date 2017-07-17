@@ -16,6 +16,7 @@ import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.Perm;
 import edu.drew.dm.rdf.SharedCanvas;
 import edu.drew.dm.rdf.TypeBasedTraversal;
+import edu.drew.dm.user.EmailAddress;
 import edu.drew.dm.user.User;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -25,11 +26,13 @@ import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.vocabulary.DCTypes;
 import org.apache.jena.vocabulary.DC_11;
 import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 import org.glassfish.grizzly.http.server.Request;
 import org.glassfish.grizzly.http.server.Session;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -99,14 +102,35 @@ public class ProjectResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonNode readDashboard(@Context SecurityContext securityCtx, @Context UriInfo ui) {
-        final ObjectNode currentProjects = objectMapper.createObjectNode();
-        dashboard.currentProjects().forEach((id, openProject) -> currentProjects
-                .with(openProject.user.getSchemeSpecificPart())
-                .put("uri", userResource(ui, openProject.user))
-                .withArray("projects").addObject()
-                    .put("project", openProject.project)
-                    .put("session", id));
-        return currentProjects;
+        return db.read((SemanticDatabase.Transaction<JsonNode>) model -> {
+            final ObjectNode currentProjects = objectMapper.createObjectNode();
+            dashboard.currentProjects().forEach((id, openProject) -> {
+                final URI user = openProject.user;
+                final String userName = user.getSchemeSpecificPart();
+
+                ObjectNode userNode = (ObjectNode) currentProjects.get(userName);
+                if (userNode == null) {
+                    final Resource userResource = model.getResource(user.toString());
+                    userNode = currentProjects.putObject(userName)
+                            .put("url", userResource(ui, user))
+                            .put(
+                                    "name",
+                                    userResource.getRequiredProperty(FOAF.name).getString()
+                            )
+                            .put(
+                                    "mail",
+                                    EmailAddress.parse(userResource.getRequiredProperty(FOAF.mbox)
+                                            .getResource().getURI())
+                            );
+                }
+
+                userNode.withArray("projects").addObject()
+                        .put("uri", openProject.project)
+                        .put("url", projectResource(ui, openProject.project))
+                        .put("session", id);
+            });
+            return currentProjects;
+        });
     }
 
     @Path("/dashboard")
