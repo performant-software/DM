@@ -112,6 +112,35 @@ dm.viewer.TextEditor.prototype.setHtml = function (htmlString) {
 };
 
 /**
+ * safeguardStyles()
+ * processes style information embedded in pasted rich text, replacing the generic class names with unique ones to avoid conflict with other pasted text
+ **/
+dm.viewer.TextEditor.prototype.safeguardStyles = function () {
+    if (this.field) {
+        var uriParts = this.uri.split(":");
+        var uri = uriParts[uriParts.length - 1];
+        var $contents = $(this.editorIframeElement).contents();
+        $contents.find("style").each(function(index) {
+            var styleText = $(this).text();
+            var styleCodex = {};
+            styleText = styleText.replace(/(?:^|, )([^\s\.]*)\.(?!dmstyle)([^\s,]+)/gm, function(selectorString, tag, oldClass) {
+                var selectorParts = selectorString.split(", ");
+                var selector = selectorParts[selectorParts.length - 1];
+                var newClass = ["dmstyle", uri, Date.now(), index, oldClass].join("-");
+                styleCodex[selector] = {oldClass: oldClass, newClass: newClass};
+
+                var separator = selectorParts.length > 1 ? ", " : "";
+                return separator + tag + "." + newClass;
+            });
+            $(this).text(styleText);
+            for (var selector in styleCodex) {
+                $(this).siblings(selector).removeClass(styleCodex[selector].oldClass).addClass(styleCodex[selector].newClass);
+            }
+        });
+    }
+};
+
+/**
  * addStylesheetToEditor(stylesheetURI)
  * adds the specified stylesheet to the editor iframe
  * @param stylesheetURI {!string} the URI of the stylesheet *relative to the html document*
@@ -133,6 +162,8 @@ dm.viewer.TextEditor.prototype.saveContents = function() {
         this.resourceId = this.databroker.createUuid();
         this.uri = this.resourceId;
     }
+
+    this.safeguardStyles();
 
     var resource = this.databroker.getResource(this.resourceId);
     this.databroker.dataModel.setTitle(resource, this.getTitle());
