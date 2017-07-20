@@ -18,7 +18,8 @@ var STATES = {
     project : 1,
     edit: 2,
     create: 3,
-    imageUpload: 4
+    imageUpload: 4,
+    alert: 5
 };
 
 var PERMISSIONS = ["read", "update", "administer"];
@@ -126,11 +127,10 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
         function(users, user) {
             user = user.shift();
             DM.userLoggedIn(user.getOneProperty("rdfs:label"));
-
+            this.currentUser = user;
             this.users = users.shift();
             this.projectController.autoSelectProject();
             this.updateProjects();
-
         }.bind(this)
     );
 };
@@ -253,7 +253,7 @@ dm.viewer.ProjectViewer.prototype.updateProjects = function() {
             .appendTo(li);
     }, this);
 
-    if (this.isGuest && projectUris.length === 1) {
+    if (this.isGuest && !project && projectUris.length === 1) {
         this.switchToProject(projectUris[0]);
     }
 };
@@ -274,6 +274,8 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
     var title = $(".modal-header h3")
             .text('\u201c' + (projectTitle) + '\u201d');
 
+    $(".atb-ProjectAlert").removeClass("atb-ProjectAlert");
+
     var workingResources = $(".atb-WorkingResources")
             .toggleClass("hidden", this.state != STATES.project);
 
@@ -286,6 +288,12 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
     );
     $("#create-footer").toggle(
         this.state == STATES.create
+    );
+    $("#alert-footer").toggle(
+        this.state == STATES.alert
+    );
+    $("#alert-text").toggle(
+        this.state == STATES.alert
     );
 
     $("#del-project").toggleClass(
@@ -372,6 +380,9 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
         canvas.find("#canvasTitleInput").val("");
         canvas.find("#canvasFileInput").val("");
         break;
+    case STATES.alert:
+        title.text("Save Conflict Warning (\u201c" + (projectTitle) + "\u201d)").addClass("atb-ProjectAlert");
+        break;
     }
 
     $(".sc-ProjectViewer-modal").modal('show');
@@ -391,8 +402,8 @@ dm.viewer.ProjectViewer.prototype.projectChosen = function(e) {
     this.switchToProject($(e.target).closest("li").attr("about"));
 };
 
-dm.viewer.ProjectViewer.prototype.switchToProject = function(project, force) {
-    project = this.databroker.getResource(project);
+dm.viewer.ProjectViewer.prototype.switchToProject = function(projectUri, force) {
+    project = this.databroker.getResource(projectUri);
     if (!force && project.equals(this.projectController.currentProject)) {
         return false;
     }
@@ -409,6 +420,33 @@ dm.viewer.ProjectViewer.prototype.switchToProject = function(project, force) {
         this.projectController.selectProject(project);
         this.updateProjects();
         this.projectView();
+
+        $.getJSON("/store/projects/dashboard", function(users) {
+            var conflictingUsers = [];
+            for (var userId in users) {
+                if (this.currentUser.uri.indexOf(userId) < 0) {
+                    var projects = users[userId].projects;
+                    for (var i = 0; i < projects.length; i++) {
+                        if (projectUri == projects[i].uri) {
+                          conflictingUsers.push({ name: users[userId].name, email: users[userId].mail });
+                          break;
+                        }
+                    }
+                }
+            }
+            if (conflictingUsers.length > 0) {
+                returnState = this.state;
+                this.showModal(STATES.alert);
+                $("#alert-text").empty();
+                $("#alert-text").append("<p>Warning! Changes you make could be overwritten by other users. The following users are also logged in as editing this project:</p><ul id='alert-users'></ul>");
+                conflictingUsers.forEach(function(conflictingUser) {
+                  $("#alert-users").append("<li>" + conflictingUser.name + ": <a href='mailto:" + conflictingUser.email + "'>" + conflictingUser.email + "</a></li>");
+                });
+                $("#dismiss-alert").off("click").on("click", function() {
+                    this.showModal(returnState);
+                }.bind(this));
+            }
+        }.bind(this));
     }.bind(this));
 
     return true;
