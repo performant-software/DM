@@ -460,8 +460,8 @@ dm.viewer.Viewer.HOVER_HIDE_DELAY = 750;
 /**
  * The default width for context menus (in pixels)
  */
-dm.viewer.Viewer.CONTEXT_MENU_WIDTH = 275;
-dm.viewer.Viewer.CONTEXT_MENU_HEIGHT = 175;
+dm.viewer.Viewer.CONTEXT_MENU_WIDTH = 550;
+dm.viewer.Viewer.CONTEXT_MENU_HEIGHT = 400;
 
 /**
  * Returns the last known position of the mouse over this viewer relative to the

@@ -62,10 +62,14 @@ body {
 
 .atb-linkCreationControls {
     padding: 10px;
-    
+
     -webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
 	border-radius: 10px;
-    
+
     background-color: rgba(87,87,87,0.5);
+}
+
+.atb-ProjectAlert {
+		color: red;
 }

@@ -81,6 +81,8 @@
                 <button class="btn btn-primary save">Upload</button>
             </div>
         </div>
+        <div id="alert-text">
+        </div>
     </div>
     <div class="modal-footer" id="main-footer">
         <button class="btn btn-primary" id="del-project" >Delete Project</button>
@@ -89,5 +91,8 @@
     <div class="modal-footer" id="create-footer">
         <button class="btn btn-primary" id="cancel-proj" data-dismiss="modal" aria-hidden="true">Cancel</button>
         <button class="btn btn-primary" id="create-proj">Create</button>
+    </div>
+    <div class="modal-footer" id="alert-footer">
+        <button class="btn btn-primary" id="dismiss-alert">Continue</button>
     </div>
 </div>
