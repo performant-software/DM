@@ -196,7 +196,7 @@ public class ProjectResource {
             @FormParam("remove") String remove) {
         long start = System.currentTimeMillis();
 
-        authorization.checkUpdateAccess(uri);
+        authorization.checkLogin();
         
         final Model updateModel = ModelReaderWriter.read(new StringReader(update), "TTL");
         final Model removalModel = ModelReaderWriter.read(new StringReader(remove), "TTL");
