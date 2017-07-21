@@ -172,6 +172,17 @@ dm.data.ProjectController.prototype.reorderProjectContents = function(project, u
 };
 
 dm.data.ProjectController.prototype.selectProject = function(project) {
+    if (project == null) {
+        if (!this.databroker.clientApp.isGuest) {
+          this.databroker.user.deleteProperty('dm:lastOpenProject');
+          this.databroker.sync();
+        }
+        this.currentProject = null;
+        this.history.setToken("");
+        this.fireProjectSelected();
+        return true;
+    }
+
     project = this.databroker.getResource(project);
 
     if (!project.equals(this.currentProject)) {
@@ -243,7 +254,8 @@ dm.data.ProjectController.prototype.fireProjectSelected = function() {
     var event = new goog.events.Event('projectSelected', this);
     event.project = this.currentProject;
     this.dispatchEvent(event);
-    DM.projectSelected(this.currentProject.uri);
+    if (this.currentProject)
+      DM.projectSelected(this.currentProject.uri);
 };
 
 dm.data.ProjectController.prototype.addResourceToProject = function(resource, project) {

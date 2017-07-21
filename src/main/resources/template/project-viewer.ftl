@@ -93,6 +93,7 @@
         <button class="btn btn-primary" id="create-proj">Create</button>
     </div>
     <div class="modal-footer" id="alert-footer">
+        <button class="btn btn-primary" id="exit-proj" data-dismiss="modal" aria-hidden="true">Exit Project</button>
         <button class="btn btn-primary" id="dismiss-alert">Continue</button>
     </div>
 </div>

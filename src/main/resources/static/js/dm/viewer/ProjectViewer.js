@@ -280,7 +280,7 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
             .toggleClass("hidden", this.state != STATES.project);
 
     $(".nav.nav-pills").toggle(
-        permissions.update && this.state != STATES.create
+        permissions.update && this.state != STATES.create && this.state != STATES.alert
     );
 
     $("#main-footer").toggle(
@@ -408,6 +408,48 @@ dm.viewer.ProjectViewer.prototype.switchToProject = function(projectUri, force) 
         return false;
     }
 
+    if (this.isGuest) {
+      this.completeSwitch(project);
+    }
+    else {
+      $.getJSON("/store/projects/dashboard", function(users) {
+          var conflictingUsers = [];
+          for (var userId in users) {
+              if (this.currentUser.uri.indexOf(userId) < 0) {
+                  var projects = users[userId].projects;
+                  for (var i = 0; i < projects.length; i++) {
+                      if (projectUri == projects[i].uri) {
+                        conflictingUsers.push({ name: users[userId].name, email: users[userId].mail });
+                        break;
+                      }
+                  }
+              }
+          }
+          if (conflictingUsers.length > 0) {
+              this.showModal(STATES.alert);
+              $("#alert-text").empty();
+              $("#alert-text").append("<p>Warning! Changes you make could be overwritten by other users. The following users are also logged in as editing this project:</p><ul id='alert-users'></ul>");
+              conflictingUsers.forEach(function(conflictingUser) {
+                $("#alert-users").append("<li>" + conflictingUser.name + ": <a href='mailto:" + conflictingUser.email + "'>" + conflictingUser.email + "</a></li>");
+              });
+              $("#dismiss-alert").off("click").on("click", function() {
+                  this.completeSwitch(project);
+              }.bind(this));
+              $("#exit-proj").off("click").on("click", function() {
+                  this.projectController.selectProject(null);
+                  this.updateProjects();
+              }.bind(this));
+          }
+          else {
+              this.completeSwitch(project);
+          }
+      }.bind(this));
+    }
+
+    return true;
+};
+
+dm.viewer.ProjectViewer.prototype.completeSwitch = function(project) {
     if (!this.viewerGrid.isEmpty()) {
         if (!confirm('Are you sure you want to switch projects? ' +
                      'All your current open resources will be closed.')) {
@@ -420,33 +462,6 @@ dm.viewer.ProjectViewer.prototype.switchToProject = function(projectUri, force) 
         this.projectController.selectProject(project);
         this.updateProjects();
         this.projectView();
-
-        $.getJSON("/store/projects/dashboard", function(users) {
-            var conflictingUsers = [];
-            for (var userId in users) {
-                if (this.currentUser.uri.indexOf(userId) < 0) {
-                    var projects = users[userId].projects;
-                    for (var i = 0; i < projects.length; i++) {
-                        if (projectUri == projects[i].uri) {
-                          conflictingUsers.push({ name: users[userId].name, email: users[userId].mail });
-                          break;
-                        }
-                    }
-                }
-            }
-            if (conflictingUsers.length > 0) {
-                returnState = this.state;
-                this.showModal(STATES.alert);
-                $("#alert-text").empty();
-                $("#alert-text").append("<p>Warning! Changes you make could be overwritten by other users. The following users are also logged in as editing this project:</p><ul id='alert-users'></ul>");
-                conflictingUsers.forEach(function(conflictingUser) {
-                  $("#alert-users").append("<li>" + conflictingUser.name + ": <a href='mailto:" + conflictingUser.email + "'>" + conflictingUser.email + "</a></li>");
-                });
-                $("#dismiss-alert").off("click").on("click", function() {
-                    this.showModal(returnState);
-                }.bind(this));
-            }
-        }.bind(this));
     }.bind(this));
 
     return true;
@@ -637,7 +652,9 @@ dm.viewer.ProjectViewer.prototype.renderPermissions = function(reset) {
 
 dm.viewer.ProjectViewer.prototype.projectSelected = function(e) {
     this.readPermissions();
-    this.switchToProject(e.project.uri, true);
+    if (e.project) {
+      this.switchToProject(e.project.uri, true);
+    }
 };
 
 dm.viewer.ProjectViewer.prototype.openViewerForResource = function(resource) {
