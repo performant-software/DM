@@ -134,7 +134,7 @@ dm.viewer.TextEditor.prototype.safeguardStyles = function () {
             });
             $(this).text(styleText);
             for (var selector in styleCodex) {
-                $(this).siblings(selector).removeClass(styleCodex[selector].oldClass).addClass(styleCodex[selector].newClass);
+                $(this).parent().find(selector).removeClass(styleCodex[selector].oldClass).addClass(styleCodex[selector].newClass);
             }
         });
     }
