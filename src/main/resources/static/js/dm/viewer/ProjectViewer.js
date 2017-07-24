@@ -408,43 +408,7 @@ dm.viewer.ProjectViewer.prototype.switchToProject = function(projectUri, force) 
         return false;
     }
 
-    if (this.isGuest) {
-      this.completeSwitch(project);
-    }
-    else {
-      $.getJSON("/store/projects/dashboard", function(users) {
-          var conflictingUsers = [];
-          for (var userId in users) {
-              if (this.currentUser.uri.indexOf(userId) < 0) {
-                  var projects = users[userId].projects;
-                  for (var i = 0; i < projects.length; i++) {
-                      if (projectUri == projects[i].uri) {
-                        conflictingUsers.push({ name: users[userId].name, email: users[userId].mail });
-                        break;
-                      }
-                  }
-              }
-          }
-          if (conflictingUsers.length > 0) {
-              this.showModal(STATES.alert);
-              $("#alert-text").empty();
-              $("#alert-text").append("<p>Warning! Changes you make could be overwritten by other users. The following users are also logged in as editing this project:</p><ul id='alert-users'></ul>");
-              conflictingUsers.forEach(function(conflictingUser) {
-                $("#alert-users").append("<li>" + conflictingUser.name + ": <a href='mailto:" + conflictingUser.email + "'>" + conflictingUser.email + "</a></li>");
-              });
-              $("#dismiss-alert").off("click").on("click", function() {
-                  this.completeSwitch(project);
-              }.bind(this));
-              $("#exit-proj").off("click").on("click", function() {
-                  this.projectController.selectProject(null);
-                  this.updateProjects();
-              }.bind(this));
-          }
-          else {
-              this.completeSwitch(project);
-          }
-      }.bind(this));
-    }
+    this.completeSwitch(project);
 
     return true;
 };
@@ -653,7 +617,45 @@ dm.viewer.ProjectViewer.prototype.renderPermissions = function(reset) {
 dm.viewer.ProjectViewer.prototype.projectSelected = function(e) {
     this.readPermissions();
     if (e.project) {
-      this.switchToProject(e.project.uri, true);
+      var projectUri = e.project.uri;
+      var project = this.databroker.getResource(projectUri);
+      if (this.isGuest || (this.permissions.length > 0 && this.permissions[0].uri == this.databroker.user.uri && this.permissions[0].permissions.update == false && this.permissions[0].permissions.administer == false)) {
+        this.switchToProject(projectUri, true);
+      }
+      else {
+        $.getJSON("/store/projects/dashboard", function(users) {
+            var conflictingUsers = [];
+            for (var userId in users) {
+                if (this.currentUser.uri.indexOf(userId) < 0) {
+                    var projects = users[userId].projects;
+                    for (var i = 0; i < projects.length; i++) {
+                        if (projectUri == projects[i].uri) {
+                          conflictingUsers.push({ name: users[userId].name, email: users[userId].mail });
+                          break;
+                        }
+                    }
+                }
+            }
+            if (conflictingUsers.length > 0) {
+                this.showModal(STATES.alert);
+                $("#alert-text").empty();
+                $("#alert-text").append("<p>Warning! Changes you make could be overwritten by other users. The following users are also logged in as editing this project:</p><ul id='alert-users'></ul>");
+                conflictingUsers.forEach(function(conflictingUser) {
+                  $("#alert-users").append("<li>" + conflictingUser.name + ": <a href='mailto:" + conflictingUser.email + "'>" + conflictingUser.email + "</a></li>");
+                });
+                $("#dismiss-alert").off("click").on("click", function() {
+                    this.switchToProject(projectUri, true);
+                }.bind(this));
+                $("#exit-proj").off("click").on("click", function() {
+                    this.projectController.selectProject(null);
+                    this.updateProjects();
+                }.bind(this));
+            }
+            else {
+                this.switchToProject(projectUri, true);
+            }
+        }.bind(this));
+      }
     }
 };
 
