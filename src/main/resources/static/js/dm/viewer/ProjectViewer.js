@@ -626,15 +626,23 @@ dm.viewer.ProjectViewer.prototype.projectSelected = function(e) {
         $.getJSON("/store/projects/dashboard", function(users) {
             var conflictingUsers = [];
             for (var userId in users) {
-                if (this.currentUser.uri.indexOf(userId) < 0) {
-                    var projects = users[userId].projects;
-                    for (var i = 0; i < projects.length; i++) {
-                        if (projectUri == projects[i].uri) {
-                          conflictingUsers.push({ name: users[userId].name, email: users[userId].mail });
-                          break;
+                // if (this.currentUser.uri.indexOf(userId) < 0) {
+                    var readonlyUser = false;
+                    for (var i = 1; i < this.permissions.length; i++) {
+                        if (this.permissions[i].uri.indexOf(userId) > 0 && this.permissions[i].permissions.update == false && this.permissions[i].permissions.administer == false) {
+                          readonlyUser = true;
                         }
                     }
-                }
+                    if (!readonlyUser) {
+                      var projects = users[userId].projects;
+                      for (var i = 0; i < projects.length; i++) {
+                          if (projectUri == projects[i].uri) {
+                            conflictingUsers.push({ name: users[userId].name, email: users[userId].mail });
+                            break;
+                          }
+                      }
+                    }
+                // }
             }
             if (conflictingUsers.length > 0) {
                 this.showModal(STATES.alert);
