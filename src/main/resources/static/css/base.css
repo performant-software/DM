@@ -71,8 +71,8 @@ a:hover {
 
 }
 
-a:focus { 
-    outline: none; 
+a:focus {
+    outline: none;
 }
 
 .alpha-index li {
@@ -93,7 +93,7 @@ a:focus {
 #athlete-alpha-index {
     position: fixed;
     top: 48px;
-    left: 525px; 
+    left: 525px;
     width: 18px;
 }
 
@@ -344,6 +344,10 @@ body {
 }
 */
 
+.sc-ProjectViewer-button .dropdown-menu {
+  max-height: 500px;
+  overflow-y: scroll;
+}
 
 .dropdown-menu a {
     padding-left: 0px;
@@ -351,11 +355,11 @@ body {
 
 
 #main-carousel .summary {
-    position: absolute; 
-    top: 67%; 
-    left: 20px; 
+    position: absolute;
+    top: 67%;
+    left: 20px;
     color: #ffffff;
-    font-family: Arial, Verdana, Sans-serif; 
+    font-family: Arial, Verdana, Sans-serif;
 /*    width: 500px; */
 }
 
@@ -398,7 +402,7 @@ body {
 
 
 #main-carousel {
-    top: 41px; 
+    top: 41px;
 }
 
 .modal-image-uploader .modal-body {
@@ -641,4 +645,3 @@ li.alert-error {
     }
 
 }
-

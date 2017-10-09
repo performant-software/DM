@@ -333,11 +333,13 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
     case STATES.edit:
         $("#projectTitleInput")
             .val(this.databroker.dataModel.getTitle(project))
-            .toggleClass("disabled", !permissions.administer);
+            .toggleClass("disabled", !permissions.administer)
+            .prop("disabled", !permissions.administer);
 
         $("#projectDescriptionInput")
             .val(project.getOneProperty('dcterms:description') || "")
-            .toggleClass("disabled", !permissions.administer);
+            .toggleClass("disabled", !permissions.administer)
+            .prop("disabled", !permissions.administer);
 
         $("#public-access").prop("checked", false);
 
@@ -353,6 +355,7 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
                     "disabled",
                     !permissions.administer
                 );
+                $("#public-access").prop("disabled", !permissions.administer);
                 if  (status == "success" && data.public) {
                     $("#public-url").text([
                         this.databroker.baseUri,
@@ -370,8 +373,12 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
         break;
     case STATES.create:
         title.text("Create New Project");
-        $("#projectTitleInput").val("");
-        $("#projectDescriptionInput").val("");
+        $("#projectTitleInput").val("")
+          .toggleClass("disabled", false)
+          .prop("disabled", false);
+        $("#projectDescriptionInput").val("")
+          .toggleClass("disabled", false)
+          .prop("disabled", false);
         break;
     case STATES.imageUpload:
         canvas.find(".progress").hide()
