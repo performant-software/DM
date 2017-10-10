@@ -323,14 +323,14 @@ dm.viewer.AnnoTitlesList.prototype.loadForResource = function (uri) {
 
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'
-                }, 'targets:');
+                }, 'referenced by:');
 
                 jQuery(this.targetTitlesDiv).prepend(headerDiv);
             }
             else {
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'
-                }, 'no targets');
+                }, 'referenced by none');
 
                 jQuery(this.targetTitlesDiv).prepend(headerDiv);
             }
