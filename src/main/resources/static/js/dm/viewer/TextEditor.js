@@ -172,7 +172,11 @@ dm.viewer.TextEditor.prototype.saveContents = function() {
     var highlightPlugin = this.field.getPluginByClassId('Annotation');
     highlightPlugin.updateAllHighlightResources();
 
-    this.databroker.sync();
+    var request = this.databroker.sync();
+    request.fail(function(response) {
+      this.saveError = true;
+      alert("Error: failed to save changes to text resource. Please copy any in-progress text to a local file, then check your internet connection and refresh your browser window.");
+    }.bind(this));
 
     this.unsavedChanges = false;
 };
@@ -394,7 +398,10 @@ dm.viewer.TextEditor.prototype.initStatusChecker = function() {
         } else if (self.loadError === true) {
             status = "Load failed!";
         } else {
-            if (!self.unsavedChanges) {
+            if (self.saveError === true) {
+              status = "Save failed!";
+            }
+            else if (!self.unsavedChanges) {
                 status = "Saved";
             } else if (self.unsavedChanges) {
                 status = "Saving...";
@@ -567,6 +574,7 @@ dm.viewer.TextEditor.prototype.addGlobalEventListeners = function() {
     goog.events.listen(this.field, goog.editor.Field.EventType.DELAYEDCHANGE, this.onChange, false, this);
     goog.events.listen(this.field.getElement(), goog.events.EventType.KEYPRESS, function() {
         self.unsavedChanges = true;
+        self.saveError = false;
         $("#save-status-"+this.useID).text("Not Saved");
     });
 
