@@ -476,11 +476,11 @@ dm.viewer.TextEditor.prototype._renderToolbar = function() {
         //goog.editor.Command.BACKGROUND_COLOR,
         //goog.editor.Command.FONT_FACE,
         goog.editor.Command.FONT_SIZE,
-        goog.editor.Command.LINK,
+        goog.editor.Command.LINK//,
         //goog.editor.Command.UNDO,
         //goog.editor.Command.REDO,
-        goog.editor.Command.UNORDERED_LIST,
-        goog.editor.Command.ORDERED_LIST//,
+        // goog.editor.Command.UNORDERED_LIST,
+        // goog.editor.Command.ORDERED_LIST//,
         //goog.editor.Command.INDENT,
         //goog.editor.Command.OUTDENT
         //goog.editor.Command.JUSTIFY_LEFT,
@@ -509,6 +509,46 @@ dm.viewer.TextEditor.prototype._renderToolbar = function() {
 
     var saveStatusDiv = $("<div id='save-status-"+this.useID+"' class='editor-status goog-toolbar goog-toolbar-horizontal'>Initializing</div>");
     $(this.toolbarDiv).append(saveStatusDiv);
+
+    var unorderedListButton = goog.ui.editor.ToolbarFactory.makeButton(
+        goog.editor.Command.UNORDERED_LIST,
+        'Bullet list',
+        '',
+        'tr-icon tr-insertUnorderedList'
+    );
+    goog.events.listen(
+        unorderedListButton,
+        'action',
+        function() {
+          window.setInterval(function() {
+            var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
+            textEditorAnnotate.addListenersToAllHighlights();
+          }.bind(this), 1000);
+        }.bind(this),
+        false,
+        this
+    );
+    myToolbar.addChild(unorderedListButton, true);
+
+    var orderedListButton = goog.ui.editor.ToolbarFactory.makeButton(
+        goog.editor.Command.ORDERED_LIST,
+        'Numbered list',
+        '',
+        'tr-icon tr-insertOrderedList'
+    );
+    goog.events.listen(
+        orderedListButton,
+        'action',
+        function() {
+          window.setInterval(function() {
+            var textEditorAnnotate = this.field.getPluginByClassId('Annotation');
+            textEditorAnnotate.addListenersToAllHighlights();
+          }.bind(this), 1000);
+        }.bind(this),
+        false,
+        this
+    );
+    myToolbar.addChild(orderedListButton, true);
 
     myToolbar.addChild(new goog.ui.ToolbarSeparator(), true);
 
