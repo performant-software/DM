@@ -55,13 +55,13 @@ dm.viewer.AnnoTitlesList.prototype.decorate = function (div) {
 
     this.noAnnosDiv = this.domHelper.createDom('div', {
         'class': 'atb-annoTitlesList-noAnnosMessage'
-    }, 'resource has no annotations');
+    }, 'resource has no links');
     jQuery(this.noAnnosDiv).hide();
     this.scrollingDiv.appendChild(this.noAnnosDiv);
 
     this.loadingDiv = this.domHelper.createDom('div', {
         'class': 'atb-annoTitlesList-loadingMessage'
-    }, 'finding annotations...');
+    }, 'finding links...');
     jQuery(this.loadingDiv).hide();
     this.scrollingDiv.appendChild(this.loadingDiv);
 
@@ -306,14 +306,14 @@ dm.viewer.AnnoTitlesList.prototype.loadForResource = function (uri) {
 
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'
-                }, 'annotations:');
+                }, 'links to:');
 
                 jQuery(this.bodyTitlesDiv).prepend(headerDiv);
             }
             else {
                 var headerDiv = this.domHelper.createDom('div', {
                     'class': 'atb-annoTitlesList-header'
-                }, 'no annotations');
+                }, 'no links');
 
                 jQuery(this.bodyTitlesDiv).prepend(headerDiv);
             }
