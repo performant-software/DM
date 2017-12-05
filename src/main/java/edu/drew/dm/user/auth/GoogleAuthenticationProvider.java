@@ -45,7 +45,7 @@ public class GoogleAuthenticationProvider extends AuthenticationProvider {
 
     @Override
     protected String profileUrl() {
-        return "https://people.googleapis.com/v1/people/me";
+        return "https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses";
     }
 
     @Override

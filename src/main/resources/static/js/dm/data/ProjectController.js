@@ -273,6 +273,9 @@ dm.data.ProjectController.prototype.createProject = function(uri) {
     }, this);
 
     this.grantAllPermissionsToUser(this.databroker.user, project);
+    if (this.databroker.superuser && this.databroker.superuser.uri != this.databroker.user.uri) {
+        this.grantAllPermissionsToUser(this.databroker.superuser, project);
+    }
 
     return project;
 };

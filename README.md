@@ -62,10 +62,14 @@ Provisioned machine images can also be created via
 * [Packer](https://www.packer.io/) and
 * [Ansible](https://www.packer.io/docs/provisioners/ansible.html)
 
-To create a provisioned droplet snapshot on Digital Ocean:
+To create a provisioned droplet snapshot on Digital Ocean, first open machine-images/digitalocean.json and fill in values for the setting in the `variables` section. You will need a Digital Ocean API token, as well as client key/secret pairs for each OAuth provider you wish to enable. You can also specify a super-user who will be granted admin privileges on any created project; the ID format to use here will be specific to the user's authentication service.
 
-    $ export DIGITALOCEAN_API_TOKEN="..."
-    $ ansible-galaxy install\
-        --role-file=provisioning/requirements.yml\
-        --roles-path=provisioning/roles
+    $ ansible-galaxy install --role-file=provisioning/requirements.yml --roles-path=provisioning/roles
     $ packer build machine-images/digitalocean.json
+
+The script will save a snapshot, which you can access through the web interface for your Digital Ocean account. To launch your DM instance, create a new droplet from this snapshot and keep the default selection for droplet sizing. When launched, the droplet will have run the DM application from the /home/dm directory.
+
+Backups
+-------
+
+Backups of the RDF store are generated hourly and are automatically removed after 90 days in order to conserve storage space. To change the length of this window, edit the cron job for backup deletion with `crontab -e`.

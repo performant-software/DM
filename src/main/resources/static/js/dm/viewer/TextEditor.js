@@ -440,7 +440,7 @@ dm.viewer.TextEditor.prototype._addDocumentIconListeners = function() {
                         this.annoTitlesList.loadForResource(this.uri);
                     }
                 }.bind(this),
-                'Annotate this document'
+                'Make annotation for entire text'
             )
         ];
     } else {
@@ -497,7 +497,7 @@ dm.viewer.TextEditor.prototype._renderToolbar = function() {
     // Create annotate button
     var annotateButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
         dm.viewer.TextEditorAnnotate.COMMAND.ADD_ANNOTATION,
-        'Annotate selected text',
+        'Make highlight for selected text',
         '',
         'icon-tag');
 
@@ -554,7 +554,7 @@ dm.viewer.TextEditor.prototype._renderToolbar = function() {
 
     var toggleMarkersButton = goog.ui.editor.ToolbarFactory.makeToggleButton(
         'toggle-markers',
-        'Toggle the visibility of highlights on the canvas',
+        'Hide/show all highlights',
         '',
         'icon-eye-close'
     );
@@ -596,7 +596,7 @@ dm.viewer.TextEditor.prototype.handleToggleMarkers = function(event) {
         $annotations.removeClass("atb-editor-textannotation-nohighlight");
         if (this.annotateButton) {
             this.annotateButton.setEnabled(true);
-            this.annotateButton.setTooltip("Annotate selected text");
+            this.annotateButton.setTooltip("Make highlight for selected text");
         }
     } else {
         $annotations.addClass("atb-editor-textannotation-nohighlight");

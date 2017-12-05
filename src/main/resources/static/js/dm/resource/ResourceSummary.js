@@ -47,7 +47,7 @@ dm.resource.ResourceSummary = function (uri, viewer, clientApp, opt_domHelper, o
 
     this.div = this.domHelper.createDom('div', {
         'class': 'atb-resourcesummary',
-        'title': 'Open this resource'
+        'title': 'Open item in a new frame'
     }, null);
     this.outerDiv = this.domHelper.createDom('div', {
         'class': 'atb-resourcesummary-outer'
@@ -55,7 +55,7 @@ dm.resource.ResourceSummary = function (uri, viewer, clientApp, opt_domHelper, o
     this.deleteButton = this.domHelper.createDom('div', {
         'class': 'atb-resourcesummary-delete-button',
         'style': 'display: none;',
-        'title': 'Click to delete this resource'
+        'title': 'Delete link to this item'
     });
 
     this.annoIds = [];
