@@ -269,7 +269,7 @@ dm.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 		                self.annoTitlesList.loadForResource(specificResourceUri);
 		            }
 		        },
-	            'Annotate this highlight'
+	            'Make annotation for this highlight'
 			),
 
 			new dm.widgets.MenuItem(
@@ -282,14 +282,17 @@ dm.viewer.TextEditorAnnotate.prototype.addListeners = function(object) {
 		                self.annoTitlesList.loadForResource(specificResourceUri);
 		            }
 				},
-	            'Link another resource to this highlight'
+	            'Make a link to this highlight'
 			),
 			new dm.widgets.MenuItem(
 				'delete_highlight_button',
 				createButtonGenerator('atb-radialmenu-button icon-remove'),
 				function(actionEvent) {
-					self.viewer.hideHoverMenu();
-					self.deleteAnnotation(object);
+          var resp = confirm("Are you sure you wish to delete this highlight and its associate links?");
+          if (resp) {
+  					self.viewer.hideHoverMenu();
+  					self.deleteAnnotation(object);
+          }
 				},
 	            'Delete this highlight'
 			)

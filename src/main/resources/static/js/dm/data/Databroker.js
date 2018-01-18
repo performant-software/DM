@@ -56,9 +56,23 @@ dm.data.Databroker = function(clientApp) {
     this.searchClient = new dm.data.SearchClient(this);
 
     this.user = undefined;
+    this.superuserId = undefined;
+    this.superuser = undefined;
+
     this.userDataLoad = this.getDeferredResource(
         this.userUrl(clientApp.username)
     ).done(function(user) { this.user = user; }.bind(this));
+
+    jQuery.ajax({
+        type: 'GET',
+        url: [this.baseUri, "store", "users", "superuser"].join("/"),
+        success: function(response){
+          this.superuserId = response;
+          this.getDeferredResource(
+              this.userUrl(response)
+          ).done(function(superuser) { this.superuser = superuser; }.bind(this));
+        }.bind(this)
+    });
 };
 
 goog.inherits(dm.data.Databroker, goog.events.EventTarget);

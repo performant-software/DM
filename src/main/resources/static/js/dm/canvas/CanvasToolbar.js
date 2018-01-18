@@ -130,7 +130,7 @@ dm.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
      var panZoomButton = this.createButton(
          'pan-zoom',
-         'Pan and zoom the canvas',
+         'Move or zoom image',
          '',
          'icon-hand-up',
          this.handlePanZoomClick
@@ -140,7 +140,7 @@ dm.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
      var drawLineButton = this.createButton(
          'draw-line',
-         'Draw lines and polylines on the canvas',
+         'Make segmented line highlight',
          '',
          'sc-CanvasToolbar-drawLineIcon',
          this.handleDrawLineClick
@@ -149,7 +149,7 @@ dm.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
      var drawBoxButton = this.createButton(
          'draw-box',
-         'Draw rectangles on the canvas',
+         'Make square/rectangle highlight',
          '',
          'sc-CanvasToolbar-drawBoxIcon',
          this.handleDrawBoxClick
@@ -158,7 +158,7 @@ dm.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
      var drawCircleButton = this.createButton(
          'draw-circle',
-         'Draw circles and ellipses on the canvas',
+         'Make circle/oval highlight',
          '',
          'sc-CanvasToolbar-drawCircleIcon',
          this.handleDrawCircleClick
@@ -167,7 +167,7 @@ dm.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
      var drawPolygonButton = this.createButton(
          'draw-polygon',
-         'Draw polygons on the canvas',
+         'Make polygon highlight',
          '',
          'sc-CanvasToolbar-drawPolygonIcon',
          this.handleDrawPolygonClick
@@ -178,7 +178,7 @@ dm.canvas.CanvasToolbar.prototype.setupDefaultButtons = function() {
 
     var toggleMarkersButton = this.createButton(
         'toggle-markers',
-        'Toggle the visibility of markers on the canvas',
+        'Hide/show all highlights',
         '',
         'icon-eye-close',
         this.handleToggleMarkers

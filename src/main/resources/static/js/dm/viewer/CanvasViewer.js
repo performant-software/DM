@@ -69,7 +69,7 @@ dm.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
                    self.linkAnnotation();
                    self.hideHoverMenu();
                }.bind(this),
-               'Link another resource to this document'
+               'Make link to the entire image'
             ),
             new dm.widgets.MenuItem(
                 "newTextAnno",
@@ -79,7 +79,7 @@ dm.viewer.CanvasViewer.prototype._addDocumentIconListeners = function() {
 
                     self.hideHoverMenu();
                 },
-                'Annotate this canvas'
+                'Make annotation for entire image'
             )
         ];
     }
@@ -279,11 +279,14 @@ dm.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                         "deleteThisMarker",
                         createButtonGenerator("atb-radialmenu-button icon-remove"),
                         function(actionEvent) {
-                            self.deleteFeature(uri);
+                            var resp = confirm("Are you sure you wish to delete this highlight and its associate links?");
+                            if (resp) {
+                              self.deleteFeature(uri);
 
-                            self.hideHoverMenu();
+                              self.hideHoverMenu();
+                            }
                         },
-                        'Delete this marker'
+                        'Delete this highlight'
                     ),
                     new dm.widgets.MenuItem(
                         "hideMarker",
@@ -293,7 +296,7 @@ dm.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
 
                             self.hideHoverMenu();
                         },
-                        'Temporarily hide this marker'
+                        'Hide this highlight'
                     ),
                     new dm.widgets.MenuItem(
                         "linkAway",
@@ -306,7 +309,7 @@ dm.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                                 self.annoTitlesList.loadForResource(specificResourceUri);
                             }
                         },
-                        'Link another resource to this marker'
+                        'Make a link to this highlight'
                     ),
                     new dm.widgets.MenuItem(
                         "newTextAnno",
@@ -318,7 +321,7 @@ dm.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
                                 self.annoTitlesList.loadForResource(specificResourceUri);
                             }
                         },
-                        'Annotate this marker'
+                        'Make annotation for this highlight'
                     )
                 ];
             }
@@ -332,7 +335,7 @@ dm.viewer.CanvasViewer.prototype.onFeatureHover = function(event) {
 
                             self.hideHoverMenu();
                         },
-                        'Temporarily hide this marker'
+                        'Hide this highlight'
                     )
                 ];
             }

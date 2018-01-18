@@ -753,7 +753,7 @@ goog.ui.editor.DefaultToolbar.MSG_BACKGROUND_COLOR_TITLE =
 
 /** @desc Link button tooltip. */
 goog.ui.editor.DefaultToolbar.MSG_LINK_TITLE =
-    goog.getMsg('Add or remove link');
+    goog.getMsg('Add or remove external WWW link');
 
 
 /** @desc Numbered list button tooltip. */

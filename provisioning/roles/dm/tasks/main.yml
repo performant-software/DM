@@ -41,3 +41,22 @@
     dest: "/etc/systemd/system/dm.service"
     mode: 0644
   notify: restart DM service
+
+- name: create DM launch script
+  template:
+    src: "dm.sh.j2"
+    dest: "/home/dm/dm.sh"
+    mode: 0644
+
+- name: create DM configuration file
+  template:
+    src: "dm.conf.j2"
+    dest: "/home/dm/dm.conf"
+    mode: 0644
+  notify: restart DM service
+
+- name: launch backup cleaner
+  cron:
+    minute: "0"
+    hour: "0"
+    job: "cd /home/dm/dm-data/ttl-dumps && find *.ttl.gz -type f -mtime +90 -delete"

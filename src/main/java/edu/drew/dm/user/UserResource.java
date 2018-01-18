@@ -1,5 +1,6 @@
 package edu.drew.dm.user;
 
+import com.typesafe.config.Config;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -8,6 +9,7 @@ import edu.drew.dm.data.SemanticDatabase;
 import edu.drew.dm.rdf.Models;
 import edu.drew.dm.rdf.OpenArchivesTerms;
 import edu.drew.dm.rdf.Perm;
+import edu.drew.dm.Configuration;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
@@ -38,12 +40,14 @@ public class UserResource {
     private final SemanticDatabase store;
     private final ObjectMapper objectMapper;
     private final UserAuthorization authorization;
+    private final Config config;
 
     @Inject
     public UserResource(SemanticDatabase db, ObjectMapper objectMapper, UserAuthorization authorization) {
         this.store = db;
         this.objectMapper = objectMapper;
         this.authorization = authorization;
+        this.config = Configuration.application();
     }
 
     @GET
@@ -82,6 +86,12 @@ public class UserResource {
                                 .forEachRemaining(project -> target.add(project.listProperties()));
                     });
         });
+    }
+
+    @Path("/superuser")
+    @GET
+    public String superuser() {
+        return config.getString("superuser.id");
     }
 
     public static Model externalize(Model model, UriInfo ui) {

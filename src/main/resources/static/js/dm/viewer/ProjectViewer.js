@@ -587,6 +587,7 @@ dm.viewer.ProjectViewer.prototype.updatePermissions = function(e) {
 
 dm.viewer.ProjectViewer.prototype.renderPermissions = function(reset) {
     var permissionsTable = $(".sc-ProjectViewer-permissions-table tbody");
+    var project = this.projectController.currentProject;
 
     if (reset) {
         permissionsTable.find("tr[about]").remove();
@@ -596,21 +597,26 @@ dm.viewer.ProjectViewer.prototype.renderPermissions = function(reset) {
             return;
         }
 
+        var isSuperuser = record.label == this.databroker.superuserId;
+
         var tr = permissionsTable.find("tr[about='" + record.uri + "']");
         if (tr.length == 0) {
             tr = $("<tr></tr>").appendTo(permissionsTable)
                 .attr("about", record.uri)
                 .toggleClass("info", i == 0);
 
+            var name = record.name;
+            if (i > 0 && isSuperuser) name += " (site admin)";
+
             $("<td></td>").appendTo(tr)
-                .append(document.createTextNode(record.name))
+                .append(document.createTextNode(name))
                 .append("<br>")
                 .append($("<small></small>").text(record.label));
 
             goog.array.forEach(PERMISSIONS, function(perm) {
                 $("<input type='checkbox'>")
                     .addClass(perm)
-                    .prop("disabled", i == 0)
+                    .prop("disabled", i == 0 || isSuperuser || record.uri == project.getOneProperty("dc:creator"))
                     .appendTo($("<td></td>").appendTo(tr));
             });
         }

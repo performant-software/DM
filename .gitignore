@@ -24,3 +24,5 @@ node_modules/
 
 dm.conf
 dm.sh
+
+machine-images/digitalocean.json

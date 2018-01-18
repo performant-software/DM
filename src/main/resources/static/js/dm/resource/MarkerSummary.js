@@ -19,7 +19,7 @@ dm.resource.MarkerSummary = function(uri, viewer, clientApp, opt_domHelper, opt_
 
    this.selected = false;
 
-   this.setTooltip('Show this marker on the canvas');
+   this.setTooltip('Open item in a new frame');
 
    this.size = new goog.math.Size(75, 75);
 
