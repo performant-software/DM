@@ -21,6 +21,7 @@ import org.apache.jena.vocabulary.RDFS;
 import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Arrays;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.GET;
@@ -82,6 +83,7 @@ public class UserResource {
 
                         agent.getModel().listObjectsOfProperty(agent, Perm.hasPermissionOver)
                                 .mapWith(RDFNode::asResource)
+                                .filterDrop(subject -> Arrays.asList(config.getString("hide.uris").split(",")).contains(subject.getURI()))
                                 .filterKeep(subject -> subject.hasProperty(RDF.type, DCTypes.Collection))
                                 .forEachRemaining(project -> target.add(project.listProperties()));
                     });
