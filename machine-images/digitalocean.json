@@ -1,14 +1,14 @@
 {
   "variables": {
-    "digital_ocean_api_token": "digital-ocean-api-token",
-    "superuser_id": "provider-name:user-id",
-    "google_key": "google-key",
-    "google_secret": "google-secret",
-    "github_key": "github-key",
-    "github_secret": "github-secret",
-    "doorkeeper_provider_base_url": "doorkeeper-provider-base-url",
-    "doorkeeper_provider_key": "doorkeeper-provider-key",
-    "doorkeeper_provider_secret": "doorkeeper-provider-secret"
+    "digital_ocean_api_token": "",
+    "superuser_id": "",
+    "google_key": "",
+    "google_secret": "",
+    "github_key": "",
+    "github_secret": "",
+    "doorkeeper_provider_base_url": "",
+    "doorkeeper_provider_key": "",
+    "doorkeeper_provider_secret": ""
   },
   "builders": [{
     "type": "digitalocean",

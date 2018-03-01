@@ -213,7 +213,10 @@ dm.viewer.ProjectViewer.prototype.updateProjects = function() {
             : "none"
     );
 
-    var projectUris = this.projectController.findProjects();
+    var allProjectUris = this.projectController.findProjects();
+    var projectUris = goog.array.filter(allProjectUris, function(uri) {
+        return this.databroker.hasResourceData(uri);
+    });
     if (project) {
         goog.array.remove(projectUris, project.uri);
     }
