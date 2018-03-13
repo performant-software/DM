@@ -89,9 +89,16 @@ Recent updates to the software stack used in Digital Ocean droplets can lead to 
   shell: apt-get -y upgrade
 ```
 
-Restoring Backup Data from an Older Instance
+Restoring a Downloaded Project from Another Instance
 -------
-If you are restoring a backup from another DM instance, you will next need to unpack the compressed backup file, upload it to your new installation server, and relaunch the DM application. You will need to use command line tools for this process:
+If you wish to seed your new instance with an exported project from an existing instance, first navigate to the existing project and click "Download" in its table of contents view. You will then need to copy the download file to your instance server and relaunch the application.
+- Clicking "Download" will provide you with a .zip file. Unzip this file so that you have a folder containing a file called download.ttl and files for any images used by the project. Use `rsync` to upload the download.ttl file to /home/dm on your instance server and the images to /home/dm/dm-data/images.
+- To prepare the DM instance for relaunch, next use `ssh` to connect your command line to your DM server, using the credentials provided by Digital Ocean. Run `cd /home/dm`, then `ps -aux | grep java` to find the process ID number of the DM application, then use `kill` with that process ID to shut down the application.
+- Finally, to relaunch the application and restore the exported project, run `nohup java -jar dm-1.0-SNAPSHOT.jar download.ttl > dm.log &`. You can then leave the ssh session with `exit`.
+
+Restoring All Projects from Another Instance
+-------
+If you are restoring a full-data backup from another DM instance, you will next need to unpack the compressed backup file, upload it to your new installation server, and relaunch the DM application. You will need to use command line tools for this process:
 - Use `gunzip` to unpack the backup file and `rsync` to upload it to your installation server’s /home/dm directory.
 - To prepare the DM instance for relaunch, next use `ssh` to connect your command line to your DM server, using the credentials provided by Digital Ocean. Run `cd /home/dm`, then `ps -aux | grep java` to find the process ID number of the DM application, then use `kill` with that process ID to shut down the application. Run `rm -rf dm-data` to remove the default data directory.
 - Finally, to relaunch the application and restore the backup, run `nohup java -jar dm-1.0-SNAPSHOT.jar your-backup-file-name.ttl > dm.log &`, replacing "your-backup-file-name" with the name of the uncompressed backup file you’ve uploaded. You can then leave the ssh session with `exit`.
