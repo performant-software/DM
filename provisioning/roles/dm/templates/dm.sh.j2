@@ -1,2 +1,2 @@
 #!/bin/bash
-nohup java -jar {{ dm_jar }} >&dm.log &
+nohup java -Xms1024m -Xmx1024m -jar {{ dm_jar }} >&dm.log &

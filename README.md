@@ -32,37 +32,15 @@ Browsersync serves client-side assets from `src/main/resources/static` and
 proxies backend logic provided by the Java process, watching asset changes
 and reloading the app in the browser when needed.
 
-VM
---
-
-A production-like setup of DM is available as a provisioned VM. Requirements:
-
-* [Vagrant](https://www.vagrantup.com/)
-* [Vagrant/Ansible](https://www.vagrantup.com/docs/provisioning/ansible.html)
-
-With Vagrant and Ansible installed, bring up a local DM instance:
-
-    $ vagrant up
-
-The VM join a private network with IP `192.168.33.44` ; see
-`Vagrantfile` for details. After VM startup and provisioning,
-optionally add a hosts entry for the private interface
-
-    $ echo "192.168.33.44 vm.local" >>/etc/hosts
-
-and browse to
-
-    http://vm.local/
-
 Machine Images
 --------------
 
-Provisioned machine images can also be created via
+Provisioned machine images can be created via
 
 * [Packer](https://www.packer.io/) and
 * [Ansible](https://www.packer.io/docs/provisioners/ansible.html)
 
-To create a provisioned droplet snapshot on Digital Ocean, first open machine-images/digitalocean.json and fill in values for the settings in the `variables` section. You will need a Digital Ocean API token, as well as client key/secret pairs for each OAuth provider you wish to enable. You can also specify a super-user who will be granted admin privileges on any created project; the ID format to use here will be specific to the user's authentication service.
+To create a provisioned droplet snapshot on Digital Ocean, first install the above requirements (Packer and Ansible) open machine-images/digitalocean.json and fill in values for the settings in the `variables` section. You will need a Digital Ocean API token, as well as client key/secret pairs for each OAuth provider you wish to enable. You can also specify a super-user who will be granted admin privileges on any created project; the ID format to use here will be specific to the user's authentication service.
 
     $ ansible-galaxy install --role-file=provisioning/requirements.yml --roles-path=provisioning/roles
     $ packer build machine-images/digitalocean.json
