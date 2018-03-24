@@ -2,45 +2,29 @@ DM: Tools For Digital Annotation and Linking
 ============================================
 (Formerly Digital Mappaemundi)
 
-Prerequisites
--------------
-
-* Python v2
-* Java Development Kit v8
-* [Apache Maven](http://maven.apache.org/)
-* [NodeJS](https://nodejs.org/)
-* [Yarn](https://yarnpkg.com/)
-
-Build instructions
-------------------
-
-    $ scripts/build
-
-Development instructions
-------------------------
-
-In order to develop the client-side code, build and start the backend:
-
-    $ scripts/build
-    $ scripts/run
-
-In parallel, initialize and start [Browsersync](https://www.browsersync.io/):
-
-    $ npm run dev
-
-Browsersync serves client-side assets from `src/main/resources/static` and
-proxies backend logic provided by the Java process, watching asset changes
-and reloading the app in the browser when needed.
-
-Machine Images
+Deploying your own instance to Digital Ocean
 --------------
 
-Provisioned machine images can be created via
+#### Creating an independent user authentication provider
+DM supports login through the OAuth protocol, and by default connects to Google's and GitHub's authentication providers. In addition, an independent OAuth provider application can be quickly created using the accompanying [Simple OAuth2 provider](https://github.com/performant-software/oauth-provider) repository. To add this service, follow the deployment instructions in that repository's ReadMe, then navigate to your-provider-application-url/oauth/applications and add an entry for your DM instance. You should use 'DM' for the application name and add your-dm-application-url/accounts/oauth-callback/independent to the Redirect URI field (this field can accommodate a list of callback URIs separated by line breaks, which is useful if you wish to provide authentication to multiple DM instances). Click Submit to save the application configuration, and copy the Application Id (key) and Secret values shown on the subsequent page.
 
-* [Packer](https://www.packer.io/) and
-* [Ansible](https://www.packer.io/docs/provisioners/ansible.html)
+#### Setting configuration variables
+In order to run the provisioning script to create an instance on Digital Ocean, you first need to create a local copy of this repository using `git clone` and fill in configuration values in the file machine-images/digitalocean.json. These include:
+- `digital_ocean_api_token`: see the "How to Generate a Personal Access Token" in [Digital Ocean's API tutorial](https://www.digitalocean.com/community/tutorials/how-to-use-the-digitalocean-api-v2). Your token must be provided here in order for the deployment process to connect with your Digital Ocean account.
+- `superuser_id`: an identifier for a user who should have top-level admin status for all projects created in the instance. The format of this ID will be specific to the authentication provider this user will use; for the independent provider application, the ID will be "independent:username@example.com" with the user's email address replacing the latter part.
+- `google_key` and `google_secret`: to enable login through Google's authentication service, see the [guide for Google's People API](https://developers.google.com/people/v1/getting-started) and fill in the key/secret values here after setting it up with your Google account.
+- `github_key` and `github_secret`: to enable login through GitHub's authentication service, see the [guide for GitHub OAuth applications](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/) and fill in the key/secret values after creating an application in your GitHub settings.
+- `independent_provider_base_url`: the URL for the independent OAuth provider application you have deployed, including the protocol and the trailing slash character, as in "http://example.com/".
+- `independent_provider_key` and `independent_provider_secret`: the Application ID and Secret values displayed by your independent OAuth provider application after adding your DM instance to its OAuth applications list.
+- `independent_provider_description`: the name of your independent OAuth provider service as it will appear in the Login dropdown menu.
 
-To create a provisioned droplet snapshot on Digital Ocean, first install the above requirements (Packer and Ansible) open machine-images/digitalocean.json and fill in values for the settings in the `variables` section. You will need a Digital Ocean API token, as well as client key/secret pairs for each OAuth provider you wish to enable. You can also specify a super-user who will be granted admin privileges on any created project; the ID format to use here will be specific to the user's authentication service.
+#### Installing required tools
+You will need to install Ansible and Packer in order to run the provisioning script. See installation instructions at:
+- http://docs.ansible.com/ansible/latest/intro_installation.html for Ansible (Mac OS X users may alternatively wish to use Homebrew)
+- https://www.packer.io/intro/getting-started/install.html for Packer
+
+#### Creating the Digital Ocean snapshot
+After `cd`ing into your local copy of this repository, run the following two commands:
 
     $ ansible-galaxy install --role-file=provisioning/requirements.yml --roles-path=provisioning/roles
     $ packer build machine-images/digitalocean.json
@@ -66,6 +50,10 @@ Recent updates to the software stack used in Digital Ocean droplets can lead to 
   #   dpkg_options: "{{ apt_upgrade_dpkg_options }}"
   shell: apt-get -y upgrade
 ```
+
+Deploying outside of Digital Ocean
+-------
+If you wish to deploy your DM instance on your own server or on a service other than Digital Ocean, you can do so by installing the requirements and running the scripts listed below in "Building and running for development or custom deployment." The `scripts/build` command will create a .jar file that, when launched in a properly configured environment, will provide the full DM application at port 8080.
 
 Restoring a Downloaded Project from Another Instance
 -------
@@ -93,3 +81,33 @@ To restore your DM instance from a backup file, you will need to shut the applic
 - In the /home/dm directory, run `gunzip backup-to-restore.ttl.gz` to decompress it.
 - Run `ps -aux` to identify the process ID of the DM application. It will contain "java -jar dm-1.0-SNAPSHOT.jar" in the Command column. Run `kill` followed by the process ID to shut the application down.
 - Run `nohup java -jar dm-1.0-SNAPSHOT.jar backup-to-restore.ttl > dm.log &` to launch the instance and restore it from the selected backup.
+
+
+Building and running for development or custom deployment
+-------------
+
+#### Requirements
+* Python v2
+* Java Development Kit v8
+* [Apache Maven](http://maven.apache.org/)
+* [NodeJS](https://nodejs.org/)
+* [Yarn](https://yarnpkg.com/)
+
+#### Build instructions
+
+    $ scripts/build
+
+#### Development instructions
+
+In order to develop the client-side code, build and start the backend:
+
+    $ scripts/build
+    $ scripts/run
+
+In parallel, initialize and start [Browsersync](https://www.browsersync.io/):
+
+    $ npm run dev
+
+Browsersync serves client-side assets from `src/main/resources/static` and
+proxies backend logic provided by the Java process, watching asset changes
+and reloading the app in the browser when needed.
