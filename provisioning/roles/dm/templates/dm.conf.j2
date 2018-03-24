@@ -8,10 +8,11 @@ auth {
             key = "{{ github_key }}"
             secret = "{{ github_secret }}"
         }
-        performant {
+        independent {
             uri = "{{ doorkeeper_provider_base_url }}"
             key = "{{ doorkeeper_provider_key }}"
             secret = "{{ doorkeeper_provider_secret }}"
+            description = "{{ independent_provider_description }}"
         }
     }
 }

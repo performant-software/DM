@@ -6,9 +6,10 @@
     "google_secret": "",
     "github_key": "",
     "github_secret": "",
-    "doorkeeper_provider_base_url": "",
-    "doorkeeper_provider_key": "",
-    "doorkeeper_provider_secret": ""
+    "independent_provider_base_url": "",
+    "independent_provider_key": "",
+    "independent_provider_secret": "",
+    "independent_provider_description": ""
   },
   "builders": [{
     "type": "digitalocean",
@@ -23,6 +24,6 @@
     "type": "ansible",
     "playbook_file": "./provisioning/playbook.yml",
     "groups": ["dm", "digitalocean"],
-    "extra_arguments": ["--extra-vars", "superuser_id={{ user `superuser_id` }} google_key={{ user `google_key` }} google_secret={{ user `google_secret` }} github_key={{ user `github_key` }} github_secret={{ user `github_secret` }} doorkeeper_provider_base_url={{ user `doorkeeper_provider_base_url` }} doorkeeper_provider_key={{ user `doorkeeper_provider_key` }} doorkeeper_provider_secret={{ user `doorkeeper_provider_secret` }}"]
+    "extra_arguments": ["--extra-vars", "superuser_id={{ user `superuser_id` }} google_key={{ user `google_key` }} google_secret={{ user `google_secret` }} github_key={{ user `github_key` }} github_secret={{ user `github_secret` }} doorkeeper_provider_base_url={{ user `independent_provider_base_url` }} doorkeeper_provider_key={{ user `independent_provider_key` }} doorkeeper_provider_secret={{ user `independent_provider_secret` }} doorkeeper_provider_description={{ user `independent_provider_description` }}"]
   }]
 }

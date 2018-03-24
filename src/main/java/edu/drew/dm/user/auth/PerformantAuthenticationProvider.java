@@ -16,32 +16,34 @@ import javax.ws.rs.core.UriInfo;
 public class PerformantAuthenticationProvider extends AuthenticationProvider {
 
     private final String baseUri;
+    private final String description;
 
     private OAuth20Service service;
 
     public PerformantAuthenticationProvider(Config config, ObjectMapper objectMapper) {
         super(config, objectMapper);
-        this.baseUri = config.hasPath("auth.oauth.performant.uri")
-                ? config.getString("auth.oauth.performant.uri")
+        this.baseUri = config.hasPath("auth.oauth.independent.uri")
+                ? config.getString("auth.oauth.independent.uri")
                 : "";
+        this.description = config.hasPath("auth.oauth.independent.description") ? config.getString("auth.oauth.independent.description") : "Performant Software";
     }
 
     @Override
     public String getKey() {
-        return "performant";
+        return "independent";
     }
 
     @Override
     public String getDescription() {
-        return "Performant Software";
+        return this.description;
     }
 
     @Override
     public OAuth20Service oauthService(UriInfo ui) {
         if (service == null) {
             service = new ServiceBuilder()
-                    .apiKey(config.getString("auth.oauth.performant.key"))
-                    .apiSecret(config.getString("auth.oauth.performant.secret"))
+                    .apiKey(config.getString("auth.oauth.independent.key"))
+                    .apiSecret(config.getString("auth.oauth.independent.secret"))
                     .callback(oauthCallbackUri(ui))
                     .build(new DefaultApi20() {
                         @Override
