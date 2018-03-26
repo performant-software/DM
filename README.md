@@ -1,6 +1,20 @@
 DM: Tools For Digital Annotation and Linking
 ============================================
-(Formerly Digital Mappaemundi)
+
+Setting up your own DM instance:
+-------------
+
+The easiest way to host your own instance of DM for your projects is to use [Digital Ocean](https://www.digitalocean.com/) - a cloud computing platform where you can set up virtual server space for as little as $10/month. We’ve set up an optimized process to deploy DM to Digital Ocean.
+
+The size of the “droplet” you will want to set up to host a DM instance will vary, but here is a basic estimate:
+
+| Instance size                                       | Memory | SSD Disk |
+| --------------------------------------------------- |:------:|:--------:|
+| Small (1-5 individual projects, 30 GB total data)   | 2 GB   | 50 GB    |
+| Medium (5-10 individual projects, 40 GB total data) | 2 GB   | 60 GB    |
+| Large (10-20 individual projects, 60 GB total data) | 4 GB   | 80 GB    |
+
+Alternatively, if you wish to set up a DM instance on your own server or another service, basic instructions are provided below.
 
 Deploying your own instance to Digital Ocean
 --------------
