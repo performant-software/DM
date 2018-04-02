@@ -1,0 +1,24 @@
+auth {
+    oauth {
+        google {
+          key = "google-key"
+          secret = "google-secret"
+        }
+        github {
+            key = "github-key"
+            secret = "github-secret"
+        }
+        independent {
+            uri = "http://example.com/"
+            key = "oauth-key"
+            secret = "oauth-secret"
+            description = "My Login Provider"
+        }
+    }
+}
+superuser {
+    id = "independent:admin@example.com"
+}
+hide {
+    uris = ""
+}

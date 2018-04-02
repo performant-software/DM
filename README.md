@@ -69,6 +69,38 @@ Deploying outside of Digital Ocean
 -------
 If you wish to deploy your DM instance on your own server or on a service other than Digital Ocean, you can do so by installing the requirements and running the scripts listed below in "Building and running for development or custom deployment." The `scripts/build` command will create a .jar file that, when launched in a properly configured environment, will provide the full DM application at port 8080.
 
+Building and running for development or custom deployment
+-------------
+
+#### Requirements
+* Python v2
+* Java Development Kit v8
+* [Apache Maven](http://maven.apache.org/)
+* [NodeJS](https://nodejs.org/)
+* [Yarn](https://yarnpkg.com/)
+
+#### Configuration
+Copy the contents of dm.conf.example to a file named dm.conf and fill in the values for OAuth providers you wish to enable. Please refer to the above section on "Creating an independent user authentication provider" and the guides for key/secret generation with the various services in the "Setting configuration variables" section.
+
+#### Build instructions
+
+    $ scripts/build
+
+#### Development instructions
+
+In order to develop the client-side code, build and start the backend:
+
+    $ scripts/build
+    $ scripts/run
+
+In parallel, initialize and start [Browsersync](https://www.browsersync.io/):
+
+    $ npm run dev
+
+Browsersync serves client-side assets from `src/main/resources/static` and
+proxies backend logic provided by the Java process, watching asset changes
+and reloading the app in the browser when needed.
+
 Restoring a Downloaded Project from Another Instance
 -------
 If you wish to seed your new instance with an exported project from an existing instance, first navigate to the existing project and click "Download" in its table of contents view. You will then need to copy the download file to your instance server and relaunch the application.
@@ -95,33 +127,3 @@ To restore your DM instance from a backup file, you will need to shut the applic
 - In the /home/dm directory, run `gunzip backup-to-restore.ttl.gz` to decompress it.
 - Run `ps -aux` to identify the process ID of the DM application. It will contain "java -jar dm-1.0-SNAPSHOT.jar" in the Command column. Run `kill` followed by the process ID to shut the application down.
 - Run `nohup java -jar dm-1.0-SNAPSHOT.jar backup-to-restore.ttl > dm.log &` to launch the instance and restore it from the selected backup.
-
-
-Building and running for development or custom deployment
--------------
-
-#### Requirements
-* Python v2
-* Java Development Kit v8
-* [Apache Maven](http://maven.apache.org/)
-* [NodeJS](https://nodejs.org/)
-* [Yarn](https://yarnpkg.com/)
-
-#### Build instructions
-
-    $ scripts/build
-
-#### Development instructions
-
-In order to develop the client-side code, build and start the backend:
-
-    $ scripts/build
-    $ scripts/run
-
-In parallel, initialize and start [Browsersync](https://www.browsersync.io/):
-
-    $ npm run dev
-
-Browsersync serves client-side assets from `src/main/resources/static` and
-proxies backend logic provided by the Java process, watching asset changes
-and reloading the app in the browser when needed.
