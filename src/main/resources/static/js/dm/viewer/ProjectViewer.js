@@ -690,7 +690,7 @@ dm.viewer.ProjectViewer.prototype.openViewerForResource = function(resource) {
     container.setViewer(viewer);
 
     if ( clone || !this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.update)) {
-        viewer.makeUneditable();
+        window.setTimeout(viewer.makeUneditable.bind(viewer), 200);
         viewer.loadResourceByUri(resource.uri);
         container.autoResize();
     } else {
