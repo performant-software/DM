@@ -65,6 +65,7 @@ dm.viewer.TextEditor = function(clientApp, opt_initialTextContent) {
     this.viewerType = 'text editor';
     this.unsavedChanges = false;
     this.loadingContent = false;
+    this.blockOnChange = true;
     this.loadError = false;
     this.styleRoot = this.clientApp.getStyleRoot();
 
@@ -105,9 +106,9 @@ dm.viewer.TextEditor.prototype.getSanitizedHtml = function () {
  * sets the contents of the editor to the specified string
  * @param {!string} htmlString the html to be written to the editor
  **/
-dm.viewer.TextEditor.prototype.setHtml = function (htmlString) {
+dm.viewer.TextEditor.prototype.setHtml = function (htmlString, noDelayedChange) {
     if (this.field) {
-        this.field.setHtml(false, htmlString, false );
+        this.field.setHtml(false, htmlString, noDelayedChange === true );
     }
 };
 
@@ -117,6 +118,7 @@ dm.viewer.TextEditor.prototype.setHtml = function (htmlString) {
  **/
 dm.viewer.TextEditor.prototype.safeguardStyles = function () {
     if (this.field) {
+        this.blockOnChange = true;
         var uriParts = this.uri.split(":");
         var uri = uriParts[uriParts.length - 1];
         var $contents = $(this.editorIframeElement).contents();
@@ -137,7 +139,38 @@ dm.viewer.TextEditor.prototype.safeguardStyles = function () {
                 $(this).parent().find(selector).removeClass(styleCodex[selector].oldClass).addClass(styleCodex[selector].newClass);
             }
         });
+        // this.blockOnChange = false;
+        window.setTimeout(function(){this.blockOnChange = false;}.bind(this), 1500);
     }
+    // if (this.field) {
+    //     this.blockOnChange = true;
+    //     var uriParts = this.uri.split(":");
+    //     var uri = uriParts[uriParts.length - 1];
+    //     var range = this.field.getRange();
+    //     if (range) range = range.saveUsingCarets();
+    //     var $contents = $($.parseHTML(this.field.getCleanContents()));
+    //     $contents.find("style").each(function(index) {
+    //         var styleText = $(this).text();
+    //         var styleCodex = {};
+    //         styleText = styleText.replace(/(?:^|, )([^\s\.]*)\.(?!dmstyle)([^\s,]+)/gm, function(selectorString, tag, oldClass) {
+    //             var selectorParts = selectorString.split(", ");
+    //             var selector = selectorParts[selectorParts.length - 1];
+    //             var newClass = ["dmstyle", uri, Date.now(), index, oldClass].join("-");
+    //             styleCodex[selector] = {oldClass: oldClass, newClass: newClass};
+    //
+    //             var separator = selectorParts.length > 1 ? ", " : "";
+    //             return separator + tag + "." + newClass;
+    //         });
+    //         $(this).text(styleText);
+    //         for (var selector in styleCodex) {
+    //             $contents.find(selector).removeClass(styleCodex[selector].oldClass).addClass(styleCodex[selector].newClass);
+    //         }
+    //     });
+    //     var contentString = $('<div>').append($contents.clone()).remove().html();
+    //     this.setHtml(contentString, true);
+    //     if (range) this.field.restoreSavedRange(range);
+    //     window.setTimeout(function(){this.blockOnChange = false;}.bind(this), 1500);
+    // }
 };
 
 /**
@@ -291,6 +324,7 @@ dm.viewer.TextEditor.prototype.render = function(div) {
     this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
     this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
 
+    // window.setTimeout(this.addGlobalEventListeners.bind(this), 100);
     this.addGlobalEventListeners();
 
     if (this.container) {
@@ -301,6 +335,8 @@ dm.viewer.TextEditor.prototype.render = function(div) {
     // Start checking/displaying document status changes
     this.initStatusChecker();
     this.initPasteHandling();
+
+    window.setTimeout(function(){this.blockOnChange = false;}.bind(this), 1000);
 };
 
 dm.viewer.TextEditor.prototype.initPasteHandling = function() {
@@ -865,7 +901,7 @@ dm.viewer.TextEditor.prototype.linkAnnotation = function () {
 };
 
 dm.viewer.TextEditor.prototype.onChange = function (event) {
-    if ( this.loadingContent === false   ) {
+    if ( this.blockOnChange === false && this.loadingContent === false ) {
         this.saveContents();
     }
     this.loadingContent = false;

@@ -19,7 +19,8 @@ var STATES = {
     edit: 2,
     create: 3,
     imageUpload: 4,
-    alert: 5
+    alert: 5,
+    browserWarning: 6
 };
 
 var PERMISSIONS = ["read", "update", "administer"];
@@ -125,12 +126,32 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
 
     $.when($.getJSON("/store/users"), this.databroker.userDataLoad).done(
         function(users, user) {
-            user = user.shift();
-            DM.userLoggedIn(user.getOneProperty("rdfs:label"));
-            this.currentUser = user;
-            this.users = users.shift();
-            this.projectController.autoSelectProject();
-            this.updateProjects();
+          var isChrome = !!window.chrome && !!window.chrome.webstore;
+            if (!this.isGuest && !isChrome) {
+                this.showModal(STATES.browserWarning);
+                $("#browser-warning-text").empty();
+                $("#browser-warning-text").append("<p>Warning! Project editing in DM 1.0 has not been rigorously tested in browsers other than Google Chrome. We strongly recommend you switch to Chrome before editing or creating new resources to avoid potential issues.</p><br /><p>DM 2.0 will support project creation and editing across all standard browsing platforms.</p>");
+                $("#dismiss-browser-warning").off("click").on("click", function() {
+                    user = user.shift();
+                    DM.userLoggedIn(user.getOneProperty("rdfs:label"));
+                    this.currentUser = user;
+                    this.users = users.shift();
+                    this.projectController.autoSelectProject();
+                    this.updateProjects();
+                }.bind(this));
+                // $("#exit-proj").off("click").on("click", function() {
+                //     this.projectController.selectProject(null);
+                //     this.updateProjects();
+                // }.bind(this));
+            }
+            else {
+              user = user.shift();
+              DM.userLoggedIn(user.getOneProperty("rdfs:label"));
+              this.currentUser = user;
+              this.users = users.shift();
+              this.projectController.autoSelectProject();
+              this.updateProjects();
+            }
         }.bind(this)
     );
 };
@@ -210,7 +231,7 @@ dm.viewer.ProjectViewer.prototype.updateProjects = function() {
     $(".sc-ProjectViewer-projectButtonTitle").text(
         project
             ? this.databroker.dataModel.getTitle(project) || 'Untitled project'
-            : "none"
+            : "Projects"
     );
 
     var allProjectUris = this.projectController.findProjects();
@@ -297,6 +318,12 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
     );
     $("#alert-text").toggle(
         this.state == STATES.alert
+    );
+    $("#browser-warning-footer").toggle(
+        this.state == STATES.browserWarning
+    );
+    $("#browser-warning-text").toggle(
+        this.state == STATES.browserWarning
     );
 
     $("#del-project").toggleClass(
@@ -392,6 +419,9 @@ dm.viewer.ProjectViewer.prototype.showModal = function(state) {
         break;
     case STATES.alert:
         title.text("Save Conflict Warning (\u201c" + (projectTitle) + "\u201d)").addClass("atb-ProjectAlert");
+        break;
+    case STATES.browserWarning:
+        title.text("Browser Incompatibility Warning");
         break;
     }
 
@@ -690,6 +720,7 @@ dm.viewer.ProjectViewer.prototype.openViewerForResource = function(resource) {
     container.setViewer(viewer);
 
     if ( clone || !this.projectController.userHasPermissionOverProject(null, null, dm.data.ProjectController.PERMISSIONS.update)) {
+        // window.setTimeout(viewer.makeUneditable.bind(viewer), 200);
         viewer.makeUneditable();
         viewer.loadResourceByUri(resource.uri);
         container.autoResize();

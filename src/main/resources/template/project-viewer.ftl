@@ -83,6 +83,8 @@
         </div>
         <div id="alert-text">
         </div>
+        <div id="browser-warning-text">
+        </div>
     </div>
     <div class="modal-footer" id="main-footer">
         <button class="btn btn-primary" id="del-project" >Delete Project</button>
@@ -95,5 +97,8 @@
     <div class="modal-footer" id="alert-footer">
         <button class="btn btn-primary" id="exit-proj" data-dismiss="modal" aria-hidden="true">Exit Project</button>
         <button class="btn btn-primary" id="dismiss-alert">Continue</button>
+    </div>
+    <div class="modal-footer" id="browser-warning-footer">
+        <button class="btn btn-primary" id="dismiss-browser-warning">Ignore</button>
     </div>
 </div>
