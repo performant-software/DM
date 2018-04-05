@@ -105,9 +105,9 @@ dm.viewer.TextEditor.prototype.getSanitizedHtml = function () {
  * sets the contents of the editor to the specified string
  * @param {!string} htmlString the html to be written to the editor
  **/
-dm.viewer.TextEditor.prototype.setHtml = function (htmlString) {
+dm.viewer.TextEditor.prototype.setHtml = function (htmlString, noDelayedChange) {
     if (this.field) {
-        this.field.setHtml(false, htmlString, false );
+        this.field.setHtml(false, htmlString, noDelayedChange === true );
     }
 };
 
@@ -119,7 +119,7 @@ dm.viewer.TextEditor.prototype.safeguardStyles = function () {
     if (this.field) {
         var uriParts = this.uri.split(":");
         var uri = uriParts[uriParts.length - 1];
-        var $contents = $(this.editorIframeElement).contents();
+        var $contents = $($.parseHTML(this.field.getCleanContents()));
         $contents.find("style").each(function(index) {
             var styleText = $(this).text();
             var styleCodex = {};
@@ -137,6 +137,8 @@ dm.viewer.TextEditor.prototype.safeguardStyles = function () {
                 $(this).parent().find(selector).removeClass(styleCodex[selector].oldClass).addClass(styleCodex[selector].newClass);
             }
         });
+        var contentString = $('<div>').append($contents.clone()).remove().html();
+        this.setHtml(contentString, true);
     }
 };
 
@@ -291,7 +293,8 @@ dm.viewer.TextEditor.prototype.render = function(div) {
     this.editorIframe = goog.dom.getFrameContentWindow(this.editorIframeElement);
     this.addStylesheetToEditor(this.styleRoot + 'atb/editorframe.css');
 
-    this.addGlobalEventListeners();
+    window.setTimeout(this.addGlobalEventListeners.bind(this), 100);
+    // this.addGlobalEventListeners();
 
     if (this.container) {
         this.container.autoResize();
