@@ -126,11 +126,32 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
 
     $.when($.getJSON("/store/users"), this.databroker.userDataLoad).done(
         function(users, user) {
-          var isChrome = !!window.chrome && !!window.chrome.webstore;
+            // browser type determination from https://stackoverflow.com/a/9851769/6126327
+            var isChrome = !!window.chrome && !!window.chrome.webstore;
+            var isFirefox = typeof InstallTrigger !== 'undefined';
             if (!this.isGuest && !isChrome) {
                 this.showModal(STATES.browserWarning);
                 $("#browser-warning-text").empty();
                 $("#browser-warning-text").append("<p>Warning! Project editing in DM 1.0 has not been rigorously tested in browsers other than Google Chrome. We strongly recommend you switch to Chrome before editing or creating new resources to avoid potential issues.</p><br /><p>DM 2.0 will support project creation and editing across all standard browsing platforms.</p>");
+                $("#dismiss-browser-warning").off("click").on("click", function() {
+                    console.log('ff warning dismiss');
+                    user = user.shift();
+                    DM.userLoggedIn(user.getOneProperty("rdfs:label"));
+                    this.currentUser = user;
+                    this.users = users.shift();
+                    this.projectController.autoSelectProject();
+                    this.updateProjects();
+                    $(".sc-ProjectViewer-modal").modal('hide');
+                }.bind(this));
+                // $("#exit-proj").off("click").on("click", function() {
+                //     this.projectController.selectProject(null);
+                //     this.updateProjects();
+                // }.bind(this));
+            }
+            else if (!isChrome && !isFirefox) {
+                this.showModal(STATES.browserWarning);
+                $("#browser-warning-text").empty();
+                $("#browser-warning-text").append("<p>DM 1.0 projects are best viewed in either Chrome or Firefox browsers. It is strongly recommended that you switch to Chrome or Firefox before viewing this project.</p>");
                 $("#dismiss-browser-warning").off("click").on("click", function() {
                     user = user.shift();
                     DM.userLoggedIn(user.getOneProperty("rdfs:label"));
@@ -138,11 +159,8 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
                     this.users = users.shift();
                     this.projectController.autoSelectProject();
                     this.updateProjects();
+                    $(".sc-ProjectViewer-modal").modal('hide');
                 }.bind(this));
-                // $("#exit-proj").off("click").on("click", function() {
-                //     this.projectController.selectProject(null);
-                //     this.updateProjects();
-                // }.bind(this));
             }
             else {
               user = user.shift();
