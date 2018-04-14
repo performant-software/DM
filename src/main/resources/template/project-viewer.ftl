@@ -99,6 +99,6 @@
         <button class="btn btn-primary" id="dismiss-alert">Continue</button>
     </div>
     <div class="modal-footer" id="browser-warning-footer">
-        <button class="btn btn-primary" id="dismiss-browser-warning">Ignore</button>
+        <button class="btn btn-primary" id="dismiss-browser-warning">Okay</button>
     </div>
 </div>
