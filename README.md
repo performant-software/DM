@@ -45,31 +45,16 @@ and reloading the app in the browser when needed.
 DM supports login through the OAuth protocol, and by default connects to Google's and GitHub's authentication providers. In addition, an independent OAuth provider application can be quickly created using the accompanying [Simple OAuth2 provider](https://github.com/performant-software/oauth-provider) repository. To add this service, follow the deployment instructions in that repository's ReadMe, then navigate to your-provider-application-url/oauth/applications and add an entry for your DM instance. You should use 'DM' for the application name and add your-dm-application-url/accounts/oauth-callback/independent to the Redirect URI field (this field can accommodate a list of callback URIs separated by line breaks, which is useful if you wish to provide authentication to multiple DM instances). Click Submit to save the application configuration, and copy the Application Id (key) and Secret values shown on the subsequent page.
 
 
-Site Administration
--------------
+#### Restoring a Downloaded Project from Another Instance
 
-Restoring a Downloaded Project from Another Instance
--------
 If you wish to seed your new instance with an exported project from an existing instance, first navigate to the existing project and click "Download" in its table of contents view. You will then need to copy the download file to your instance server and relaunch the application.
 - Clicking "Download" will provide you with a .zip file. Unzip this file so that you have a folder containing a file called download.ttl and files for any images used by the project. Use `rsync` to upload the download.ttl file to /home/dm on your instance server and the images to /home/dm/dm-data/images.
 - To prepare the DM instance for relaunch, next use `ssh` to connect your command line to your DM server, using the credentials provided by Digital Ocean. Run `cd /home/dm`, then `ps -aux | grep java` to find the process ID number of the DM application, then use `kill` with that process ID to shut down the application.
 - Finally, to relaunch the application and restore the exported project, run `nohup java -jar dm-1.0-SNAPSHOT.jar download.ttl > dm.log &`. You can then leave the ssh session with `exit`.
 
-Restoring All Projects from Another Instance
--------
+#### Restoring All Projects from Another Instance
+
 If you are restoring a full-data backup from another DM instance, you will next need to unpack the compressed backup file, upload it to your new installation server, and relaunch the DM application. You will need to use command line tools for this process:
 - Use `gunzip` to unpack the backup file and `rsync` to upload it to your installation server’s /home/dm directory.
 - To prepare the DM instance for relaunch, next use `ssh` to connect your command line to your DM server, using the credentials provided by Digital Ocean. Run `cd /home/dm`, then `ps -aux | grep java` to find the process ID number of the DM application, then use `kill` with that process ID to shut down the application. Run `rm -rf dm-data` to remove the default data directory.
 - Finally, to relaunch the application and restore the backup, run `nohup java -jar dm-1.0-SNAPSHOT.jar your-backup-file-name.ttl > dm.log &`, replacing "your-backup-file-name" with the name of the uncompressed backup file you’ve uploaded. You can then leave the ssh session with `exit`.
-
-Backups
--------
-
-Backups of the RDF store are generated hourly and are automatically removed after 90 days in order to conserve storage space. To change the length of this window, edit the cron job for backup deletion with `crontab -e`.
-
-To restore your DM instance from a backup file, you will need to shut the application down and relaunch it, passing the decompressed backup file as an argument.
-- `ssh` as the root user into your instance server and navigate to /home/dm.
-- Identify the backup file you want to restore (hourly backup files are located in dm-data/ttl-dumps). Run `cp your-backup-file-path /home/dm/backup-to-restore.ttl.gz`, replacing "your-backup-file-path" with the full path to the desired backup file, to copy it to a convenient location.
-- In the /home/dm directory, run `gunzip backup-to-restore.ttl.gz` to decompress it.
-- Run `ps -aux` to identify the process ID of the DM application. It will contain "java -jar dm-1.0-SNAPSHOT.jar" in the Command column. Run `kill` followed by the process ID to shut the application down.
-- Run `nohup java -jar dm-1.0-SNAPSHOT.jar backup-to-restore.ttl > dm.log &` to launch the instance and restore it from the selected backup.
