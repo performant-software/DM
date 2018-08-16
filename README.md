@@ -19,7 +19,7 @@ If you wish to deploy your DM instance on your own server or on a service other 
 * [Yarn](https://yarnpkg.com/)
 
 #### Configuration
-Copy the contents of dm.conf.example to a file named dm.conf and fill in the values for OAuth providers you wish to enable. Please refer to the above section on "Creating an independent user authentication provider" and the guides for key/secret generation with the various services in the "Setting configuration variables" section.
+Copy the contents of dm.conf.example to a file named dm.conf and fill in the values for OAuth providers you wish to enable. Please refer to the section below on "Creating an independent user authentication provider" and the guides for key/secret generation with the various services in the "Setting configuration variables" section.
 
 #### Build instructions
 
@@ -44,6 +44,16 @@ and reloading the app in the browser when needed.
 
 DM supports login through the OAuth protocol, and by default connects to Google's and GitHub's authentication providers. In addition, an independent OAuth provider application can be quickly created using the accompanying [Simple OAuth2 provider](https://github.com/performant-software/oauth-provider) repository. To add this service, follow the deployment instructions in that repository's ReadMe, then navigate to your-provider-application-url/oauth/applications and add an entry for your DM instance. You should use 'DM' for the application name and add your-dm-application-url/accounts/oauth-callback/independent to the Redirect URI field (this field can accommodate a list of callback URIs separated by line breaks, which is useful if you wish to provide authentication to multiple DM instances). Click Submit to save the application configuration, and copy the Application Id (key) and Secret values shown on the subsequent page.
 
+#### Setting configuration variables
+
+The following variables must be set to allow DM to work with an OAuth provider for user authentication:
+
+- `superuser_id`: an identifier for a user who should have top-level admin status for all projects created in the instance. The format of this ID will be specific to the authentication provider this user will use; for the independent provider application, the ID will be "independent:username@example.com" with the user's email address replacing the latter part.
+- `google_key` and `google_secret`: to enable login through Google's authentication service, see the [guide for Google's People API](https://developers.google.com/people/v1/getting-started) and fill in the key/secret values here after setting it up with your Google account.
+- `github_key` and `github_secret`: to enable login through GitHub's authentication service, see the [guide for GitHub OAuth applications](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/) and fill in the key/secret values after creating an application in your GitHub settings.
+- `independent_provider_base_url`: the URL for the independent OAuth provider application you have deployed, including the protocol and the trailing slash character, as in "http://example.com/".
+- `independent_provider_key` and `independent_provider_secret`: the Application ID and Secret values displayed by your independent OAuth provider application after adding your DM instance to its OAuth applications list.
+- `independent_provider_description`: the name of your independent OAuth provider service as it will appear in the Login dropdown menu.
 
 #### Restoring a Downloaded Project from Another Instance
 
