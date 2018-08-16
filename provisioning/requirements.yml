@@ -1,9 +1,0 @@
----
-- src: "geerlingguy.firewall"
-- src: "geerlingguy.security"
-- src: "geerlingguy.java"
-- src: "williamyeh.reset-locale"
-- src: "williamyeh.uwsgi"
-- src: "geerlingguy.nginx"
-- src: "tersmitten.apt"
-- src: "tersmitten.postfix"

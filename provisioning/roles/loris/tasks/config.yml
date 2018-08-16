@@ -1,8 +1,0 @@
----
-- name: configure loris
-  template:
-    src: loris2.conf.j2
-    dest: "{{ loris_conf }}"
-    owner: loris
-    group: loris
-    mode: 0660

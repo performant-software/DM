@@ -1,5 +1,0 @@
-[uwsgi]
-wsgi-file = {{ loris_wsgi }}
-socket = /var/run/uwsgi/loris.socket
-chmod-socket = 666
-workers = {{ [4, 2 * ansible_processor_vcpus] | max }}

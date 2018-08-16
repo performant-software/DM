@@ -1,4 +1,0 @@
----
-postfix_aliases:
-  - user: root
-    alias: "webmaster@performantsoftware.com"
