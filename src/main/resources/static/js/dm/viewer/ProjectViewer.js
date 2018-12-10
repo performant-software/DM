@@ -126,8 +126,22 @@ dm.viewer.ProjectViewer = function(clientApp, opt_domHelper) {
 
     $.when($.getJSON("/store/users"), this.databroker.userDataLoad).done(
         function(users, user) {
-            // browser type determination from https://stackoverflow.com/a/9851769/6126327
-            var isChrome = !!window.chrome && !!window.chrome.webstore;
+            // browser type determination from https://stackoverflow.com/questions/4565112/javascript-how-to-find-out-if-the-user-browser-is-chrome/13348618#13348618
+            var isChromium = window.chrome;
+            var winNav = window.navigator;
+            var vendorName = winNav.vendor;
+            var isOpera = typeof window.opr !== "undefined";
+            var isIEedge = winNav.userAgent.indexOf("Edge") > -1;
+
+            var isChrome = (
+              isChromium !== null &&
+              typeof isChromium !== "undefined" &&
+              vendorName === "Google Inc." &&
+              isOpera === false &&
+              isIEedge === false
+            );
+
+            //!!window.chrome && !!window.chrome.webstore;
             var isFirefox = typeof InstallTrigger !== 'undefined';
             if (!this.isGuest && !isChrome) {
                 this.showModal(STATES.browserWarning);
